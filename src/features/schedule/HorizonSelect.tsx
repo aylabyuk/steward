@@ -56,15 +56,18 @@ export function HorizonSelect({ value, onChange }: Props) {
   }
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="relative w-full sm:w-auto font-mono">
       <button
         ref={buttonRef}
         onClick={() => setOpen(!open)}
-        className="w-full sm:w-auto flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-start gap-1 sm:gap-2 px-3 py-2 text-sm font-medium text-walnut border border-border rounded-lg hover:bg-parchment-2 transition-all duration-150 hover:border-border-strong"
+        className={cn(
+          "w-full sm:w-auto inline-flex items-center gap-2.5 px-3.5 py-2 text-walnut bg-chalk border rounded-lg hover:bg-parchment-2 hover:border-walnut-3 transition-all duration-120",
+          open ? "border-walnut" : "border-border-strong"
+        )}
       >
-        <span className="text-xs uppercase tracking-[0.18em] text-walnut-3">Showing</span>
-        <span className="font-medium">{display}</span>
-        <span className={cn("text-xs text-walnut-2 transition-transform duration-150 ml-auto sm:ml-1", open && "rotate-180")}>
+        <span className="text-xs uppercase tracking-[0.18em] text-walnut-3 font-medium">Showing</span>
+        <span className="font-display text-sm font-medium tracking-[-0.005em]">{display}</span>
+        <span className={cn("text-xs text-walnut-3 transition-transform duration-120 ml-auto sm:ml-0.5", open && "rotate-180")}>
           ▼
         </span>
       </button>
