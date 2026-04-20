@@ -66,6 +66,14 @@ service cloud.firestore {
           allow create, update, delete: if isActiveMember(wardId);
         }
       }
+
+      // Letter templates: any active member can read; only bishopric can
+      // edit (same rationale as member roster -- a ward-wide configuration
+      // that clerks shouldn't unilaterally change).
+      match /letterTemplates/{templateId} {
+        allow read: if isActiveMember(wardId);
+        allow create, update, delete: if isActiveBishopric(wardId);
+      }
     }
 
     // Cross-ward allowlist query: any signed-in user can read a member doc
