@@ -5,14 +5,14 @@ Core entity: **SacramentMeeting** per Sunday date.
 ## SacramentMeeting
 
 - `date` — ISO `YYYY-MM-DD`
-- `meetingType` — `regular` | `fast_sunday` | `ward_conference` | `stake_conference` | `general_conference` | `other`
+- `meetingType` — `regular` | `fast` | `stake` | `general`
 - `status` — `draft` | `pending_approval` | `approved` | `published` (v1.1)
 - `cancellation` — `{ cancelled, reason, cancelledAt, cancelledBy }`
 - `approvals[]` — log of approval events
 - `contentVersionHash` — cheap hash of current content; approvals compare against it to detect staleness
 - `openingHymn`, `sacramentHymn`, `closingHymn` — Hymn assignments
 - `openingPrayer`, `benediction` — Person + status
-- `speakers[]` — subcollection (variable count), 2+ for `regular`; disabled for `fast_sunday`
+- `speakers[]` — subcollection (variable count), 2+ for `regular`; disabled for `fast`
 - `specialNumber` — optional (performer name, piece title, status)
 - `sacramentBread` — Person + status
 - `sacramentBlessers[]` — 2 Melchizedek Priesthood holders, Person + status
@@ -28,7 +28,9 @@ Lightweight: `name`, `email` (optional), `phone` (v1.1). Inline on the assignmen
 
 `not_assigned` | `draft` | `invite_printed` | `invite_emailed` | `notified` | `accepted` | `declined` | `completed`
 
-Speaker-only extras: `topic`, `letterBody`, `sentAt`, `sentBy`.
+### Speaker statuses
+
+`planned` | `invited` | `confirmed` | `declined`
 
 ## Firestore shape
 
@@ -62,7 +64,7 @@ wards/{wardId}/
     - sacramentBlessers: [assignment, assignment]
     - specialNumber, wardBusiness, stakeBusiness, announcements
   meetings/{date}/speakers/{speakerId}
-    - name, email, topic, status, letterBody, letterUpdatedAt, sentAt, sentBy
+    - name, email, topic, status, role
   meetings/{date}/comments/{commentId}
     - authorUid, authorDisplayName, body, mentionedUids[], createdAt, editedAt, deletedAt
   meetings/{date}/history/{eventId}
@@ -76,15 +78,13 @@ Speakers / comments / history are subcollections (variable count; can be long). 
 | Type | Speakers | Sac. hymn | Sac. blessers/bread | Opening/Closing hymn | Prayers | Notes |
 |---|---|---|---|---|---|---|
 | `regular` | ✓ (2+) | ✓ | ✓ | ✓ | ✓ | Default. |
-| `fast_sunday` | — (testimonies) | ✓ | ✓ | ✓ | ✓ | First Sunday of month (auto). Lead-time N/A. |
-| `ward_conference` | ✓ | ✓ | ✓ | ✓ | ✓ | Annual; often stake leaders speak. |
-| `stake_conference` | — | — | — | — | — | **No sacrament meeting.** Placeholder only. |
-| `general_conference` | — | — | — | — | — | **No sacrament meeting.** |
-| `other` | flex | flex | flex | flex | flex | Escape hatch (funerals, missionary farewells, etc.). |
+| `fast` | — (testimonies) | ✓ | ✓ | ✓ | ✓ | First Sunday of month (auto). Lead-time N/A. |
+| `stake` | — | — | — | — | — | **No sacrament meeting.** Placeholder only. |
+| `general` | — | — | — | — | — | **No sacrament meeting.** |
 
-**Auto-defaults on meeting creation**: `fast_sunday` if first Sunday of month, else `regular`. Placeholder docs auto-created for dates in `settings.nonMeetingSundays` (bishopric fills at start of year).
+**Auto-defaults on meeting creation**: `fast` if first Sunday of month, else `regular`. Placeholder docs auto-created for dates in `settings.nonMeetingSundays` (bishopric fills at start of year).
 
-**Non-meeting Sundays** (`stake_conference` / `general_conference`): no planning fields exposed; schedule view shows greyed-out cards; finalization nudges skip; change notifications don't fire; print shows a single line.
+**Non-meeting Sundays** (`stake` / `general`): no planning fields exposed; schedule view shows greyed-out cards; finalization nudges skip; change notifications don't fire.
 
 ## Cancellation
 

@@ -23,13 +23,13 @@ const SEVERITY_TEXT: Record<Exclude<LeadTimeSeverity, "none">, string> = {
   urgent: "Short notice. Confirm directly.",
 };
 
-const HAS_SPEAKERS: ReadonlySet<MeetingType> = new Set(["regular", "ward_conference", "other"]);
+const HAS_SPEAKERS: ReadonlySet<MeetingType> = new Set(["regular"]);
 
 export function SpeakerSection({ wardId, date, type, leadTimeDays, nonMeetingSundays }: Props) {
   const { data: speakers } = useSpeakers(date);
   const [adding, setAdding] = useState(false);
 
-  if (type === "fast_sunday") {
+  if (type === "fast") {
     return <p className="text-xs text-slate-500">Testimony meeting — no assigned speakers.</p>;
   }
   if (!HAS_SPEAKERS.has(type)) return null;

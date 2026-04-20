@@ -10,7 +10,7 @@ export function defaultMeetingType(
 ): MeetingType {
   const override = nonMeetingSundays.find((s) => s.date === isoDate);
   if (override) return override.type;
-  if (isFirstSundayOfMonth(isoDate)) return "fast_sunday";
+  if (isFirstSundayOfMonth(isoDate)) return "fast";
   return "regular";
 }
 

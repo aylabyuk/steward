@@ -57,7 +57,8 @@ describe("type schemas", () => {
   it("parses a speaker with optional fields", () => {
     const parsed = speakerSchema.parse({
       name: "Alice",
-      status: "not_assigned",
+      status: "planned",
+      role: "Member",
     });
     expect(parsed.name).toBe("Alice");
   });

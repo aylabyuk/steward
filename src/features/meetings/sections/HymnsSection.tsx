@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function HymnsSection({ wardId, date, meeting, type, nonMeetingSundays }: Props) {
-  const showSacramentHymn = type !== "stake_conference" && type !== "general_conference";
+  const showSacramentHymn = type !== "stake" && type !== "general";
 
   async function set(field: "openingHymn" | "sacramentHymn" | "closingHymn", next: Hymn | null) {
     await updateMeetingField(wardId, date, nonMeetingSundays, { [field]: next });

@@ -1,16 +1,17 @@
 import { z } from "zod";
 import { assignmentSchema } from "./person";
 
-export const MEETING_TYPES = [
-  "regular",
-  "fast_sunday",
-  "ward_conference",
-  "stake_conference",
-  "general_conference",
-  "other",
-] as const;
+export const MEETING_TYPES = ["regular", "fast", "stake", "general"] as const;
 export const meetingTypeSchema = z.enum(MEETING_TYPES);
 export type MeetingType = z.infer<typeof meetingTypeSchema>;
+
+export const SPEAKER_STATUSES = ["planned", "invited", "confirmed", "declined"] as const;
+export const speakerStatusSchema = z.enum(SPEAKER_STATUSES);
+export type SpeakerStatus = z.infer<typeof speakerStatusSchema>;
+
+export const SPEAKER_ROLES = ["Member", "Youth", "High Council", "Visiting"] as const;
+export const speakerRoleSchema = z.enum(SPEAKER_ROLES);
+export type SpeakerRole = z.infer<typeof speakerRoleSchema>;
 
 export const MEETING_STATUSES = ["draft", "pending_approval", "approved", "published"] as const;
 export const meetingStatusSchema = z.enum(MEETING_STATUSES);
@@ -84,11 +85,8 @@ export const speakerSchema = z.object({
   name: z.string().min(1),
   email: z.email().optional().or(z.literal("")),
   topic: z.string().optional(),
-  status: assignmentSchema.shape.status,
-  letterBody: z.string().optional(),
-  letterUpdatedAt: z.any().optional(),
-  sentAt: z.any().optional(),
-  sentBy: z.string().optional(),
+  status: speakerStatusSchema,
+  role: speakerRoleSchema.default("Member"),
   createdAt: z.any().optional(),
   updatedAt: z.any().optional(),
 });
