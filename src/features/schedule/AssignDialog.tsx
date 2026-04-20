@@ -19,7 +19,15 @@ export function AssignDialog({ open, title, onClose, onSave, saving, children }:
       if (e.key === "Escape") onClose();
     }
     document.addEventListener("keydown", handleEsc);
-    return () => document.removeEventListener("keydown", handleEsc);
+    // Lock background scroll while modal is open. Preserve any prior inline
+    // overflow so we can restore exactly what was there (in case another
+    // consumer already set it).
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [open, onClose]);
 
   if (!open) return null;
