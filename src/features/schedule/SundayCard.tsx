@@ -6,6 +6,8 @@ import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel } from "./kindLabel";
 import { SundayCardBody } from "./SundayCardBody";
+import { SpeakerEditor } from "./SpeakerEditor";
+import { AssignDialog } from "./AssignDialog";
 import { leadTimeSeverity } from "@/features/speakers/leadTime";
 
 const SEVERITY_STYLE: Record<"warn" | "urgent", string> = {
@@ -38,6 +40,7 @@ export function SundayCard({
   const kind = kindLabel(type);
   const cancelled = Boolean(meeting?.cancellation?.cancelled);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const badge = useCommentUnread(wardId, date);
@@ -128,7 +131,22 @@ export function SundayCard({
         </div>
       )}
 
-      {!cancelled && !isNoMeeting && <SundayCardBody date={date} type={type} />}
+      {!cancelled && !isNoMeeting && (
+        <>
+          <SundayCardBody
+            date={date}
+            type={type}
+            onAddSpeaker={() => setAssignDialogOpen(true)}
+          />
+          <AssignDialog
+            open={assignDialogOpen}
+            date={date}
+            onClose={() => setAssignDialogOpen(false)}
+          >
+            <SpeakerEditor date={date} onClose={() => setAssignDialogOpen(false)} />
+          </AssignDialog>
+        </>
+      )}
     </article>
   );
 }
