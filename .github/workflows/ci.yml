@@ -20,6 +20,14 @@ jobs:
     timeout-minutes: 15
     env:
       CI: "true"
+      # Firebase web config is public — these are the dev project's values.
+      # Security boundary is Firestore rules, not the API key.
+      VITE_FIREBASE_API_KEY: AIzaSyBeBECZlT1Rye3GL-usPr4KsdCHNumJyEE
+      VITE_FIREBASE_AUTH_DOMAIN: steward-dev-5e4dc.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: steward-dev-5e4dc
+      VITE_FIREBASE_STORAGE_BUCKET: steward-dev-5e4dc.firebasestorage.app
+      VITE_FIREBASE_MESSAGING_SENDER_ID: "159630054981"
+      VITE_FIREBASE_APP_ID: 1:159630054981:web:b95053f12fcfa9e7ea752c
     steps:
       - uses: actions/checkout@v4
 
