@@ -2,45 +2,19 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import type { MeetingType } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
+import { CopyFromPreviousButton } from "./CopyFromPreviousButton";
 import { EditorPlaceholder, EditorSection } from "./EditorSection";
 import { defaultMeetingType } from "./ensureMeetingDoc";
+import { formatLongDate, HIDE_SPEAKER_TYPES, NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
 import { HymnsSection } from "./sections/HymnsSection";
 import { MusicSection } from "./sections/MusicSection";
 import { PrayersSection } from "./sections/PrayersSection";
 import { SacramentSection } from "./sections/SacramentSection";
 import { cancelMeeting } from "./updateMeeting";
-
-function formatLong(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-const TYPE_LABELS: Record<MeetingType, string> = {
-  regular: "Regular sacrament meeting",
-  fast_sunday: "Fast & Testimony meeting",
-  ward_conference: "Ward conference",
-  stake_conference: "Stake conference",
-  general_conference: "General conference",
-  other: "Other",
-};
-
-const NO_MEETING = new Set<MeetingType>(["stake_conference", "general_conference"]);
-const HIDE_SPEAKERS = new Set<MeetingType>([
-  "fast_sunday",
-  "stake_conference",
-  "general_conference",
-]);
 
 interface Props {
   date: string;
@@ -59,8 +33,8 @@ export function WeekEditor({ date }: Props) {
   const nonMeeting = settings.data?.settings.nonMeetingSundays ?? [];
   const type = meeting.data?.meetingType ?? defaultMeetingType(date, nonMeeting);
   const cancellation = meeting.data?.cancellation;
-  const isNonMeeting = NO_MEETING.has(type);
-  const showSpeakers = !HIDE_SPEAKERS.has(type);
+  const isNonMeeting = NO_MEETING_TYPES.has(type);
+  const showSpeakers = !HIDE_SPEAKER_TYPES.has(type);
 
   return (
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
@@ -70,7 +44,7 @@ export function WeekEditor({ date }: Props) {
         </Link>
       </nav>
       <header className="mb-6 flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-slate-900">{formatLong(date)}</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">{formatLongDate(date)}</h1>
         <p className="text-sm text-slate-500">{TYPE_LABELS[type]}</p>
       </header>
 
@@ -87,7 +61,6 @@ export function WeekEditor({ date }: Props) {
         onConfirm={async (reason) => {
           if (!authUid) return;
           await cancelMeeting(wardId, date, reason, authUid, nonMeeting);
-          setConfirmingCancel(false);
         }}
       />
 
@@ -112,6 +85,14 @@ export function WeekEditor({ date }: Props) {
               meeting={meeting.data}
               nonMeetingSundays={nonMeeting}
             />
+            <div className="mt-3 border-t border-slate-200 pt-3">
+              <CopyFromPreviousButton
+                wardId={wardId}
+                date={date}
+                meeting={meeting.data}
+                nonMeetingSundays={nonMeeting}
+              />
+            </div>
           </EditorSection>
           <EditorSection title="Sacrament">
             <SacramentSection
