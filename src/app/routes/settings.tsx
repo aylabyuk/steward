@@ -16,11 +16,6 @@ const links = [
     label: "Notifications",
     desc: "Your push preferences and quiet hours",
   },
-  {
-    to: "/settings/letter-templates",
-    label: "Letter templates",
-    desc: "Speaker invitation templates",
-  },
 ];
 
 export function SettingsIndex() {
@@ -34,7 +29,7 @@ export function SettingsIndex() {
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-walnut">Settings</h1>
       </header>
-      <ul className="flex flex-col divide-y divide-slate-200 rounded-lg border border-border bg-chalk">
+      <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-chalk">
         {links.map((l) => (
           <li key={l.to}>
             <Link to={l.to} className="block px-4 py-3 text-sm hover:bg-parchment-2">
