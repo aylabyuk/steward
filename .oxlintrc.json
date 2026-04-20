@@ -29,6 +29,10 @@
     "eslint/no-ternary": "off",
     "eslint/prefer-destructuring": "off",
     "eslint/init-declarations": "off",
+    "eslint/curly": "off",
+    "eslint/id-length": "off",
+    "eslint/max-statements": "off",
+    "react/jsx-max-depth": "off",
     "unicorn/no-null": "off",
     "unicorn/filename-case": [
       "warn",
