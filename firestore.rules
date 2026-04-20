@@ -93,6 +93,18 @@ service cloud.firestore {
           allow read: if isActiveMember(wardId);
           allow create, update, delete: if isActiveMember(wardId);
         }
+
+        // Comments: any active member reads + creates (with authorUid tied
+        // to the caller). Authors own their edits/soft-deletes; no one else
+        // can mutate. authorUid on create MUST match request.auth.uid so a
+        // malicious client can't impersonate another member.
+        match /comments/{commentId} {
+          allow read: if isActiveMember(wardId);
+          allow create: if isActiveMember(wardId)
+            && request.resource.data.authorUid == request.auth.uid;
+          allow update, delete: if isActiveMember(wardId)
+            && resource.data.authorUid == request.auth.uid;
+        }
       }
 
       // Letter templates: any active member can read; only bishopric can
