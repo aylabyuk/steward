@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
 const HORIZON_OPTIONS = [
-  { label: "1 month", weeks: 4 },
-  { label: "2 months", weeks: 9 },
-  { label: "3 months", weeks: 13 },
-  { label: "6 months", weeks: 26 },
-  { label: "12 months", weeks: 52 },
+  { label: "1 month", display: "Next 1 month", weeks: 4 },
+  { label: "2 months", display: "Next 2 months", weeks: 9 },
+  { label: "3 months", display: "Next 3 months", weeks: 13 },
+  { label: "6 months", display: "Next 6 months", weeks: 26 },
+  { label: "12 months", display: "Next 12 months", weeks: 52 },
 ];
 
 interface Props {
@@ -20,7 +20,7 @@ export function HorizonSelect({ value, onChange }: Props) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = HORIZON_OPTIONS.find((o) => o.weeks === value);
-  const label = selectedOption?.label ?? "Schedule";
+  const display = selectedOption?.display ?? "Schedule";
 
   useEffect(() => {
     if (!open) return;
@@ -60,10 +60,11 @@ export function HorizonSelect({ value, onChange }: Props) {
       <button
         ref={buttonRef}
         onClick={() => setOpen(!open)}
-        className="w-full sm:w-auto inline-flex items-center justify-center sm:justify-start gap-2 px-3 py-2 text-sm font-medium text-walnut border border-border rounded-lg hover:bg-parchment-2 transition-all duration-150 hover:border-border-strong"
+        className="w-full sm:w-auto flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-start gap-1 sm:gap-2 px-3 py-2 text-sm font-medium text-walnut border border-border rounded-lg hover:bg-parchment-2 transition-all duration-150 hover:border-border-strong"
       >
-        {label}
-        <span className={cn("text-xs text-walnut-2 transition-transform duration-150", open && "rotate-180")}>
+        <span className="text-xs uppercase tracking-wider text-walnut-3">Showing</span>
+        <span className="font-medium">{display}</span>
+        <span className={cn("text-xs text-walnut-2 transition-transform duration-150 ml-auto sm:ml-1", open && "rotate-180")}>
           ▼
         </span>
       </button>
@@ -87,7 +88,7 @@ export function HorizonSelect({ value, onChange }: Props) {
                   : "text-walnut hover:bg-parchment-2",
               )}
             >
-              {option.label}
+              {option.display}
             </button>
           ))}
         </div>
