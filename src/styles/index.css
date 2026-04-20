@@ -1,6 +1,141 @@
 @import "tailwindcss";
 
+/* =========================================================
+   Fonts
+   ========================================================= */
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter-VariableFont_opsz_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;0,6..72,800;1,6..72,400;1,6..72,500;1,6..72,600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap");
+
+/* =========================================================
+   Design Tokens
+   ========================================================= */
+@theme {
+  /* Palette */
+  --color-parchment: #fbf6ee;
+  --color-parchment-2: #f4ecdc;
+  --color-parchment-3: #e9dcc2;
+  --color-bordeaux: #8b2e2a;
+  --color-bordeaux-deep: #6b1f1c;
+  --color-bordeaux-soft: #b65449;
+  --color-brass: #c89b5a;
+  --color-brass-soft: #e0be87;
+  --color-brass-deep: #8e6a36;
+  --color-walnut: #3b2a22;
+  --color-walnut-2: #5a4636;
+  --color-walnut-3: #8a7460;
+  --color-ink: #231815;
+  --color-chalk: #fffdf7;
+  --color-border: #d9c9a8;
+  --color-border-strong: #b99e6e;
+  --color-success: #4e6b3a;
+  --color-success-soft: #e2ead3;
+  --color-warning: #b97a19;
+  --color-warning-soft: #f6e6c4;
+  --color-danger-soft: #f3dad5;
+  --color-info-soft: #dce5eb;
+
+  /* Typography */
+  --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
+
+  /* Shadows */
+  --shadow-elev-1: 0 1px 0 rgba(35, 24, 21, 0.06), 0 1px 2px rgba(35, 24, 21, 0.06);
+  --shadow-elev-2: 0 1px 0 rgba(35, 24, 21, 0.06), 0 4px 12px rgba(35, 24, 21, 0.08);
+  --shadow-elev-3: 0 2px 0 rgba(35, 24, 21, 0.04), 0 12px 28px rgba(35, 24, 21, 0.12);
+
+  /* Easings */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-press: cubic-bezier(0.3, 0, 0.6, 1);
+
+  /* Radii */
+  --radius: 6px;
+  --radius-sm: 3px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* Spacing */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+}
+
+/* =========================================================
+   Base Styles
+   ========================================================= */
 @layer base {
+  html,
+  body {
+    @apply bg-parchment text-walnut font-sans text-base leading-relaxed antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Semantic typography */
+  h1 {
+    @apply font-display text-6xl font-semibold leading-tight;
+    letter-spacing: -0.02em;
+    color: var(--color-walnut);
+  }
+
+  h2 {
+    @apply font-display text-4xl font-semibold leading-snug;
+    letter-spacing: -0.015em;
+    color: var(--color-walnut);
+  }
+
+  h3 {
+    @apply font-display text-3xl font-semibold;
+    letter-spacing: -0.01em;
+    color: var(--color-walnut);
+  }
+
+  h4 {
+    @apply font-sans text-xl font-semibold leading-tight;
+    letter-spacing: -0.005em;
+    color: var(--color-walnut);
+  }
+
+  p {
+    @apply text-base leading-relaxed text-walnut;
+  }
+
+  small {
+    @apply text-sm text-walnut-2;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: var(--color-brass-soft);
+    color: var(--color-walnut);
+  }
+
+  /* Focus ring */
+  :where(button, a, input, select, textarea, [role="button"]):focus-visible {
+    outline: 2px solid var(--color-bordeaux);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  /* Cursor utilities */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   a[href],
@@ -13,5 +148,62 @@
   button:disabled,
   [role="button"][aria-disabled="true"] {
     cursor: not-allowed;
+  }
+}
+
+/* =========================================================
+   Custom Utilities
+   ========================================================= */
+@layer utilities {
+  @utility paper-grain {
+    background-image: radial-gradient(rgba(139, 46, 42, 0.03) 1px, transparent 1px),
+      radial-gradient(rgba(59, 42, 34, 0.035) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
+  }
+}
+
+/* =========================================================
+   Animations
+   ========================================================= */
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadePop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
