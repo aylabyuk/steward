@@ -79,11 +79,11 @@ functions/          # Firebase Cloud Functions
 - **[docs/access.md](docs/access.md)** — roles matrix, sign-in allowlist, ward bootstrap, email CC policy
 - **[docs/engineering.md](docs/engineering.md)** — state management, component size limit, lint/format, testing, CI
 
-## Open questions
+## Decisions (resolved)
 
-1. Hymn list: ship JSON in repo vs. free-type? *(Leaning: ship JSON.)*
-2. Who can add/remove ward members in-app? *(Leaning: any `bishopric` role.)*
-3. Package manager: npm / pnpm / bun? *(Leaning: pnpm.)*
+1. **Hymn list**: ship JSON in repo (`src/features/hymns/hymns.json`).
+2. **Member management**: any active `bishopric` member can add/remove/deactivate the ward roster in-app.
+3. **Package manager**: pnpm (workspace root + `functions/`).
 
 ---
 
