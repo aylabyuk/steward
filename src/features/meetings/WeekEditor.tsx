@@ -11,6 +11,7 @@ import { CancellationBanner } from "./CancellationBanner";
 import { CopyFromPreviousButton } from "./CopyFromPreviousButton";
 import { EditorPlaceholder, EditorSection } from "./EditorSection";
 import { defaultMeetingType } from "./ensureMeetingDoc";
+import { HistoryDrawer } from "./HistoryDrawer";
 import { formatLongDate, HIDE_SPEAKER_TYPES, NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
 import { WeekEditorActions } from "./WeekEditorActions";
 import { HymnsSection } from "./sections/HymnsSection";
@@ -145,6 +146,9 @@ export function WeekEditor({ date }: Props) {
           <CommentThread wardId={wardId} date={date} />
         </div>
       )}
+      <div className="mt-6">
+        <HistoryDrawer date={date} />
+      </div>
     </main>
   );
 }

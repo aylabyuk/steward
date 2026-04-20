@@ -105,6 +105,19 @@ service cloud.firestore {
           allow update, delete: if isActiveMember(wardId)
             && resource.data.authorUid == request.auth.uid;
         }
+
+        // History (audit trail): write-once log appended in the same batch as
+        // the underlying content change. Any active member reads. Creates
+        // require actorUid to match the caller and the standard event shape.
+        // No updates or deletes -- audit history is immutable.
+        match /history/{eventId} {
+          allow read: if isActiveMember(wardId);
+          allow create: if isActiveMember(wardId)
+            && request.resource.data.actorUid == request.auth.uid
+            && request.resource.data.target in ['meeting', 'speaker', 'comment', 'approval']
+            && request.resource.data.action in ['create', 'update', 'delete'];
+          allow update, delete: if false;
+        }
       }
 
       // Letter templates: any active member can read; only bishopric can

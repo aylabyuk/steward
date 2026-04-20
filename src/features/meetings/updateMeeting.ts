@@ -1,8 +1,9 @@
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { writeMeetingPatch } from "./approvals";
 import { ensureMeetingDoc } from "./ensureMeetingDoc";
+import { appendHistoryEvent, currentActor } from "./history";
 
 export async function updateMeetingField(
   wardId: string,
@@ -23,8 +24,9 @@ export async function cancelMeeting(
 ): Promise<void> {
   await ensureMeetingDoc(wardId, date, nonMeetingSundays);
   // Cancellation is orthogonal to approval; hash excludes it, so this is a
-  // direct updateDoc -- approvals are preserved, no re-hash needed.
-  await updateDoc(doc(db, "wards", wardId, "meetings", date), {
+  // direct update -- approvals are preserved, no re-hash needed.
+  const batch = writeBatch(db);
+  batch.update(doc(db, "wards", wardId, "meetings", date), {
     cancellation: {
       cancelled: true,
       reason,
@@ -33,11 +35,32 @@ export async function cancelMeeting(
     },
     updatedAt: serverTimestamp(),
   });
+  const actor = currentActor();
+  if (actor) {
+    appendHistoryEvent(batch, wardId, date, actor, {
+      target: "meeting",
+      targetId: date,
+      action: "update",
+      changes: [{ field: "cancellation", new: { cancelled: true, reason } }],
+    });
+  }
+  await batch.commit();
 }
 
 export async function uncancelMeeting(wardId: string, date: string): Promise<void> {
-  await updateDoc(doc(db, "wards", wardId, "meetings", date), {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "wards", wardId, "meetings", date), {
     cancellation: null,
     updatedAt: serverTimestamp(),
   });
+  const actor = currentActor();
+  if (actor) {
+    appendHistoryEvent(batch, wardId, date, actor, {
+      target: "meeting",
+      targetId: date,
+      action: "update",
+      changes: [{ field: "cancellation", old: { cancelled: true } }],
+    });
+  }
+  await batch.commit();
 }
