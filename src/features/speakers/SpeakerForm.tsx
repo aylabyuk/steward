@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { writeMeetingPatch } from "@/features/meetings/approvals";
 import { ensureMeetingDoc } from "@/features/meetings/ensureMeetingDoc";
 import { db } from "@/lib/firebase";
 import type { NonMeetingSunday } from "@/lib/types";
@@ -42,6 +43,8 @@ export function SpeakerForm({ wardId, date, nonMeetingSundays, onCancel, onAdded
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    // Recompute meeting hash + invalidate approvals if content shifted.
+    await writeMeetingPatch(wardId, date, {});
     reset();
     onAdded();
   }

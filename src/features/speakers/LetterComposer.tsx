@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { Link } from "react-router";
+import { writeMeetingPatch } from "@/features/meetings/approvals";
 import { useLetterTemplate } from "@/hooks/useLetterTemplates";
 import { useSpeaker } from "@/hooks/useSpeaker";
 import { useWardMembers } from "@/hooks/useWardMembers";
@@ -63,6 +64,7 @@ export function LetterComposer({ date, speakerId }: Props) {
       letterUpdatedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    await writeMeetingPatch(wardId, date, {});
     setSavedAt(Date.now());
   }
 

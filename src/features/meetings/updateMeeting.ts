@@ -1,6 +1,7 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { NonMeetingSunday, SacramentMeeting } from "@/lib/types";
+import { writeMeetingPatch } from "./approvals";
 import { ensureMeetingDoc } from "./ensureMeetingDoc";
 
 export async function updateMeetingField(
@@ -10,10 +11,7 @@ export async function updateMeetingField(
   patch: Partial<SacramentMeeting>,
 ): Promise<void> {
   await ensureMeetingDoc(wardId, date, nonMeetingSundays);
-  await updateDoc(doc(db, "wards", wardId, "meetings", date), {
-    ...patch,
-    updatedAt: serverTimestamp(),
-  });
+  await writeMeetingPatch(wardId, date, patch);
 }
 
 export async function cancelMeeting(
@@ -24,6 +22,8 @@ export async function cancelMeeting(
   nonMeetingSundays: readonly NonMeetingSunday[],
 ): Promise<void> {
   await ensureMeetingDoc(wardId, date, nonMeetingSundays);
+  // Cancellation is orthogonal to approval; hash excludes it, so this is a
+  // direct updateDoc -- approvals are preserved, no re-hash needed.
   await updateDoc(doc(db, "wards", wardId, "meetings", date), {
     cancellation: {
       cancelled: true,

@@ -4,6 +4,7 @@ import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { ApprovalPanel } from "./ApprovalPanel";
 import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
 import { CopyFromPreviousButton } from "./CopyFromPreviousButton";
@@ -55,6 +56,11 @@ export function WeekEditor({ date }: Props) {
         onStartCancel={() => setConfirmingCancel(true)}
         isNonMeeting={isNonMeeting}
       />
+      {!isNonMeeting && (
+        <div className="mb-6">
+          <ApprovalPanel wardId={wardId} date={date} meeting={meeting.data} />
+        </div>
+      )}
       <CancelDialog
         open={confirmingCancel}
         onClose={() => setConfirmingCancel(false)}
