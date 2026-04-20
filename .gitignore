@@ -22,6 +22,9 @@ blob-report/
 .env.*
 !.env.example
 
+# Generated from public/firebase-messaging-sw.template.js by scripts/generate-sw.mjs
+public/firebase-messaging-sw.js
+
 # Firebase
 .firebase/
 firebase-debug.log
