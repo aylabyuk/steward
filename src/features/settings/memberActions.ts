@@ -11,7 +11,7 @@ export function countActiveBishopric(members: readonly WithId<Member>[]): number
   return members.filter((m) => m.data.active && m.data.role === "bishopric").length;
 }
 
-function wouldRemoveLastBishopric(
+export function wouldRemoveLastBishopric(
   members: readonly WithId<Member>[],
   targetUid: string,
   next: { active: boolean; role: Member["role"] },

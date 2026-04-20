@@ -6,6 +6,7 @@ import {
   LastBishopricError,
   setActive,
   updateCalling,
+  wouldRemoveLastBishopric,
 } from "./memberActions";
 
 function member(id: string, overrides: Partial<Member>): WithId<Member> {
@@ -55,14 +56,23 @@ describe("last-bishopric invariant", () => {
     );
   });
 
-  it("allows demoting a bishopric when another active bishopric remains", async () => {
+  it("allows demoting a bishopric when another active bishopric remains", () => {
+    // Pure invariant check: when more than one active bishopric exists,
+    // demoting one is fine. (We don't actually call updateCalling here --
+    // that would attempt a Firestore write and hang in environments without
+    // emulator/network access. The invariant is what we want to assert.)
     const members = [
       member("a", { calling: "bishop", role: "bishopric" }),
       member("b", { calling: "first_counselor", role: "bishopric" }),
     ];
-    // Will hit Firestore (we expect it to throw on the network attempt rather than the invariant).
-    await expect(updateCalling("w1", members, "a", "ward_clerk")).rejects.not.toBeInstanceOf(
-      LastBishopricError,
-    );
+    expect(wouldRemoveLastBishopric(members, "a", { active: true, role: "clerk" })).toBe(false);
+  });
+
+  it("flags the would-strip transition for the only active bishopric", () => {
+    const members = [
+      member("a", { calling: "bishop", role: "bishopric" }),
+      member("b", { calling: "ward_clerk", role: "clerk" }),
+    ];
+    expect(wouldRemoveLastBishopric(members, "a", { active: false, role: "bishopric" })).toBe(true);
   });
 });
