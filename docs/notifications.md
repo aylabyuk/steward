@@ -28,7 +28,7 @@ Three distinct push flows, all via Firebase Cloud Messaging (FCM) Web Push. Thre
 
 **Skipped**:
 - Comments (handled by `onCommentCreate`).
-- Non-meeting Sundays (`stake_conference` / `general_conference`).
+- Non-meeting Sundays (`stake` / `general`).
 
 **Cancelled meetings**: fires with special `"Meeting cancelled"` wording.
 

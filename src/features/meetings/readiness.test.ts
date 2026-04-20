@@ -27,8 +27,8 @@ const complete: SacramentMeeting = {
 };
 
 const twoSpeakers: WithId<Speaker>[] = [
-  { id: "s1", data: { name: "A", status: "accepted" } },
-  { id: "s2", data: { name: "B", status: "accepted" } },
+  { id: "s1", data: { name: "A", status: "confirmed", role: "Member" } },
+  { id: "s2", data: { name: "B", status: "confirmed", role: "Member" } },
 ];
 
 describe("checkMeetingReadiness", () => {
@@ -45,11 +45,11 @@ describe("checkMeetingReadiness", () => {
     expect(out).toContain("1 more speaker(s) needed");
   });
 
-  it("does not require speakers for fast_sunday", () => {
+  it("does not require speakers for fast Sunday", () => {
     const out = checkMeetingReadiness(
-      { ...complete, meetingType: "fast_sunday" },
+      { ...complete, meetingType: "fast" },
       [],
-      "fast_sunday",
+      "fast",
     );
     expect(out).toEqual([]);
   });
@@ -74,9 +74,8 @@ describe("checkMeetingReadiness", () => {
     expect(out).toContain("Sacrament bread");
   });
 
-  it("returns empty for non-meeting types", () => {
-    expect(checkMeetingReadiness(complete, [], "stake_conference")).toEqual([]);
-    expect(checkMeetingReadiness(complete, [], "general_conference")).toEqual([]);
-    expect(checkMeetingReadiness(complete, [], "other")).toEqual([]);
+  it("returns empty for non-regular meeting types", () => {
+    expect(checkMeetingReadiness(complete, [], "stake")).toEqual([]);
+    expect(checkMeetingReadiness(complete, [], "general")).toEqual([]);
   });
 });

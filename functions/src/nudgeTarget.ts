@@ -1,7 +1,7 @@
 import type { NudgeDay } from "./nudgeSlot.js";
 import type { MeetingDocLite } from "./meetingChange.js";
 
-const NO_MEETING_TYPES = new Set(["stake_conference", "general_conference"]);
+const NO_MEETING_TYPES = new Set(["stake", "general"]);
 
 export interface NudgeMember {
   uid: string;

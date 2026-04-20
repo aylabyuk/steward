@@ -36,7 +36,7 @@ describe("computeNudgeTarget", () => {
     expect(
       computeNudgeTarget({
         ...base,
-        meeting: { meetingType: "stake_conference" },
+        meeting: { meetingType: "stake" },
       }),
     ).toBeNull();
   });

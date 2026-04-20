@@ -14,7 +14,7 @@ const base: SacramentMeeting = {
 
 const speaker = (id: string, name: string): WithId<Speaker> => ({
   id,
-  data: { name, status: "not_assigned" },
+  data: { name, status: "planned", role: "Member" },
 });
 
 describe("canonicalizeContent", () => {
@@ -26,7 +26,7 @@ describe("canonicalizeContent", () => {
 
   it("changes when meetingType changes", () => {
     const a = canonicalizeContent(base, []);
-    const b = canonicalizeContent({ ...base, meetingType: "ward_conference" }, []);
+    const b = canonicalizeContent({ ...base, meetingType: "fast" }, []);
     expect(a).not.toBe(b);
   });
 
@@ -86,11 +86,11 @@ describe("canonicalizeContent", () => {
   it("changes when a speaker's topic is edited", () => {
     const s1: WithId<Speaker> = {
       id: "s1",
-      data: { name: "Alice", status: "not_assigned" },
+      data: { name: "Alice", status: "planned", role: "Member" },
     };
     const s1Edited: WithId<Speaker> = {
       id: "s1",
-      data: { name: "Alice", topic: "Faith", status: "not_assigned" },
+      data: { name: "Alice", topic: "Faith", status: "planned", role: "Member" },
     };
     expect(canonicalizeContent(base, [s1])).not.toBe(canonicalizeContent(base, [s1Edited]));
   });
@@ -110,7 +110,7 @@ describe("computeContentHash", () => {
 
   it("produces different hashes for different content", async () => {
     const a = await computeContentHash(base, []);
-    const b = await computeContentHash({ ...base, meetingType: "fast_sunday" }, []);
+    const b = await computeContentHash({ ...base, meetingType: "fast" }, []);
     expect(a).not.toBe(b);
   });
 });

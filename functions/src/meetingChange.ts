@@ -9,7 +9,7 @@ export interface MeetingDocLite {
 
 export type MeetingChangeKind = "cancelled" | "uncancelled" | "updated";
 
-const NO_MEETING_TYPES = new Set(["stake_conference", "general_conference"]);
+const NO_MEETING_TYPES = new Set(["stake", "general"]);
 
 /**
  * Classifies a meeting doc transition into the kind of notification (if any)
