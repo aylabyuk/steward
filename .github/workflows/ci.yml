@@ -45,6 +45,9 @@ jobs:
       - name: Unit tests (Vitest)
         run: pnpm test
 
+      - name: Rules tests (Firestore emulator)
+        run: pnpm test:rules
+
       - name: Build
         run: pnpm build
 
