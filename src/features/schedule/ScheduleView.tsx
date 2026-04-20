@@ -4,7 +4,6 @@ import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "@/hooks/useUpcomingMeetings";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { AppShell } from "@/app/components/AppShell";
 import { PageHead } from "./PageHead";
 import { HorizonSelect } from "./HorizonSelect";
 import { SundayCard } from "./SundayCard";
@@ -29,11 +28,7 @@ export function ScheduleView() {
   if (!wardId) return null;
 
   if (error) {
-    return (
-      <AppShell>
-        <main className="p-6 text-sm text-red-700">Failed to load schedule: {error.message}</main>
-      </AppShell>
-    );
+    return <main className="p-6 text-sm text-red-700">Failed to load schedule: {error.message}</main>;
   }
 
   const meetings = new Map(slots.map((s) => [s.date, s.meeting]));
@@ -41,37 +36,35 @@ export function ScheduleView() {
   const monthGroups = groupByMonth(dates, meetings);
 
   return (
-    <AppShell>
-      <main className="p-4 sm:p-6">
-        <SubscribePrompt />
+    <main className="p-4 sm:p-6 max-w-5xl mx-auto">
+      <SubscribePrompt />
 
-        <PageHead
-          title="Schedule"
-          subtitle={loading ? "Loading…" : `${slots.length} Sundays`}
-          rightSlot={<HorizonSelect value={horizon} onChange={setHorizon} />}
-        />
+      <PageHead
+        title="Schedule"
+        subtitle={loading ? "Loading…" : `${slots.length} Sundays`}
+        rightSlot={<HorizonSelect value={horizon} onChange={setHorizon} />}
+      />
 
-        <div className="mt-8">
-          {monthGroups.map((group) => (
-            <QuarterSection
-              key={`${group.year}-${group.month}`}
-              title={group.label}
-              count={group.sundays.length}
-            >
-              {group.sundays.map((sunday) => (
-                <SundayCard
-                  key={sunday.date}
-                  date={sunday.date}
-                  meeting={sunday.meeting}
-                  fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
-                  leadTimeDays={leadTimeDays}
-                  nonMeetingSundays={nonMeeting}
-                />
-              ))}
-            </QuarterSection>
-          ))}
-        </div>
-      </main>
-    </AppShell>
+      <div className="mt-8">
+        {monthGroups.map((group) => (
+          <QuarterSection
+            key={`${group.year}-${group.month}`}
+            title={group.label}
+            count={group.sundays.length}
+          >
+            {group.sundays.map((sunday) => (
+              <SundayCard
+                key={sunday.date}
+                date={sunday.date}
+                meeting={sunday.meeting}
+                fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
+                leadTimeDays={leadTimeDays}
+                nonMeetingSundays={nonMeeting}
+              />
+            ))}
+          </QuarterSection>
+        ))}
+      </div>
+    </main>
   );
 }
