@@ -18,6 +18,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:emulators": "firebase emulators:exec --only auth,firestore --project=demo-steward \"playwright test --config playwright.emulators.config.ts\"",
     "test:rules": "firebase emulators:exec --only firestore --project=demo-steward \"vitest run --config vitest.rules.config.ts\"",
     "emulators": "firebase emulators:start --only auth,firestore",
     "bootstrap-ward": "tsx scripts/bootstrap-ward.ts"
