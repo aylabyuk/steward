@@ -56,22 +56,24 @@ export function HorizonSelect({ value, onChange }: Props) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-auto">
       <button
         ref={buttonRef}
         onClick={() => setOpen(!open)}
-        className="px-3 py-2 text-sm font-medium text-walnut border border-border rounded-md hover:bg-parchment-2 transition"
+        className="w-full sm:w-auto inline-flex items-center justify-center sm:justify-start gap-2 px-3 py-2 text-sm font-medium text-walnut border border-border rounded-lg hover:bg-parchment-2 transition-all duration-150 hover:border-border-strong"
       >
         {label}
-        <span className="ml-1 text-walnut-2">▼</span>
+        <span className={cn("text-xs text-walnut-2 transition-transform duration-150", open && "rotate-180")}>
+          ▼
+        </span>
       </button>
 
       {open && (
         <div
           ref={menuRef}
           className={cn(
-            "absolute right-0 mt-2 w-40 bg-chalk border border-border rounded-md shadow-elev-2 overflow-hidden z-10",
-            "animate-[fadeIn_0.1s_ease-out]",
+            "absolute right-0 mt-2 w-48 bg-chalk border border-border rounded-lg shadow-elev-3 overflow-hidden z-10 sm:w-48",
+            "animate-[fadePop_0.15s_ease-out]",
           )}
         >
           {HORIZON_OPTIONS.map((option) => (
@@ -79,7 +81,7 @@ export function HorizonSelect({ value, onChange }: Props) {
               key={option.weeks}
               onClick={() => handleSelect(option.weeks)}
               className={cn(
-                "w-full px-4 py-2 text-left text-sm transition",
+                "w-full px-4 py-2.5 text-left text-sm transition-colors duration-100",
                 value === option.weeks
                   ? "bg-brass-soft text-walnut font-medium"
                   : "text-walnut hover:bg-parchment-2",
