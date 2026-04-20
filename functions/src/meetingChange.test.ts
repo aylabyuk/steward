@@ -15,8 +15,8 @@ describe("classifyMeetingChange", () => {
   it("ignores stake/general conference Sundays", () => {
     expect(
       classifyMeetingChange(
-        { meetingType: "stake_conference" },
-        { meetingType: "stake_conference", contentVersionHash: "x" },
+        { meetingType: "stake" },
+        { meetingType: "stake", contentVersionHash: "x" },
       ),
     ).toBeNull();
   });

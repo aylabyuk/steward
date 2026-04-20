@@ -7,17 +7,16 @@ function hasPerson(a: Assignment | undefined): boolean {
 
 const MIN_SPEAKERS = 2;
 
-const REQUIRES_PROGRAM: ReadonlySet<MeetingType> = new Set(["regular", "ward_conference"]);
+const REQUIRES_PROGRAM: ReadonlySet<MeetingType> = new Set(["regular"]);
 
-const REQUIRES_SPEAKERS: ReadonlySet<MeetingType> = new Set(["regular", "ward_conference"]);
+const REQUIRES_SPEAKERS: ReadonlySet<MeetingType> = new Set(["regular"]);
 
 /**
  * Returns the human-readable list of things still missing before a meeting
  * can reasonably be approved. Empty list = ready.
  *
- * Only meaningfully-gated types (regular, ward_conference) are checked;
- * fast_sunday skips the speakers requirement; stake/general_conference +
- * other are assumed free-form (empty list).
+ * Regular meetings require speakers + hymns + prayers + musicians.
+ * Fast Sundays skip speakers. Stake/General conference meetings skip all checks.
  */
 export function checkMeetingReadiness(
   meeting: SacramentMeeting | null,
@@ -25,7 +24,7 @@ export function checkMeetingReadiness(
   type: MeetingType,
 ): string[] {
   if (!meeting) return ["Meeting not created yet"];
-  if (!REQUIRES_PROGRAM.has(type) && type !== "fast_sunday") return [];
+  if (!REQUIRES_PROGRAM.has(type) && type !== "fast") return [];
 
   const missing: string[] = [];
 

@@ -2,9 +2,8 @@ import { useRef, useState } from "react";
 import { type MeetingType, type NonMeetingSunday, nonMeetingSundaySchema } from "@/lib/types";
 
 const TYPE_OPTIONS: { value: MeetingType; label: string }[] = [
-  { value: "stake_conference", label: "Stake conference" },
-  { value: "general_conference", label: "General conference" },
-  { value: "other", label: "Other (no meeting)" },
+  { value: "stake", label: "Stake conference" },
+  { value: "general", label: "General conference" },
 ];
 
 interface Props {
@@ -85,7 +84,7 @@ export function NonMeetingSundaysEditor({ value, onChange, disabled }: Props) {
   }
   function add() {
     const today = new Date().toISOString().slice(0, 10);
-    const draft = { date: today, type: "stake_conference" as MeetingType };
+    const draft = { date: today, type: "stake" as MeetingType };
     const parsed = nonMeetingSundaySchema.safeParse(draft);
     if (!parsed.success) {
       setError(parsed.error.message);

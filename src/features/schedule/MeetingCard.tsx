@@ -15,14 +15,12 @@ interface Props {
 
 const TYPE_LABELS: Record<MeetingType, string> = {
   regular: "Regular",
-  fast_sunday: "Fast Sunday",
-  ward_conference: "Ward Conference",
-  stake_conference: "Stake Conference",
-  general_conference: "General Conference",
-  other: "Other",
+  fast: "Fast Sunday",
+  stake: "Stake Conference",
+  general: "General Conference",
 };
 
-const NO_MEETING = new Set<MeetingType>(["stake_conference", "general_conference"]);
+const NO_MEETING = new Set<MeetingType>(["stake", "general"]);
 
 function formatLongDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
