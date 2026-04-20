@@ -1,4 +1,5 @@
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { writeMeetingPatch } from "@/features/meetings/approvals";
 import { db } from "@/lib/firebase";
 import type { AssignmentStatus } from "@/lib/types";
 
@@ -19,6 +20,7 @@ export async function markSpeakerSent(
     sentBy,
     updatedAt: serverTimestamp(),
   });
+  await writeMeetingPatch(wardId, date, {});
 }
 
 export async function revertSpeakerSent(
@@ -31,4 +33,5 @@ export async function revertSpeakerSent(
     status: previousStatus,
     updatedAt: serverTimestamp(),
   });
+  await writeMeetingPatch(wardId, date, {});
 }
