@@ -1,10 +1,14 @@
+import { SpeakerSection } from "@/features/speakers/SpeakerSection";
 import { daysBetween } from "@/lib/dates";
-import type { MeetingType, SacramentMeeting } from "@/lib/types";
+import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 
 interface Props {
+  wardId: string;
   date: string;
   meeting: SacramentMeeting | null;
   fallbackType: MeetingType;
+  leadTimeDays: number;
+  nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
 const TYPE_LABELS: Record<MeetingType, string> = {
@@ -54,7 +58,14 @@ function CardBody({
   return <p className="text-sm text-slate-600">{relativeDays(days)}</p>;
 }
 
-export function MeetingCard({ date, meeting, fallbackType }: Props) {
+export function MeetingCard({
+  wardId,
+  date,
+  meeting,
+  fallbackType,
+  leadTimeDays,
+  nonMeetingSundays,
+}: Props) {
   const type = meeting?.meetingType ?? fallbackType;
   const cancelled = Boolean(meeting?.cancellation?.cancelled);
   const isNonMeeting = NO_MEETING.has(type);
@@ -79,6 +90,15 @@ export function MeetingCard({ date, meeting, fallbackType }: Props) {
         isNonMeeting={isNonMeeting}
         days={days}
       />
+      {!cancelled && !isNonMeeting && (
+        <SpeakerSection
+          wardId={wardId}
+          date={date}
+          type={type}
+          leadTimeDays={leadTimeDays}
+          nonMeetingSundays={nonMeetingSundays}
+        />
+      )}
     </article>
   );
 }
