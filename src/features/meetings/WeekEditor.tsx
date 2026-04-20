@@ -67,6 +67,12 @@ export function WeekEditor({ date }: Props) {
               >
                 Print — conducting
               </Link>
+              <Link
+                to={`/print/${date}/congregation`}
+                className="rounded-md border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-100"
+              >
+                Print — congregation
+              </Link>
             </nav>
           )}
         </div>
