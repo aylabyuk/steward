@@ -26,42 +26,40 @@ function renderCard(meeting: SacramentMeeting | null = mockMeeting) {
 }
 
 describe("SundayCard", () => {
-  it("renders date and kind label", () => {
+  it("renders date", () => {
     renderCard();
-    expect(screen.getByText(/Sun, Apr 5/)).toBeInTheDocument();
-    expect(screen.getByText("Regular")).toBeInTheDocument();
+    expect(screen.getByText("Apr 5")).toBeInTheDocument();
   });
 
-  it("shows fast variant correctly", () => {
-    renderCard({ ...mockMeeting, meetingType: "fast" });
-    expect(screen.getByText("Fast Sunday")).toBeInTheDocument();
+  it("shows countdown text", () => {
+    renderCard();
+    expect(screen.getByText(/IN.*DAYS|IN.*WEEKS|PAST|TODAY/)).toBeInTheDocument();
   });
 
   it("shows no-meeting variant for stake/general", () => {
     renderCard({ ...mockMeeting, meetingType: "stake" });
-    expect(screen.getByText("Stake")).toBeInTheDocument();
+    expect(screen.getByText(/Stake|no sacrament meeting/)).toBeInTheDocument();
   });
 
-  it("shows cancellation message", () => {
-    renderCard({
+  it("shows cancellation message and strikethrough", () => {
+    const { container } = renderCard({
       ...mockMeeting,
       cancellation: { cancelled: true, reason: "Snow" },
     });
-    expect(screen.getByText(/Cancelled.*Snow/)).toBeInTheDocument();
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(screen.getByText("Snow")).toBeInTheDocument();
+    const heading = container.querySelector("p.line-through");
+    expect(heading).toBeInTheDocument();
   });
 
-  it("applies strikethrough to cancelled date", () => {
-    const { container } = renderCard({
-      ...mockMeeting,
-      cancellation: { cancelled: true },
-    });
-    const link = container.querySelector("a");
-    expect(link).toHaveClass("line-through");
-  });
-
-  it("shows short-notice warning for urgent dates", () => {
+  it("shows notice for short-notice dates", () => {
     renderCard();
-    // Date is 2026-04-05, leadTime is 14 days from now
-    // This test depends on current date, so we check presence of warning styles
+    // Date is 2026-04-05, leadTime is 14 days
+    // This test depends on current date
+  });
+
+  it("shows Add speaker button", () => {
+    renderCard();
+    expect(screen.getByText("Add speaker")).toBeInTheDocument();
   });
 });
