@@ -2,14 +2,12 @@
 
 1. **Speaker Schedule view** — primary workspace. Plan speakers 4–8 weeks ahead. Calendar-style cards.
 2. **Weekly Program view** — specific Sunday editor. Speakers already filled from schedule; finalize hymns, pianist, chorister, bread, blessers, special number, business/announcements.
-3. **Per-speaker invitation letter** — composed from a per-ward template, editable before sending via `mailto:`. No email → print view.
-4. **Inline assignment status updates.**
-5. **Print views** — two variants (Conducting vs. Congregation).
-6. **Auth** — Google sign-in; ward team only (see [access.md](access.md)).
-7. **Push notifications** on program changes + mentions + finalization nudges (see [notifications.md](notifications.md)).
-8. **Comments** — flat thread per meeting, `@mentions`, edit/delete own.
-9. **Copy from previous week** — one-click carry-over of pianist/chorister/blessers/bread. Speakers + topics NOT copied.
-10. **Audit trail** — see [domain.md#audit-trail](domain.md).
+3. **Inline assignment status updates.**
+4. **Auth** — Google sign-in; ward team only (see [access.md](access.md)).
+5. **Push notifications** on program changes + mentions + finalization nudges (see [notifications.md](notifications.md)).
+6. **Comments** — flat thread per meeting, `@mentions`, edit/delete own.
+7. **Copy from previous week** — one-click carry-over of pianist/chorister/blessers/bread. Speakers + topics NOT copied.
+8. **Audit trail** — see [domain.md#audit-trail](domain.md).
 
 ## Speaker scheduling
 
@@ -65,35 +63,6 @@ Honest framing: we track *"user says they sent it"*, not SMTP delivery. Fine for
 
 Same pattern for printed letters: "Print letter" → print dialog → status `invite_printed` + undo.
 
-## Letter templates & placeholders
-
-Templates at `wards/{wardId}/letterTemplates/{templateId}`. Editable by bishopric.
-
-**Handlebars-style placeholders** (v1):
-- `{{speakerName}}`, `{{date}}`, `{{dayCount}}`, `{{topic}}`
-- `{{durationMinutes}}` (ward setting, default 10–15)
-- `{{wardName}}`, `{{bishopName}}`, `{{senderName}}`
-
-**Rendering**: client-side pure string replacement. No template engine dep. Unknown placeholders pass through visibly (so typos are spotted).
-
-**Plain text only** (matches `mailto:` constraint). Template editor has a preview pane.
-
-**Default template seeded on ward creation**: `"Speaker Invitation"`. Add more later (e.g., "Youth Speaker Invitation").
-
-**Per-speaker letter**: composed text stored on speaker doc (`letterBody`). Editing the ward template later does NOT retro-update already-composed letters.
-
-## Print views
-
-Two variants, both Sunday-specific:
-
-- **`/print/:date/conducting`** — full detail (program flow, speakers + topics, hymns, pianist, chorister, blessers, bread, announcements, ward business, stake business). One dense page.
-- **`/print/:date/congregation`** — minimal program flow (hymns, speakers, special number, sacrament blessers). Announcements opt-in at print time via toggle. **Never** ward/stake business.
-
-**Blocked** unless meeting `status == approved`.
-
-**Cancelled / non-meeting Sundays**: render single line `"No sacrament meeting — {reason}"`.
-
-Dedicated `@media print` stylesheet. Semantic HTML (headings, not divs) for a11y.
 
 ## Out of scope for v1
 

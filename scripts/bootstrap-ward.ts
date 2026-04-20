@@ -77,25 +77,6 @@ function defaultSettings(timezone: string) {
   };
 }
 
-const DEFAULT_LETTER_TEMPLATE = {
-  name: "Speaker Invitation",
-  subject: "Speaker invitation — {{date}}",
-  body: [
-    "Dear {{speakerName}},",
-    "",
-    "The bishopric invites you to speak in sacrament meeting on Sunday, {{date}} ({{dayCount}} days away).",
-    "",
-    "Topic: {{topic}}",
-    "Duration: {{durationMinutes}} minutes",
-    "",
-    "Please let us know if this date doesn't work.",
-    "",
-    "Thank you,",
-    "{{senderName}}",
-    "{{wardName}}",
-  ].join("\n"),
-};
-
 async function main() {
   const args = parseCli();
 
@@ -108,7 +89,6 @@ async function main() {
 
   const wardRef = db.collection("wards").doc(args.wardId);
   const memberRef = wardRef.collection("members").doc(uid);
-  const templateRef = wardRef.collection("letterTemplates").doc("speaker-invitation");
 
   const existing = await wardRef.get();
   if (existing.exists) {
@@ -130,12 +110,10 @@ async function main() {
     ccOnEmails: true,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
-  batch.set(templateRef, DEFAULT_LETTER_TEMPLATE);
   await batch.commit();
 
   console.log(`Bootstrapped ward "${args.wardName}" (${args.wardId})`);
   console.log(`  bishop: ${args.bishopName} <${args.bishopEmail}> uid=${uid}`);
-  console.log(`  seeded: letterTemplates/speaker-invitation`);
 }
 
 main().catch((error: unknown) => {
