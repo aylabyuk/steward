@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// Deny-all baseline. Permissions are added phase by phase:
+// Phase 2.4 — auth + members
+// Phase 4.3 — meetings + speakers
+// Phase 7.3 — approvals
+// Phase 9.4 — comments
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
