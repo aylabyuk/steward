@@ -12,6 +12,11 @@ const links = [
     desc: "Callings, active roster, email CC defaults",
   },
   {
+    to: "/settings/notifications",
+    label: "Notifications",
+    desc: "Your push preferences and quiet hours",
+  },
+  {
     to: "/settings/letter-templates",
     label: "Letter templates",
     desc: "Speaker invitation templates",

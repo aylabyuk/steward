@@ -4,7 +4,16 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { collectionGroup, doc, getDoc, query, setDoc, where, getDocs } from "firebase/firestore";
+import {
+  collectionGroup,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { authedAs, createTestEnv, seedMember, seedWard } from "./_helpers";
 
 describe("wards/{wardId}/members rules", () => {
@@ -117,6 +126,36 @@ describe("wards/{wardId}/members rules", () => {
         active: true,
       }),
     );
+  });
+
+  it("lets a clerk update their own notification prefs", async () => {
+    await seedWard(env, "w1");
+    await seedMember(env, { wardId: "w1", uid: "alice", email: "a@x.com", role: "clerk" });
+    const db = authedAs(env, "alice", "a@x.com").firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, "wards/w1/members/alice"), {
+        notificationPrefs: { enabled: false },
+      }),
+    );
+  });
+
+  it("blocks a clerk from editing another member's notification prefs", async () => {
+    await seedWard(env, "w1");
+    await seedMember(env, { wardId: "w1", uid: "alice", email: "a@x.com", role: "clerk" });
+    await seedMember(env, { wardId: "w1", uid: "bob", email: "b@x.com", role: "clerk" });
+    const db = authedAs(env, "alice", "a@x.com").firestore();
+    await assertFails(
+      updateDoc(doc(db, "wards/w1/members/bob"), {
+        notificationPrefs: { enabled: false },
+      }),
+    );
+  });
+
+  it("blocks a clerk's self-edit from changing role or calling", async () => {
+    await seedWard(env, "w1");
+    await seedMember(env, { wardId: "w1", uid: "alice", email: "a@x.com", role: "clerk" });
+    const db = authedAs(env, "alice", "a@x.com").firestore();
+    await assertFails(updateDoc(doc(db, "wards/w1/members/alice"), { role: "bishopric" }));
   });
 
   it("enforces the first-member invariant (ward with no bishopric rejects in-app create)", async () => {
