@@ -29,10 +29,10 @@ export function Login() {
   }
 
   return (
-    <main className="grid min-h-dvh place-items-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold text-slate-900">Steward</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <main className="grid min-h-dvh place-items-center bg-parchment-2 px-4">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-chalk p-6 shadow-sm">
+        <h1 className="text-xl font-semibold text-walnut">Steward</h1>
+        <p className="mt-2 text-sm text-walnut-2">
           Sign in with the Google account linked to your ward.
         </p>
         <button
@@ -41,19 +41,19 @@ export function Login() {
             void signIn();
           }}
           disabled={isLoading}
-          className="mt-6 w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-6 w-full rounded-md bg-walnut px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? "Loading…" : "Continue with Google"}
         </button>
         {isEmulator && (
           <form onSubmit={emailSignIn} className="mt-6 flex flex-col gap-2 border-t pt-4">
-            <p className="text-xs font-medium text-slate-500">Emulator-only sign-in</p>
+            <p className="text-xs font-medium text-walnut-2">Emulator-only sign-in</p>
             <input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-md border border-border px-2 py-1 text-sm"
               data-testid="e2e-email"
             />
             <input
@@ -61,12 +61,12 @@ export function Login() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-md border border-border px-2 py-1 text-sm"
               data-testid="e2e-password"
             />
             <button
               type="submit"
-              className="rounded-md border border-slate-300 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-border px-3 py-1 text-sm text-walnut hover:bg-parchment-2"
               data-testid="e2e-signin"
             >
               Sign in

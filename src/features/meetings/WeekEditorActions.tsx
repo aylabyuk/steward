@@ -17,13 +17,13 @@ export function WeekEditorActions({ wardId, date, type, meeting }: Props) {
         <nav className="flex flex-wrap gap-2 text-xs">
           <Link
             to={`/print/${date}/conducting`}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-100"
+            className="rounded-md border border-border bg-chalk px-3 py-1 text-walnut hover:bg-parchment-2"
           >
             Print — conducting
           </Link>
           <Link
             to={`/print/${date}/congregation`}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-100"
+            className="rounded-md border border-border bg-chalk px-3 py-1 text-walnut hover:bg-parchment-2"
           >
             Print — congregation
           </Link>
