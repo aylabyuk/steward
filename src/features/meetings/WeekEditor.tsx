@@ -2,8 +2,11 @@ import { Link } from "react-router";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { defaultMeetingType } from "./ensureMeetingDoc";
 import type { MeetingType } from "@/lib/types";
+import { defaultMeetingType } from "./ensureMeetingDoc";
+import { MusicSection } from "./sections/MusicSection";
+import { PrayersSection } from "./sections/PrayersSection";
+import { SacramentSection } from "./sections/SacramentSection";
 
 function formatLong(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
@@ -76,8 +79,29 @@ export function WeekEditor({ date }: Props) {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Section title="Program flow">
-            <Placeholder>Hymns + prayers land in Task 5.3 / 5.2.</Placeholder>
+          <Section title="Prayers">
+            <PrayersSection
+              wardId={wardId}
+              date={date}
+              meeting={meeting.data}
+              nonMeetingSundays={nonMeeting}
+            />
+          </Section>
+          <Section title="Music">
+            <MusicSection
+              wardId={wardId}
+              date={date}
+              meeting={meeting.data}
+              nonMeetingSundays={nonMeeting}
+            />
+          </Section>
+          <Section title="Sacrament">
+            <SacramentSection
+              wardId={wardId}
+              date={date}
+              meeting={meeting.data}
+              nonMeetingSundays={nonMeeting}
+            />
           </Section>
           {showSpeakers && (
             <Section title={`Speakers (${speakers.data.length})`}>
@@ -95,16 +119,8 @@ export function WeekEditor({ date }: Props) {
               )}
             </Section>
           )}
-          <Section title="Sacrament">
-            <Placeholder>Bread + blessers land in Task 5.2.</Placeholder>
-          </Section>
-          <Section title="Music">
-            <Placeholder>Pianist + chorister + special number land in Task 5.2.</Placeholder>
-          </Section>
-          <Section title="Business &amp; announcements" className="lg:col-span-2">
-            <Placeholder>
-              Ward business / stake business / announcements land in the next slice.
-            </Placeholder>
+          <Section title="Hymns" className="lg:col-span-2">
+            <Placeholder>Hymn picker lands in Task 5.3.</Placeholder>
           </Section>
         </div>
       )}
