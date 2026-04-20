@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { useSpeakers } from "@/hooks/useMeeting";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { leadTimeSeverity, type LeadTimeSeverity } from "./leadTime";
@@ -47,9 +48,17 @@ export function SpeakerSection({ wardId, date, type, leadTimeDays, nonMeetingSun
           <li className="text-slate-400">No speakers yet.</li>
         ) : (
           speakers.map((s) => (
-            <li key={s.id}>
-              <strong className="text-slate-900">{s.data.name}</strong>
-              {s.data.topic && <span className="text-slate-500"> · {s.data.topic}</span>}
+            <li key={s.id} className="flex items-baseline justify-between gap-2">
+              <span>
+                <strong className="text-slate-900">{s.data.name}</strong>
+                {s.data.topic && <span className="text-slate-500"> · {s.data.topic}</span>}
+              </span>
+              <Link
+                to={`/week/${date}/speaker/${s.id}/letter`}
+                className="text-xs text-blue-600 hover:underline"
+              >
+                Letter
+              </Link>
             </li>
           ))
         )}
