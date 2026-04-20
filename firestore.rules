@@ -66,7 +66,8 @@ service cloud.firestore {
 
     match /wards/{wardId} {
       allow read: if isActiveMember(wardId);
-      allow update: if isActiveMember(wardId);
+      // Settings live on the ward doc; only bishopric can change them.
+      allow update: if isActiveBishopric(wardId);
       // Ward creation/deletion is Admin-SDK-only (see scripts/bootstrap-ward.ts).
       allow create, delete: if false;
 
