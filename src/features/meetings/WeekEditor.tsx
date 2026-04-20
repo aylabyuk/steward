@@ -4,6 +4,7 @@ import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { MeetingType } from "@/lib/types";
 import { defaultMeetingType } from "./ensureMeetingDoc";
+import { HymnsSection } from "./sections/HymnsSection";
 import { MusicSection } from "./sections/MusicSection";
 import { PrayersSection } from "./sections/PrayersSection";
 import { SacramentSection } from "./sections/SacramentSection";
@@ -120,7 +121,13 @@ export function WeekEditor({ date }: Props) {
             </Section>
           )}
           <Section title="Hymns" className="lg:col-span-2">
-            <Placeholder>Hymn picker lands in Task 5.3.</Placeholder>
+            <HymnsSection
+              wardId={wardId}
+              date={date}
+              meeting={meeting.data}
+              type={type}
+              nonMeetingSundays={nonMeeting}
+            />
           </Section>
         </div>
       )}
