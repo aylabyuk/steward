@@ -1,42 +1,33 @@
-import { useSpeakers } from "@/hooks/useMeeting";
-import type { MeetingType } from "@/lib/types";
+import type { Speaker } from "@/lib/types";
+import type { WithId } from "@/hooks/_sub";
 import { SpeakerRow } from "./SpeakerRow";
 
 interface Props {
-  date: string;
-  type: MeetingType;
-  onAddSpeaker?: () => void;
+  speakers: WithId<Speaker>[];
+  onAddSpeaker: () => void;
 }
 
-export function SundayCardBody({ date, type, onAddSpeaker }: Props) {
-  const { data: speakers } = useSpeakers(date);
-
-  if (type === "fast") {
-    return <p className="text-sm text-walnut-2 italic py-3">Testimony meeting — no speakers</p>;
-  }
-
+export function SundayCardBody({ speakers, onAddSpeaker }: Props) {
   return (
-    <div>
+    <div className="px-4 pb-4">
       {speakers.length === 0 ? (
-        <p className="text-sm text-walnut-2 italic py-3">No speakers yet.</p>
+        <p className="font-serif italic text-sm text-walnut-3 py-2">No speakers yet.</p>
       ) : (
-        <div className="space-y-3 py-3 border-b border-border mb-3 pb-3">
+        <ul className="list-none m-0 p-0 mb-2">
           {speakers.map((s, idx) => (
             <SpeakerRow key={s.id} number={idx + 1} speaker={s.data} />
           ))}
-        </div>
+        </ul>
       )}
-      {onAddSpeaker && (
-        <button
-          onClick={onAddSpeaker}
-          className="flex items-center gap-2 text-sm font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors"
-        >
-          <span className="w-6 h-6 border border-bordeaux rounded-sm flex items-center justify-center text-lg">
-            +
-          </span>
-          Add speaker
-        </button>
-      )}
+      <button
+        onClick={onAddSpeaker}
+        className="inline-flex items-center gap-1.5 text-[13px] font-sans font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors py-1.5"
+      >
+        <span className="w-4 h-4 border border-bordeaux rounded-sm flex items-center justify-center">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+        </span>
+        Add speaker
+      </button>
     </div>
   );
 }
