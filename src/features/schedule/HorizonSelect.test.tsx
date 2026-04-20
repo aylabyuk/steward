@@ -14,17 +14,17 @@ describe("HorizonSelect", () => {
 
   it("renders with initial value", () => {
     render(<HorizonSelect value={9} onChange={() => {}} />);
-    expect(screen.getByText("2 months")).toBeInTheDocument();
+    expect(screen.getByText("Next 2 months")).toBeInTheDocument();
   });
 
   it("persists selection to localStorage", async () => {
     const onChange = vi.fn();
     const { rerender } = render(<HorizonSelect value={9} onChange={onChange} />);
 
-    const button = screen.getByRole("button", { name: /2 months/ });
+    const button = screen.getByRole("button", { name: /Next 2 months/ });
     await userEvent.click(button);
 
-    const option = screen.getByRole("button", { name: "3 months" });
+    const option = screen.getByRole("button", { name: "Next 3 months" });
     await userEvent.click(option);
 
     expect(onChange).toHaveBeenCalledWith(13);
@@ -33,30 +33,30 @@ describe("HorizonSelect", () => {
 
   it("shows dropdown menu on click", async () => {
     render(<HorizonSelect value={9} onChange={() => {}} />);
-    const button = screen.getByRole("button", { name: /2 months/ });
+    const button = screen.getByRole("button", { name: /Next 2 months/ });
     await userEvent.click(button);
 
-    expect(screen.getByText("1 month")).toBeInTheDocument();
-    expect(screen.getByText("6 months")).toBeInTheDocument();
+    expect(screen.getByText("Next 1 month")).toBeInTheDocument();
+    expect(screen.getByText("Next 6 months")).toBeInTheDocument();
   });
 
   it("closes dropdown on selection", async () => {
     render(<HorizonSelect value={9} onChange={() => {}} />);
-    const button = screen.getByRole("button", { name: /2 months/ });
+    const button = screen.getByRole("button", { name: /Next 2 months/ });
     await userEvent.click(button);
 
-    const option = screen.getByRole("button", { name: "3 months" });
+    const option = screen.getByRole("button", { name: "Next 3 months" });
     await userEvent.click(option);
 
-    expect(screen.queryByText("1 month")).not.toBeInTheDocument();
+    expect(screen.queryByText("Next 1 month")).not.toBeInTheDocument();
   });
 
   it("closes dropdown on Escape key", async () => {
     render(<HorizonSelect value={9} onChange={() => {}} />);
-    const button = screen.getByRole("button", { name: /2 months/ });
+    const button = screen.getByRole("button", { name: /Next 2 months/ });
     await userEvent.click(button);
 
     await userEvent.keyboard("{Escape}");
-    expect(screen.queryByText("1 month")).not.toBeInTheDocument();
+    expect(screen.queryByText("Next 1 month")).not.toBeInTheDocument();
   });
 });
