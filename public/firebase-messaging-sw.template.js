@@ -3,8 +3,9 @@
 // VITE_FIREBASE_* environment variables (see .env.example). Run `pnpm dev`
 // or `pnpm build` to regenerate; the script also runs in CI.
 //
-// This SW doubles as the PWA install signal -- the no-op fetch handler
-// at the bottom is what makes browsers count it toward the install criteria.
+// This SW also serves as the PWA install signal. Modern Chrome (99+) and
+// the related install-prompt criteria no longer require a fetch handler;
+// adding a no-op one triggers a console warning about navigation overhead.
 
 importScripts("https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js");
@@ -29,9 +30,4 @@ messaging.onBackgroundMessage((payload) => {
     badge: "/icon.svg",
     data: payload.data ?? {},
   });
-});
-
-self.addEventListener("fetch", () => {
-  // Intentionally empty: pass through to the network. Existing only so the
-  // SW satisfies PWA install criteria in browsers that require a fetch handler.
 });
