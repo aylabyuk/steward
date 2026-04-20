@@ -1,0 +1,52 @@
+import { useState } from "react";
+import { Link } from "react-router";
+import { AddMemberDialog } from "@/features/settings/AddMemberDialog";
+import { MemberList } from "@/features/settings/MemberList";
+import { useCurrentMember } from "@/hooks/useCurrentMember";
+import { useWardMembers } from "@/hooks/useWardMembers";
+import { useCurrentWardStore } from "@/stores/currentWardStore";
+
+export function MembersPage() {
+  const wardId = useCurrentWardStore((s) => s.wardId);
+  const me = useCurrentMember();
+  const { data: members, loading } = useWardMembers();
+  const [addOpen, setAddOpen] = useState(false);
+  const canEdit = me?.data.role === "bishopric" && me.data.active;
+
+  return (
+    <main className="mx-auto max-w-3xl p-4 sm:p-6">
+      <nav className="mb-4 text-sm text-slate-500">
+        <Link to="/settings" className="hover:text-slate-700">
+          ← Settings
+        </Link>
+      </nav>
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Members</h1>
+          <p className="text-sm text-slate-500">
+            Manage callings, deactivate roster, and toggle email CC for clerks.
+          </p>
+        </div>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="rounded-md bg-slate-900 px-3 py-1 text-sm text-white"
+          >
+            Add member
+          </button>
+        )}
+      </header>
+      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+      {!loading && wardId && (
+        <MemberList wardId={wardId} members={members} canEdit={Boolean(canEdit)} />
+      )}
+      {!canEdit && !loading && (
+        <p className="mt-3 text-xs text-slate-500">Only bishopric members can edit the roster.</p>
+      )}
+      {wardId && (
+        <AddMemberDialog wardId={wardId} open={addOpen} onClose={() => setAddOpen(false)} />
+      )}
+    </main>
+  );
+}

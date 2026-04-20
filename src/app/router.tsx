@@ -3,6 +3,7 @@ import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
 import { LetterTemplatesPage } from "./routes/letter-templates";
 import { Login } from "./routes/login";
+import { MembersPage } from "./routes/members";
 import { PrintCongregationPage } from "./routes/print-congregation";
 import { PrintConductingPage } from "./routes/print-conducting";
 import { SettingsIndex } from "./routes/settings";
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
       { path: "print/:date/congregation", element: <PrintCongregationPage /> },
       { path: "settings", element: <SettingsIndex /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
+      { path: "settings/members", element: <MembersPage /> },
       { path: "settings/letter-templates", element: <LetterTemplatesPage /> },
     ],
   },

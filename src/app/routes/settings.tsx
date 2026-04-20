@@ -7,6 +7,11 @@ const links = [
     desc: "Timezone, lead time, nudges, non-meeting Sundays",
   },
   {
+    to: "/settings/members",
+    label: "Members",
+    desc: "Callings, active roster, email CC defaults",
+  },
+  {
     to: "/settings/letter-templates",
     label: "Letter templates",
     desc: "Speaker invitation templates",
