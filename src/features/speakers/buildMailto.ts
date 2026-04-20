@@ -23,9 +23,7 @@ function buildUrl(to: string, cc: string[], subject: string, body: string): stri
  * the link still opens in the mail client.
  */
 export function buildMailto({ to, cc, subject, body }: MailtoInput): string {
-  const dedupedCc = [
-    ...new Set(cc.map((e) => e.trim().toLowerCase()).filter((e) => e.length > 0)),
-  ];
+  const dedupedCc = [...new Set(cc.map((e) => e.trim().toLowerCase()).filter((e) => e.length > 0))];
   const initial = buildUrl(to, dedupedCc, subject, body);
   if (initial.length <= MAX_URL_LENGTH) return initial;
 
