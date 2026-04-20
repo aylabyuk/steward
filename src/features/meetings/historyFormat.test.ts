@@ -30,6 +30,22 @@ describe("formatHistoryEvent", () => {
     expect(out.details).toEqual([]);
   });
 
+  it("includes status in assignment value labels", () => {
+    const out = formatHistoryEvent({
+      actorDisplayName: "Alice",
+      target: "meeting",
+      action: "update",
+      changes: [
+        {
+          field: "openingPrayer",
+          old: { person: { name: "Fred" }, status: "not_assigned" },
+          new: { person: { name: "Fred" }, status: "accepted" },
+        },
+      ],
+    });
+    expect(out.details[0]).toBe("Opening prayer: Fred (not assigned) → Fred (accepted)");
+  });
+
   it("formats an approval", () => {
     const out = formatHistoryEvent({
       actorDisplayName: "Carol",

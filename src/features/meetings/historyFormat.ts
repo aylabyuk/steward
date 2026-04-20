@@ -39,9 +39,11 @@ function valueLabel(v: unknown): string {
   if (typeof v === "object") {
     const obj = v as Record<string, unknown>;
     if ("number" in obj && "title" in obj) return `#${obj.number} ${obj.title}`;
-    if ("person" in obj) {
-      const p = (obj as { person?: { name?: string } }).person;
-      return p?.name ?? "(unassigned)";
+    if ("person" in obj || "status" in obj) {
+      const a = obj as { person?: { name?: string } | null; status?: string };
+      const name = a.person?.name ?? "(unassigned)";
+      const status = a.status ? ` (${a.status.replace(/_/g, " ")})` : "";
+      return `${name}${status}`;
     }
     if ("name" in obj && typeof obj.name === "string") return obj.name;
     return "(updated)";
