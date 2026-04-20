@@ -1,0 +1,45 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "unicorn"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "off",
+    "restriction": "off",
+    "nursery": "off",
+    "style": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "eslint/max-lines": ["error", { "max": 150, "skipBlankLines": true, "skipComments": true }],
+    "eslint/max-lines-per-function": [
+      "error",
+      {
+        "max": 150,
+        "skipBlankLines": true,
+        "skipComments": true,
+        "IIFEs": true
+      }
+    ],
+    "react/react-in-jsx-scope": "off",
+    "eslint/func-style": "off",
+    "eslint/sort-imports": "off",
+    "unicorn/filename-case": ["warn", { "cases": { "kebabCase": true, "pascalCase": true } }]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "e2e/**"],
+      "rules": {
+        "eslint/max-lines": "off",
+        "eslint/max-lines-per-function": "off"
+      }
+    },
+    {
+      "files": ["src/features/hymns/hymns.json", "**/*.json"],
+      "rules": {
+        "eslint/max-lines": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["dist", "node_modules", "playwright-report", "test-results", "coverage"]
+}
