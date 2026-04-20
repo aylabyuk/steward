@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { SpeakerSection } from "@/features/speakers/SpeakerSection";
+import { useCommentUnread } from "@/hooks/useCommentUnread";
 import { daysBetween } from "@/lib/dates";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 
@@ -71,6 +72,7 @@ export function MeetingCard({
   const cancelled = Boolean(meeting?.cancellation?.cancelled);
   const isNonMeeting = NO_MEETING.has(type);
   const days = daysBetween(new Date(), date);
+  const badge = useCommentUnread(wardId, date);
 
   const base = "flex flex-col gap-2 rounded-lg border p-4 text-left shadow-sm transition";
   const style = isNonMeeting
@@ -86,7 +88,20 @@ export function MeetingCard({
         >
           {formatLongDate(date)}
         </Link>
-        <span className="text-xs uppercase tracking-wide text-slate-500">{TYPE_LABELS[type]}</span>
+        <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
+          {badge.count > 0 && (
+            <Link
+              to={`/week/${date}#comments`}
+              className={`rounded-full px-2 py-px text-[10px] normal-case tracking-normal ${
+                badge.unread ? "bg-red-500 text-white" : "bg-slate-200 text-slate-700"
+              }`}
+              title={badge.unread ? "Unread comments" : "Comments"}
+            >
+              💬 {badge.count}
+            </Link>
+          )}
+          {TYPE_LABELS[type]}
+        </span>
       </header>
       <CardBody
         cancelled={cancelled}

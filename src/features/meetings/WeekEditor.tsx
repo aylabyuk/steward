@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { CommentThread } from "@/features/comments/CommentThread";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
+import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { ApprovalPanel } from "./ApprovalPanel";
 import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
 import { CopyFromPreviousButton } from "./CopyFromPreviousButton";
 import { EditorPlaceholder, EditorSection } from "./EditorSection";
 import { defaultMeetingType } from "./ensureMeetingDoc";
 import { formatLongDate, HIDE_SPEAKER_TYPES, NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
+import { WeekEditorActions } from "./WeekEditorActions";
 import { HymnsSection } from "./sections/HymnsSection";
 import { MusicSection } from "./sections/MusicSection";
 import { PrayersSection } from "./sections/PrayersSection";
@@ -28,6 +30,11 @@ export function WeekEditor({ date }: Props) {
   const meeting = useMeeting(date);
   const speakers = useSpeakers(date);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const markRead = useCommentReadStore((s) => s.markRead);
+
+  useEffect(() => {
+    if (wardId) markRead(wardId, date);
+  }, [wardId, date, markRead]);
 
   if (!wardId) return null;
 
@@ -57,25 +64,7 @@ export function WeekEditor({ date }: Props) {
         isNonMeeting={isNonMeeting}
       />
       {!isNonMeeting && (
-        <div className="mb-6 flex flex-col gap-3">
-          <ApprovalPanel wardId={wardId} date={date} type={type} meeting={meeting.data} />
-          {meeting.data?.status === "approved" && (
-            <nav className="flex flex-wrap gap-2 text-xs">
-              <Link
-                to={`/print/${date}/conducting`}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-100"
-              >
-                Print — conducting
-              </Link>
-              <Link
-                to={`/print/${date}/congregation`}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-100"
-              >
-                Print — congregation
-              </Link>
-            </nav>
-          )}
-        </div>
+        <WeekEditorActions wardId={wardId} date={date} type={type} meeting={meeting.data} />
       )}
       <CancelDialog
         open={confirmingCancel}
@@ -149,6 +138,11 @@ export function WeekEditor({ date }: Props) {
               nonMeetingSundays={nonMeeting}
             />
           </EditorSection>
+        </div>
+      )}
+      {!isNonMeeting && (
+        <div className="mt-6">
+          <CommentThread wardId={wardId} date={date} />
         </div>
       )}
     </main>
