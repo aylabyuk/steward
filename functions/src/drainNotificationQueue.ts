@@ -23,24 +23,23 @@ interface QueueEntry {
 export const drainNotificationQueue = onSchedule("every 1 minutes", async () => {
   const db = getFirestore();
   const now = Timestamp.now();
-  const due = await db
-    .collectionGroup("notificationQueue")
-    .where("dispatchAt", "<=", now)
-    .get();
+  const due = await db.collectionGroup("notificationQueue").where("dispatchAt", "<=", now).get();
   if (due.empty) return;
 
-  for (const queueSnap of due.docs) {
-    const entry = queueSnap.data() as QueueEntry;
-    try {
-      await dispatchOne(db, entry);
-      await queueSnap.ref.delete();
-    } catch (err) {
-      logger.error("failed to drain notification", {
-        path: queueSnap.ref.path,
-        err: (err as Error).message,
-      });
-    }
-  }
+  await Promise.all(
+    due.docs.map(async (queueSnap) => {
+      const entry = queueSnap.data() as QueueEntry;
+      try {
+        await dispatchOne(db, entry);
+        await queueSnap.ref.delete();
+      } catch (err) {
+        logger.error("failed to drain notification", {
+          path: queueSnap.ref.path,
+          err: (err as Error).message,
+        });
+      }
+    }),
+  );
 });
 
 async function dispatchOne(db: FirebaseFirestore.Firestore, entry: QueueEntry): Promise<void> {
@@ -49,7 +48,7 @@ async function dispatchOne(db: FirebaseFirestore.Firestore, entry: QueueEntry): 
   const timezone = timezoneFor(ward);
 
   const memberSnaps = await db.collection(`wards/${entry.wardId}/members`).get();
-  const exclude = new Set(entry.excludeUids ?? []);
+  const exclude = entry.excludeUids ? new Set(entry.excludeUids) : new Set<string>();
   const candidates: RecipientCandidate[] = memberSnaps.docs
     .filter((m) => !exclude.has(m.id))
     .map((m) => ({ uid: m.id, member: m.data() as MemberDoc }));

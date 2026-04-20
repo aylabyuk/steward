@@ -40,14 +40,17 @@ export function classifyMeetingChange(
 
 export function describeChange(kind: MeetingChangeKind, after: MeetingDocLite): string {
   switch (kind) {
-    case "cancelled":
+    case "cancelled": {
       return after.cancellation?.reason
         ? `Meeting cancelled — ${after.cancellation.reason}`
         : "Meeting cancelled";
-    case "uncancelled":
+    }
+    case "uncancelled": {
       return "Meeting reinstated";
-    case "updated":
+    }
+    case "updated": {
       return "Sacrament program updated";
+    }
   }
 }
 

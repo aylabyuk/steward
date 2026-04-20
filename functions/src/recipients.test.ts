@@ -26,10 +26,7 @@ describe("filterRecipients", () => {
   });
 
   it("drops inactive members", () => {
-    const out = filterRecipients(
-      [{ uid: "alice", member: member({ active: false }) }],
-      ctx,
-    );
+    const out = filterRecipients([{ uid: "alice", member: member({ active: false }) }], ctx);
     expect(out).toEqual([]);
   });
 
@@ -57,10 +54,7 @@ describe("filterRecipients", () => {
   });
 
   it("drops members without any FCM tokens", () => {
-    const out = filterRecipients(
-      [{ uid: "alice", member: member({ fcmTokens: [] }) }],
-      ctx,
-    );
+    const out = filterRecipients([{ uid: "alice", member: member({ fcmTokens: [] }) }], ctx);
     expect(out).toEqual([]);
   });
 
