@@ -19,7 +19,7 @@ function specialKey(s: SpecialNumber | null | undefined): string {
 }
 
 function speakerKey(s: Speaker): string {
-  return [s.name, s.email ?? "", s.topic ?? "", s.status, s.letterBody ?? ""].join("|");
+  return [s.name, s.email ?? "", s.topic ?? "", s.status, s.role].join("|");
 }
 
 /**
