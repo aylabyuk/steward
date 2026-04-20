@@ -63,3 +63,19 @@ pnpm bootstrap-ward \
 - Refuses to run if `wards/{wardId}` already exists; use the in-app settings
   flow to add additional members.
 - Creates a Firebase Auth user if one does not already exist for the email.
+
+## _reset-ward
+
+Destructive: recursively deletes `wards/{wardId}` (doc + every subcollection).
+Meant for dev only — the underscore prefix marks it as privileged. Pair with
+`bootstrap-ward` to reset test state:
+
+```sh
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
+FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+GCLOUD_PROJECT=steward-dev-5e4dc \
+pnpm tsx scripts/_reset-ward.ts stv1
+```
+
+Positional arg is the ward id; defaults to `stv1`. **Never run this against
+a real production project.**
