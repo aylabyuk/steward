@@ -1,0 +1,324 @@
+/* =========================================================
+   the-vinci — Colors & Type
+   ---------------------------------------------------------
+   Warm, letterpressed, reverent-but-playful.
+   Bordeaux + brass on warm cream, anchored by deep walnut.
+   Editorial display serif (Newsreader), humanist UI sans
+   (IBM Plex Sans), and a utility mono (IBM Plex Mono).
+   ========================================================= */
+
+/* --- Web fonts --- */
+/* Inter: user-uploaded variable font, used for UI sans */
+@font-face {
+  font-family: 'Inter';
+  src: url('fonts/Inter-VariableFont_opsz_wght.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+/* Newsreader (display/serif) + IBM Plex Mono (mono) still via Google */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;0,6..72,800;1,6..72,400;1,6..72,500;1,6..72,600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+  /* ---------- Palette: core ---------- */
+  --parchment:     #FBF6EE;  /* page ground */
+  --parchment-2:   #F4ECDC;  /* card / inset */
+  --parchment-3:   #E9DCC2;  /* divider / quiet */
+  --bordeaux:      #8B2E2A;  /* primary */
+  --bordeaux-deep: #6B1F1C;  /* pressed / headings */
+  --bordeaux-soft: #B65449;  /* hover / accent */
+  --brass:         #C89B5A;  /* secondary accent */
+  --brass-soft:    #E0BE87;  /* tint */
+  --brass-deep:    #8E6A36;  /* text-on-cream safe */
+  --walnut:        #3B2A22;  /* ink / primary text */
+  --walnut-2:      #5A4636;  /* secondary text */
+  --walnut-3:      #8A7460;  /* tertiary text */
+  --ink:           #231815;  /* near-black for body */
+  --chalk:         #FFFDF7;  /* raised / modal surface */
+  --shadow-ink:    rgba(35, 24, 21, 0.12);
+
+  /* ---------- Semantic ---------- */
+  --fg:            var(--ink);
+  --fg-1:          var(--walnut);
+  --fg-2:          var(--walnut-2);
+  --fg-3:          var(--walnut-3);
+  --fg-inverse:    var(--parchment);
+  --bg:            var(--parchment);
+  --bg-raised:     var(--chalk);
+  --bg-inset:      var(--parchment-2);
+  --bg-quiet:      var(--parchment-3);
+  --border:        #D9C9A8;
+  --border-strong: #B99E6E;
+  --border-ink:    var(--walnut);
+  --accent:        var(--bordeaux);
+  --accent-soft:   #F3E3DC;
+  --accent-2:      var(--brass);
+
+  /* ---------- Status ---------- */
+  --success:       #4E6B3A;
+  --success-soft:  #E2EAD3;
+  --warning:       #B97A19;
+  --warning-soft:  #F6E6C4;
+  --danger:        var(--bordeaux);
+  --danger-soft:   #F3DAD5;
+  --info:          #3F5B6B;
+  --info-soft:     #DCE5EB;
+
+  /* ---------- Type families ---------- */
+  --font-display:  'Newsreader', 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-serif:    'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --font-sans:     'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:     'IBM Plex Mono', ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Consolas, monospace;
+
+  /* ---------- Type scale (fluid) ---------- */
+  --fs-xs:   12px;
+  --fs-sm:   13px;
+  --fs-md:   15px;
+  --fs-lg:   17px;
+  --fs-xl:   20px;
+  --fs-2xl:  24px;
+  --fs-3xl:  32px;
+  --fs-4xl:  44px;
+  --fs-5xl:  60px;
+  --fs-6xl:  84px;
+
+  /* ---------- Spacing (4px base) ---------- */
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+
+  /* ---------- Radii ---------- */
+  --radius-sm:   3px;
+  --radius-md:   6px;
+  --radius-lg:   10px;
+  --radius-xl:   16px;
+  --radius-pill: 999px;
+
+  /* ---------- Elevation (warm shadows, never cool) ---------- */
+  --elev-0:  none;
+  --elev-1:  0 1px 0 rgba(35,24,21,0.06), 0 1px 2px rgba(35,24,21,0.06);
+  --elev-2:  0 1px 0 rgba(35,24,21,0.06), 0 4px 12px rgba(35,24,21,0.08);
+  --elev-3:  0 2px 0 rgba(35,24,21,0.04), 0 12px 28px rgba(35,24,21,0.12);
+  --elev-press: inset 0 2px 0 rgba(35,24,21,0.10);
+
+  /* ---------- Motion ---------- */
+  --ease-in-out: cubic-bezier(.4,.0,.2,1);
+  --ease-out:    cubic-bezier(.2,.7,.2,1);
+  --ease-press:  cubic-bezier(.3,.0,.6,1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+
+  /* ---------- Grid ---------- */
+  --content-narrow: 640px;
+  --content-prose:  720px;
+  --content-wide:   1080px;
+  --content-max:    1280px;
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Paper texture — subtle warm grain applied to any .paper surface */
+.paper {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(rgba(139, 46, 42, 0.035) 1px, transparent 1px),
+    radial-gradient(rgba(59, 42, 34, 0.04) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+}
+
+/* =========================================================
+   Semantic type
+   ========================================================= */
+.h-display, h1.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-6xl);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--walnut);
+  font-feature-settings: "ss01", "liga";
+}
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-5xl);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--walnut);
+}
+
+h2, .h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-4xl);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: var(--walnut);
+}
+
+h3, .h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-3xl);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--walnut);
+}
+
+h4, .h4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-xl);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  color: var(--walnut);
+}
+
+h5, .h5 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-lg);
+  line-height: 1.35;
+  color: var(--walnut);
+}
+
+h6, .h6, .eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-xs);
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass-deep);
+}
+
+p, .p {
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  color: var(--fg-1);
+  text-wrap: pretty;
+}
+
+.lede {
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  line-height: 1.5;
+  color: var(--fg-1);
+  font-style: italic;
+}
+
+.prose {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+small, .small {
+  font-size: var(--fs-sm);
+  color: var(--fg-2);
+}
+
+.caption {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+code, .code, kbd {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--bg-inset);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--walnut);
+  border: 1px solid var(--border);
+}
+
+a {
+  color: var(--bordeaux);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color var(--dur-1) var(--ease-out);
+}
+a:hover { color: var(--bordeaux-deep); }
+
+blockquote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-xl);
+  line-height: 1.5;
+  color: var(--walnut);
+  border-left: 2px solid var(--brass);
+  padding: var(--space-2) var(--space-6);
+  margin: var(--space-6) 0;
+}
+
+hr.rule {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: var(--space-8) 0;
+}
+
+/* Ornamental divider — three dots, used between sections */
+.rule-ornament {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin: var(--space-10) 0;
+  color: var(--brass);
+}
+.rule-ornament::before,
+.rule-ornament::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}
+.rule-ornament > span {
+  font-family: var(--font-display);
+  font-size: 22px; letter-spacing: 0.4em;
+  color: var(--brass-deep);
+}
+
+/* Drop cap for editorial moments */
+.dropcap::first-letter {
+  font-family: var(--font-display);
+  font-weight: 700;
+  float: left;
+  font-size: 4.2em;
+  line-height: 0.85;
+  padding: 4px 8px 0 0;
+  color: var(--bordeaux);
+}
+
+/* Selection */
+::selection { background: var(--brass-soft); color: var(--walnut); }
+
+/* Focus ring — warm, never blue */
+:where(button, a, input, select, textarea, [role="button"]):focus-visible {
+  outline: 2px solid var(--bordeaux);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
