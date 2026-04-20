@@ -19,7 +19,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:rules": "firebase emulators:exec --only firestore --project=demo-steward \"vitest run --config vitest.rules.config.ts\"",
-    "emulators": "firebase emulators:start --only auth,firestore"
+    "emulators": "firebase emulators:start --only auth,firestore",
+    "bootstrap-ward": "tsx scripts/bootstrap-ward.ts"
   },
   "dependencies": {
     "firebase": "^12.12.0",
@@ -40,10 +41,12 @@
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^4.1.4",
+    "firebase-admin": "^13.8.0",
     "firebase-tools": "^15.15.0",
     "jsdom": "^29.0.2",
     "oxlint": "^1.60.0",
     "tailwindcss": "^4.1.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0",
     "vite": "^7.0.0",
     "vitest": "^4.1.4"
