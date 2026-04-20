@@ -3,6 +3,7 @@ import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
 import { LetterTemplatesPage } from "./routes/letter-templates";
 import { Login } from "./routes/login";
+import { SpeakerLetter } from "./routes/speaker-letter";
 import { Week } from "./routes/week";
 
 export const router = createBrowserRouter([
@@ -13,6 +14,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/schedule" replace /> },
       { path: "schedule", element: <ScheduleView /> },
       { path: "week/:date", element: <Week /> },
+      { path: "week/:date/speaker/:id/letter", element: <SpeakerLetter /> },
       { path: "settings/letter-templates", element: <LetterTemplatesPage /> },
     ],
   },
