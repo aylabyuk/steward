@@ -621,6 +621,29 @@ Vertical slice: open a specific Sunday, fill all assignment fields.
 
 ---
 
+## Phase 7.5 — UI design pass (placeholder)
+
+Goal: unify the visual design across everything built in Phases 2–7. Deferred here deliberately so we refine after the main editor surfaces (schedule, week editor, letters, approvals) exist — it's easier to style coherently once you see them all.
+
+**What this is NOT:** functional behavior. No logic changes.
+
+**Likely scope (decide when we get here):**
+
+- Consistent color palette, spacing, and typography beyond the current "slate + Tailwind defaults" look.
+- Form controls (inputs, selects, textareas) styled uniformly.
+- Button hierarchy (primary / secondary / destructive) applied consistently.
+- Empty states, loading skeletons, error banners.
+- Mobile polish — touch target sizes, table reflow on the week editor.
+- Icons (if any). Probably Lucide since it pairs well with Tailwind.
+
+**Acceptance criteria:** TBD when the user has concrete visual direction. For now the goal is functional first; this phase is a deliberate placeholder.
+
+**Dependencies:** Phase 7 complete (all core surfaces exist).
+
+**Estimated scope:** M–L depending on how far the user wants to go.
+
+---
+
 ## Phase 8 — Print views
 
 ### Task 8.1 — Conducting print view
