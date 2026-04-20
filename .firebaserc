@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "steward-dev-5e4dc",
+    "dev": "steward-dev-5e4dc",
+    "prod": "steward-prod-65a36"
+  }
+}
