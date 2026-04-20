@@ -40,6 +40,30 @@ service cloud.firestore {
         && getMember(wardId, request.auth.uid).role == 'bishopric';
     }
 
+    // Status may stay the same, flip to 'draft' (the edit-invalidates-approvals
+    // path), or progress to pending_approval / approved / published -- the
+    // latter three only by bishopric.
+    function statusTransitionOk(wardId) {
+      return request.resource.data.status == resource.data.status
+        || request.resource.data.status == 'draft'
+        || isActiveBishopric(wardId);
+    }
+
+    // Approvals array may keep the same length (content edit or in-place
+    // invalidation flip) OR grow by exactly one entry authored by the
+    // bishopric member performing the write. Shrinking and foreign-author
+    // appends are rejected. Duplicate prevention is client-enforced.
+    function approvalsArrayOk(wardId) {
+      let oldApprovals = resource.data.get('approvals', []);
+      let newApprovals = request.resource.data.get('approvals', []);
+      let lastIdx = newApprovals.size() - 1;
+      return newApprovals.size() == oldApprovals.size()
+        || (newApprovals.size() == oldApprovals.size() + 1
+            && isActiveBishopric(wardId)
+            && newApprovals[lastIdx].uid == request.auth.uid
+            && newApprovals[lastIdx].invalidated == false);
+    }
+
     match /wards/{wardId} {
       allow read: if isActiveMember(wardId);
       allow update: if isActiveMember(wardId);
@@ -55,11 +79,15 @@ service cloud.firestore {
         allow create, update, delete: if isActiveBishopric(wardId);
       }
 
-      // Meetings and their speaker subcollection: any active member can
-      // read and write. Approval-specific restrictions land in Phase 7.3.
+      // Meetings and their speaker subcollection. Content edits are open to
+      // any active member. Approval transitions (status pending_approval /
+      // approved, growing the approvals array) are gated to bishopric.
       match /meetings/{date} {
         allow read: if isActiveMember(wardId);
-        allow create, update, delete: if isActiveMember(wardId);
+        allow create, delete: if isActiveMember(wardId);
+        allow update: if isActiveMember(wardId)
+          && statusTransitionOk(wardId)
+          && approvalsArrayOk(wardId);
 
         match /speakers/{speakerId} {
           allow read: if isActiveMember(wardId);
