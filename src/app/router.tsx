@@ -4,6 +4,7 @@ import { AuthGate } from "./auth-gate";
 import { LetterTemplatesPage } from "./routes/letter-templates";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
+import { NotificationSettingsPage } from "./routes/notification-settings";
 import { PrintCongregationPage } from "./routes/print-congregation";
 import { PrintConductingPage } from "./routes/print-conducting";
 import { SettingsIndex } from "./routes/settings";
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { path: "settings", element: <SettingsIndex /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/members", element: <MembersPage /> },
+      { path: "settings/notifications", element: <NotificationSettingsPage /> },
       { path: "settings/letter-templates", element: <LetterTemplatesPage /> },
     ],
   },
