@@ -1,15 +1,17 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router";
 import { SundayCard } from "./SundayCard";
 import type { SacramentMeeting } from "@/lib/types";
 
-const mockMeeting: SacramentMeeting = {
+const mockMeeting = {
   meetingType: "regular",
   status: "draft",
   approvals: [],
-};
+  wardBusiness: "",
+  stakeBusiness: "",
+  announcements: "",
+} as unknown as SacramentMeeting;
 
 function renderCard(meeting: SacramentMeeting | null = mockMeeting) {
   return render(
@@ -33,7 +35,7 @@ describe("SundayCard", () => {
 
   it("shows countdown text", () => {
     renderCard();
-    expect(screen.getByText(/IN.*DAYS|IN.*WEEKS|PAST|TODAY/)).toBeInTheDocument();
+    expect(screen.getByText(/In \d|Past|Today/)).toBeInTheDocument();
   });
 
   it("shows no-meeting variant for stake/general", () => {
@@ -44,18 +46,17 @@ describe("SundayCard", () => {
   it("shows cancellation message and strikethrough", () => {
     const { container } = renderCard({
       ...mockMeeting,
-      cancellation: { cancelled: true, reason: "Snow" },
+      cancellation: {
+        cancelled: true,
+        reason: "Snow",
+        cancelledAt: null,
+        cancelledBy: "test",
+      },
     });
     expect(screen.getByText("Cancelled")).toBeInTheDocument();
     expect(screen.getByText("Snow")).toBeInTheDocument();
     const heading = container.querySelector("p.line-through");
     expect(heading).toBeInTheDocument();
-  });
-
-  it("shows notice for short-notice dates", () => {
-    renderCard();
-    // Date is 2026-04-05, leadTime is 14 days
-    // This test depends on current date
   });
 
   it("shows Add speaker button", () => {
