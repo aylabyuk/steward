@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut as fbSignOut,
   type User,
@@ -14,6 +15,7 @@ export interface AuthState {
   user: User | null;
   status: AuthStatus;
   signIn: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -23,6 +25,9 @@ export const useAuthStore = create<AuthState>(() => ({
   signIn: async () => {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
+  },
+  signInWithEmail: async (email, password) => {
+    await signInWithEmailAndPassword(auth, email, password);
   },
   signOut: async () => {
     await fbSignOut(auth);

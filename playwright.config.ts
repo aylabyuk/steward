@@ -5,6 +5,10 @@ const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
+  // Auth-seeded specs live under e2e/emulators/ and need the Firebase
+  // emulators running. They're driven by the separate test:e2e:emulators
+  // script + playwright.emulators.config.ts.
+  testIgnore: ["emulators/**"],
   fullyParallel: true,
   forbidOnly: Boolean(process.env["CI"]),
   retries: 0,

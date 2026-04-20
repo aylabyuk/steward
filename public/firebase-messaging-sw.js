@@ -1,14 +1,11 @@
 // Firebase Cloud Messaging service worker. Registered explicitly by the app
 // at /firebase-messaging-sw.js so the SDK can route background pushes here.
+// This is the only service worker the app ships -- it doubles as the PWA
+// install signal (browsers count any registered SW).
 //
-// Config below is the steward-dev project's public web config (same values
-// the CI workflow ships in plain text). Production builds need this file
-// regenerated against the prod project; Phase 14 (PWA polish) handles that.
-//
-// Coexistence with the PWA service worker (vite-plugin-pwa, lands in Phase
-// 14): both SWs claim distinct scopes -- this one is registered explicitly
-// here, the PWA SW is registered automatically by the plugin. Do not register
-// this file twice.
+// Config below is the steward-dev project's public web config. Production
+// builds need this file regenerated against the prod project (open task on
+// the launch checklist).
 
 importScripts("https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.14.0/firebase-messaging-compat.js");
@@ -29,8 +26,15 @@ messaging.onBackgroundMessage((payload) => {
   const body = payload.notification?.body ?? "";
   self.registration.showNotification(title, {
     body,
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    icon: "/icon.svg",
+    badge: "/icon.svg",
     data: payload.data ?? {},
   });
+});
+
+// PWA installability hint: a SW with at least an empty fetch listener counts
+// toward the install criteria in some browsers. We pass through to the
+// network without caching -- the app is online-only in v1.
+self.addEventListener("fetch", () => {
+  // Intentionally empty: let the browser handle the request normally.
 });
