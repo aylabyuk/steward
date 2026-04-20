@@ -36,8 +36,7 @@ Steps (admin in Firebase Console):
    - `calling` in (`bishop` | `first_counselor` | `second_counselor`)
    - `role: "bishopric"`
    - `active: true`
-3. Seed `letterTemplates/speaker-invitation` default.
-4. Share sign-in URL with the bishop.
+3. Share sign-in URL with the bishop.
 
 **Invariant**: the first member must be `bishopric`. Firestore rules reject in-app member creation if the ward has zero existing bishopric members — only the console (admin SDK) can seed the first one.
 
