@@ -21,7 +21,7 @@ const STATE_LABELS: Record<SpeakerStatus, string> = {
 };
 
 const STATE_ACTIVE: Record<SpeakerStatus, string> = {
-  planned: "bg-parchment-2 text-walnut border-b-2 border-walnut-3",
+  planned: "bg-parchment-2 text-walnut",
   invited: "bg-brass-soft text-walnut",
   confirmed: "bg-success-soft text-success",
   declined: "bg-danger-soft text-bordeaux",
@@ -67,15 +67,17 @@ export function SpeakerEditCard({ draft, index, date, onChange, onRemove }: Prop
         ))}
       </div>
 
-      <InviteAction
-        draft={draft}
-        date={date}
-        onMarkInvited={() => onChange({ status: "invited" })}
-        onPrint={() => printInvitationLetter(
-          { name: draft.name, email: draft.email, topic: draft.topic, status: draft.status, role: draft.role },
-          date,
-        )}
-      />
+      {draft.status === "planned" && (
+        <InviteAction
+          draft={draft}
+          date={date}
+          onMarkInvited={() => onChange({ status: "invited" })}
+          onPrint={() => printInvitationLetter(
+            { name: draft.name, email: draft.email, topic: draft.topic, status: draft.status, role: draft.role },
+            date,
+          )}
+        />
+      )}
 
       <div className="flex flex-col gap-2.5">
         <label className="flex flex-col gap-1">
