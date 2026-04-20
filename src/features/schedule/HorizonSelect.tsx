@@ -75,23 +75,25 @@ export function HorizonSelect({ value, onChange }: Props) {
       {open && (
         <div
           ref={menuRef}
-          className={cn(
-            "absolute right-0 mt-2 w-48 bg-chalk border border-border rounded-lg shadow-elev-3 overflow-hidden z-10 sm:w-48",
-            "animate-[fadePop_0.15s_ease-out]",
-          )}
+          className="absolute right-0 top-full mt-1.5 min-w-50 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-10 animate-[menuIn_120ms_ease-out]"
         >
           {HORIZON_OPTIONS.map((option) => (
             <button
               key={option.weeks}
               onClick={() => handleSelect(option.weeks)}
               className={cn(
-                "w-full px-4 py-2.5 text-left text-sm transition-colors duration-100",
+                "w-full grid gap-1.5 items-center px-2.5 py-2 text-left text-xs font-display rounded-sm cursor-pointer transition-colors duration-100",
+                "grid-cols-[16px_1fr]",
                 value === option.weeks
-                  ? "bg-brass-soft text-walnut font-medium"
-                  : "text-walnut hover:bg-parchment-2",
+                  ? "text-bordeaux font-medium"
+                  : "text-walnut hover:bg-parchment",
               )}
+              style={{ gridTemplateColumns: "16px 1fr" }}
             >
-              {option.display}
+              <span className="text-[8px] text-center text-bordeaux leading-none">
+                {value === option.weeks ? "•" : ""}
+              </span>
+              <span>{option.display}</span>
             </button>
           ))}
         </div>
