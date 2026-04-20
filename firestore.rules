@@ -1,12 +1,71 @@
 rules_version = '2';
 
-// Deny-all baseline. Permissions are added phase by phase:
-// Phase 2.4 — auth + members
-// Phase 4.3 — meetings + speakers
-// Phase 7.3 — approvals
-// Phase 9.4 — comments
+// Permission model (see docs/access.md):
+//   bishopric = bishop + 2 counselors        -> approve, edit, view
+//   clerk     = exec sec / clerk (+ assts)   -> edit, view
+// Every path checks the auth'd user has an active member doc in the target ward.
+// Member-doc creation requires an existing active bishopric, so an empty ward
+// can only be seeded by the Admin SDK (which bypasses these rules).
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return request.auth.token.email;
+    }
+
+    function memberPath(wardId, uid) {
+      return /databases/$(database)/documents/wards/$(wardId)/members/$(uid);
+    }
+
+    function getMember(wardId, uid) {
+      return get(memberPath(wardId, uid)).data;
+    }
+
+    function memberExists(wardId, uid) {
+      return exists(memberPath(wardId, uid));
+    }
+
+    function isActiveMember(wardId) {
+      return isSignedIn()
+        && memberExists(wardId, request.auth.uid)
+        && getMember(wardId, request.auth.uid).active == true;
+    }
+
+    function isActiveBishopric(wardId) {
+      return isActiveMember(wardId)
+        && getMember(wardId, request.auth.uid).role == 'bishopric';
+    }
+
+    match /wards/{wardId} {
+      allow read: if isActiveMember(wardId);
+      allow update: if isActiveMember(wardId);
+      // Ward creation/deletion is Admin-SDK-only (see scripts/bootstrap-ward.ts).
+      allow create, delete: if false;
+
+      // Per-doc (get) + list access for members in a specific ward.
+      match /members/{memberId} {
+        allow read: if isActiveMember(wardId);
+        // Only an existing active bishopric member can mutate the roster.
+        // With no active bishopric in a ward, non-admin creates are blocked
+        // -- the Admin SDK seeds the first member.
+        allow create, update, delete: if isActiveBishopric(wardId);
+      }
+    }
+
+    // Cross-ward allowlist query: any signed-in user can read a member doc
+    // whose email matches their Google-verified email. This satisfies the
+    // sign-in collectionGroup('members').where('email','==',auth.email)
+    // lookup without letting them read unrelated members. The client must
+    // filter on email for Firestore to consider the list query safe.
+    match /{path=**}/members/{memberId} {
+      allow read: if isSignedIn() && resource.data.email == userEmail();
+    }
+
+    // Deny-all baseline for every other path; permissions land in later phases.
     match /{document=**} {
       allow read, write: if false;
     }
