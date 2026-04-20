@@ -57,10 +57,10 @@ export function SundayCard({
   return (
     <article
       className={cn(
-        "rounded-lg border p-4 transition",
+        "rounded-lg border p-4 transition-all duration-200",
         isNoMeeting
           ? "border-border bg-parchment-2 text-walnut-2"
-          : "border-border bg-chalk hover:border-border-strong",
+          : "border-border bg-chalk shadow-elev-1 hover:shadow-elev-2 hover:border-border-strong",
       )}
     >
       <div className="flex items-baseline justify-between gap-2 mb-3">
