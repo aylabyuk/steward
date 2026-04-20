@@ -51,14 +51,14 @@ export async function sendAndPrune(
   });
 
   const allDead: string[] = [];
-  for (const [uid, dead] of deadByUid) {
-    const tokens = tokensByUid.get(uid) ?? [];
-    const kept = tokens.filter((t) => !dead.has(t.token));
-    await getFirestore()
-      .doc(`wards/${wardId}/members/${uid}`)
-      .update({ fcmTokens: kept });
-    for (const tok of dead) allDead.push(tok);
-  }
+  await Promise.all(
+    [...deadByUid.entries()].map(([uid, dead]) => {
+      const tokens = tokensByUid.get(uid) ?? [];
+      const kept = tokens.filter((t) => !dead.has(t.token));
+      for (const tok of dead) allDead.push(tok);
+      return getFirestore().doc(`wards/${wardId}/members/${uid}`).update({ fcmTokens: kept });
+    }),
+  );
 
   return {
     successCount: response.successCount,

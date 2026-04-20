@@ -77,9 +77,9 @@ describe("classifyMeetingChange", () => {
 
 describe("describeChange", () => {
   it("includes the cancellation reason when set", () => {
-    expect(
-      describeChange("cancelled", { cancellation: { cancelled: true, reason: "snow" } }),
-    ).toBe("Meeting cancelled — snow");
+    expect(describeChange("cancelled", { cancellation: { cancelled: true, reason: "snow" } })).toBe(
+      "Meeting cancelled — snow",
+    );
   });
 
   it("falls back when no reason was provided", () => {
