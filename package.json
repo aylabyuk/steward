@@ -9,7 +9,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "predev": "node scripts/generate-sw.mjs",
     "build": "tsc --noEmit && vite build",
+    "prebuild": "node scripts/generate-sw.mjs",
     "preview": "vite preview --port 4173",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
