@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Timestamp } from "firebase/firestore";
 import type { WithId } from "@/hooks/_sub";
 import { useHistory } from "@/hooks/useHistory";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import type { HistoryEvent } from "@/lib/types";
 import { formatHistoryEvent } from "./historyFormat";
 
@@ -9,6 +10,8 @@ const PAGE_STEP = 20;
 
 interface Props {
   date: string;
+  open: boolean;
+  onClose: () => void;
 }
 
 function formatTime(at: unknown): string {
@@ -42,23 +45,31 @@ function HistoryRow({ event }: { event: WithId<HistoryEvent> }) {
   );
 }
 
-export function HistoryDrawer({ date }: Props) {
-  const [open, setOpen] = useState(false);
+export function HistoryModal({ date, open, onClose }: Props) {
   const [pageSize, setPageSize] = useState(PAGE_STEP);
   const history = useHistory(open ? date : null, pageSize);
-
+  useLockBodyScroll(open);
+  if (!open) return null;
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between p-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-      >
-        <span>History</span>
-        <span className="text-slate-400">{open ? "▾" : "▸"}</span>
-      </button>
-      {open && (
-        <div className="border-t border-slate-200 p-3">
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Meeting history"
+    >
+      <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl">
+        <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <h2 className="text-base font-semibold text-slate-900">History</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100"
+          >
+            ✕
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto px-4 py-3">
           {history.loading && <p className="text-xs text-slate-500">Loading…</p>}
           {history.error && <p className="text-xs text-red-600">{history.error.message}</p>}
           {!history.loading && history.data.length === 0 && (
@@ -75,13 +86,13 @@ export function HistoryDrawer({ date }: Props) {
             <button
               type="button"
               onClick={() => setPageSize((n) => n + PAGE_STEP)}
-              className="mt-2 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
+              className="mt-3 rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
             >
               Load more
             </button>
           )}
         </div>
-      )}
-    </section>
+      </div>
+    </div>
   );
 }
