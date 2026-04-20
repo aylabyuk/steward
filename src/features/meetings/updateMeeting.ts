@@ -15,3 +15,29 @@ export async function updateMeetingField(
     updatedAt: serverTimestamp(),
   });
 }
+
+export async function cancelMeeting(
+  wardId: string,
+  date: string,
+  reason: string,
+  actorUid: string,
+  nonMeetingSundays: readonly NonMeetingSunday[],
+): Promise<void> {
+  await ensureMeetingDoc(wardId, date, nonMeetingSundays);
+  await updateDoc(doc(db, "wards", wardId, "meetings", date), {
+    cancellation: {
+      cancelled: true,
+      reason,
+      cancelledAt: serverTimestamp(),
+      cancelledBy: actorUid,
+    },
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function uncancelMeeting(wardId: string, date: string): Promise<void> {
+  await updateDoc(doc(db, "wards", wardId, "meetings", date), {
+    cancellation: null,
+    updatedAt: serverTimestamp(),
+  });
+}
