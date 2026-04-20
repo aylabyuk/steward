@@ -27,7 +27,7 @@ function InvalidationNotice({ count }: { count: number }) {
 function MissingList({ items }: { items: string[] }) {
   if (items.length === 0) return null;
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+    <div className="rounded-md border border-border bg-parchment-2 p-2 text-xs text-walnut">
       <p className="font-medium">Still needed before approval:</p>
       <ul className="ml-4 list-disc">
         {items.map((m) => (
@@ -88,12 +88,12 @@ export function ApprovalPanel({ wardId, date, type, meeting }: Props) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="flex flex-col gap-3 rounded-lg border border-border bg-chalk p-4 shadow-sm">
       <header className="flex items-baseline justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-walnut-2">
           Approval — {status.replace(/_/g, " ")}
         </h2>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-walnut-2">
           {live.length} / {REQUIRED_APPROVALS}
         </span>
       </header>
@@ -102,7 +102,7 @@ export function ApprovalPanel({ wardId, date, type, meeting }: Props) {
       <MissingList items={missing} />
 
       {live.length > 0 && (
-        <ul className="flex flex-col gap-1 text-xs text-slate-700">
+        <ul className="flex flex-col gap-1 text-xs text-walnut">
           {live.map((a) => (
             <li key={a.uid}>✓ {a.displayName}</li>
           ))}
@@ -118,7 +118,7 @@ export function ApprovalPanel({ wardId, date, type, meeting }: Props) {
             onClick={() => void handleRequest()}
             disabled={busy || !ready}
             title={ready ? undefined : "Fill the items above first."}
-            className="rounded-md bg-slate-900 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md bg-walnut px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Request approval
           </button>

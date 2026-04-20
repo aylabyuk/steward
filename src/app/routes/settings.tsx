@@ -26,20 +26,20 @@ const links = [
 export function SettingsIndex() {
   return (
     <main className="mx-auto max-w-3xl p-4 sm:p-6">
-      <nav className="mb-4 text-sm text-slate-500">
-        <Link to="/schedule" className="hover:text-slate-700">
+      <nav className="mb-4 text-sm text-walnut-2">
+        <Link to="/schedule" className="hover:text-walnut">
           ← Schedule
         </Link>
       </nav>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
+        <h1 className="text-2xl font-semibold text-walnut">Settings</h1>
       </header>
-      <ul className="flex flex-col divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+      <ul className="flex flex-col divide-y divide-slate-200 rounded-lg border border-border bg-chalk">
         {links.map((l) => (
           <li key={l.to}>
-            <Link to={l.to} className="block px-4 py-3 text-sm hover:bg-slate-50">
-              <span className="font-medium text-slate-900">{l.label}</span>
-              <span className="block text-xs text-slate-500">{l.desc}</span>
+            <Link to={l.to} className="block px-4 py-3 text-sm hover:bg-parchment-2">
+              <span className="font-medium text-walnut">{l.label}</span>
+              <span className="block text-xs text-walnut-2">{l.desc}</span>
             </Link>
           </li>
         ))}

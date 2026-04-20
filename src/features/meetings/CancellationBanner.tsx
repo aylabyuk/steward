@@ -18,7 +18,7 @@ export function CancellationBanner({ wardId, date, cancellation }: Props) {
       <button
         type="button"
         onClick={() => void uncancelMeeting(wardId, date)}
-        className="shrink-0 rounded-md border border-red-300 bg-white px-3 py-1 text-xs text-red-700 hover:bg-red-100"
+        className="shrink-0 rounded-md border border-red-300 bg-chalk px-3 py-1 text-xs text-red-700 hover:bg-red-100"
       >
         Uncancel
       </button>

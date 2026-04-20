@@ -64,15 +64,15 @@ export function WeekEditor({ date }: Props) {
 
   return (
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
-      <nav className="mb-4 text-sm text-slate-500">
-        <Link to="/schedule" className="hover:text-slate-700">
+      <nav className="mb-4 text-sm text-walnut-2">
+        <Link to="/schedule" className="hover:text-walnut">
           ← Schedule
         </Link>
       </nav>
       <header className="mb-6 flex items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold text-slate-900">{formatLongDate(date)}</h1>
-          <p className="text-sm text-slate-500">{TYPE_LABELS[type]}</p>
+          <h1 className="text-2xl font-semibold text-walnut">{formatLongDate(date)}</h1>
+          <p className="text-sm text-walnut-2">{TYPE_LABELS[type]}</p>
         </div>
         <OverflowMenu items={menuItems} />
       </header>
@@ -91,7 +91,7 @@ export function WeekEditor({ date }: Props) {
       />
 
       {isNonMeeting ? (
-        <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="rounded-md border border-border bg-parchment-2 p-4 text-sm text-walnut-2">
           No sacrament meeting is held on {TYPE_LABELS[type].toLowerCase()} Sundays.
         </div>
       ) : (
@@ -111,7 +111,7 @@ export function WeekEditor({ date }: Props) {
               meeting={meeting.data}
               nonMeetingSundays={nonMeeting}
             />
-            <div className="mt-3 border-t border-slate-200 pt-3">
+            <div className="mt-3 border-t border-border pt-3">
               <CopyFromPreviousButton
                 wardId={wardId}
                 date={date}
