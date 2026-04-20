@@ -65,7 +65,7 @@ export function HorizonSelect({ value, onChange }: Props) {
           open ? "border-walnut" : "border-border-strong"
         )}
       >
-        <span className="text-xs uppercase tracking-[0.18em] text-walnut-3 font-medium">Showing</span>
+        <span className="text-[9.5px] uppercase tracking-[0.18em] text-walnut-3 font-medium">Showing</span>
         <span className="font-display text-sm font-medium tracking-[-0.005em]">{display}</span>
         <span className={cn("text-xs text-walnut-3 transition-transform duration-120 ml-auto sm:ml-0.5", open && "rotate-180")}>
           ▼
