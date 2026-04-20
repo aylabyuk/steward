@@ -28,6 +28,7 @@
     "eslint/no-magic-numbers": "off",
     "eslint/no-ternary": "off",
     "eslint/prefer-destructuring": "off",
+    "eslint/init-declarations": "off",
     "unicorn/filename-case": ["warn", { "cases": { "kebabCase": true, "pascalCase": true } }]
   },
   "overrides": [
