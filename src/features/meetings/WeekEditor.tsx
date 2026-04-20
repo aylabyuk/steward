@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { OverflowMenu } from "@/components/ui/OverflowMenu";
 import { CommentThread } from "@/features/comments/CommentThread";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
@@ -9,15 +10,16 @@ import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
 import { CopyFromPreviousButton } from "./CopyFromPreviousButton";
-import { EditorPlaceholder, EditorSection } from "./EditorSection";
+import { EditorSection } from "./EditorSection";
 import { defaultMeetingType } from "./ensureMeetingDoc";
-import { HistoryDrawer } from "./HistoryDrawer";
+import { HistoryModal } from "./HistoryModal";
 import { formatLongDate, HIDE_SPEAKER_TYPES, NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
 import { WeekEditorActions } from "./WeekEditorActions";
 import { HymnsSection } from "./sections/HymnsSection";
 import { MusicSection } from "./sections/MusicSection";
 import { PrayersSection } from "./sections/PrayersSection";
 import { SacramentSection } from "./sections/SacramentSection";
+import { SpeakersSection } from "./sections/SpeakersSection";
 import { cancelMeeting } from "./updateMeeting";
 
 interface Props {
@@ -31,6 +33,7 @@ export function WeekEditor({ date }: Props) {
   const meeting = useMeeting(date);
   const speakers = useSpeakers(date);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const markRead = useCommentReadStore((s) => s.markRead);
 
   useEffect(() => {
@@ -44,6 +47,19 @@ export function WeekEditor({ date }: Props) {
   const cancellation = meeting.data?.cancellation;
   const isNonMeeting = NO_MEETING_TYPES.has(type);
   const showSpeakers = !HIDE_SPEAKER_TYPES.has(type);
+  const canCancel = !isNonMeeting && !cancellation?.cancelled;
+  const menuItems = [
+    { label: "History", onSelect: () => setHistoryOpen(true) },
+    ...(canCancel
+      ? [
+          {
+            label: "Cancel meeting…",
+            onSelect: () => setConfirmingCancel(true),
+            destructive: true,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
@@ -52,18 +68,15 @@ export function WeekEditor({ date }: Props) {
           ← Schedule
         </Link>
       </nav>
-      <header className="mb-6 flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-slate-900">{formatLongDate(date)}</h1>
-        <p className="text-sm text-slate-500">{TYPE_LABELS[type]}</p>
+      <header className="mb-6 flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold text-slate-900">{formatLongDate(date)}</h1>
+          <p className="text-sm text-slate-500">{TYPE_LABELS[type]}</p>
+        </div>
+        <OverflowMenu items={menuItems} />
       </header>
 
-      <CancellationBanner
-        wardId={wardId}
-        date={date}
-        cancellation={cancellation}
-        onStartCancel={() => setConfirmingCancel(true)}
-        isNonMeeting={isNonMeeting}
-      />
+      <CancellationBanner wardId={wardId} date={date} cancellation={cancellation} />
       {!isNonMeeting && (
         <WeekEditorActions wardId={wardId} date={date} type={type} meeting={meeting.data} />
       )}
@@ -114,22 +127,7 @@ export function WeekEditor({ date }: Props) {
               nonMeetingSundays={nonMeeting}
             />
           </EditorSection>
-          {showSpeakers && (
-            <EditorSection title={`Speakers (${speakers.data.length})`}>
-              {speakers.data.length === 0 ? (
-                <EditorPlaceholder>No speakers yet. Add from the schedule view.</EditorPlaceholder>
-              ) : (
-                <ul className="flex flex-col gap-1 text-sm">
-                  {speakers.data.map((s) => (
-                    <li key={s.id}>
-                      <strong>{s.data.name}</strong>
-                      {s.data.topic && <span className="text-slate-500"> · {s.data.topic}</span>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </EditorSection>
-          )}
+          {showSpeakers && <SpeakersSection speakers={speakers.data} />}
           <EditorSection title="Hymns" className="lg:col-span-2">
             <HymnsSection
               wardId={wardId}
@@ -146,9 +144,7 @@ export function WeekEditor({ date }: Props) {
           <CommentThread wardId={wardId} date={date} />
         </div>
       )}
-      <div className="mt-6">
-        <HistoryDrawer date={date} />
-      </div>
+      <HistoryModal date={date} open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </main>
   );
 }

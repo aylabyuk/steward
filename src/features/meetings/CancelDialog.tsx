@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 
 interface Props {
   open: boolean;
@@ -16,6 +17,8 @@ export function CancelDialog({ open, onConfirm, onClose }: Props) {
       setBusy(false);
     }
   }, [open]);
+
+  useLockBodyScroll(open);
 
   if (!open) return null;
 
