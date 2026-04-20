@@ -1,13 +1,18 @@
+import { defaultMeetingType } from "@/features/meetings/ensureMeetingDoc";
 import { useUpcomingMeetings } from "@/hooks/useUpcomingMeetings";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { defaultMeetingType } from "@/features/meetings/ensureMeetingDoc";
+import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { MeetingCard } from "./MeetingCard";
 
 export function ScheduleView() {
+  const wardId = useCurrentWardStore((s) => s.wardId);
   const settingsState = useWardSettings();
   const horizon = settingsState.data?.settings.scheduleHorizonWeeks ?? 8;
+  const leadTimeDays = settingsState.data?.settings.speakerLeadTimeDays ?? 14;
   const nonMeeting = settingsState.data?.settings.nonMeetingSundays ?? [];
   const { slots, loading, error } = useUpcomingMeetings(horizon);
+
+  if (!wardId) return null;
 
   if (error) {
     return (
@@ -27,9 +32,12 @@ export function ScheduleView() {
         {slots.map((slot) => (
           <MeetingCard
             key={slot.date}
+            wardId={wardId}
             date={slot.date}
             meeting={slot.meeting}
             fallbackType={defaultMeetingType(slot.date, nonMeeting)}
+            leadTimeDays={leadTimeDays}
+            nonMeetingSundays={nonMeeting}
           />
         ))}
       </div>
