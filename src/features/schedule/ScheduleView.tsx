@@ -40,8 +40,9 @@ export function ScheduleView() {
       <SubscribePrompt />
 
       <PageHead
+        eyebrow="Sacrament meeting"
         title="Schedule"
-        subtitle={loading ? "Loading…" : `${slots.length} Sundays`}
+        subtitle="Assign speakers for the weeks ahead."
         rightSlot={<HorizonSelect value={horizon} onChange={setHorizon} />}
       />
 
