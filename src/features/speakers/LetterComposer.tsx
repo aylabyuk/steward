@@ -9,6 +9,7 @@ import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { renderTemplate } from "./renderTemplate";
+import { SendActions } from "./SendActions";
 import { buildTemplateValues } from "./templateValues";
 
 const DEFAULT_TEMPLATE_ID = "speaker-invitation";
@@ -118,8 +119,15 @@ export function LetterComposer({ date, speakerId }: Props) {
             Saved at {new Date(savedAt).toLocaleTimeString()}.
           </span>
         )}
-        <p className="text-xs text-slate-500">Send + print actions land with Task 6.3.</p>
       </div>
+      <SendActions
+        date={date}
+        speakerId={speakerId}
+        speaker={speaker}
+        subject={subject}
+        body={body}
+        onBeforeAction={saveDraft}
+      />
     </div>
   );
 }

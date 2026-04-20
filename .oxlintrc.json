@@ -36,6 +36,7 @@
     "eslint/capitalized-comments": "off",
     "eslint/no-continue": "off",
     "unicorn/catch-error-name": "off",
+    "unicorn/prefer-global-this": "off",
     "react/jsx-max-depth": "off",
     "react/jsx-props-no-spreading": "off",
     "unicorn/no-null": "off",
