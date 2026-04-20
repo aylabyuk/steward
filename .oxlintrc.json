@@ -24,6 +24,9 @@
     "react/react-in-jsx-scope": "off",
     "eslint/func-style": "off",
     "eslint/sort-imports": "off",
+    "eslint/sort-keys": "off",
+    "eslint/no-magic-numbers": "off",
+    "eslint/no-ternary": "off",
     "unicorn/filename-case": ["warn", { "cases": { "kebabCase": true, "pascalCase": true } }]
   },
   "overrides": [
