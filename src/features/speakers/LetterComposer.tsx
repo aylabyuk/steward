@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { Link } from "react-router";
-import { writeMeetingPatch } from "@/features/meetings/approvals";
 import { useLetterTemplate } from "@/hooks/useLetterTemplates";
 import { useSpeaker } from "@/hooks/useSpeaker";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { renderTemplate } from "./renderTemplate";
 import { SendActions } from "./SendActions";
+import { saveSpeakerLetter } from "./speakerActions";
 import { buildTemplateValues } from "./templateValues";
 
 const DEFAULT_TEMPLATE_ID = "speaker-invitation";
@@ -59,12 +57,7 @@ export function LetterComposer({ date, speakerId }: Props) {
 
   async function saveDraft() {
     if (!wardId) return;
-    await updateDoc(doc(db, "wards", wardId, "meetings", date, "speakers", speakerId), {
-      letterBody: body,
-      letterUpdatedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    await writeMeetingPatch(wardId, date, {});
+    await saveSpeakerLetter(wardId, date, speakerId, body);
     setSavedAt(Date.now());
   }
 

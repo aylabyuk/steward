@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { buildMailto } from "./buildMailto";
 import { computeCc } from "./computeCc";
-import { markSpeakerSent, revertSpeakerSent } from "./speakerStatusUpdates";
+import { markSpeakerSent, revertSpeakerSent } from "./speakerActions";
 
 interface Props {
   date: string;
