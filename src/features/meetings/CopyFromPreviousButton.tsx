@@ -61,14 +61,14 @@ export function CopyFromPreviousButton({ wardId, date, meeting, nonMeetingSunday
   }
 
   if (state.kind === "none") {
-    return <p className="text-xs text-slate-500">No previous meeting to copy from.</p>;
+    return <p className="text-xs text-walnut-2">No previous meeting to copy from.</p>;
   }
   if (state.kind === "done") {
     return <p className="text-xs text-green-700">Copied from {formatShort(state.prev.date)}.</p>;
   }
   if (state.kind === "confirming") {
     return (
-      <div className="flex flex-col gap-2 text-xs text-slate-700">
+      <div className="flex flex-col gap-2 text-xs text-walnut">
         <span>
           Overwrite existing music/sacrament with values from {formatShort(state.prev.date)}?
         </span>
@@ -76,14 +76,14 @@ export function CopyFromPreviousButton({ wardId, date, meeting, nonMeetingSunday
           <button
             type="button"
             onClick={() => void commit(state.prev)}
-            className="rounded-md bg-slate-900 px-3 py-1 text-xs text-white"
+            className="rounded-md bg-walnut px-3 py-1 text-xs text-white"
           >
             Overwrite
           </button>
           <button
             type="button"
             onClick={() => setState({ kind: "idle" })}
-            className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700"
+            className="rounded-md border border-border px-3 py-1 text-xs text-walnut"
           >
             Cancel
           </button>
@@ -99,7 +99,7 @@ export function CopyFromPreviousButton({ wardId, date, meeting, nonMeetingSunday
       type="button"
       onClick={() => void start()}
       disabled={state.kind === "searching"}
-      className="text-xs text-blue-600 hover:underline disabled:text-slate-400"
+      className="text-xs text-blue-600 hover:underline disabled:text-walnut-3"
     >
       {state.kind === "searching"
         ? "Searching…"

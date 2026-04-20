@@ -26,8 +26,8 @@ function FieldRow({ label, hint, value, onCommit }: FieldRowProps) {
   }, [value]);
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-slate-700">{label}</span>
-      {hint && <span className="text-xs text-slate-500">{hint}</span>}
+      <span className="font-medium text-walnut">{label}</span>
+      {hint && <span className="text-xs text-walnut-2">{hint}</span>}
       <textarea
         value={local}
         onChange={(e) => setLocal(e.target.value)}
@@ -35,7 +35,7 @@ function FieldRow({ label, hint, value, onCommit }: FieldRowProps) {
           if (local !== value) void onCommit(local);
         }}
         rows={3}
-        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+        className="rounded-md border border-border px-2 py-1 text-sm"
       />
     </label>
   );

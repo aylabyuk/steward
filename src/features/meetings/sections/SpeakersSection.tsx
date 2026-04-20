@@ -16,7 +16,7 @@ export function SpeakersSection({ speakers }: Props) {
           {speakers.map((s) => (
             <li key={s.id}>
               <strong>{s.data.name}</strong>
-              {s.data.topic && <span className="text-slate-500"> · {s.data.topic}</span>}
+              {s.data.topic && <span className="text-walnut-2"> · {s.data.topic}</span>}
             </li>
           ))}
         </ul>
