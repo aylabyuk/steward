@@ -1,4 +1,5 @@
 import { defaultMeetingType } from "@/features/meetings/ensureMeetingDoc";
+import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "@/hooks/useUpcomingMeetings";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -22,6 +23,7 @@ export function ScheduleView() {
 
   return (
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
+      <SubscribePrompt />
       <header className="mb-4 flex items-baseline justify-between">
         <h1 className="text-xl font-semibold text-slate-900">Schedule</h1>
         <span className="text-xs text-slate-500">

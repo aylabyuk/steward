@@ -1,6 +1,7 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
+import { getMessaging, isSupported, type Messaging } from "firebase/messaging";
 
 const requiredEnv = [
   "VITE_FIREBASE_API_KEY",
@@ -39,4 +40,17 @@ export const db: Firestore = getFirestore(app);
 
 if (import.meta.env.VITE_USE_EMULATORS === "true") {
   connectEmulators(auth, db);
+}
+
+let messagingPromise: Promise<Messaging | null> | null = null;
+
+/**
+ * FCM is browser-only and requires service-worker support. Returns null in
+ * unsupported environments (Vitest jsdom, Safari without PWA install, etc.)
+ * so callers can show a graceful fallback rather than crash on import.
+ */
+export function getMessagingIfSupported(): Promise<Messaging | null> {
+  if (messagingPromise) return messagingPromise;
+  messagingPromise = isSupported().then((ok) => (ok ? getMessaging(app) : null));
+  return messagingPromise;
 }
