@@ -27,6 +27,7 @@
     "eslint/sort-keys": "off",
     "eslint/no-magic-numbers": "off",
     "eslint/no-ternary": "off",
+    "eslint/prefer-destructuring": "off",
     "unicorn/filename-case": ["warn", { "cases": { "kebabCase": true, "pascalCase": true } }]
   },
   "overrides": [
