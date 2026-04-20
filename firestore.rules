@@ -54,6 +54,18 @@ service cloud.firestore {
         // -- the Admin SDK seeds the first member.
         allow create, update, delete: if isActiveBishopric(wardId);
       }
+
+      // Meetings and their speaker subcollection: any active member can
+      // read and write. Approval-specific restrictions land in Phase 7.3.
+      match /meetings/{date} {
+        allow read: if isActiveMember(wardId);
+        allow create, update, delete: if isActiveMember(wardId);
+
+        match /speakers/{speakerId} {
+          allow read: if isActiveMember(wardId);
+          allow create, update, delete: if isActiveMember(wardId);
+        }
+      }
     }
 
     // Cross-ward allowlist query: any signed-in user can read a member doc
