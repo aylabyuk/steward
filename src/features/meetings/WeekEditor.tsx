@@ -15,6 +15,7 @@ import { defaultMeetingType } from "./ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
 import { formatLongDate, HIDE_SPEAKER_TYPES, NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
 import { WeekEditorActions } from "./WeekEditorActions";
+import { BusinessSection } from "./sections/BusinessSection";
 import { HymnsSection } from "./sections/HymnsSection";
 import { MusicSection } from "./sections/MusicSection";
 import { PrayersSection } from "./sections/PrayersSection";
@@ -137,6 +138,12 @@ export function WeekEditor({ date }: Props) {
               nonMeetingSundays={nonMeeting}
             />
           </EditorSection>
+          <BusinessSection
+            wardId={wardId}
+            date={date}
+            meeting={meeting.data}
+            nonMeetingSundays={nonMeeting}
+          />
         </div>
       )}
       {!isNonMeeting && (
