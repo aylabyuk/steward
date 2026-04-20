@@ -77,3 +77,26 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  functions:
+    name: functions · build · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build functions
+        run: pnpm --filter @steward/functions build
+
+      - name: Test functions
+        run: pnpm --filter @steward/functions test
