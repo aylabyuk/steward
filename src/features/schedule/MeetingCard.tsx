@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { SpeakerSection } from "@/features/speakers/SpeakerSection";
 import { daysBetween } from "@/lib/dates";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
@@ -79,9 +80,12 @@ export function MeetingCard({
   return (
     <article className={`${base} ${style}`}>
       <header className="flex items-baseline justify-between">
-        <h3 className={`font-semibold ${cancelled ? "text-slate-400 line-through" : ""}`}>
+        <Link
+          to={`/week/${date}`}
+          className={`font-semibold hover:underline ${cancelled ? "text-slate-400 line-through" : ""}`}
+        >
           {formatLongDate(date)}
-        </h3>
+        </Link>
         <span className="text-xs uppercase tracking-wide text-slate-500">{TYPE_LABELS[type]}</span>
       </header>
       <CardBody
