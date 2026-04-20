@@ -87,8 +87,10 @@ export function useCollectionSnapshot<T>(
         for (const d of snap.docs) {
           const parsed = schema.safeParse(d.data());
           if (!parsed.success) {
-            setState({ data: [], loading: false, error: parsed.error });
-            return;
+            // Skip + log. One malformed doc shouldn't blank the whole list --
+            // that just makes recovery harder for the user.
+            console.error(`Schema parse failed at ${key}/${d.id}`, parsed.error);
+            continue;
           }
           items.push({ id: d.id, data: parsed.data });
         }

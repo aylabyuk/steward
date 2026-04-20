@@ -58,7 +58,7 @@ export function WeekEditor({ date }: Props) {
       />
       {!isNonMeeting && (
         <div className="mb-6">
-          <ApprovalPanel wardId={wardId} date={date} meeting={meeting.data} />
+          <ApprovalPanel wardId={wardId} date={date} type={type} meeting={meeting.data} />
         </div>
       )}
       <CancelDialog

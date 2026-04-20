@@ -64,8 +64,8 @@ export function useUpcomingMeetings(horizonWeeks: number): UpcomingState {
         for (const d of snap.docs) {
           const parsed = sacramentMeetingSchema.safeParse(d.data());
           if (!parsed.success) {
-            setState({ byDate: new Map(), loading: false, error: parsed.error });
-            return;
+            console.error(`Meeting ${d.id} failed schema parse`, parsed.error);
+            continue;
           }
           byDate.set(d.id, parsed.data);
         }

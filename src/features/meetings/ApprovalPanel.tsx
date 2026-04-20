@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { useSpeakers } from "@/hooks/useMeeting";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
-import type { SacramentMeeting } from "@/lib/types";
+import type { MeetingType, SacramentMeeting } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
 import { AlreadyApprovedError, approveMeeting, requestApproval } from "./approvals";
+import { checkMeetingReadiness } from "./readiness";
 
 interface Props {
   wardId: string;
   date: string;
+  type: MeetingType;
   meeting: SacramentMeeting | null;
 }
 
@@ -21,9 +24,24 @@ function InvalidationNotice({ count }: { count: number }) {
   );
 }
 
-export function ApprovalPanel({ wardId, date, meeting }: Props) {
+function MissingList({ items }: { items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+      <p className="font-medium">Still needed before approval:</p>
+      <ul className="ml-4 list-disc">
+        {items.map((m) => (
+          <li key={m}>{m}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function ApprovalPanel({ wardId, date, type, meeting }: Props) {
   const me = useCurrentMember();
   const authUser = useAuthStore((s) => s.user);
+  const { data: speakers } = useSpeakers(date);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +53,8 @@ export function ApprovalPanel({ wardId, date, meeting }: Props) {
   const status = meeting.status;
   const canApprove = me?.data.active === true && me.data.role === "bishopric";
   const alreadyApproved = authUser ? live.some((a) => a.uid === authUser.uid) : false;
+  const missing = checkMeetingReadiness(meeting, speakers, type);
+  const ready = missing.length === 0;
 
   async function handleRequest() {
     setBusy(true);
@@ -61,8 +81,7 @@ export function ApprovalPanel({ wardId, date, meeting }: Props) {
         displayName: authUser.displayName ?? authUser.email ?? "",
       });
     } catch (e) {
-      if (e instanceof AlreadyApprovedError) setError(e.message);
-      else setError((e as Error).message);
+      setError(e instanceof AlreadyApprovedError ? e.message : (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -80,6 +99,7 @@ export function ApprovalPanel({ wardId, date, meeting }: Props) {
       </header>
 
       <InvalidationNotice count={invalidatedCount} />
+      <MissingList items={missing} />
 
       {live.length > 0 && (
         <ul className="flex flex-col gap-1 text-xs text-slate-700">
@@ -96,8 +116,9 @@ export function ApprovalPanel({ wardId, date, meeting }: Props) {
           <button
             type="button"
             onClick={() => void handleRequest()}
-            disabled={busy}
-            className="rounded-md bg-slate-900 px-3 py-1 text-sm text-white disabled:opacity-50"
+            disabled={busy || !ready}
+            title={ready ? undefined : "Fill the items above first."}
+            className="rounded-md bg-slate-900 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Request approval
           </button>
@@ -106,8 +127,9 @@ export function ApprovalPanel({ wardId, date, meeting }: Props) {
           <button
             type="button"
             onClick={() => void handleApprove()}
-            disabled={busy}
-            className="rounded-md bg-green-600 px-3 py-1 text-sm text-white disabled:opacity-50"
+            disabled={busy || !ready}
+            title={ready ? undefined : "Fill the items above first."}
+            className="rounded-md bg-green-600 px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             Approve
           </button>
