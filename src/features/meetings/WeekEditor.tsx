@@ -114,6 +114,7 @@ export function WeekEditor({ date }: Props) {
               <ProgramApproval
                 report={report}
                 status={meeting.data?.status ?? "draft"}
+                approvals={meeting.data?.approvals ?? []}
                 onRequestApproval={() => void handleRequestApproval()}
                 busy={busy}
               />
@@ -152,6 +153,7 @@ export function WeekEditor({ date }: Props) {
       {!isNonMeeting && (
         <ProgramSaveBar
           savedAt={new Date()}
+          status={meeting.data?.status ?? "draft"}
           ready={report.ready}
           remaining={report.missing.length + report.unconfirmed.length}
           busy={busy}
