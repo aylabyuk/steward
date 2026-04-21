@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
+import { useWardMembers } from "@/hooks/useWardMembers";
 import type { Approval } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
 import { AlreadyApprovedError, approveMeeting, requestApproval, resetToDraft } from "../approvals";
@@ -23,10 +24,17 @@ interface UseApprovalActions {
 export function useApprovalActions({ wardId, date, approvals }: UseApprovalActions) {
   const authUser = useAuthStore((s) => s.user);
   const me = useCurrentMember();
+  // Once this flips false, `me` has resolved (either to a member doc or to
+  // null if the user isn't in this ward). We use it to disable the Request
+  // approval button during the brief first-render window where a bishopric
+  // user would otherwise be mis-classified as non-bishopric and have their
+  // self-approval dropped.
+  const { loading: memberLoading } = useWardMembers();
   const [busy, setBusy] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const memberReady = !memberLoading;
   const isActiveBishopric = me?.data.active === true && me.data.role === "bishopric";
   const alreadyApproved = authUser
     ? approvals.some((a) => a.uid === authUser.uid && !a.invalidated)
@@ -34,7 +42,7 @@ export function useApprovalActions({ wardId, date, approvals }: UseApprovalActio
   const canApprove = Boolean(authUser && isActiveBishopric && !alreadyApproved);
 
   async function handleRequestApproval() {
-    if (!authUser) return;
+    if (!authUser || !memberReady) return;
     setBusy(true);
     setError(null);
     try {
@@ -47,6 +55,8 @@ export function useApprovalActions({ wardId, date, approvals }: UseApprovalActio
         displayName: me?.data.displayName ?? authUser.displayName ?? authUser.email ?? "",
         isBishopric: isActiveBishopric,
       });
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -72,13 +82,22 @@ export function useApprovalActions({ wardId, date, approvals }: UseApprovalActio
   }
 
   async function handleResetToDraft() {
-    await resetToDraft(wardId, date);
-    setResetDialogOpen(false);
+    setBusy(true);
+    setError(null);
+    try {
+      await resetToDraft(wardId, date);
+      setResetDialogOpen(false);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return {
     busy,
     error,
+    memberReady,
     canApprove,
     alreadyApproved,
     resetDialogOpen,
