@@ -16,7 +16,6 @@ import { checkMeetingReadiness } from "./readiness";
 import { BusinessSection } from "./sections/BusinessSection";
 import { HymnsSection } from "./sections/HymnsSection";
 import { LeadersSection } from "./sections/LeadersSection";
-import { MusicSection } from "./sections/MusicSection";
 import { PrayersSection } from "./sections/PrayersSection";
 import { SacramentSection } from "./sections/SacramentSection";
 import { SpeakersSection } from "./sections/SpeakersSection";
@@ -124,7 +123,6 @@ export function WeekEditor({ date }: Props) {
               <LeadersSection {...sectionProps} />
               <BusinessSection {...sectionProps} />
               <PrayersSection {...sectionProps} />
-              <MusicSection {...sectionProps} />
               <SacramentSection {...sectionProps} />
               {type === "regular" && (
                 <SpeakersSection

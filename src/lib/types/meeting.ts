@@ -47,8 +47,11 @@ export type Approval = z.infer<typeof approvalSchema>;
 // Visiting authorities, ward members, or other guests to be recognized
 // from the stand (stake leaders, mission president, etc.). `details`
 // is free-form — typically their calling or a short descriptor.
+// `name` allows empty strings so newly-added rows can persist as drafts
+// until the user types something. The Leaders UI renders the placeholder
+// when the row is blank; content hash + history treat it as a real field.
 export const visitorSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().default(""),
   details: z.string().optional(),
 });
 export type Visitor = z.infer<typeof visitorSchema>;

@@ -28,11 +28,6 @@ export function buildRailSections(
       done: hasPerson(m?.openingPrayer) && hasPerson(m?.benediction),
     },
     {
-      id: "sec-music",
-      label: "Music",
-      done: hasPerson(m?.chorister) && hasPerson(m?.pianist),
-    },
-    {
       id: "sec-sacrament",
       label: "Sacrament",
       done:
@@ -50,9 +45,12 @@ export function buildRailSections(
     });
   }
   sections.push({
-    id: "sec-hymns",
-    label: "Hymns & music",
-    done: Boolean(m?.openingHymn && m?.sacramentHymn && m?.closingHymn),
+    id: "sec-music",
+    label: "Music & hymns",
+    done:
+      hasPerson(m?.chorister) &&
+      hasPerson(m?.pianist) &&
+      Boolean(m?.openingHymn && m?.sacramentHymn && m?.closingHymn),
   });
   return sections;
 }

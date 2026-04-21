@@ -1,5 +1,13 @@
 import { HymnPicker } from "@/features/hymns/HymnPicker";
-import type { Hymn, MeetingType, MidItem as MidItemType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
+import type {
+  Assignment,
+  Hymn,
+  MeetingType,
+  MidItem as MidItemType,
+  NonMeetingSunday,
+  SacramentMeeting,
+} from "@/lib/types";
+import { AssignRow } from "../program/AssignRow";
 import { MidItem } from "../program/MidItem";
 import { ProgramSection } from "../program/ProgramSection";
 import { updateMeetingField } from "../updateMeeting";
@@ -12,8 +20,7 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
-// Suggested-hymn lists (opening/sacrament/closing). Ordered for the design's
-// "Suggested" section in the hymn picker.
+// Suggested-hymn lists (opening/sacrament/closing).
 const OPENING_SUGGESTIONS = [2, 9, 83, 301];
 const SACRAMENT_SUGGESTIONS = [169, 174, 177, 181, 182, 188, 193, 194];
 const CLOSING_SUGGESTIONS = [30, 85, 86, 89];
@@ -24,13 +31,29 @@ export function HymnsSection({ wardId, date, meeting, type, nonMeetingSundays }:
   async function setHymn(field: "openingHymn" | "sacramentHymn" | "closingHymn", next: Hymn | null) {
     await updateMeetingField(wardId, date, nonMeetingSundays, { [field]: next });
   }
-
   async function setMid(next: MidItemType) {
     await updateMeetingField(wardId, date, nonMeetingSundays, { mid: next });
   }
+  async function setMusic(field: "chorister" | "pianist", next: Assignment) {
+    await updateMeetingField(wardId, date, nonMeetingSundays, { [field]: next });
+  }
 
   return (
-    <ProgramSection id="sec-hymns" label="Hymns & music">
+    <ProgramSection id="sec-music" label="Music & hymns">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-7 gap-y-1 mb-4 pb-4 border-b border-dashed border-border">
+        <AssignRow
+          label="Chorister"
+          placeholder="Chorister name"
+          assignment={meeting?.chorister}
+          onChange={(a) => void setMusic("chorister", a)}
+        />
+        <AssignRow
+          label="Pianist"
+          placeholder="Pianist name"
+          assignment={meeting?.pianist}
+          onChange={(a) => void setMusic("pianist", a)}
+        />
+      </div>
       <div className="flex flex-col">
         <HymnPicker
           label="Opening"
