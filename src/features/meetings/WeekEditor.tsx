@@ -81,7 +81,7 @@ export function WeekEditor({ date }: Props) {
   };
 
   return (
-    <main className="max-w-295 mx-auto px-4 sm:px-8 pt-7 pb-30">
+    <main className="p-4 sm:px-8 sm:pt-7 pb-30 sm:pb-30 max-w-300 mx-auto">
       <div className="grid gap-10 min-[900px]:grid-cols-[minmax(0,1fr)_280px]">
         <div>
           <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
