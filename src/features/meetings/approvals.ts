@@ -6,6 +6,44 @@ import { readMeetingAndSpeakers } from "./readMeetingAndSpeakers";
 
 export { writeMeetingPatch } from "./writeMeetingPatch";
 
+/**
+ * Explicitly return the meeting to draft. Used when the user wants to
+ * edit a pending_approval or approved program: invalidates any live
+ * approvals, resets requiredApprovals to the default, and sets status
+ * back to "draft" so edits can proceed fresh.
+ */
+export async function resetToDraft(wardId: string, date: string): Promise<void> {
+  const current = await readMeetingAndSpeakers(wardId, date);
+  if (!current) throw new Error("Meeting not found");
+  const { meeting } = current;
+  if (meeting.status === "draft") return;
+
+  const approvals = meeting.approvals ?? [];
+  const invalidatedAt = Timestamp.now();
+  const updated = approvals.map((a) =>
+    a.invalidated ? a : { ...a, invalidated: true, invalidatedAt },
+  );
+  const priorStatus = meeting.status;
+
+  const batch = writeBatch(db);
+  batch.update(doc(db, "wards", wardId, "meetings", date), {
+    status: "draft",
+    approvals: updated,
+    requiredApprovals: 2,
+    updatedAt: serverTimestamp(),
+  });
+  const actor = currentActor();
+  if (actor) {
+    appendHistoryEvent(batch, wardId, date, actor, {
+      target: "meeting",
+      targetId: date,
+      action: "update",
+      changes: [{ field: "status", old: priorStatus, new: "draft" }],
+    });
+  }
+  await batch.commit();
+}
+
 export interface SelfApprover {
   uid: string;
   email: string;

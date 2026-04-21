@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { OverflowMenu } from "@/components/ui/OverflowMenu";
-import { CommentThread } from "@/features/comments/CommentThread";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useAuthStore } from "@/stores/authStore";
 import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -12,20 +10,17 @@ import { CancellationBanner } from "./CancellationBanner";
 import { defaultMeetingType, ensureMeetingDoc } from "./ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
 import { NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
-import { requestApproval } from "./approvals";
 import { checkMeetingReadiness } from "./readiness";
-import { BusinessSection } from "./sections/BusinessSection";
-import { HymnsSection } from "./sections/HymnsSection";
-import { LeadersSection } from "./sections/LeadersSection";
-import { PrayersSection } from "./sections/PrayersSection";
-import { SacramentSection } from "./sections/SacramentSection";
-import { SpeakersSection } from "./sections/SpeakersSection";
+import { LockBanner } from "./program/LockBanner";
 import { ProgramApproval } from "./program/ProgramApproval";
 import { ProgramHead } from "./program/ProgramHead";
-import { ProgramRail } from "./program/ProgramRail";
 import { ProgramSaveBar } from "./program/ProgramSaveBar";
+import { ProgramSections } from "./program/ProgramSections";
+import { ProgramSide } from "./program/ProgramSide";
+import { ResetToDraftDialog } from "./program/ResetToDraftDialog";
 import { StatusLegend } from "./program/StatusLegend";
 import { buildRailSections } from "./program/railSections";
+import { useApprovalActions } from "./program/useApprovalActions";
 import { cancelMeeting } from "./updateMeeting";
 
 interface Props {
@@ -34,24 +29,19 @@ interface Props {
 
 export function WeekEditor({ date }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId);
-  const authUser = useAuthStore((s) => s.user);
-  const authUid = authUser?.uid;
-  const me = useCurrentMember();
+  const authUid = useAuthStore((s) => s.user?.uid);
   const settings = useWardSettings();
   const meeting = useMeeting(date);
   const speakers = useSpeakers(date);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
   const markRead = useCommentReadStore((s) => s.markRead);
+  const approval = useApprovalActions({ wardId: wardId ?? "", date });
 
   useEffect(() => {
     if (wardId) markRead(wardId, date);
   }, [wardId, date, markRead]);
 
-  // Auto-create the meeting doc on first visit so we don't sit on
-  // "Meeting not created yet". Gated on ward settings being loaded
-  // so we pick the right default meetingType (fast Sundays, overrides).
   const settingsLoaded = Boolean(settings.data);
   useEffect(() => {
     if (!wardId || !settingsLoaded) return;
@@ -68,6 +58,9 @@ export function WeekEditor({ date }: Props) {
   const canCancel = !isNonMeeting && !cancellation?.cancelled;
   const report = checkMeetingReadiness(meeting.data, speakers.data, type);
   const rail = buildRailSections(meeting.data, speakers.data, type, report);
+  const currentStatus = meeting.data?.status ?? "draft";
+  const liveApprovals = (meeting.data?.approvals ?? []).filter((a) => !a.invalidated).length;
+  const isLocked = !isNonMeeting && currentStatus !== "draft" && currentStatus !== "published";
 
   const menuItems = [
     { label: "History", onSelect: () => setHistoryOpen(true) },
@@ -75,30 +68,6 @@ export function WeekEditor({ date }: Props) {
       ? [{ label: "Cancel meeting…", onSelect: () => setConfirmingCancel(true), destructive: true }]
       : []),
   ];
-
-  async function handleRequestApproval() {
-    if (!authUser) return;
-    setBusy(true);
-    try {
-      const isActiveBishopric =
-        me?.data.active === true && me.data.role === "bishopric";
-      await requestApproval(wardId!, date, {
-        uid: authUser.uid,
-        email: authUser.email ?? "",
-        displayName: authUser.displayName ?? authUser.email ?? "",
-        isBishopric: isActiveBishopric,
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const sectionProps = {
-    wardId,
-    date,
-    meeting: meeting.data,
-    nonMeetingSundays: nonMeeting,
-  };
 
   return (
     <main className="pb-30">
@@ -124,52 +93,53 @@ export function WeekEditor({ date }: Props) {
             <>
               <ProgramApproval
                 report={report}
-                status={meeting.data?.status ?? "draft"}
+                status={currentStatus}
                 approvals={meeting.data?.approvals ?? []}
                 requiredApprovals={meeting.data?.requiredApprovals}
-                onRequestApproval={() => void handleRequestApproval()}
-                busy={busy}
+                onRequestApproval={approval.requestApproval}
+                busy={approval.busy}
               />
+              {isLocked && (
+                <LockBanner status={currentStatus} onUnlock={approval.openResetDialog} />
+              )}
               <div className="flex justify-center mb-4 lg:hidden">
                 <StatusLegend />
               </div>
-              <LeadersSection {...sectionProps} />
-              <BusinessSection {...sectionProps} />
-              <PrayersSection {...sectionProps} />
-              <SacramentSection {...sectionProps} />
-              {type === "regular" && (
-                <SpeakersSection
+              <div
+                className={isLocked ? "pointer-events-none opacity-60 select-none" : ""}
+                aria-disabled={isLocked}
+              >
+                <ProgramSections
                   wardId={wardId}
                   date={date}
+                  meeting={meeting.data}
+                  type={type}
                   speakers={speakers.data}
-                  mid={meeting.data?.mid}
                   nonMeetingSundays={nonMeeting}
                 />
-              )}
-              <HymnsSection {...sectionProps} type={type} />
+              </div>
+              <ResetToDraftDialog
+                open={approval.resetDialogOpen}
+                status={currentStatus}
+                liveApprovals={liveApprovals}
+                onClose={approval.closeResetDialog}
+                onConfirm={approval.resetToDraft}
+              />
             </>
           )}
         </div>
 
-        {!isNonMeeting && (
-          <div className="flex flex-col gap-4 min-w-0 lg:sticky lg:top-22.5 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pb-4">
-            <ProgramRail sections={rail} />
-            <div className="hidden lg:flex">
-              <StatusLegend />
-            </div>
-            <CommentThread wardId={wardId} date={date} />
-          </div>
-        )}
+        {!isNonMeeting && <ProgramSide wardId={wardId} date={date} rail={rail} />}
       </div>
 
       {!isNonMeeting && (
         <ProgramSaveBar
           savedAt={new Date()}
-          status={meeting.data?.status ?? "draft"}
+          status={currentStatus}
           ready={report.ready}
           remaining={report.missing.length + report.unconfirmed.length}
-          busy={busy}
-          onRequestApproval={() => void handleRequestApproval()}
+          busy={approval.busy}
+          onRequestApproval={approval.requestApproval}
         />
       )}
       <HistoryModal date={date} open={historyOpen} onClose={() => setHistoryOpen(false)} />
