@@ -21,6 +21,8 @@ PWA for a ward bishopric to plan weekly sacrament meeting programs. Desktop + mo
 - **Components ≤ 150 LOC.** Enforced by oxlint `max-lines` + `max-lines-per-function` (error, not warn).
 - **Only three Cloud Functions.** No API server, no custom endpoints. Firestore rules are the rest of the backend.
 - **Multi-ward from day one.** All data scoped under `wards/{wardId}/`.
+- **No direct pushes to `develop` or `main`.** Every change flows through a PR: feature branch → PR into `develop` (see the [`feature-branch-workflow`](.claude/skills/feature-branch-workflow.md) skill); releases go via PR from `develop` → `main` (see [`release-to-main`](.claude/skills/release-to-main.md)). GitHub's free tier doesn't enforce this — discipline does. No force-pushes to either branch, ever.
+- **Merge-commit is the only enabled merge method** at the repo level (squash + rebase disabled). Keeps `develop` and `main` SHA-aligned and prevents "N ahead / N behind" drift.
 - **Every push to `develop` runs the full CI pipeline.** Lint + format + typecheck + unit + rules + e2e. All must pass; no retries on flakes.
 
 ## Directory layout
