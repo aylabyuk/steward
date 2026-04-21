@@ -36,7 +36,11 @@ export function WeekEditor({ date }: Props) {
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const markRead = useCommentReadStore((s) => s.markRead);
-  const approval = useApprovalActions({ wardId: wardId ?? "", date });
+  const approval = useApprovalActions({
+    wardId: wardId ?? "",
+    date,
+    approvals: meeting.data?.approvals ?? [],
+  });
 
   useEffect(() => {
     if (wardId) markRead(wardId, date);
@@ -97,6 +101,10 @@ export function WeekEditor({ date }: Props) {
                 approvals={meeting.data?.approvals ?? []}
                 requiredApprovals={meeting.data?.requiredApprovals}
                 onRequestApproval={approval.requestApproval}
+                onApprove={approval.approve}
+                canApprove={approval.canApprove}
+                alreadyApproved={approval.alreadyApproved}
+                error={approval.error}
                 busy={approval.busy}
               />
               {isLocked && (
