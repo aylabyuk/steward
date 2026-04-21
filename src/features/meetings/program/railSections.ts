@@ -1,10 +1,26 @@
 import type { WithId } from "@/hooks/_sub";
 import type { Assignment, MeetingType, SacramentMeeting, Speaker } from "@/lib/types";
-import type { RailSection } from "./ProgramRail";
+import type { RailSection, RailState } from "./ProgramRail";
 import type { ReadinessReport } from "../readiness";
 
 function hasPerson(a: Assignment | undefined): boolean {
   return Boolean(a?.person?.name);
+}
+
+function isConfirmed(a: Assignment | undefined): boolean {
+  return Boolean(a?.confirmed);
+}
+
+/**
+ * Reduce a set of assignments to a rail state:
+ * - `missing`     → any slot lacks a person
+ * - `unconfirmed` → everyone assigned but at least one isn't confirmed
+ * - `done`        → everyone assigned and confirmed
+ */
+function peopleState(assignments: readonly (Assignment | undefined)[]): RailState {
+  if (assignments.some((a) => !hasPerson(a))) return "missing";
+  if (assignments.some((a) => !isConfirmed(a))) return "unconfirmed";
+  return "done";
 }
 
 export function buildRailSections(
@@ -15,42 +31,47 @@ export function buildRailSections(
 ): RailSection[] {
   const m = meeting ?? undefined;
   const sections: RailSection[] = [
-    { id: "sec-overview", label: "Approval", done: report.ready },
+    { id: "sec-overview", label: "Approval", state: report.ready ? "done" : "missing" },
     {
       id: "sec-leaders",
       label: "Leaders",
-      done: hasPerson(m?.presiding) && hasPerson(m?.conducting),
+      state: peopleState([m?.presiding, m?.conducting]),
     },
-    { id: "sec-notes", label: "Announcements", done: true },
+    { id: "sec-notes", label: "Announcements", state: "done" },
     {
       id: "sec-prayers",
       label: "Prayers",
-      done: hasPerson(m?.openingPrayer) && hasPerson(m?.benediction),
+      state: peopleState([m?.openingPrayer, m?.benediction]),
     },
     {
       id: "sec-sacrament",
       label: "Sacrament",
-      done:
-        hasPerson(m?.sacramentBread) &&
-        hasPerson(m?.sacramentBlessers?.[0]) &&
-        hasPerson(m?.sacramentBlessers?.[1]),
+      state: peopleState([
+        m?.sacramentBread,
+        m?.sacramentBlessers?.[0],
+        m?.sacramentBlessers?.[1],
+      ]),
     },
   ];
   if (type === "regular") {
+    let speakerState: RailState = "missing";
+    if (speakers.length >= 2) {
+      speakerState = speakers.every((s) => s.data.status === "confirmed")
+        ? "done"
+        : "unconfirmed";
+    }
     sections.push({
       id: "sec-speakers",
       label: "Speakers",
       count: speakers.length,
-      done: speakers.length >= 2,
+      state: speakerState,
     });
   }
+  const hymnsMissing = !(m?.openingHymn && m?.sacramentHymn && m?.closingHymn);
   sections.push({
     id: "sec-music",
     label: "Music & hymns",
-    done:
-      hasPerson(m?.chorister) &&
-      hasPerson(m?.pianist) &&
-      Boolean(m?.openingHymn && m?.sacramentHymn && m?.closingHymn),
+    state: hymnsMissing ? "missing" : peopleState([m?.chorister, m?.pianist]),
   });
   return sections;
 }
