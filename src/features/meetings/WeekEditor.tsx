@@ -107,6 +107,7 @@ export function WeekEditor({ date }: Props) {
                 alreadyApproved={approval.alreadyApproved}
                 error={approval.error}
                 busy={approval.busy}
+                memberReady={approval.memberReady}
               />
               {isLocked && (
                 <LockBanner status={currentStatus} onUnlock={approval.openResetDialog} />

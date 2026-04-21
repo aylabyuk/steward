@@ -22,19 +22,23 @@ export function useDocSnapshot<T>(
   segments: readonly (string | null | undefined)[],
   schema: ZodType<T>,
 ): DocSubState<T> {
-  const signedIn = useAuthStore((s) => s.status === "signed_in");
+  const authStatus = useAuthStore((s) => s.status);
+  const signedIn = authStatus === "signed_in";
+  const authLoading = authStatus === "loading";
   const ready =
     signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
   const [state, setState] = useState<DocSubState<T>>({
     data: null,
-    loading: ready,
+    loading: ready || authLoading,
     error: null,
   });
 
   useEffect(() => {
     if (!key) {
-      setState({ data: null, loading: false, error: null });
+      // Treat the auth-loading window as "still loading" so callers don't
+      // briefly render empty states while the sign-in handshake resolves.
+      setState({ data: null, loading: authLoading, error: null });
       return;
     }
     setState({ data: null, loading: true, error: null });
@@ -55,7 +59,7 @@ export function useDocSnapshot<T>(
       },
       (error) => setState({ data: null, loading: false, error }),
     );
-  }, [key, schema]);
+  }, [key, schema, authLoading]);
 
   return state;
 }
@@ -69,19 +73,21 @@ export function useCollectionSnapshot<T>(
   segments: readonly (string | null | undefined)[],
   schema: ZodType<T>,
 ): SubState<WithId<T>[]> {
-  const signedIn = useAuthStore((s) => s.status === "signed_in");
+  const authStatus = useAuthStore((s) => s.status);
+  const signedIn = authStatus === "signed_in";
+  const authLoading = authStatus === "loading";
   const ready =
     signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
   const [state, setState] = useState<SubState<WithId<T>[]>>({
     data: [],
-    loading: ready,
+    loading: ready || authLoading,
     error: null,
   });
 
   useEffect(() => {
     if (!key) {
-      setState({ data: [], loading: false, error: null });
+      setState({ data: [], loading: authLoading, error: null });
       return;
     }
     setState({ data: [], loading: true, error: null });
@@ -103,7 +109,7 @@ export function useCollectionSnapshot<T>(
       },
       (error) => setState({ data: [], loading: false, error }),
     );
-  }, [key, schema]);
+  }, [key, schema, authLoading]);
 
   return state;
 }

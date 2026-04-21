@@ -22,9 +22,19 @@ export function PrintLayout({ ready, dense, landscape, children }: Props) {
   useEffect(() => {
     if (!ready || triggered.current) return;
     triggered.current = true;
-    // Let fonts + paint settle before the print preview snapshots the page.
-    const id = setTimeout(() => window.print(), 250);
-    return () => clearTimeout(id);
+    // Wait for webfonts to finish loading before the browser snapshots the
+    // page for print — otherwise the dialog can capture fallback glyphs on
+    // slow connections. document.fonts.ready resolves deterministically
+    // rather than racing a fixed timeout.
+    let cancelled = false;
+    const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
+    const waitForFonts = fonts?.ready ?? Promise.resolve();
+    void waitForFonts.then(() => {
+      if (!cancelled) window.print();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [ready]);
 
   return (
