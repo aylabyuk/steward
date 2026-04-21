@@ -4,6 +4,7 @@ import type { ReadinessReport } from "../readiness";
 import { ApprovedBody, DraftMissingBody, PendingBody } from "./ApprovalBodies";
 
 interface Props {
+  date: string;
   report: ReadinessReport;
   status: string;
   approvals: readonly Approval[];
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function ProgramApproval({
+  date,
   report,
   status,
   approvals,
@@ -56,7 +58,7 @@ export function ProgramApproval({
         </span>
       </div>
 
-      {isApproved && <ApprovedBody approvals={live} />}
+      {isApproved && <ApprovedBody approvals={live} date={date} />}
       {isPending && <PendingBody approvals={live} />}
       {isDraft && !ready && <DraftMissingBody missing={missing} unconfirmed={unconfirmed} />}
       {isDraft && ready && (
