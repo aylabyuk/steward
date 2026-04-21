@@ -41,7 +41,10 @@ export function useApprovalActions({ wardId, date, approvals }: UseApprovalActio
       await requestApproval(wardId, date, {
         uid: authUser.uid,
         email: authUser.email ?? "",
-        displayName: authUser.displayName ?? authUser.email ?? "",
+        // Prefer the member-doc name (full name) over the Auth displayName
+        // (often first-name-only) so the stored self-approval has the
+        // full name from the start.
+        displayName: me?.data.displayName ?? authUser.displayName ?? authUser.email ?? "",
         isBishopric: isActiveBishopric,
       });
     } finally {
