@@ -1,4 +1,4 @@
-import { doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { isFirstSundayOfMonth } from "@/lib/dates";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
@@ -14,34 +14,40 @@ export function defaultMeetingType(
   return "regular";
 }
 
+/**
+ * Create the meeting doc if it doesn't already exist. Runs in a
+ * transaction so two parallel callers (e.g. the WeekEditor effect racing
+ * createSpeaker's own ensureMeetingDoc) can't both pass the exists-check
+ * and clobber each other.
+ */
 export async function ensureMeetingDoc(
   wardId: string,
   isoDate: string,
   nonMeetingSundays: readonly NonMeetingSunday[],
 ): Promise<void> {
   const ref = doc(db, "wards", wardId, "meetings", isoDate);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return;
   const meetingType = defaultMeetingType(isoDate, nonMeetingSundays);
-  const batch = writeBatch(db);
-  batch.set(ref, {
-    meetingType,
-    status: "draft",
-    approvals: [],
-    wardBusiness: "",
-    stakeBusiness: "",
-    announcements: "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
   const actor = currentActor();
-  if (actor) {
-    appendHistoryEvent(batch, wardId, isoDate, actor, {
-      target: "meeting",
-      targetId: isoDate,
-      action: "create",
-      changes: [{ field: "meetingType", new: meetingType }],
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (snap.exists()) return;
+    tx.set(ref, {
+      meetingType,
+      status: "draft",
+      approvals: [],
+      wardBusiness: "",
+      stakeBusiness: "",
+      announcements: "",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
-  }
-  await batch.commit();
+    if (actor) {
+      appendHistoryEvent(tx, wardId, isoDate, actor, {
+        target: "meeting",
+        targetId: isoDate,
+        action: "create",
+        changes: [{ field: "meetingType", new: meetingType }],
+      });
+    }
+  });
 }
