@@ -5,7 +5,7 @@ import { NotificationPrefsEditor } from "@/features/settings/NotificationPrefsEd
 
 export function NotificationSettingsPage() {
   return (
-    <main className="mx-auto max-w-3xl p-4 sm:p-6">
+    <main className="max-w-3xl mx-auto pb-12">
       <nav className="mb-4 text-sm text-walnut-2">
         <Link to="/settings" className="hover:text-walnut">
           ← Settings

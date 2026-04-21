@@ -36,7 +36,7 @@ export function ScheduleView() {
   const monthGroups = groupByMonth(dates, meetings);
 
   return (
-    <main className="p-4 sm:px-8 sm:py-7 max-w-380 mx-auto">
+    <main className="pb-12">
       <SubscribePrompt />
 
       <PageHead
