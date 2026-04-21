@@ -1,3 +1,4 @@
+import { useWardMembers } from "@/hooks/useWardMembers";
 import type { Approval } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -57,7 +58,12 @@ export function ApprovedBody({ approvals }: { approvals: readonly Approval[] }) 
 
 function ApproverList({ approvals }: { approvals: readonly Approval[] }) {
   const currentUid = useAuthStore((s) => s.user?.uid);
+  const { data: members } = useWardMembers();
   if (approvals.length === 0) return null;
+  // Map uid -> live display name from the member doc, so old approvals
+  // stored with a truncated Auth displayName still render with the
+  // full ward-roster name.
+  const nameByUid = new Map(members.map((m) => [m.id, m.data.displayName]));
   return (
     <ul className="flex flex-col gap-1 mb-1 list-none p-0 m-0">
       {approvals.map((a) => (
@@ -67,7 +73,7 @@ function ApproverList({ approvals }: { approvals: readonly Approval[] }) {
               <path d="M20 6L9 17l-5-5" />
             </svg>
           </span>
-          {a.displayName}
+          {nameByUid.get(a.uid) ?? a.displayName}
           {a.uid === currentUid && <span className="text-walnut-3"> (You)</span>}
         </li>
       ))}
