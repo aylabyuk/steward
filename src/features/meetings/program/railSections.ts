@@ -54,6 +54,5 @@ export function buildRailSections(
     done: Boolean(m?.openingHymn && m?.sacramentHymn && m?.closingHymn),
   });
   sections.push({ id: "sec-notes", label: "Announcements", done: true });
-  sections.push({ id: "sec-comments", label: "Comments", done: true });
   return sections;
 }
