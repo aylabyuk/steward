@@ -51,11 +51,14 @@ export interface SelfApprover {
   isBishopric: boolean;
 }
 
+const REQUIRED_APPROVALS = 2;
+
 /**
- * Flip meeting.status → pending_approval and, if the requester is a
- * bishopric member, include their approval automatically. A bishopric
- * requester sets requiredApprovals = 1 (their own vote suffices); any
- * other role requires two bishopric approvals.
+ * Flip meeting.status → pending_approval. If the requester is a
+ * bishopric member, their request *also* counts as one of the two
+ * required approvals; another bishopric member still has to approve
+ * before the meeting is considered approved. Clerks and secretaries
+ * have to collect two separate bishopric approvals.
  */
 export async function requestApproval(
   wardId: string,
@@ -67,17 +70,14 @@ export async function requestApproval(
   const { meeting } = current;
   const approvals = meeting.approvals ?? [];
 
-  const isBishopricRequest = Boolean(selfApprover?.isBishopric);
-  const requiredApprovals = isBishopricRequest ? 1 : 2;
-
   const update: Record<string, unknown> = {
-    requiredApprovals,
+    requiredApprovals: REQUIRED_APPROVALS,
     updatedAt: serverTimestamp(),
   };
 
   let liveAfter = approvals.filter((a) => !a.invalidated).length;
 
-  if (isBishopricRequest && selfApprover) {
+  if (selfApprover?.isBishopric) {
     const alreadyApproved = approvals.some(
       (a) => a.uid === selfApprover.uid && !a.invalidated,
     );
@@ -95,7 +95,7 @@ export async function requestApproval(
     }
   }
 
-  update.status = liveAfter >= requiredApprovals ? "approved" : "pending_approval";
+  update.status = liveAfter >= REQUIRED_APPROVALS ? "approved" : "pending_approval";
 
   const batch = writeBatch(db);
   batch.update(doc(db, "wards", wardId, "meetings", date), update);
@@ -105,10 +105,7 @@ export async function requestApproval(
       target: "meeting",
       targetId: date,
       action: "update",
-      changes: [
-        { field: "status", old: meeting.status, new: update.status },
-        { field: "requiredApprovals", new: requiredApprovals },
-      ],
+      changes: [{ field: "status", old: meeting.status, new: update.status }],
     });
   }
   await batch.commit();
