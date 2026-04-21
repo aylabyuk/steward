@@ -1,12 +1,14 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { createSpeaker, deleteSpeaker, updateSpeaker } from "@/features/speakers/speakerActions";
 import { useSpeakers } from "@/hooks/useMeeting";
+import type { NonMeetingSunday } from "@/lib/types";
 import { SpeakerEditCard } from "./SpeakerEditCard";
 import { emptyDraft, fromSpeaker, isDirty, type Draft } from "./speakerDraft";
 
 interface Props {
   date: string;
   wardId: string;
+  nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
 export interface SpeakerEditListHandle {
@@ -14,7 +16,7 @@ export interface SpeakerEditListHandle {
 }
 
 export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function SpeakerEditList(
-  { date, wardId },
+  { date, wardId, nonMeetingSundays },
   ref,
 ) {
   const speakers = useSpeakers(date);
@@ -76,6 +78,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
             createSpeaker({
               wardId,
               date,
+              nonMeetingSundays,
               name,
               email: d.email.trim() || undefined,
               topic: d.topic.trim() || undefined,
@@ -99,7 +102,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
       await Promise.all(tasks);
       setDeletedIds([]);
     },
-  }), [drafts, deletedIds, wardId, date]);
+  }), [drafts, deletedIds, wardId, date, nonMeetingSundays]);
 
   if (speakers.loading && !seededRef.current) {
     return <p className="text-sm text-walnut-2">Loading…</p>;
