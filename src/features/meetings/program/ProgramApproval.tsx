@@ -16,6 +16,9 @@ interface Props {
   alreadyApproved?: boolean;
   error?: string | null;
   busy?: boolean;
+  /** False until useWardMembers has loaded; gates the Request button so a
+   *  still-loading bishopric role isn't mis-classified. */
+  memberReady?: boolean;
 }
 
 export function ProgramApproval({
@@ -30,6 +33,7 @@ export function ProgramApproval({
   alreadyApproved,
   error,
   busy,
+  memberReady,
 }: Props) {
   const { ready, missing, unconfirmed, totalItems, doneCount } = report;
   const live = approvals.filter((a) => !a.invalidated);
@@ -77,7 +81,7 @@ export function ProgramApproval({
           <button
             type="button"
             onClick={onRequestApproval}
-            disabled={!ready || busy || !onRequestApproval}
+            disabled={!ready || busy || !onRequestApproval || memberReady === false}
             className={cn(
               "font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border inline-flex items-center gap-1.5 transition-colors",
               ready
