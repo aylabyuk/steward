@@ -9,6 +9,10 @@ interface Props {
   approvals: readonly Approval[];
   requiredApprovals: number | undefined;
   onRequestApproval?: () => void;
+  onApprove?: () => void;
+  canApprove?: boolean;
+  alreadyApproved?: boolean;
+  error?: string | null;
   busy?: boolean;
 }
 
@@ -18,6 +22,10 @@ export function ProgramApproval({
   approvals,
   requiredApprovals,
   onRequestApproval,
+  onApprove,
+  canApprove,
+  alreadyApproved,
+  error,
   busy,
 }: Props) {
   const { ready, missing, unconfirmed, totalItems, doneCount } = report;
@@ -57,6 +65,10 @@ export function ProgramApproval({
         </p>
       )}
 
+      {error && (
+        <p className="font-sans text-[12.5px] text-bordeaux mb-2.5">{error}</p>
+      )}
+
       {isDraft && (
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
@@ -78,6 +90,25 @@ export function ProgramApproval({
             Bishopric members will be notified by push notification.
           </span>
         </div>
+      )}
+
+      {isPending && canApprove && (
+        <div className="flex items-center gap-2.5 flex-wrap mt-3.5">
+          <button
+            type="button"
+            onClick={onApprove}
+            disabled={busy || !onApprove}
+            className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border bg-success border-success text-chalk inline-flex items-center gap-1.5 transition-colors hover:bg-success/90 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <CheckIcon />
+            {busy ? "Approving…" : "Approve this program"}
+          </button>
+        </div>
+      )}
+      {isPending && !canApprove && alreadyApproved && (
+        <p className="font-serif italic text-[13px] text-walnut-3 mt-3">
+          You've already approved this version. Waiting on one more bishopric member.
+        </p>
       )}
     </section>
   );
