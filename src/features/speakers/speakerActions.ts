@@ -1,8 +1,9 @@
 import { collection, doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { writeMeetingPatch } from "@/features/meetings/approvals";
+import { ensureMeetingDoc } from "@/features/meetings/ensureMeetingDoc";
 import { appendHistoryEvent, currentActor } from "@/features/meetings/history";
 import { db } from "@/lib/firebase";
-import type { HistoryChange, SpeakerRole, SpeakerStatus } from "@/lib/types";
+import type { HistoryChange, NonMeetingSunday, SpeakerRole, SpeakerStatus } from "@/lib/types";
 
 function speakerRef(wardId: string, date: string, speakerId: string) {
   return doc(db, "wards", wardId, "meetings", date, "speakers", speakerId);
@@ -12,12 +13,16 @@ export interface CreateSpeakerInput {
   wardId: string;
   date: string;
   name: string;
+  nonMeetingSundays: readonly NonMeetingSunday[];
   email?: string;
   topic?: string;
   role?: SpeakerRole;
 }
 
 export async function createSpeaker(input: CreateSpeakerInput): Promise<void> {
+  // Creating a speaker before the meeting doc exists would orphan the
+  // subcollection entry. Ensure the parent meeting is there first.
+  await ensureMeetingDoc(input.wardId, input.date, input.nonMeetingSundays);
   const ref = doc(collection(db, "wards", input.wardId, "meetings", input.date, "speakers"));
   const data: Record<string, unknown> = {
     name: input.name,

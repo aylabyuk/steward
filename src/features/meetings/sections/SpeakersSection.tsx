@@ -82,7 +82,12 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
       onClose={() => setManageOpen(false)}
       onSave={() => void handleManageSave()}
     >
-      <SpeakerEditList ref={editListRef} date={date} wardId={wardId} />
+      <SpeakerEditList
+        ref={editListRef}
+        date={date}
+        wardId={wardId}
+        nonMeetingSundays={nonMeetingSundays}
+      />
     </AssignDialog>
   );
 
