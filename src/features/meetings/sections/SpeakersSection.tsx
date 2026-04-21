@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import type { WithId } from "@/hooks/_sub";
-import type { MidItem as MidItemType, Speaker } from "@/lib/types";
+import type { MidItem as MidItemType, NonMeetingSunday, Speaker } from "@/lib/types";
 import { reorderSpeakers } from "@/features/speakers/speakerActions";
 import { ProgramSection } from "../program/ProgramSection";
+import { updateMeetingField } from "../updateMeeting";
 import { MidPlaceholderRow, SpeakerListRow } from "./SpeakerListRow";
 
 interface Props {
@@ -10,7 +11,12 @@ interface Props {
   date: string;
   speakers: readonly WithId<Speaker>[];
   mid: MidItemType | undefined;
+  nonMeetingSundays: readonly NonMeetingSunday[];
 }
+
+type Item =
+  | { kind: "speaker"; id: string; speaker: WithId<Speaker> }
+  | { kind: "mid"; id: "__mid__"; label: string };
 
 function sortByOrder(speakers: readonly WithId<Speaker>[]): WithId<Speaker>[] {
   return [...speakers].sort((a, b) => {
@@ -31,19 +37,42 @@ function formatMidLabel(mid: MidItemType | undefined): string {
     : "Musical number — add performer";
 }
 
-export function SpeakersSection({ wardId, date, speakers, mid }: Props) {
+function buildItems(ordered: WithId<Speaker>[], mid: MidItemType | undefined, midLabel: string): Item[] {
+  const showMid = Boolean(mid && mid.mode !== "none" && midLabel);
+  const clampedAfter = Math.min(Math.max(mid?.midAfter ?? 1, 0), ordered.length);
+  const items: Item[] = [];
+  ordered.forEach((s, i) => {
+    if (showMid && i === clampedAfter) items.push({ kind: "mid", id: "__mid__", label: midLabel });
+    items.push({ kind: "speaker", id: s.id, speaker: s });
+  });
+  if (showMid && clampedAfter >= ordered.length) {
+    items.push({ kind: "mid", id: "__mid__", label: midLabel });
+  }
+  return items;
+}
+
+export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays }: Props) {
   const ordered = useMemo(() => sortByOrder(speakers), [speakers]);
+  const midLabel = formatMidLabel(mid);
+  const items = useMemo(() => buildItems(ordered, mid, midLabel), [ordered, mid, midLabel]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
 
-  function persist(next: WithId<Speaker>[]) {
-    void reorderSpeakers(wardId, date, next.map((s) => s.id));
+  function persist(nextItems: Item[]) {
+    const speakerIds = nextItems.filter((x) => x.kind === "speaker").map((x) => x.id);
+    const midIdx = nextItems.findIndex((x) => x.kind === "mid");
+    void reorderSpeakers(wardId, date, speakerIds);
+    if (mid && midIdx >= 0) {
+      void updateMeetingField(wardId, date, nonMeetingSundays, {
+        mid: { ...mid, midAfter: midIdx },
+      });
+    }
   }
 
   function move(i: number, delta: number) {
     const j = i + delta;
-    if (j < 0 || j >= ordered.length) return;
-    const next = [...ordered];
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
     [next[i], next[j]] = [next[j]!, next[i]!];
     persist(next);
   }
@@ -54,7 +83,7 @@ export function SpeakersSection({ wardId, date, speakers, mid }: Props) {
       setOverIdx(null);
       return;
     }
-    const next = [...ordered];
+    const next = [...items];
     const [moved] = next.splice(dragIdx, 1);
     next.splice(i, 0, moved!);
     persist(next);
@@ -62,11 +91,7 @@ export function SpeakersSection({ wardId, date, speakers, mid }: Props) {
     setOverIdx(null);
   }
 
-  const midLabel = formatMidLabel(mid);
-  const showMidRow = Boolean(mid && mid.mode !== "none" && midLabel);
-  const midAfter = Math.min(Math.max(mid?.midAfter ?? 1, 0), ordered.length);
-
-  if (ordered.length === 0 && !showMidRow) {
+  if (items.length === 0) {
     return (
       <ProgramSection id="sec-speakers" label="Speakers">
         <p className="font-serif italic text-[13.5px] text-walnut-3 py-1">
@@ -76,6 +101,7 @@ export function SpeakersSection({ wardId, date, speakers, mid }: Props) {
     );
   }
 
+  let speakerCounter = 0;
   return (
     <ProgramSection
       id="sec-speakers"
@@ -88,27 +114,36 @@ export function SpeakersSection({ wardId, date, speakers, mid }: Props) {
       }
     >
       <ul className="flex flex-col">
-        {ordered.map((s, i) => (
-          <SpeakerListRow
-            key={s.id}
-            speaker={s}
-            index={i}
-            isLast={i === ordered.length - 1}
-            isDragging={dragIdx === i}
-            isOver={overIdx === i && dragIdx !== null && dragIdx !== i}
-            onDragStart={() => setDragIdx(i)}
-            onDragOver={() => setOverIdx(i)}
-            onDragEnd={() => {
+        {items.map((item, i) => {
+          const drag = {
+            isDragging: dragIdx === i,
+            isOver: overIdx === i && dragIdx !== null && dragIdx !== i,
+            onDragStart: () => setDragIdx(i),
+            onDragOver: () => setOverIdx(i),
+            onDragEnd: () => {
               setDragIdx(null);
               setOverIdx(null);
-            }}
-            onDrop={() => handleDrop(i)}
-            onMoveUp={() => move(i, -1)}
-            onMoveDown={() => move(i, +1)}
-            midLabel={showMidRow && i + 1 === midAfter ? midLabel : null}
-          />
-        ))}
-        {showMidRow && midAfter >= ordered.length && <MidPlaceholderRow label={midLabel} />}
+            },
+            onDrop: () => handleDrop(i),
+            onMoveUp: () => move(i, -1),
+            onMoveDown: () => move(i, +1),
+            canMoveUp: i > 0,
+            canMoveDown: i < items.length - 1,
+          };
+          const isLast = i === items.length - 1;
+          if (item.kind === "mid") {
+            return <MidPlaceholderRow key={item.id} label={item.label} isLast={isLast} {...drag} />;
+          }
+          return (
+            <SpeakerListRow
+              key={item.id}
+              speaker={item.speaker}
+              index={speakerCounter++}
+              isLast={isLast}
+              {...drag}
+            />
+          );
+        })}
       </ul>
     </ProgramSection>
   );

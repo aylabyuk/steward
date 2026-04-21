@@ -117,6 +117,7 @@ export function WeekEditor({ date }: Props) {
                   date={date}
                   speakers={speakers.data}
                   mid={meeting.data?.mid}
+                  nonMeetingSundays={nonMeeting}
                 />
               )}
               <HymnsSection {...sectionProps} type={type} />
