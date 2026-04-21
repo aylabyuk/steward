@@ -20,7 +20,7 @@ const links = [
 
 export function SettingsIndex() {
   return (
-    <main className="mx-auto max-w-3xl p-4 sm:p-6">
+    <main className="max-w-3xl mx-auto pb-12">
       <nav className="mb-4 text-sm text-walnut-2">
         <Link to="/schedule" className="hover:text-walnut">
           ← Schedule
