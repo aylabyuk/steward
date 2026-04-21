@@ -111,6 +111,17 @@ service cloud.firestore {
       // Ward creation/deletion is Admin-SDK-only (see scripts/bootstrap-ward.ts).
       allow create, delete: if false;
 
+      // Templates: Markdown letter templates (speaker invitations, etc.)
+      // any active member (bishopric or clerk) can view or edit. They
+      // aren't bishopric-gated because the template is bishopric-voiced
+      // content, but editing it is part of the clerk's existing
+      // schedule-support workflow — same threshold as writing an
+      // `announcements` string on a meeting.
+      match /templates/{templateId} {
+        allow read: if isActiveMember(wardId);
+        allow create, update, delete: if isActiveMember(wardId);
+      }
+
       // Invites: bishopric creates/lists/revokes pending invites keyed by
       // the invitee's lower-cased email. The invitee themselves can read
       // the doc targeted at their email (so an invite-acceptance page can
