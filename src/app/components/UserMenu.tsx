@@ -85,27 +85,14 @@ export function UserMenu() {
             </div>
           </div>
 
-          {/* Items */}
+          {/* Items — Settings index hosts links to ward / members /
+              notifications, so we only surface one entry here. */}
           <Link
             to="/settings"
             onClick={() => setOpen(false)}
             className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
           >
-            Account settings
-          </Link>
-          <Link
-            to="/settings/ward"
-            onClick={() => setOpen(false)}
-            className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
-          >
-            Ward preferences
-          </Link>
-          <Link
-            to="/settings/notifications"
-            onClick={() => setOpen(false)}
-            className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
-          >
-            Notifications
+            Settings
           </Link>
 
           {/* Divider */}
