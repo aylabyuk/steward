@@ -7,6 +7,50 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-04-21
+
+Backlog scaffolding: a skill for filing issues mid-session plus issue
+templates so anything captured follows a consistent shape.
+
+### Added
+- `.claude/skills/log-issue.md` — skill that turns a mid-session
+  discovery into a GitHub issue (de-dupe search, template-shaped body,
+  label selection, guardrails).
+- `.claude/skills/feature-branch-workflow.md` — skill that enforces
+  "non-trivial changes start on a `feat/…` / `fix/…` / `chore/…`
+  branch off `develop` and ship as a PR; no direct pushes to
+  `develop` or `main`, no squash/rebase, no force-pushes".
+- `.github/ISSUE_TEMPLATE/` with `bug.yml`, `feature.yml`, and
+  `tech-debt.yml` so issues filed from the GitHub UI follow the same
+  shape as ones filed via the CLI. `config.yml` disables blank
+  issues.
+- Labels on GitHub: `tech-debt`, `needs-triage`, `security`.
+- `CLAUDE.md` "Backlog hygiene" section: Claude now proactively asks
+  about logging any discovered bug / feature idea / tech-debt item
+  mid-session, with a 10-minute rule-of-thumb threshold.
+- `CLAUDE.md` hard rules: "No direct pushes to `develop` or `main`"
+  and "Merge-commit is the only enabled merge method".
+
+### Changed
+- **Merge methods at the repo level**: squash and rebase merges
+  disabled on GitHub (`gh repo edit --enable-squash-merge=false
+  --enable-rebase-merge=false`). Only "Create a merge commit" is
+  available now, which prevents the history drift that produced the
+  "N ahead / N behind" mirror on earlier releases.
+- `.claude/skills/release-to-main.md` — dropped the force-push
+  develop-realignment step (no longer needed, now that drift can't
+  occur) and added a simple fast-forward `git pull` post-merge sync.
+  Guardrails hardened: no direct pushes, no force-pushes, ever.
+  Changelog step also pulls closed issues since the last tag so each
+  release links back to the backlog that drove it.
+
+### Infrastructure
+- Branch protection on `develop` / `main` is NOT enforced at the
+  GitHub layer — classic protection and rulesets both require
+  GitHub Pro on private repos. The PR-only workflow is enforced by
+  skills + discipline. Revisit if the repo moves to a paid plan or
+  adds collaborators.
+
 ## [0.1.1] — 2026-04-21
 
 Docs + release tooling, plus a cleanup of an index config that drifted
@@ -117,6 +161,7 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/aylabyuk/steward/releases/tag/v0.1.2
 [0.1.1]: https://github.com/aylabyuk/steward/releases/tag/v0.1.1
 [0.1.0]: https://github.com/aylabyuk/steward/releases/tag/v0.1.0

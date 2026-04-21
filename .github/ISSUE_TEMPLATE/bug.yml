@@ -1,0 +1,34 @@
+name: Bug report
+description: Something isn't working
+labels: [bug, needs-triage]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What's wrong?
+      description: One or two sentences — what did you expect, what happened instead.
+      placeholder: "When I click Request approval, the button stays spinning and nothing saves."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal ordered list. Skip if it's obvious.
+      placeholder: |
+        1. Open /week/2026-04-26
+        2. Assign two speakers + set them to confirmed
+        3. Click Request approval
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Context (optional)
+      description: Ward role, device, browser, network. Anything that might matter.
+      placeholder: "Signed in as bishop, Safari on iPhone, on wifi."
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots / logs (optional)
+      description: Drag images in, paste console errors, or link to the failing URL.

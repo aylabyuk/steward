@@ -21,6 +21,8 @@ PWA for a ward bishopric to plan weekly sacrament meeting programs. Desktop + mo
 - **Components ≤ 150 LOC.** Enforced by oxlint `max-lines` + `max-lines-per-function` (error, not warn).
 - **Only three Cloud Functions.** No API server, no custom endpoints. Firestore rules are the rest of the backend.
 - **Multi-ward from day one.** All data scoped under `wards/{wardId}/`.
+- **No direct pushes to `develop` or `main`.** Every change flows through a PR: feature branch → PR into `develop` (see the [`feature-branch-workflow`](.claude/skills/feature-branch-workflow.md) skill); releases go via PR from `develop` → `main` (see [`release-to-main`](.claude/skills/release-to-main.md)). GitHub's free tier doesn't enforce this — discipline does. No force-pushes to either branch, ever.
+- **Merge-commit is the only enabled merge method** at the repo level (squash + rebase disabled). Keeps `develop` and `main` SHA-aligned and prevents "N ahead / N behind" drift.
 - **Every push to `develop` runs the full CI pipeline.** Lint + format + typecheck + unit + rules + e2e. All must pass; no retries on flakes.
 
 ## Directory layout
@@ -70,6 +72,22 @@ functions/          # Firebase Cloud Functions
 - `npm run test:e2e` — Playwright (emulator + preview)
 - `npm run test:all` — CI target
 - `npm run emulators` — Firebase Local Emulator Suite
+
+## Backlog hygiene — log before you forget
+
+When you discover a bug, feature gap, or tech-debt item mid-session
+that you're NOT going to fix in the next step, proactively ask the
+user once: *"Log this as a GitHub issue, or skip?"* Use the
+[`log-issue`](.claude/skills/log-issue.md) skill to file it. The
+threshold: if it's a 10-minute fix you're about to make anyway, skip.
+Everything else — things you're documenting but not fixing, feature
+ideas mentioned in passing, known shortcuts — should get an issue so
+it doesn't evaporate in chat history.
+
+Issue templates live at `.github/ISSUE_TEMPLATE/` (bug / feature /
+tech-debt). Commit messages that resolve an issue should use
+`Fixes #N` so the PR auto-closes on merge to `main`. Changelog
+entries reference the issue inline as `(#N)`.
 
 ## Topic docs — load on demand for the current task
 
