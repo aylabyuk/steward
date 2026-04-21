@@ -82,7 +82,7 @@ export function WeekEditor({ date }: Props) {
 
   return (
     <main className="p-4 sm:px-8 sm:pt-7 pb-30 sm:pb-30 max-w-380 mx-auto">
-      <div className="grid gap-10 min-[900px]:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div>
           <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
 
@@ -108,7 +108,7 @@ export function WeekEditor({ date }: Props) {
                 onRequestApproval={() => void handleRequestApproval()}
                 busy={busy}
               />
-              <div className="flex justify-center mb-4 min-[900px]:hidden">
+              <div className="flex justify-center mb-4 lg:hidden">
                 <StatusLegend />
               </div>
               <LeadersSection {...sectionProps} />
@@ -131,9 +131,9 @@ export function WeekEditor({ date }: Props) {
         </div>
 
         {!isNonMeeting && (
-          <div className="flex flex-col gap-4 min-w-0 min-[900px]:sticky min-[900px]:top-22.5 min-[900px]:self-start min-[900px]:max-h-[calc(100vh-6rem)] min-[900px]:overflow-y-auto min-[900px]:pb-4">
+          <div className="flex flex-col gap-4 min-w-0 lg:sticky lg:top-22.5 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pb-4">
             <ProgramRail sections={rail} />
-            <div className="hidden min-[900px]:flex">
+            <div className="hidden lg:flex">
               <StatusLegend />
             </div>
             <CommentThread wardId={wardId} date={date} />

@@ -37,7 +37,7 @@ export function ProgramRail({ sections }: Props) {
   }, [sections]);
 
   return (
-    <nav aria-label="Program sections" className="hidden min-[900px]:flex flex-col gap-0.5 p-1">
+    <nav aria-label="Program sections" className="hidden lg:flex flex-col gap-0.5 p-1">
       <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep px-2.5 pt-1.5 pb-2">
         In this program
       </div>
