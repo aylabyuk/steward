@@ -22,7 +22,7 @@
     "test:e2e": "playwright test",
     "test:e2e:emulators": "firebase emulators:exec --only auth,firestore --project=demo-steward \"playwright test --config playwright.emulators.config.ts\"",
     "test:rules": "firebase emulators:exec --only firestore --project=demo-steward \"vitest run --config vitest.rules.config.ts\"",
-    "emulators": "firebase emulators:start --only auth,firestore",
+    "emulators": "firebase emulators:start --only auth,firestore --import=./emulator-data --export-on-exit ./emulator-data",
     "bootstrap-ward": "tsx scripts/bootstrap-ward.ts",
     "add-member": "tsx scripts/add-member.ts"
   },
