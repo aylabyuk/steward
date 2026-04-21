@@ -32,7 +32,7 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
-export function SundayCard({ date, meeting, fallbackType, leadTimeDays }: Props) {
+export function SundayCard({ date, meeting, fallbackType, leadTimeDays, nonMeetingSundays }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const type = meeting?.meetingType ?? fallbackType;
   const kind = kindLabel(type);
@@ -42,6 +42,7 @@ export function SundayCard({ date, meeting, fallbackType, leadTimeDays }: Props)
   const [saving, setSaving] = useState(false);
   const editListRef = useRef<SpeakerEditListHandle>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
+  const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
 
   if (cancelled) {
     return (
@@ -75,9 +76,13 @@ export function SundayCard({ date, meeting, fallbackType, leadTimeDays }: Props)
     >
       <SundayCardHeader
         date={date}
+        wardId={wardId}
+        currentType={type}
+        nonMeetingSundays={nonMeetingSundays}
         urgent={severity === "urgent"}
         badge={kind.badge || undefined}
         variant={kind.variant}
+        locked={hasConfirmedSpeaker}
       />
 
       {!kind.isSpecial && severity !== "none" && (
