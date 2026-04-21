@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { WithId } from "@/hooks/_sub";
 import type { MidItem as MidItemType, NonMeetingSunday, Speaker } from "@/lib/types";
 import { reorderSpeakers } from "@/features/speakers/speakerActions";
+import { AssignDialog } from "@/features/schedule/AssignDialog";
+import { SpeakerEditList, type SpeakerEditListHandle } from "@/features/schedule/SpeakerEditList";
+import { formatShortDate } from "@/features/schedule/dateFormat";
 import { ProgramSection } from "../program/ProgramSection";
 import { updateMeetingField } from "../updateMeeting";
 import { MidPlaceholderRow, SpeakerListRow } from "./SpeakerListRow";
+import { buildItems, formatMidLabel, sortByOrder, type Item } from "./speakerListItems";
 
 interface Props {
   wardId: string;
@@ -14,49 +18,15 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
-type Item =
-  | { kind: "speaker"; id: string; speaker: WithId<Speaker> }
-  | { kind: "mid"; id: "__mid__"; label: string };
-
-function sortByOrder(speakers: readonly WithId<Speaker>[]): WithId<Speaker>[] {
-  return [...speakers].sort((a, b) => {
-    const oa = a.data.order ?? Number.MAX_SAFE_INTEGER;
-    const ob = b.data.order ?? Number.MAX_SAFE_INTEGER;
-    if (oa !== ob) return oa - ob;
-    return a.id.localeCompare(b.id);
-  });
-}
-
-function formatMidLabel(mid: MidItemType | undefined): string {
-  if (!mid || mid.mode === "none") return "";
-  if (mid.mode === "rest") {
-    return mid.rest ? `Rest hymn · ${mid.rest.number} — ${mid.rest.title}` : "Rest hymn — pick a hymn";
-  }
-  return mid.musical?.performer
-    ? `Musical number · ${mid.musical.performer}`
-    : "Musical number — add performer";
-}
-
-function buildItems(ordered: WithId<Speaker>[], mid: MidItemType | undefined, midLabel: string): Item[] {
-  const showMid = Boolean(mid && mid.mode !== "none" && midLabel);
-  const clampedAfter = Math.min(Math.max(mid?.midAfter ?? 1, 0), ordered.length);
-  const items: Item[] = [];
-  ordered.forEach((s, i) => {
-    if (showMid && i === clampedAfter) items.push({ kind: "mid", id: "__mid__", label: midLabel });
-    items.push({ kind: "speaker", id: s.id, speaker: s });
-  });
-  if (showMid && clampedAfter >= ordered.length) {
-    items.push({ kind: "mid", id: "__mid__", label: midLabel });
-  }
-  return items;
-}
-
 export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays }: Props) {
   const ordered = useMemo(() => sortByOrder(speakers), [speakers]);
   const midLabel = formatMidLabel(mid);
   const items = useMemo(() => buildItems(ordered, mid, midLabel), [ordered, mid, midLabel]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const editListRef = useRef<SpeakerEditListHandle>(null);
 
   function persist(nextItems: Item[]) {
     const speakerIds = nextItems.filter((x) => x.kind === "speaker").map((x) => x.id);
@@ -83,12 +53,46 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
     setOverIdx(null);
   }
 
+  async function handleManageSave() {
+    if (!editListRef.current) return;
+    setSaving(true);
+    try {
+      await editListRef.current.save();
+      setManageOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const manageButton = (
+    <button
+      type="button"
+      onClick={() => setManageOpen(true)}
+      className="ml-auto font-sans text-[12.5px] font-semibold text-bordeaux hover:text-bordeaux-deep hover:underline hover:underline-offset-2 transition-colors"
+    >
+      Manage speakers →
+    </button>
+  );
+
+  const dialog = (
+    <AssignDialog
+      open={manageOpen}
+      title={formatShortDate(date)}
+      saving={saving}
+      onClose={() => setManageOpen(false)}
+      onSave={() => void handleManageSave()}
+    >
+      <SpeakerEditList ref={editListRef} date={date} wardId={wardId} />
+    </AssignDialog>
+  );
+
   if (items.length === 0) {
     return (
-      <ProgramSection id="sec-speakers" label="Speakers">
+      <ProgramSection id="sec-speakers" label="Speakers" rightSlot={manageButton}>
         <p className="font-serif italic text-[13.5px] text-walnut-3 py-1">
-          No speakers yet. Assign from the schedule view.
+          No speakers yet. Use <em>Manage speakers</em> to add them.
         </p>
+        {dialog}
       </ProgramSection>
     );
   }
@@ -100,8 +104,9 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
       label="Speakers"
       count={ordered.length}
       rightSlot={
-        <span className="ml-auto inline-flex gap-2.5 items-center">
+        <span className="ml-auto inline-flex gap-3 items-center">
           <span className="font-serif italic text-[12.5px] text-walnut-3">Drag to reorder</span>
+          {manageButton}
         </span>
       }
     >
@@ -133,6 +138,7 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
           );
         })}
       </ul>
+      {dialog}
     </ProgramSection>
   );
 }
