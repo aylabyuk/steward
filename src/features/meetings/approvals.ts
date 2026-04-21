@@ -6,21 +6,71 @@ import { readMeetingAndSpeakers } from "./readMeetingAndSpeakers";
 
 export { writeMeetingPatch } from "./writeMeetingPatch";
 
-const REQUIRED_APPROVALS = 2;
+export interface SelfApprover {
+  uid: string;
+  email: string;
+  displayName: string;
+  isBishopric: boolean;
+}
 
-export async function requestApproval(wardId: string, date: string): Promise<void> {
-  const batch = writeBatch(db);
-  batch.update(doc(db, "wards", wardId, "meetings", date), {
-    status: "pending_approval",
+/**
+ * Flip meeting.status → pending_approval and, if the requester is a
+ * bishopric member, include their approval automatically. A bishopric
+ * requester sets requiredApprovals = 1 (their own vote suffices); any
+ * other role requires two bishopric approvals.
+ */
+export async function requestApproval(
+  wardId: string,
+  date: string,
+  selfApprover?: SelfApprover,
+): Promise<void> {
+  const current = await readMeetingAndSpeakers(wardId, date);
+  if (!current) throw new Error("Meeting not found");
+  const { meeting } = current;
+  const approvals = meeting.approvals ?? [];
+
+  const isBishopricRequest = Boolean(selfApprover?.isBishopric);
+  const requiredApprovals = isBishopricRequest ? 1 : 2;
+
+  const update: Record<string, unknown> = {
+    requiredApprovals,
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  let liveAfter = approvals.filter((a) => !a.invalidated).length;
+
+  if (isBishopricRequest && selfApprover) {
+    const alreadyApproved = approvals.some(
+      (a) => a.uid === selfApprover.uid && !a.invalidated,
+    );
+    if (!alreadyApproved) {
+      const selfApproval: Approval = {
+        uid: selfApprover.uid,
+        email: selfApprover.email,
+        displayName: selfApprover.displayName,
+        approvedAt: Timestamp.now(),
+        approvedVersionHash: meeting.contentVersionHash ?? "",
+        invalidated: false,
+      };
+      update.approvals = [...approvals, selfApproval];
+      liveAfter += 1;
+    }
+  }
+
+  update.status = liveAfter >= requiredApprovals ? "approved" : "pending_approval";
+
+  const batch = writeBatch(db);
+  batch.update(doc(db, "wards", wardId, "meetings", date), update);
   const actor = currentActor();
   if (actor) {
     appendHistoryEvent(batch, wardId, date, actor, {
       target: "meeting",
       targetId: date,
       action: "update",
-      changes: [{ field: "status", old: "draft", new: "pending_approval" }],
+      changes: [
+        { field: "status", old: meeting.status, new: update.status },
+        { field: "requiredApprovals", new: requiredApprovals },
+      ],
     });
   }
   await batch.commit();
@@ -59,7 +109,8 @@ export async function approveMeeting(input: ApproveInput): Promise<void> {
 
   const updated = [...approvals, newApproval];
   const live = updated.filter((a) => !a.invalidated);
-  const newStatus = live.length >= REQUIRED_APPROVALS ? "approved" : "pending_approval";
+  const requiredApprovals = meeting.requiredApprovals ?? 2;
+  const newStatus = live.length >= requiredApprovals ? "approved" : "pending_approval";
 
   const batch = writeBatch(db);
   batch.update(doc(db, "wards", input.wardId, "meetings", input.date), {

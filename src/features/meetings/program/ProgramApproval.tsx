@@ -7,18 +7,25 @@ interface Props {
   report: ReadinessReport;
   status: string;
   approvals: readonly Approval[];
+  requiredApprovals: number | undefined;
   onRequestApproval?: () => void;
   busy?: boolean;
 }
 
-const REQUIRED_APPROVALS = 2;
-
-export function ProgramApproval({ report, status, approvals, onRequestApproval, busy }: Props) {
+export function ProgramApproval({
+  report,
+  status,
+  approvals,
+  requiredApprovals,
+  onRequestApproval,
+  busy,
+}: Props) {
   const { ready, missing, unconfirmed, totalItems, doneCount } = report;
   const live = approvals.filter((a) => !a.invalidated);
   const isPending = status === "pending_approval";
   const isApproved = status === "approved";
   const isDraft = !isPending && !isApproved;
+  const threshold = requiredApprovals ?? 2;
   const eyebrow = isApproved ? "approved" : isPending ? "pending" : ready ? "ready" : "draft";
 
   return (
@@ -36,7 +43,7 @@ export function ProgramApproval({ report, status, approvals, onRequestApproval, 
         <Eyebrow state={eyebrow} />
         <span className="ml-auto font-mono text-[11px] tracking-[0.08em] text-walnut-3">
           {isApproved || isPending
-            ? `${live.length}/${REQUIRED_APPROVALS} approvals`
+            ? `${live.length}/${threshold} approvals`
             : `${doneCount}/${totalItems} complete`}
         </span>
       </div>
