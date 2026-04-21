@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/cn";
 
@@ -14,6 +15,7 @@ function ChevronDown({ size = 14 }: { size?: number }) {
 export function UserMenu() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const me = useCurrentMember();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,7 +35,10 @@ export function UserMenu() {
     };
   }, [open]);
 
-  const name = user?.displayName || "User";
+  // Prefer the member doc (always written with the full name by the
+  // add-member script) over the Auth-level displayName, which may only
+  // be a first name depending on how the user originally signed in.
+  const name = me?.data.displayName || user?.displayName || "User";
   const initials = name
     .split(" ")
     .map((p) => p[0])
