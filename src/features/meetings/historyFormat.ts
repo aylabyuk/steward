@@ -15,6 +15,7 @@ const FIELD_LABELS: Record<string, string> = {
   sacramentBlessers: "Sacrament blessers",
   mid: "Musical interlude",
   showAnnouncements: "Show announcements",
+  visitors: "Visitors on the stand",
   wardBusiness: "Ward business",
   stakeBusiness: "Stake business",
   announcements: "Announcements",
