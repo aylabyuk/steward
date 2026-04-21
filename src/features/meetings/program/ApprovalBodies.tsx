@@ -45,14 +45,53 @@ export function PendingBody({ approvals }: { approvals: readonly Approval[] }) {
   );
 }
 
-export function ApprovedBody({ approvals }: { approvals: readonly Approval[] }) {
+export function ApprovedBody({
+  approvals,
+  date,
+}: {
+  approvals: readonly Approval[];
+  date: string;
+}) {
   return (
     <>
       <p className="font-display text-[17px] font-semibold text-walnut tracking-[-0.005em] m-0 mb-2.5">
         Approved and ready to print
       </p>
       <ApproverList approvals={approvals} />
+      <div className="mt-4 flex flex-col sm:flex-row gap-2.5 flex-wrap">
+        <PrintButton
+          href={`/print/${date}/congregation`}
+          title="Congregation"
+          subtitle="Hand out to attendees — hymns, prayers, speakers with topics."
+        />
+        <PrintButton
+          href={`/print/${date}/conducting`}
+          title="Conducting"
+          subtitle="Conductor's desk copy — script cues + ward / stake business space."
+        />
+      </div>
     </>
+  );
+}
+
+function PrintButton({ href, title, subtitle }: { href: string; title: string; subtitle: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex-1 inline-flex flex-col gap-0.5 px-3.5 py-2.5 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 hover:border-walnut-3 transition-colors"
+    >
+      <span className="font-sans text-[13px] font-semibold inline-flex items-center gap-1.5">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9V2h12v7" />
+          <rect x="3" y="9" width="18" height="9" rx="2" />
+          <path d="M6 14h12v7H6z" />
+        </svg>
+        Print {title.toLowerCase()} program
+      </span>
+      <span className="font-serif italic text-[12px] text-walnut-3 leading-snug">{subtitle}</span>
+    </a>
   );
 }
 
