@@ -19,9 +19,9 @@ const SEVERITY_TEXT: Record<"warn" | "urgent", string> = {
 
 const CARD_BG: Record<KindVariant, string> = {
   regular: "bg-chalk",
-  fast: "bg-gradient-to-b from-[rgba(224,190,135,0.14)] to-[rgba(224,190,135,0.04)] bg-chalk border-brass-soft",
-  stake: "bg-gradient-to-b from-[rgba(139,46,42,0.05)] to-[rgba(139,46,42,0.01)] bg-chalk",
-  general: "bg-gradient-to-b from-[rgba(139,46,42,0.05)] to-[rgba(139,46,42,0.01)] bg-chalk",
+  fast: "bg-chalk bg-[linear-gradient(180deg,rgba(224,190,135,0.14),rgba(224,190,135,0.04))] border-brass-soft",
+  stake: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
+  general: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
 };
 
 interface Props {
