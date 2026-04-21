@@ -1,6 +1,15 @@
-import { collection, doc, serverTimestamp, type WriteBatch } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  serverTimestamp,
+  type Transaction,
+  type WriteBatch,
+} from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { HistoryChange } from "@/lib/types";
+
+/** A Firestore writer — either a batched write or an active transaction. */
+export type HistoryWriter = WriteBatch | Transaction;
 
 export interface HistoryActor {
   uid: string;
@@ -75,14 +84,16 @@ export function computeDiff(
 }
 
 export function appendHistoryEvent(
-  batch: WriteBatch,
+  writer: HistoryWriter,
   wardId: string,
   date: string,
   actor: HistoryActor,
   event: HistoryEventInput,
 ): void {
   const ref = doc(collection(db, "wards", wardId, "meetings", date, "history"));
-  batch.set(ref, {
+  // Both WriteBatch and Transaction expose .set(ref, data); TS can't reconcile
+  // the union's return types so we narrow to WriteBatch — the call shape matches.
+  (writer as WriteBatch).set(ref, {
     actorUid: actor.uid,
     actorDisplayName: actor.displayName,
     at: serverTimestamp(),

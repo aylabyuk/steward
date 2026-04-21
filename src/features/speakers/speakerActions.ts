@@ -5,6 +5,8 @@ import { appendHistoryEvent, currentActor } from "@/features/meetings/history";
 import { db } from "@/lib/firebase";
 import type { HistoryChange, NonMeetingSunday, SpeakerRole, SpeakerStatus } from "@/lib/types";
 
+export { reorderSpeakers } from "./reorderSpeakers";
+
 function speakerRef(wardId: string, date: string, speakerId: string) {
   return doc(db, "wards", wardId, "meetings", date, "speakers", speakerId);
 }
@@ -105,30 +107,3 @@ export async function deleteSpeaker(
   await writeMeetingPatch(wardId, date, {});
 }
 
-/**
- * Persist a new order for all speakers in the given date. Writes `order` on
- * every speaker in a single batch so the UI and Firestore never disagree.
- * History: one aggregated "reorder" event rather than N individual updates.
- */
-export async function reorderSpeakers(
-  wardId: string,
-  date: string,
-  orderedIds: readonly string[],
-): Promise<void> {
-  const batch = writeBatch(db);
-  orderedIds.forEach((id, i) => {
-    batch.update(speakerRef(wardId, date, id), { order: i, updatedAt: serverTimestamp() });
-  });
-
-  const actor = currentActor();
-  if (actor) {
-    appendHistoryEvent(batch, wardId, date, actor, {
-      target: "speaker",
-      targetId: "reorder",
-      action: "update",
-      changes: [{ field: "order", new: orderedIds.join(",") }],
-    });
-  }
-  await batch.commit();
-  await writeMeetingPatch(wardId, date, {});
-}
