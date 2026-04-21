@@ -110,7 +110,7 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
         </span>
       }
     >
-      <ul className="flex flex-col">
+      <ul className="flex flex-col -mx-5">
         {items.map((item, i) => {
           const drag = {
             isDragging: dragIdx === i,
