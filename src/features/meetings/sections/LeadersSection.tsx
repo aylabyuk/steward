@@ -10,25 +10,25 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
-export function MusicSection({ wardId, date, meeting, nonMeetingSundays }: Props) {
-  async function set(field: "chorister" | "pianist", next: Assignment) {
+export function LeadersSection({ wardId, date, meeting, nonMeetingSundays }: Props) {
+  async function set(field: "presiding" | "conducting", next: Assignment) {
     await updateMeetingField(wardId, date, nonMeetingSundays, { [field]: next });
   }
 
   return (
-    <ProgramSection id="sec-music" label="Music">
+    <ProgramSection id="sec-leaders" label="Leaders">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-7 gap-y-1">
         <AssignRow
-          label="Chorister"
-          placeholder="Chorister name"
-          assignment={meeting?.chorister}
-          onChange={(a) => void set("chorister", a)}
+          label="Presiding"
+          placeholder="e.g. Bishop Reeves"
+          assignment={meeting?.presiding}
+          onChange={(a) => void set("presiding", a)}
         />
         <AssignRow
-          label="Pianist"
-          placeholder="Pianist name"
-          assignment={meeting?.pianist}
-          onChange={(a) => void set("pianist", a)}
+          label="Conducting"
+          placeholder="e.g. Brother Tan"
+          assignment={meeting?.conducting}
+          onChange={(a) => void set("conducting", a)}
         />
       </div>
     </ProgramSection>

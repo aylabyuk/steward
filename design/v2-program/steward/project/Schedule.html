@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en" data-screen-label="Schedule · Desktop + Mobile">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>the-vinci · Schedule</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo-monogram.svg">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="schedule.css?v=16">
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/data.jsx"></script>
+<script type="text/babel" src="components/SpeakerEditor.jsx"></script>
+<script type="text/babel" src="components/SundayCard.jsx"></script>
+<script type="text/babel" src="components/AssignVariants.jsx"></script>
+
+<script type="text/babel">
+
+
+function TopBar() {
+  return (
+    <div className="topbar">
+      <div className="topbar__brand">
+        <img src="assets/logo-monogram.svg" alt="" />
+        <div className="topbar__brand-name">Steward</div>
+        <div className="topbar__brand-tag">
+</div>
+      </div>
+      <div className="topbar__spacer" />
+      <UserMenu />
+    </div>);
+}
+
+function UserMenu() {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {if (ref.current && !ref.current.contains(e.target)) setOpen(false);};
+    const onEsc = (e) => {if (e.key === "Escape") setOpen(false);};
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onEsc);
+    return () => {document.removeEventListener("mousedown", onDoc);document.removeEventListener("keydown", onEsc);};
+  }, [open]);
+  const name = "Sebastian Tan";
+  const role = "Bishopric · 1st Counselor";
+  const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("");
+  return (
+    <div className="user-menu" ref={ref}>
+      <button className="user-menu__btn" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-haspopup="menu">
+        <span className="user-menu__avatar">{initials}</span>
+        <span className="user-menu__name hide-mobile">{name}</span>
+        <span className="user-menu__caret hide-mobile"><Icon name="chevron-down" size={13} /></span>
+      </button>
+      {open &&
+      <div className="user-menu__pop" role="menu">
+          <div className="user-menu__head">
+            <span className="user-menu__avatar user-menu__avatar--lg">{initials}</span>
+            <div className="user-menu__id">
+              <div className="user-menu__id-name">{name}</div>
+              <div className="user-menu__id-role">{role}</div>
+            </div>
+          </div>
+          <div className="user-menu__sep" />
+          <button className="user-menu__item" role="menuitem">Account settings</button>
+          <button className="user-menu__item" role="menuitem">Ward preferences</button>
+          <button className="user-menu__item" role="menuitem">Help & feedback</button>
+          <div className="user-menu__sep" />
+          <button className="user-menu__item user-menu__item--quiet" role="menuitem">Sign out</button>
+        </div>
+      }
+    </div>);
+
+}
+
+function Sidebar() {
+  const Item = ({ active, children }) =>
+  <div className={"sidebar__item" + (active ? " sidebar__item--active" : "")}>{children}</div>;
+
+  return (
+    <nav className="sidebar">
+      <div className="sidebar__label">Ward</div>
+      <Item>This Sunday</Item>
+      <Item active>Schedule</Item>
+      <Item>Speakers</Item>
+      <Item>Hymns</Item>
+      <div className="sidebar__label">Archive</div>
+      <Item>Past programs</Item>
+      <Item>Settings</Item>
+    </nav>);
+
+}
+
+function groupByMonth(sundays) {
+  const groups = [];
+  sundays.forEach((s) => {
+    const y = s.date.getFullYear();
+    const m = s.date.getMonth();
+    const key = `${y}-${m}`;
+    let g = groups.find((x) => x.key === key);
+    if (!g) {
+      g = { key, y, m, label: `${monthName(m)} ${y}`, items: [] };
+      groups.push(g);
+    }
+    g.items.push(s);
+  });
+  return groups;
+}
+
+function HorizonSelect({ value, onChange }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {if (ref.current && !ref.current.contains(e.target)) setOpen(false);};
+    const onEsc = (e) => {if (e.key === "Escape") setOpen(false);};
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onEsc);
+    return () => {document.removeEventListener("mousedown", onDoc);document.removeEventListener("keydown", onEsc);};
+  }, [open]);
+  const OPTIONS = [1, 2, 3, 6, 12];
+  return (
+    <div className="horizon-sel" ref={ref}>
+      <button
+        className="horizon-sel__btn"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="listbox">
+        
+        <span className="horizon-sel__eyebrow">Showing</span>
+        <span className="horizon-sel__value">Next {value} {value === 1 ? "month" : "months"}</span>
+        <span className="horizon-sel__caret"><Icon name="chevron-down" size={13} /></span>
+      </button>
+      {open &&
+      <div className="horizon-sel__pop" role="listbox">
+          {OPTIONS.map((n) =>
+        <button
+          key={n}
+          role="option"
+          aria-selected={value === n}
+          className={"horizon-sel__item" + (value === n ? " is-active" : "")}
+          onClick={() => {onChange(n);setOpen(false);}}>
+          
+              <span className="horizon-sel__mark">{value === n ? "●" : ""}</span>
+              <span>Next {n} {n === 1 ? "month" : "months"}</span>
+            </button>
+        )}
+        </div>
+      }
+    </div>);
+
+}
+
+function App() {
+  const [monthsAhead, setMonthsAhead] = React.useState(() => {
+    const v = +(localStorage.getItem("steward:months") || 3);
+    return [1, 2, 3, 6, 12].includes(v) ? v : 3;
+  });
+  const [sundays, setSundays] = React.useState(() => buildSundays(3));
+  const [modalFor, setModalFor] = React.useState(null);
+
+  React.useEffect(() => {
+    setSundays(buildSundays(monthsAhead));
+    localStorage.setItem("steward:months", String(monthsAhead));
+  }, [monthsAhead]);
+
+  const updateSunday = (next) => {
+    setSundays(sundays.map((s) => s.id === next.id ? next : s));
+    if (modalFor && modalFor.id === next.id) setModalFor(next);
+  };
+
+  const groups = groupByMonth(sundays);
+
+  return (
+    <div className="app density-roomy layout-grid">
+      <TopBar />
+      <div className="shell">
+        <div className="main">
+          <div className="page-head">
+            <div className="page-head__left">
+              <div className="page-head__eyebrow">Sacrament meeting</div>
+              <h1 className="page-head__title">Schedule</h1>
+              <div className="page-head__sub">Assign speakers for the weeks ahead.</div>
+            </div>
+            <div className="page-head__right">
+              <HorizonSelect value={monthsAhead} onChange={setMonthsAhead} />
+            </div>
+          </div>
+
+          {groups.map((g) =>
+          <section key={g.key} className="quarter">
+              <div className="quarter__head">
+                <h2 className="quarter__title">{g.label}</h2>
+                <span className="quarter__meta">{g.items.length} {g.items.length === 1 ? "Sunday" : "Sundays"}</span>
+              </div>
+              <div className="grid">
+                {g.items.map((s) =>
+              <SundayCard
+                key={s.id}
+                sunday={s}
+                isOpen={false}
+                onToggle={() => setModalFor(s)}
+                onUpdate={updateSunday}
+                assignFlow="modal" />
+
+              )}
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
+
+      {modalFor &&
+      <AssignModal sunday={modalFor} onClose={() => setModalFor(null)} onUpdate={updateSunday} />
+      }
+    </div>);
+
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
