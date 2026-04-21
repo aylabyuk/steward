@@ -23,7 +23,7 @@ export function ScheduleView() {
     if (stored) setHorizon(Number(stored));
   }, []);
 
-  const { slots, loading, error } = useUpcomingMeetings(horizon);
+  const { slots, error } = useUpcomingMeetings(horizon);
 
   if (!wardId) return null;
 

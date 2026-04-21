@@ -52,7 +52,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
       const target = prev.find((d) => d.tempId === tempId);
       if (target && target.id) {
         // Persisted: queue a Firestore delete to run on Save.
-        setDeletedIds((prev) => (prev.includes(target.id!) ? prev : [...prev, target.id!]));
+        setDeletedIds((ids) => (ids.includes(target.id!) ? ids : [...ids, target.id!]));
       }
       return prev.filter((d) => d.tempId !== tempId);
     });
