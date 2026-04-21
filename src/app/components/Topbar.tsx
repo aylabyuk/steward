@@ -10,7 +10,15 @@ export function Topbar() {
         {/* Brand */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
           <img src="/icons/logo-monogram.svg" alt="Steward" className="h-6 w-6" />
-          <span className="font-display text-base font-semibold tracking-tight">Steward</span>
+          <div className="flex flex-col leading-none">
+            <span className="font-display text-base font-semibold tracking-tight">Steward</span>
+            <span
+              aria-label={`Version ${__APP_VERSION__}`}
+              className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-walnut-3"
+            >
+              v{__APP_VERSION__}
+            </span>
+          </div>
           {wardName && (
             <>
               <span aria-hidden className="text-walnut-3">
