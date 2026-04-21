@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
 export interface OverflowMenuItem {
@@ -14,7 +14,10 @@ interface Props {
 
 export function OverflowMenu({ items, ariaLabel = "More actions" }: Props) {
   const [open, setOpen] = useState(false);
+  const [direction, setDirection] = useState<"down" | "up">("down");
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -32,9 +35,24 @@ export function OverflowMenu({ items, ariaLabel = "More actions" }: Props) {
     };
   }, [open]);
 
+  // Decide whether the menu should open downward or flip above the trigger.
+  // Measured synchronously before paint so there is no visual jump.
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current || !menuRef.current) return;
+    const trigger = triggerRef.current.getBoundingClientRect();
+    const menuHeight = menuRef.current.offsetHeight;
+    const GAP = 16;
+    const spaceBelow = window.innerHeight - trigger.bottom;
+    const spaceAbove = trigger.top;
+    setDirection(
+      spaceBelow < menuHeight + GAP && spaceAbove > spaceBelow ? "up" : "down",
+    );
+  }, [open]);
+
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={triggerRef}
         type="button"
         aria-label={ariaLabel}
         aria-haspopup="menu"
@@ -46,8 +64,14 @@ export function OverflowMenu({ items, ariaLabel = "More actions" }: Props) {
       </button>
       {open && (
         <ul
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-1.5 min-w-44 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-20 animate-[menuIn_120ms_ease-out] list-none m-0"
+          className={cn(
+            "absolute right-0 min-w-44 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-20 list-none m-0",
+            direction === "down"
+              ? "top-full mt-1.5 animate-[menuIn_120ms_ease-out]"
+              : "bottom-full mb-1.5 animate-[menuInUp_120ms_ease-out]",
+          )}
         >
           {items.map((item) => (
             <li key={item.label} role="none">
