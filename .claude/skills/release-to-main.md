@@ -82,6 +82,16 @@ Do this as a single commit titled `chore(release): vX.Y.Z`:
    - Group entries under **Added / Changed / Fixed / Security /
      Infrastructure** subheads. Commit subjects are a starting point,
      not the final copy — rewrite for the end reader.
+   - **Pull closed-issue references** for the release window so the
+     changelog links back to the backlog that drove the work:
+     ```bash
+     LAST_TAG=$(git describe --tags --abbrev=0 origin/main)
+     LAST_DATE=$(git log -1 --format=%aI "$LAST_TAG" | cut -d'T' -f1)
+     gh issue list --state closed --limit 100 \
+       --search "closed:>=$LAST_DATE" --json number,title,labels
+     ```
+     Attach `(#N)` references inline where a bullet corresponds to a
+     closed issue.
    - Re-add an empty `## [Unreleased]` at the top of the file.
    - Update the compare links at the bottom:
      ```

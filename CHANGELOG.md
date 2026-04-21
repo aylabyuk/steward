@@ -7,6 +7,29 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-04-21
+
+Backlog scaffolding: a skill for filing issues mid-session plus issue
+templates so anything captured follows a consistent shape.
+
+### Added
+- `.claude/skills/log-issue.md` — skill that turns a mid-session
+  discovery into a GitHub issue (de-dupe search, template-shaped body,
+  label selection, guardrails).
+- `.github/ISSUE_TEMPLATE/` with `bug.yml`, `feature.yml`, and
+  `tech-debt.yml` so issues filed from the GitHub UI follow the same
+  shape as ones filed via the CLI. `config.yml` disables blank
+  issues.
+- Labels on GitHub: `tech-debt`, `needs-triage`, `security`.
+- `CLAUDE.md` "Backlog hygiene" section: Claude now proactively asks
+  about logging any discovered bug / feature idea / tech-debt item
+  mid-session, with a 10-minute rule-of-thumb threshold.
+
+### Changed
+- `.claude/skills/release-to-main.md` — the changelog step now also
+  pulls closed issues since the last tag so each release links back
+  to the backlog that drove it.
+
 ## [0.1.1] — 2026-04-21
 
 Docs + release tooling, plus a cleanup of an index config that drifted
@@ -117,6 +140,7 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/aylabyuk/steward/releases/tag/v0.1.2
 [0.1.1]: https://github.com/aylabyuk/steward/releases/tag/v0.1.1
 [0.1.0]: https://github.com/aylabyuk/steward/releases/tag/v0.1.0

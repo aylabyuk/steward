@@ -1,0 +1,30 @@
+name: Tech debt / cleanup
+description: Internal refactor, known shortcut, or followup from a previous change
+labels: [tech-debt, needs-triage]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What's the shortcut?
+      description: The thing that's simpler / faster / good-enough today but should eventually change.
+      placeholder: "ApprovalsArrayOk unrolls positionally for max 2 approvals; if the cap ever moves to 3+, the rule breaks."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why fix it?
+      description: What breaks, slows down, or becomes risky if we don't.
+      placeholder: "Silent rule misbehavior on future schema changes."
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Rough plan (optional)
+      description: If you already know how you'd unwind it.
+  - type: textarea
+    id: refs
+    attributes:
+      label: File / PR / commit references (optional)
+      placeholder: "firestore.rules:63 · introduced in #1"

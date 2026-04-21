@@ -71,6 +71,22 @@ functions/          # Firebase Cloud Functions
 - `npm run test:all` — CI target
 - `npm run emulators` — Firebase Local Emulator Suite
 
+## Backlog hygiene — log before you forget
+
+When you discover a bug, feature gap, or tech-debt item mid-session
+that you're NOT going to fix in the next step, proactively ask the
+user once: *"Log this as a GitHub issue, or skip?"* Use the
+[`log-issue`](.claude/skills/log-issue.md) skill to file it. The
+threshold: if it's a 10-minute fix you're about to make anyway, skip.
+Everything else — things you're documenting but not fixing, feature
+ideas mentioned in passing, known shortcuts — should get an issue so
+it doesn't evaporate in chat history.
+
+Issue templates live at `.github/ISSUE_TEMPLATE/` (bug / feature /
+tech-debt). Commit messages that resolve an issue should use
+`Fixes #N` so the PR auto-closes on merge to `main`. Changelog
+entries reference the issue inline as `(#N)`.
+
 ## Topic docs — load on demand for the current task
 
 - **[docs/domain.md](docs/domain.md)** — data model, Firestore shape, meeting types, cancellation, approval lifecycle, audit trail
