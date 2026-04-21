@@ -99,6 +99,10 @@ export const sacramentMeetingSchema = z.object({
   presiding: assignmentSchema.optional(),
   conducting: assignmentSchema.optional(),
   visitors: z.array(visitorSchema).default([]),
+  // How many live approvals are needed to move status → approved.
+  // Set when approval is requested: 1 if the requester is bishopric
+  // (their self-approval counts), otherwise 2.
+  requiredApprovals: z.number().int().min(1).max(2).default(2),
   lastNudgedAt: z.any().optional(),
   updatedAt: z.any().optional(),
   createdAt: z.any().optional(),

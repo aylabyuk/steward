@@ -3,6 +3,7 @@ import { OverflowMenu } from "@/components/ui/OverflowMenu";
 import { CommentThread } from "@/features/comments/CommentThread";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
+import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useAuthStore } from "@/stores/authStore";
 import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -33,7 +34,9 @@ interface Props {
 
 export function WeekEditor({ date }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId);
-  const authUid = useAuthStore((s) => s.user?.uid);
+  const authUser = useAuthStore((s) => s.user);
+  const authUid = authUser?.uid;
+  const me = useCurrentMember();
   const settings = useWardSettings();
   const meeting = useMeeting(date);
   const speakers = useSpeakers(date);
@@ -74,9 +77,17 @@ export function WeekEditor({ date }: Props) {
   ];
 
   async function handleRequestApproval() {
+    if (!authUser) return;
     setBusy(true);
     try {
-      await requestApproval(wardId!, date);
+      const isActiveBishopric =
+        me?.data.active === true && me.data.role === "bishopric";
+      await requestApproval(wardId!, date, {
+        uid: authUser.uid,
+        email: authUser.email ?? "",
+        displayName: authUser.displayName ?? authUser.email ?? "",
+        isBishopric: isActiveBishopric,
+      });
     } finally {
       setBusy(false);
     }
@@ -115,6 +126,7 @@ export function WeekEditor({ date }: Props) {
                 report={report}
                 status={meeting.data?.status ?? "draft"}
                 approvals={meeting.data?.approvals ?? []}
+                requiredApprovals={meeting.data?.requiredApprovals}
                 onRequestApproval={() => void handleRequestApproval()}
                 busy={busy}
               />
