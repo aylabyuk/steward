@@ -112,6 +112,7 @@ export function WeekEditor({ date }: Props) {
                 <StatusLegend />
               </div>
               <LeadersSection {...sectionProps} />
+              <BusinessSection {...sectionProps} />
               <PrayersSection {...sectionProps} />
               <MusicSection {...sectionProps} />
               <SacramentSection {...sectionProps} />
@@ -125,7 +126,6 @@ export function WeekEditor({ date }: Props) {
                 />
               )}
               <HymnsSection {...sectionProps} type={type} />
-              <BusinessSection {...sectionProps} />
             </>
           )}
         </div>
