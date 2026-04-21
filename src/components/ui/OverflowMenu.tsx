@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/cn";
 
 export interface OverflowMenuItem {
   label: string;
@@ -13,54 +14,62 @@ interface Props {
 
 export function OverflowMenu({ items, ariaLabel = "More actions" }: Props) {
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <button
         type="button"
         aria-label={ariaLabel}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
+        className="inline-flex items-center justify-center w-7 h-7 rounded-md text-walnut-3 hover:text-walnut border border-transparent hover:border-border hover:bg-parchment-2 transition-colors leading-none"
       >
-        <svg viewBox="0 0 20 20" aria-hidden="true" className="h-5 w-5 fill-current">
-          <circle cx="4" cy="10" r="1.6" />
-          <circle cx="10" cy="10" r="1.6" />
-          <circle cx="16" cy="10" r="1.6" />
-        </svg>
+        <span className="text-lg -mt-0.5">⋯</span>
       </button>
       {open && (
-        <>
-          <button
-            type="button"
-            aria-hidden="true"
-            tabIndex={-1}
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-10 cursor-default bg-transparent"
-          />
-          <ul
-            role="menu"
-            className="absolute right-0 z-20 mt-1 min-w-40 rounded-md border border-slate-200 bg-white py-1 shadow-lg"
-          >
-            {items.map((item) => (
-              <li key={item.label} role="none">
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setOpen(false);
-                    item.onSelect();
-                  }}
-                  className={`block w-full px-3 py-1.5 text-left text-sm hover:bg-slate-100 ${
-                    item.destructive ? "text-red-700" : "text-slate-700"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
+        <ul
+          role="menu"
+          className="absolute right-0 mt-1.5 min-w-44 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-20 animate-[menuIn_120ms_ease-out] list-none m-0"
+        >
+          {items.map((item) => (
+            <li key={item.label} role="none">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  item.onSelect();
+                }}
+                className={cn(
+                  "w-full text-left font-sans text-[13px] px-3 py-1.5 rounded-sm transition-colors",
+                  item.destructive
+                    ? "text-bordeaux hover:bg-danger-soft"
+                    : "text-walnut hover:bg-parchment",
+                )}
+              >
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
