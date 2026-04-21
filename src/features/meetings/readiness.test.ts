@@ -68,6 +68,17 @@ describe("checkMeetingReadiness", () => {
     expect(r.ready).toBe(false);
   });
 
+  it("blocks approval when any speaker is not confirmed", () => {
+    const [a, b] = twoSpeakers;
+    const r = checkMeetingReadiness(
+      complete,
+      [a!, { ...b!, data: { ...b!.data, status: "invited" } }],
+      "regular",
+    );
+    expect(r.unconfirmed).toContain("B — not confirmed");
+    expect(r.ready).toBe(false);
+  });
+
   it("flags every missing hymn + assignment on an empty regular meeting", () => {
     const empty: SacramentMeeting = {
       meetingType: "regular",

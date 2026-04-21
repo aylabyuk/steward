@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { createSpeaker, updateSpeaker } from "@/features/speakers/speakerActions";
+import { createSpeaker, deleteSpeaker, updateSpeaker } from "@/features/speakers/speakerActions";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { SpeakerEditCard } from "./SpeakerEditCard";
 import { emptyDraft, fromSpeaker, isDirty, type Draft } from "./speakerDraft";
@@ -19,6 +19,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
 ) {
   const speakers = useSpeakers(date);
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const originalsRef = useRef<Map<string, Draft>>(new Map());
   const seededRef = useRef(false);
 
@@ -47,10 +48,11 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   function removeDraft(tempId: string) {
     setDrafts((prev) => {
       const target = prev.find((d) => d.tempId === tempId);
-      // New (unsaved) drafts are just spliced out. Persisted speakers can't be deleted
-      // yet (no deleteSpeaker action) — keep them in state; nothing to save.
-      if (target && target.id === null) return prev.filter((d) => d.tempId !== tempId);
-      return prev;
+      if (target && target.id) {
+        // Persisted: queue a Firestore delete to run on Save.
+        setDeletedIds((prev) => (prev.includes(target.id!) ? prev : [...prev, target.id!]));
+      }
+      return prev.filter((d) => d.tempId !== tempId);
     });
   }
 
@@ -61,6 +63,11 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   useImperativeHandle(ref, () => ({
     async save() {
       const tasks: Promise<void>[] = [];
+      // Persisted deletions first so any re-indexing/hash recompute settles
+      // before we issue create/update for the remaining rows.
+      for (const id of deletedIds) {
+        tasks.push(deleteSpeaker(wardId, date, id));
+      }
       for (const d of drafts) {
         const name = d.name.trim();
         if (!name) continue;
@@ -90,8 +97,9 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
         }
       }
       await Promise.all(tasks);
+      setDeletedIds([]);
     },
-  }), [drafts, wardId, date]);
+  }), [drafts, deletedIds, wardId, date]);
 
   if (speakers.loading && !seededRef.current) {
     return <p className="text-sm text-walnut-2">Loading…</p>;
