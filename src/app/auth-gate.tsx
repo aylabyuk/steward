@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Navigate } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import { AppShell } from "@/app/components/AppShell";
 import { WardPicker } from "@/app/components/ward-picker";
 import { useWardAccess } from "@/hooks/useWardAccess";
@@ -15,7 +15,18 @@ function Loading() {
   );
 }
 
-export function AuthGate() {
+interface Props {
+  /**
+   * When true (default), the gate renders <AppShell /> which in turn
+   * hosts the route outlet with the topbar + centered content column.
+   * When false, it renders <Outlet /> directly so children can own the
+   * full page chrome — used for print views that need a standalone
+   * layout.
+   */
+  appShell?: boolean;
+}
+
+export function AuthGate({ appShell = true }: Props) {
   const status = useAuthStore((s) => s.status);
   const access = useWardAccess();
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -35,5 +46,5 @@ export function AuthGate() {
   if (access.kind === "none") return <AccessRequired />;
   if (access.kind === "multiple" && !wardId) return <WardPicker members={access.members} />;
 
-  return <AppShell />;
+  return appShell ? <AppShell /> : <Outlet />;
 }
