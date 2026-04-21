@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 
+export type RailState = "done" | "unconfirmed" | "missing";
+
 export interface RailSection {
   id: string;
   label: string;
-  done?: boolean;
+  state: RailState;
   count?: number;
 }
 
@@ -55,7 +57,9 @@ export function ProgramRail({ sections }: Props) {
           <span
             className={cn(
               "w-2 h-2 rounded-full border",
-              s.done ? "bg-success border-success" : "border-walnut-3",
+              s.state === "done" && "bg-success border-success",
+              s.state === "unconfirmed" && "border-walnut-3",
+              s.state === "missing" && "border-dashed border-border-strong",
             )}
           />
           <span>{s.label}</span>
