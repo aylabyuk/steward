@@ -2,17 +2,26 @@ import { useRef, useState } from "react";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { kindLabel } from "./kindLabel";
+import { cn } from "@/lib/cn";
+import { kindLabel, type KindVariant } from "./kindLabel";
 import { SpeakerEditList, type SpeakerEditListHandle } from "./SpeakerEditList";
 import { AssignDialog } from "./AssignDialog";
 import { SundayCardBody } from "./SundayCardBody";
 import { SundayCardHeader } from "./SundayCardHeader";
+import { SundayCardSpecial } from "./SundayCardSpecial";
 import { formatShortDate } from "./dateFormat";
 import { leadTimeSeverity } from "@/features/speakers/leadTime";
 
 const SEVERITY_TEXT: Record<"warn" | "urgent", string> = {
   warn: "Less than 2 weeks notice — consider a later week.",
   urgent: "Short notice — confirm speakers directly.",
+};
+
+const CARD_BG: Record<KindVariant, string> = {
+  regular: "bg-chalk",
+  fast: "bg-gradient-to-b from-[rgba(224,190,135,0.14)] to-[rgba(224,190,135,0.04)] bg-chalk border-brass-soft",
+  stake: "bg-gradient-to-b from-[rgba(139,46,42,0.05)] to-[rgba(139,46,42,0.01)] bg-chalk",
+  general: "bg-gradient-to-b from-[rgba(139,46,42,0.05)] to-[rgba(139,46,42,0.01)] bg-chalk",
 };
 
 interface Props {
@@ -33,14 +42,6 @@ export function SundayCard({ date, meeting, fallbackType, leadTimeDays }: Props)
   const [saving, setSaving] = useState(false);
   const editListRef = useRef<SpeakerEditListHandle>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
-
-  if (kind.variant === "noMeeting") {
-    return (
-      <article className="rounded-lg border border-border bg-parchment-2 p-4 text-walnut-2">
-        <p className="text-sm">{kind.label} — no sacrament meeting</p>
-      </article>
-    );
-  }
 
   if (cancelled) {
     return (
@@ -66,17 +67,35 @@ export function SundayCard({ date, meeting, fallbackType, leadTimeDays }: Props)
   }
 
   return (
-    <article className="rounded-lg border border-border bg-chalk shadow-elev-1 hover:shadow-elev-2 hover:border-border-strong transition-all duration-200">
-      <SundayCardHeader date={date} urgent={severity === "urgent"} />
+    <article
+      className={cn(
+        "rounded-lg border border-border shadow-elev-1 hover:shadow-elev-2 hover:border-border-strong transition-all duration-200",
+        CARD_BG[kind.variant],
+      )}
+    >
+      <SundayCardHeader
+        date={date}
+        urgent={severity === "urgent"}
+        badge={kind.badge || undefined}
+        variant={kind.variant}
+      />
 
-      {severity !== "none" && (
+      {!kind.isSpecial && severity !== "none" && (
         <div className="mx-4 mb-3 rounded-md border border-danger-soft bg-danger-soft/30 px-3 py-2 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-bordeaux shrink-0" />
           <span className="text-[12.5px] text-bordeaux-deep">{SEVERITY_TEXT[severity]}</span>
         </div>
       )}
 
-      <SundayCardBody speakers={speakers} onAddSpeaker={() => setAssignDialogOpen(true)} />
+      {kind.isSpecial ? (
+        <SundayCardSpecial
+          variant={kind.variant}
+          stampLabel={kind.stampLabel}
+          description={kind.description}
+        />
+      ) : (
+        <SundayCardBody speakers={speakers} onAddSpeaker={() => setAssignDialogOpen(true)} />
+      )}
 
       <AssignDialog
         open={assignDialogOpen}
