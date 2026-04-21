@@ -92,12 +92,15 @@ export const sacramentMeetingSchema = z.object({
 });
 export type SacramentMeeting = z.infer<typeof sacramentMeetingSchema>;
 
+// Tolerate legacy speaker docs that stored a status outside the current
+// enum (e.g. "draft", "sent") — fall back to "planned" rather than failing
+// the whole list parse.
 export const speakerSchema = z.object({
   name: z.string().min(1),
   email: z.email().optional().or(z.literal("")),
   topic: z.string().optional(),
-  status: speakerStatusSchema,
-  role: speakerRoleSchema.default("Member"),
+  status: speakerStatusSchema.catch("planned"),
+  role: speakerRoleSchema.catch("Member"),
   order: z.number().int().min(0).optional(),
   createdAt: z.any().optional(),
   updatedAt: z.any().optional(),
