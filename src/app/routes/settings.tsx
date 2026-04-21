@@ -16,6 +16,11 @@ const links = [
     label: "Notifications",
     desc: "Your push preferences and quiet hours",
   },
+  {
+    to: "/settings/templates/speakers",
+    label: "Speaker invitation letter",
+    desc: "Ward default template shown to speakers + printed letter",
+  },
 ];
 
 export function SettingsIndex() {

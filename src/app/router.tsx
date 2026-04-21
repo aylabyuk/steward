@@ -8,6 +8,7 @@ import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
 import { NotificationSettingsPage } from "./routes/notification-settings";
 import { SettingsIndex } from "./routes/settings";
+import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
 
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/members", element: <MembersPage /> },
       { path: "settings/notifications", element: <NotificationSettingsPage /> },
+      { path: "settings/templates/speakers", element: <SpeakerLetterTemplatePage /> },
     ],
   },
   // Print views share AuthGate's auth + ward resolution (so
