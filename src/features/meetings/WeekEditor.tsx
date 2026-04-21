@@ -96,6 +96,7 @@ export function WeekEditor({ date }: Props) {
           ) : (
             <>
               <ProgramApproval
+                date={date}
                 report={report}
                 status={currentStatus}
                 approvals={meeting.data?.approvals ?? []}

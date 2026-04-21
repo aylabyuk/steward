@@ -1,4 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router";
+import { CongregationProgram } from "@/features/print/CongregationProgram";
+import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
 import { Login } from "./routes/login";
@@ -22,5 +24,10 @@ export const router = createBrowserRouter([
       { path: "settings/notifications", element: <NotificationSettingsPage /> },
     ],
   },
+  // Print views render standalone — no AppShell / topbar — so the printed
+  // page doesn't include app chrome. They still gate on auth + approval
+  // internally.
+  { path: "/print/:date/congregation", element: <CongregationProgram /> },
+  { path: "/print/:date/conducting", element: <ConductingProgram /> },
   { path: "/login", element: <Login /> },
 ]);
