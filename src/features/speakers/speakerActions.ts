@@ -128,4 +128,3 @@ export async function deleteSpeaker(
     await writeMeetingPatch(wardId, date, {});
   });
 }
-

@@ -48,10 +48,16 @@ export function ProgramApproval({
       id="sec-overview"
       className={cn(
         "rounded-xl border p-5 mb-7",
-        isApproved && "border-success-soft bg-chalk bg-[linear-gradient(180deg,rgba(78,107,58,0.1),rgba(78,107,58,0.02))]",
-        isPending && "border-info-soft bg-chalk bg-[linear-gradient(180deg,rgba(60,85,100,0.08),rgba(60,85,100,0.02))]",
-        isDraft && ready && "border-success-soft bg-chalk bg-[linear-gradient(180deg,rgba(78,107,58,0.1),rgba(78,107,58,0.02))]",
-        isDraft && !ready && "border-brass-soft bg-chalk bg-[linear-gradient(180deg,rgba(224,190,135,0.2),rgba(224,190,135,0.05))]",
+        isApproved &&
+          "border-success-soft bg-chalk bg-[linear-gradient(180deg,rgba(78,107,58,0.1),rgba(78,107,58,0.02))]",
+        isPending &&
+          "border-info-soft bg-chalk bg-[linear-gradient(180deg,rgba(60,85,100,0.08),rgba(60,85,100,0.02))]",
+        isDraft &&
+          ready &&
+          "border-success-soft bg-chalk bg-[linear-gradient(180deg,rgba(78,107,58,0.1),rgba(78,107,58,0.02))]",
+        isDraft &&
+          !ready &&
+          "border-brass-soft bg-chalk bg-[linear-gradient(180deg,rgba(224,190,135,0.2),rgba(224,190,135,0.05))]",
       )}
     >
       <div className="flex items-center gap-2.5 mb-3">
@@ -72,9 +78,7 @@ export function ProgramApproval({
         </p>
       )}
 
-      {error && (
-        <p className="font-sans text-[12.5px] text-bordeaux mb-2.5">{error}</p>
-      )}
+      {error && <p className="font-sans text-[12.5px] text-bordeaux mb-2.5">{error}</p>}
 
       {isDraft && (
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -120,4 +124,3 @@ export function ProgramApproval({
     </section>
   );
 }
-

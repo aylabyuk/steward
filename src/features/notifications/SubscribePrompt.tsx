@@ -60,8 +60,8 @@ export function SubscribePrompt() {
           Install Steward to enable push notifications
         </p>
         <p className="mt-1 text-[13px] text-walnut-2">
-          iOS only delivers Web Push to apps installed on your home screen. Tap the Share button
-          in Safari and choose "Add to Home Screen", then open Steward from the icon.
+          iOS only delivers Web Push to apps installed on your home screen. Tap the Share button in
+          Safari and choose "Add to Home Screen", then open Steward from the icon.
         </p>
         <div className="mt-3 flex items-center justify-end">
           <button

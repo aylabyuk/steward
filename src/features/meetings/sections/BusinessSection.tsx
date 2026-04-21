@@ -85,14 +85,18 @@ function FieldRow({ label, optional, placeholder, helper, value, onCommit }: Fie
         placeholder={placeholder}
         className="font-sans text-[14px] leading-[1.55] px-3 py-2.5 bg-parchment border border-transparent rounded-md text-walnut min-h-17.5 w-full resize-y transition-colors placeholder:text-walnut-3 placeholder:italic hover:border-border-strong hover:bg-chalk focus:outline-none focus:border-bordeaux focus:bg-chalk focus:ring-2 focus:ring-bordeaux/15"
       />
-      {helper && (
-        <span className="font-serif italic text-[12.5px] text-walnut-3">{helper}</span>
-      )}
+      {helper && <span className="font-serif italic text-[12.5px] text-walnut-3">{helper}</span>}
     </label>
   );
 }
 
-function ShowAnnouncementsToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function ShowAnnouncementsToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <label className="inline-flex items-center gap-2.5 pt-2.5 cursor-pointer w-fit">
       <input

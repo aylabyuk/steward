@@ -49,7 +49,9 @@ export function MidItem({ mid, onChange }: Props) {
               onClick={() => setMode(mode.key)}
               className={cn(
                 "font-mono text-[10px] uppercase tracking-widest px-2.5 py-1.5 rounded-sm transition-colors",
-                m.mode === mode.key ? "bg-walnut text-parchment" : "text-walnut-2 hover:bg-parchment-2",
+                m.mode === mode.key
+                  ? "bg-walnut text-parchment"
+                  : "text-walnut-2 hover:bg-parchment-2",
               )}
             >
               {mode.label}

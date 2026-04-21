@@ -58,9 +58,7 @@ export function AssignRow({ label, placeholder, assignment, showStatus = true, o
       {showStatus ? (
         <StatusToggle
           state={state}
-          onToggle={() =>
-            onChange({ ...a, confirmed: !a.confirmed })
-          }
+          onToggle={() => onChange({ ...a, confirmed: !a.confirmed })}
           title={`${label} status`}
         />
       ) : (

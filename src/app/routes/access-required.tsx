@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import {
-  findInvitesForEmail,
-  type PendingInvite,
-} from "@/features/invites/inviteActions";
+import { findInvitesForEmail, type PendingInvite } from "@/features/invites/inviteActions";
 import { CALLING_LABELS } from "@/features/settings/callingLabels";
 import { useAuthStore } from "@/stores/authStore";
 

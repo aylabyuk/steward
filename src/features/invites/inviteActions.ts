@@ -10,12 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  type Calling,
-  callingToRole,
-  inviteSchema,
-  memberSchema,
-} from "@/lib/types";
+import { type Calling, callingToRole, inviteSchema, memberSchema } from "@/lib/types";
 
 function inviteEmailKey(email: string): string {
   return email.trim().toLowerCase();
@@ -59,11 +54,7 @@ export async function revokeInvite(wardId: string, email: string): Promise<void>
  * role/calling/email/displayName mirror the invite so the invitee can't
  * escalate their own calling.
  */
-export async function acceptInvite(
-  wardId: string,
-  uid: string,
-  email: string,
-): Promise<void> {
+export async function acceptInvite(wardId: string, uid: string, email: string): Promise<void> {
   const emailKey = inviteEmailKey(email);
   const inviteRef = doc(db, "wards", wardId, "invites", emailKey);
   const snap = await getDoc(inviteRef);
@@ -103,9 +94,7 @@ export interface PendingInvite {
 
 export async function findInvitesForEmail(email: string): Promise<PendingInvite[]> {
   const emailKey = inviteEmailKey(email);
-  const snap = await getDocs(
-    query(collectionGroup(db, "invites"), where("email", "==", emailKey)),
-  );
+  const snap = await getDocs(query(collectionGroup(db, "invites"), where("email", "==", emailKey)));
   const out: PendingInvite[] = [];
   for (const d of snap.docs) {
     const wardId = d.ref.parent.parent?.id;

@@ -35,7 +35,10 @@ export function LeadersSection({ wardId, date, meeting, nonMeetingSundays }: Pro
           onChange={(a) => void setAssignment("conducting", a)}
         />
       </div>
-      <VisitorsList visitors={meeting?.visitors ?? []} onChange={(next) => void setVisitors(next)} />
+      <VisitorsList
+        visitors={meeting?.visitors ?? []}
+        onChange={(next) => void setVisitors(next)}
+      />
     </ProgramSection>
   );
 }

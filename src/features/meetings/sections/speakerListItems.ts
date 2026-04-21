@@ -17,7 +17,9 @@ export function sortByOrder(speakers: readonly WithId<Speaker>[]): WithId<Speake
 export function formatMidLabel(mid: MidItemType | undefined): string {
   if (!mid || mid.mode === "none") return "";
   if (mid.mode === "rest") {
-    return mid.rest ? `Rest hymn · ${mid.rest.number} — ${mid.rest.title}` : "Rest hymn — pick a hymn";
+    return mid.rest
+      ? `Rest hymn · ${mid.rest.number} — ${mid.rest.title}`
+      : "Rest hymn — pick a hymn";
   }
   return mid.musical?.performer
     ? `Musical number · ${mid.musical.performer}`

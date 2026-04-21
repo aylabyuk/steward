@@ -52,16 +52,12 @@ describe("invite rules", () => {
   describe("CRUD", () => {
     it("lets bishopric create an invite", async () => {
       const db = authedAs(env, "bishop1", "b1@x.com").firestore();
-      await assertSucceeds(
-        setDoc(doc(db, `wards/${WARD}/invites/${invitedEmail}`), invite),
-      );
+      await assertSucceeds(setDoc(doc(db, `wards/${WARD}/invites/${invitedEmail}`), invite));
     });
 
     it("blocks a non-bishopric member from creating invites", async () => {
       const db = authedAs(env, "clerk1", "c1@x.com").firestore();
-      await assertFails(
-        setDoc(doc(db, `wards/${WARD}/invites/${invitedEmail}`), invite),
-      );
+      await assertFails(setDoc(doc(db, `wards/${WARD}/invites/${invitedEmail}`), invite));
     });
 
     it("lets bishopric revoke (delete) an invite", async () => {

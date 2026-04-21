@@ -48,7 +48,10 @@ test.describe("Schedule Page", () => {
 
   test("navigates to week view on card click", async ({ page }) => {
     // Click a date link
-    const dateLink = page.locator("a").filter({ hasText: /Sun|Mon|Tue|Wed|Thu|Fri|Sat/ }).first();
+    const dateLink = page
+      .locator("a")
+      .filter({ hasText: /Sun|Mon|Tue|Wed|Thu|Fri|Sat/ })
+      .first();
     const href = await dateLink.getAttribute("href");
     expect(href).toMatch(/^\/week\/\d{4}-\d{2}-\d{2}$/);
 

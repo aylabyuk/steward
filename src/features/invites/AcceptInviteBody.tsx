@@ -22,9 +22,7 @@ export function AcceptInviteBody({ state, onAccept, onSignOut }: Props) {
   }
   if (state.kind === "done") {
     return (
-      <p className="font-serif italic text-[14px] text-walnut-2">
-        Welcome aboard — redirecting…
-      </p>
+      <p className="font-serif italic text-[14px] text-walnut-2">Welcome aboard — redirecting…</p>
     );
   }
   if (state.kind === "no-invite") {
@@ -43,9 +41,9 @@ function NoInvite({ email, onSignOut }: { email: string; onSignOut: () => void }
         No invite for this account
       </h1>
       <p className="font-serif text-[14px] text-walnut-2 mb-3">
-        You're signed in as <strong>{email}</strong>. We couldn't find a pending invite for
-        that email — the bishop may have sent the invite to a different address, or it was
-        already accepted.
+        You're signed in as <strong>{email}</strong>. We couldn't find a pending invite for that
+        email — the bishop may have sent the invite to a different address, or it was already
+        accepted.
       </p>
       <button
         type="button"
@@ -61,9 +59,7 @@ function NoInvite({ email, onSignOut }: { email: string; onSignOut: () => void }
 function WrongWard({ elsewhere }: { elsewhere: readonly PendingInvite[] }) {
   return (
     <>
-      <h1 className="font-display text-[22px] font-semibold text-walnut mb-2">
-        Wrong ward link
-      </h1>
+      <h1 className="font-display text-[22px] font-semibold text-walnut mb-2">Wrong ward link</h1>
       <p className="font-serif text-[14px] text-walnut-2 mb-3">
         Your pending invite is for a different ward. Open the link below to accept:
       </p>
@@ -86,13 +82,7 @@ function WrongWard({ elsewhere }: { elsewhere: readonly PendingInvite[] }) {
   );
 }
 
-function ReadyBody({
-  invite,
-  onAccept,
-}: {
-  invite: PendingInvite;
-  onAccept: () => void;
-}) {
+function ReadyBody({ invite, onAccept }: { invite: PendingInvite; onAccept: () => void }) {
   return (
     <>
       <h1 className="font-display text-[22px] font-semibold text-walnut mb-2">
@@ -100,8 +90,8 @@ function ReadyBody({
       </h1>
       <p className="font-serif text-[14px] text-walnut-2 mb-4">
         <strong>{invite.invitedByName}</strong> invited you as{" "}
-        <strong>{CALLING_LABELS[invite.calling]}</strong>. Accepting will add you to the
-        ward roster so you can help plan meetings.
+        <strong>{CALLING_LABELS[invite.calling]}</strong>. Accepting will add you to the ward roster
+        so you can help plan meetings.
       </p>
       <button
         type="button"

@@ -32,7 +32,13 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
-export function SundayCard({ date, meeting, fallbackType, leadTimeDays, nonMeetingSundays }: Props) {
+export function SundayCard({
+  date,
+  meeting,
+  fallbackType,
+  leadTimeDays,
+  nonMeetingSundays,
+}: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const type = meeting?.meetingType ?? fallbackType;
   const kind = kindLabel(type);

@@ -62,43 +62,47 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
     setDrafts((prev) => [...prev, emptyDraft()]);
   }
 
-  useImperativeHandle(ref, () => ({
-    async save() {
-      // Speaker mutations each internally call writeMeetingPatch to
-      // recompute the meeting content hash, so run them serially — parallel
-      // saves would each read a stale speakers snapshot and the final
-      // hash would not reflect the final speaker set.
-      for (const id of deletedIds) {
-        await deleteSpeaker(wardId, date, id);
-      }
-      for (const d of drafts) {
-        const name = d.name.trim();
-        if (!name) continue;
-        if (d.id === null) {
-          await createSpeaker({
-            wardId,
-            date,
-            nonMeetingSundays,
-            name,
-            email: d.email.trim() || undefined,
-            topic: d.topic.trim() || undefined,
-            role: d.role,
-          });
-        } else {
-          const original = originalsRef.current.get(d.tempId) ?? null;
-          if (!isDirty(d, original)) continue;
-          await updateSpeaker(wardId, date, d.id, {
-            name,
-            email: d.email.trim(),
-            topic: d.topic.trim(),
-            role: d.role,
-            status: d.status,
-          });
+  useImperativeHandle(
+    ref,
+    () => ({
+      async save() {
+        // Speaker mutations each internally call writeMeetingPatch to
+        // recompute the meeting content hash, so run them serially — parallel
+        // saves would each read a stale speakers snapshot and the final
+        // hash would not reflect the final speaker set.
+        for (const id of deletedIds) {
+          await deleteSpeaker(wardId, date, id);
         }
-      }
-      setDeletedIds([]);
-    },
-  }), [drafts, deletedIds, wardId, date, nonMeetingSundays]);
+        for (const d of drafts) {
+          const name = d.name.trim();
+          if (!name) continue;
+          if (d.id === null) {
+            await createSpeaker({
+              wardId,
+              date,
+              nonMeetingSundays,
+              name,
+              email: d.email.trim() || undefined,
+              topic: d.topic.trim() || undefined,
+              role: d.role,
+            });
+          } else {
+            const original = originalsRef.current.get(d.tempId) ?? null;
+            if (!isDirty(d, original)) continue;
+            await updateSpeaker(wardId, date, d.id, {
+              name,
+              email: d.email.trim(),
+              topic: d.topic.trim(),
+              role: d.role,
+              status: d.status,
+            });
+          }
+        }
+        setDeletedIds([]);
+      },
+    }),
+    [drafts, deletedIds, wardId, date, nonMeetingSundays],
+  );
 
   if (speakers.loading && !seededRef.current) {
     return <p className="text-sm text-walnut-2">Loading…</p>;
@@ -120,7 +124,18 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
         onClick={addDraft}
         className="self-start font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 inline-flex items-center gap-1.5 transition-colors mt-1"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
         Add speaker
       </button>
     </div>

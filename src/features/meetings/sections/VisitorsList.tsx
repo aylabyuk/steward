@@ -51,7 +51,18 @@ export function VisitorsList({ visitors, onChange }: Props) {
         className="mt-2 inline-flex items-center gap-1.5 font-sans text-[13px] font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors py-1.5"
       >
         <span className="w-4 h-4 border border-bordeaux rounded-sm flex items-center justify-center">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
         </span>
         Add visitor
       </button>
@@ -116,7 +127,18 @@ function VisitorRow({ index, visitor, onChange, onRemove }: VisitorRowProps) {
         aria-label="Remove visitor"
         className="w-6 h-6 inline-flex items-center justify-center rounded text-walnut-3 hover:text-bordeaux hover:bg-parchment-2 transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
       </button>
     </li>
   );

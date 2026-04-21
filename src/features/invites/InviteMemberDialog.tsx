@@ -33,8 +33,7 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
     setError(null);
   }
 
-  const ready =
-    isValidEmail(email) && displayName.trim().length > 0 && Boolean(inviter && ward);
+  const ready = isValidEmail(email) && displayName.trim().length > 0 && Boolean(inviter && ward);
 
   async function submit() {
     if (!inviter || !ward) return;
@@ -78,8 +77,8 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
           Invite member
         </h2>
         <p className="mt-1 font-serif italic text-[13px] text-walnut-3">
-          They'll receive an email with a link; once they sign in they'll see the invite and
-          can accept it in one click.
+          They'll receive an email with a link; once they sign in they'll see the invite and can
+          accept it in one click.
         </p>
         <div className="mt-4 flex flex-col gap-3">
           <InviteField label="Email">
@@ -113,9 +112,7 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
             </select>
           </InviteField>
         </div>
-        {error && (
-          <p className="mt-3 font-sans text-[12.5px] text-bordeaux">{error}</p>
-        )}
+        {error && <p className="mt-3 font-sans text-[12.5px] text-bordeaux">{error}</p>}
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"
@@ -140,4 +137,3 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
     </div>
   );
 }
-

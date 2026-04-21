@@ -50,9 +50,7 @@ describe("formatMidLabel", () => {
   });
 
   it("prompts the user when a rest hymn is selected but not picked", () => {
-    expect(formatMidLabel({ mode: "rest", midAfter: 1 })).toBe(
-      "Rest hymn — pick a hymn",
-    );
+    expect(formatMidLabel({ mode: "rest", midAfter: 1 })).toBe("Rest hymn — pick a hymn");
   });
 
   it("formats a musical number with performer", () => {
@@ -65,9 +63,7 @@ describe("formatMidLabel", () => {
   });
 
   it("prompts the user when a musical number is selected with no performer", () => {
-    expect(formatMidLabel({ mode: "musical", midAfter: 1 })).toBe(
-      "Musical number — add performer",
-    );
+    expect(formatMidLabel({ mode: "musical", midAfter: 1 })).toBe("Musical number — add performer");
   });
 });
 
@@ -83,11 +79,7 @@ describe("buildItems", () => {
       rest: { number: 1, title: "X" },
       midAfter: 1,
     };
-    const items = buildItems(
-      [speaker("a"), speaker("b")],
-      mid,
-      "Rest hymn · 1 — X",
-    );
+    const items = buildItems([speaker("a"), speaker("b")], mid, "Rest hymn · 1 — X");
     expect(items.map((i) => i.kind)).toEqual(["speaker", "mid", "speaker"]);
   });
 

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/cn";
 import { isValidEmail } from "@/lib/email";
 import type { Draft } from "./speakerDraft";
+import { CheckIcon, MailIcon, PrintIcon, SendIcon } from "./SpeakerInviteIcons";
 
 interface Props {
   draft: Draft;
@@ -47,8 +48,12 @@ export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
         )}
       </div>
       <div className="inline-flex gap-1.5 shrink-0 flex-wrap ml-auto">
-        <Btn onClick={onMarkInvited} icon={invited ? <CheckIcon /> : null}>Mark invited</Btn>
-        <Btn onClick={onPrint} icon={<PrintIcon />} primary={!emailValid}>Print letter</Btn>
+        <Btn onClick={onMarkInvited} icon={invited ? <CheckIcon /> : null}>
+          Mark invited
+        </Btn>
+        <Btn onClick={onPrint} icon={<PrintIcon />} primary={!emailValid}>
+          Print letter
+        </Btn>
         {hasEmail && (
           <Btn onClick={handleSendEmail} icon={<SendIcon />} primary disabled={!emailValid}>
             Send email
@@ -87,22 +92,4 @@ function Btn({
       {children}
     </button>
   );
-}
-
-function MailIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-brass-deep shrink-0">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3 7l9 6 9-6" />
-    </svg>
-  );
-}
-function CheckIcon() {
-  return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>;
-}
-function PrintIcon() {
-  return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7" /><rect x="3" y="9" width="18" height="9" rx="2" /><path d="M6 14h12v7H6z" /></svg>;
-}
-function SendIcon() {
-  return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>;
 }

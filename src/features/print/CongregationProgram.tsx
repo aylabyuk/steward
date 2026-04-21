@@ -105,7 +105,12 @@ function ProgramCopy({ m, wardName, dateLong, sequence, visitorText }: CopyProps
       </RowSection>
 
       <RowSection title="Opening" dense>
-        <RowHymn label="Opening hymn" number={m?.openingHymn?.number} title={m?.openingHymn?.title} dense />
+        <RowHymn
+          label="Opening hymn"
+          number={m?.openingHymn?.number}
+          title={m?.openingHymn?.title}
+          dense
+        />
         <RowLabeled label="Invocation" value={personName(m?.openingPrayer)} dense />
       </RowSection>
 
@@ -134,7 +139,12 @@ function ProgramCopy({ m, wardName, dateLong, sequence, visitorText }: CopyProps
       </RowSection>
 
       <RowSection title="Closing" dense>
-        <RowHymn label="Closing hymn" number={m?.closingHymn?.number} title={m?.closingHymn?.title} dense />
+        <RowHymn
+          label="Closing hymn"
+          number={m?.closingHymn?.number}
+          title={m?.closingHymn?.title}
+          dense
+        />
         <RowLabeled label="Benediction" value={personName(m?.benediction)} dense />
       </RowSection>
     </>
