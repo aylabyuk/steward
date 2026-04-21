@@ -3,7 +3,7 @@ import { WardSettingsEditor } from "@/features/settings/WardSettingsEditor";
 
 export function WardSettingsPage() {
   return (
-    <main className="max-w-3xl mx-auto pb-12">
+    <main className="pb-12">
       <nav className="mb-4 text-sm text-walnut-2">
         <Link to="/settings" className="hover:text-walnut">
           ← Settings
