@@ -64,6 +64,20 @@ service cloud.firestore {
             || (o.invalidated == false && n.invalidated == true));
     }
 
+    // Invite-driven member creation: the newly-created member doc must
+    // mirror the invite's role / calling / displayName / email, so an
+    // invitee can't self-promote by changing their stored calling.
+    function matchesInvite(wardId) {
+      let email = request.auth.token.email.lower();
+      let invite = get(/databases/$(database)/documents/wards/$(wardId)/invites/$(email)).data;
+      let data = request.resource.data;
+      return data.email == email
+        && data.role == invite.role
+        && data.calling == invite.calling
+        && data.displayName == invite.displayName
+        && data.active == true;
+    }
+
     function noApprovalTampering(oldA, newA) {
       return oldA.size() == 0
         || (oldA.size() == 1 && approvalEntryPreserved(oldA[0], newA[0]))
@@ -97,13 +111,31 @@ service cloud.firestore {
       // Ward creation/deletion is Admin-SDK-only (see scripts/bootstrap-ward.ts).
       allow create, delete: if false;
 
+      // Invites: bishopric creates/lists/revokes pending invites keyed by
+      // the invitee's lower-cased email. The invitee themselves can read
+      // the doc targeted at their email (so an invite-acceptance page can
+      // show ward/role details) and delete it when accepting.
+      match /invites/{inviteEmail} {
+        allow read: if isActiveBishopric(wardId)
+          || (isSignedIn() && request.auth.token.email.lower() == inviteEmail);
+        allow create, update: if isActiveBishopric(wardId);
+        allow delete: if isActiveBishopric(wardId)
+          || (isSignedIn() && request.auth.token.email.lower() == inviteEmail);
+      }
+
       // Per-doc (get) + list access for members in a specific ward.
       match /members/{memberId} {
         allow read: if isActiveMember(wardId);
-        // Only an existing active bishopric member can mutate the roster.
-        // With no active bishopric in a ward, non-admin creates are blocked
-        // -- the Admin SDK seeds the first member.
-        allow create, delete: if isActiveBishopric(wardId);
+        // Create path: existing bishopric can add anyone, OR the invitee
+        // themselves can self-create from a matching invite -- the doc ID
+        // must equal their auth uid, and role/calling/email must mirror
+        // the invite so they can't escalate their own calling.
+        allow create: if isActiveBishopric(wardId)
+          || (isSignedIn()
+              && request.auth.uid == memberId
+              && exists(/databases/$(database)/documents/wards/$(wardId)/invites/$(request.auth.token.email.lower()))
+              && matchesInvite(wardId));
+        allow delete: if isActiveBishopric(wardId);
         // Roster updates are bishopric-only OR self-edits limited to a
         // member's own notification prefs and FCM tokens (so a clerk can
         // toggle quiet hours / register a device without touching role).
@@ -164,6 +196,14 @@ service cloud.firestore {
     // filter on email for Firestore to consider the list query safe.
     match /{path=**}/members/{memberId} {
       allow read: if isSignedIn() && resource.data.email == userEmail();
+    }
+
+    // Cross-ward invite lookup: a signed-in user can discover pending
+    // invites addressed to their email so the sign-in flow can surface a
+    // "You were invited to X Ward" prompt without the bishop having to
+    // share a deep link. Read is scoped to invites whose email matches.
+    match /{path=**}/invites/{inviteId} {
+      allow read: if isSignedIn() && resource.data.email == userEmail().lower();
     }
 
     // Deny-all baseline for every other path; permissions land in later phases.
