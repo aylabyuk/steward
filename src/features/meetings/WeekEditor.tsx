@@ -82,7 +82,7 @@ export function WeekEditor({ date }: Props) {
 
   return (
     <main className="max-w-295 mx-auto px-4 sm:px-8 pt-7 pb-30">
-      <div className="grid gap-10 items-start min-[900px]:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="grid gap-10 min-[900px]:grid-cols-[minmax(0,1fr)_280px]">
         <div>
           <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
 
@@ -126,12 +126,16 @@ export function WeekEditor({ date }: Props) {
               )}
               <HymnsSection {...sectionProps} type={type} />
               <BusinessSection {...sectionProps} />
-              <CommentThread wardId={wardId} date={date} />
             </>
           )}
         </div>
 
-        {!isNonMeeting && <ProgramRail sections={rail} />}
+        {!isNonMeeting && (
+          <div className="flex flex-col gap-4 min-w-0">
+            <ProgramRail sections={rail} />
+            <CommentThread wardId={wardId} date={date} />
+          </div>
+        )}
       </div>
 
       {!isNonMeeting && (
