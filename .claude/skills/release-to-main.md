@@ -1,34 +1,32 @@
 ---
 name: release-to-main
-description: Promote develop → main for a Steward production release. Handles the PR, the correct merge strategy, the post-merge develop realignment, and the Firestore deploys. Use when the user says "ship to prod", "publish to production", "release", or similar.
+description: Promote develop → main for a Steward production release. Handles the PR, the changelog + version bump, tagging, and the Firebase rules/indexes deploys. Use when the user says "ship to prod", "publish to production", "release", or similar.
 ---
 
 # Release develop → main (Steward)
 
-This skill encodes the release workflow for Steward. It exists because
-the release path touches three systems (GitHub, Vercel auto-deploy off
-`main`, Firebase rules/indexes on `steward-prod-65a36`) and the
-previous release drifted the branches ("N commits ahead, N commits
-behind") due to the wrong merge strategy.
+This skill encodes the release workflow for Steward. It exists
+because the release path touches three systems: GitHub (PR merge),
+Vercel (auto-deploy off `main`), and Firebase (rules + indexes on
+`steward-prod-65a36`, deployed by hand).
 
 ## Branch topology
 
 - `main` → production (Vercel auto-deploys from here)
 - `develop` → staging / CI target
-- Feature branches → PR into `develop`
+- Feature branches → PR into `develop` (see `feature-branch-workflow`)
 - Release → PR from `develop` → `main`
 
-## Merge strategy matters
+## Merge strategy
 
-- Feature PRs into `develop`: **"Rebase and merge"** is fine.
-- Release PRs (`develop` → `main`): **"Create a merge commit"** — NOT
-  rebase-and-merge. Rebase-and-merge creates new SHAs on `main` and
-  leaves `develop` and `main` permanently divergent ("N ahead, N
-  behind") even though they contain the same changes.
-
-If the repo's default merge button is still "Rebase and merge", either
-change it in GitHub Settings → General → Pull Requests, or pick
-"Create a merge commit" manually when merging the release PR.
+Merge-commit is the **only** method enabled at the repo level (squash
+and rebase are disabled). This is by design: rebase-and-merge and
+squash-merge both rewrite commit SHAs on the merge target, which
+historically left `develop` and `main` divergent ("N ahead / N
+behind") even though they contained the same changes. With
+merge-commit-only enforced repo-wide, the GitHub UI only offers one
+button and `develop` stays in sync with `main` automatically after
+the release merge — no post-merge realignment needed.
 
 ## Versioning
 
@@ -82,6 +80,16 @@ Do this as a single commit titled `chore(release): vX.Y.Z`:
    - Group entries under **Added / Changed / Fixed / Security /
      Infrastructure** subheads. Commit subjects are a starting point,
      not the final copy — rewrite for the end reader.
+   - **Pull closed-issue references** for the release window so the
+     changelog links back to the backlog that drove the work:
+     ```bash
+     LAST_TAG=$(git describe --tags --abbrev=0 origin/main)
+     LAST_DATE=$(git log -1 --format=%aI "$LAST_TAG" | cut -d'T' -f1)
+     gh issue list --state closed --limit 100 \
+       --search "closed:>=$LAST_DATE" --json number,title,labels
+     ```
+     Attach `(#N)` references inline where a bullet corresponds to a
+     closed issue.
    - Re-add an empty `## [Unreleased]` at the top of the file.
    - Update the compare links at the bottom:
      ```
@@ -113,30 +121,31 @@ Wait for CI to go green on the PR before merging.
 
 ## Merge
 
-Use **"Create a merge commit"** on the GitHub UI. Confirm with the
-user before the click — this is a high-severity production action.
+Click Merge on the GitHub UI — the only available method is "Create
+a merge commit" (enforced at the repo level). Confirm with the user
+before the click — this is a high-severity production action.
 
-## Post-merge realignment (CRITICAL — do this every time)
+## Post-merge sync
 
-Even with a merge commit, staying strictly aligned is cleaner if the
-release PR used rebase-and-merge (legacy). After every release,
-realign `develop` so future `develop ↔ main` diffs are clean:
+Merge-commit preserves develop's SHAs on main, so the post-merge
+state is: `main == develop + one merge commit`. Pull the merge
+commit down onto develop with a fast-forward:
 
 ```bash
-git fetch origin main
+git fetch origin
 git checkout develop
-git reset --hard origin/main
-git push origin develop --force-with-lease
+git pull --ff-only origin develop    # picks up the merge commit
 ```
 
-Safe here because `develop` doesn't carry commits that `main` doesn't
-have after the release merge — `main` is the superset.
-
-Also sync local `version-2` or any other long-running branches to the
-new `main`:
+If you maintain any long-running local branches (e.g. `version-2`),
+fast-forward them too:
 ```bash
-git checkout version-2 && git merge --ff-only origin/main
+git checkout version-2 && git merge --ff-only origin/develop
 ```
+
+Never force-push to `develop` or `main` as part of this flow. The
+legacy `git reset --hard && git push --force-with-lease` dance is no
+longer needed and is explicitly forbidden — see Guardrails.
 
 ## Tag the release
 
@@ -226,8 +235,19 @@ After rules + indexes deploy + the Vercel prod build lands:
 
 ## Guardrails
 
-- Never force-push to `main`.
-- Never merge a red PR into `main`.
-- Firebase deploys target `prod` explicitly via `--project=prod`; never
-  omit the flag (the default project is `steward-dev-5e4dc`).
+- **Never direct-push to `develop` or `main`** — everything flows
+  through PRs. GitHub's free tier doesn't enforce this, so it's on
+  discipline + this skill.
+- **Never force-push to `develop` or `main`** under any circumstance.
+  The legacy realignment step that used `--force-with-lease` is
+  removed; merge-commit-only prevents the drift that required it.
+- **Never merge a red PR into `main`.**
+- Firebase deploys target `prod` explicitly via `--project=prod`;
+  never omit the flag (the default project is `steward-dev-5e4dc`).
 - When in doubt, open an extra PR rather than fix-in-main.
+
+## Escape hatch
+
+Admin bypass is on (solo dev, free tier). If a direct push or
+force-push is genuinely the right move (emergency rollback, say),
+ask the user explicitly and log what was done in a follow-up issue.

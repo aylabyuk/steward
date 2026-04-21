@@ -1,0 +1,34 @@
+name: Feature request
+description: A new capability or workflow
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are we solving?
+      description: The underlying need, not the solution.
+      placeholder: "Bishops forget to remind speakers the Thursday before their Sunday."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: How you'd like it to work. Rough is fine.
+      placeholder: "Send a reminder push to each confirmed speaker 72 hours before their assigned meeting."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Done when…
+      description: Checklist of concrete acceptance criteria.
+      placeholder: |
+        - [ ] Each confirmed speaker gets one push at T-72h
+        - [ ] Cancelled / rescheduled meetings skip the reminder
+        - [ ] Covered by a rules-unit test + e2e
+  - type: textarea
+    id: context
+    attributes:
+      label: Out of scope (optional)
+      description: What you explicitly don't want bundled into this.
