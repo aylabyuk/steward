@@ -1,5 +1,7 @@
 import { HymnPicker } from "@/features/hymns/HymnPicker";
-import type { Hymn, MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
+import type { Hymn, MeetingType, MidItem as MidItemType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
+import { MidItem } from "../program/MidItem";
+import { ProgramSection } from "../program/ProgramSection";
 import { updateMeetingField } from "../updateMeeting";
 
 interface Props {
@@ -10,32 +12,50 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
+// Suggested-hymn lists (opening/sacrament/closing). Ordered for the design's
+// "Suggested" section in the hymn picker.
+const OPENING_SUGGESTIONS = [2, 9, 83, 301];
+const SACRAMENT_SUGGESTIONS = [169, 174, 177, 181, 182, 188, 193, 194];
+const CLOSING_SUGGESTIONS = [30, 85, 86, 89];
+
 export function HymnsSection({ wardId, date, meeting, type, nonMeetingSundays }: Props) {
   const showSacramentHymn = type !== "stake" && type !== "general";
 
-  async function set(field: "openingHymn" | "sacramentHymn" | "closingHymn", next: Hymn | null) {
+  async function setHymn(field: "openingHymn" | "sacramentHymn" | "closingHymn", next: Hymn | null) {
     await updateMeetingField(wardId, date, nonMeetingSundays, { [field]: next });
   }
 
+  async function setMid(next: MidItemType) {
+    await updateMeetingField(wardId, date, nonMeetingSundays, { mid: next });
+  }
+
   return (
-    <div className="flex flex-col gap-3">
-      <HymnPicker
-        label="Opening"
-        hymn={meeting?.openingHymn}
-        onChange={(h) => void set("openingHymn", h)}
-      />
-      {showSacramentHymn && (
+    <ProgramSection id="sec-hymns" label="Hymns & music">
+      <div className="flex flex-col">
         <HymnPicker
-          label="Sacrament"
-          hymn={meeting?.sacramentHymn}
-          onChange={(h) => void set("sacramentHymn", h)}
+          label="Opening"
+          hymn={meeting?.openingHymn}
+          suggestions={OPENING_SUGGESTIONS}
+          onChange={(h) => void setHymn("openingHymn", h)}
         />
-      )}
-      <HymnPicker
-        label="Closing"
-        hymn={meeting?.closingHymn}
-        onChange={(h) => void set("closingHymn", h)}
-      />
-    </div>
+        {showSacramentHymn && (
+          <HymnPicker
+            label="Sacrament"
+            hymn={meeting?.sacramentHymn}
+            suggestions={SACRAMENT_SUGGESTIONS}
+            placeholder="Pick a sacrament hymn"
+            onChange={(h) => void setHymn("sacramentHymn", h)}
+          />
+        )}
+        <MidItem mid={meeting?.mid} onChange={(next) => void setMid(next)} />
+        <HymnPicker
+          label="Closing"
+          hymn={meeting?.closingHymn}
+          suggestions={CLOSING_SUGGESTIONS}
+          placeholder="Pick a closing hymn"
+          onChange={(h) => void setHymn("closingHymn", h)}
+        />
+      </div>
+    </ProgramSection>
   );
 }

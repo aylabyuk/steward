@@ -1,5 +1,7 @@
-import { AssignmentField } from "@/features/assignments/AssignmentField";
 import type { Assignment, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
+import { emptyAssignment } from "@/lib/types";
+import { AssignRow } from "../program/AssignRow";
+import { ProgramSection } from "../program/ProgramSection";
 import { updateMeetingField } from "../updateMeeting";
 
 interface Props {
@@ -9,12 +11,10 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
-const EMPTY: Assignment = { person: null, status: "not_assigned" };
-
 export function SacramentSection({ wardId, date, meeting, nonMeetingSundays }: Props) {
-  const blessers = meeting?.sacramentBlessers ?? [EMPTY, EMPTY];
-  // Enforce exactly 2 slots, pad if needed.
-  const [b1, b2] = [blessers[0] ?? EMPTY, blessers[1] ?? EMPTY];
+  const blessers = meeting?.sacramentBlessers ?? [];
+  const b1 = blessers[0] ?? emptyAssignment();
+  const b2 = blessers[1] ?? emptyAssignment();
 
   async function setBread(next: Assignment) {
     await updateMeetingField(wardId, date, nonMeetingSundays, { sacramentBread: next });
@@ -27,14 +27,28 @@ export function SacramentSection({ wardId, date, meeting, nonMeetingSundays }: P
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <AssignmentField
-        label="Bread"
-        assignment={meeting?.sacramentBread}
-        onChange={(a) => void setBread(a)}
-      />
-      <AssignmentField label="Blesser 1" assignment={b1} onChange={(a) => void setBlesser(0, a)} />
-      <AssignmentField label="Blesser 2" assignment={b2} onChange={(a) => void setBlesser(1, a)} />
-    </div>
+    <ProgramSection id="sec-sacrament" label="Sacrament">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-7 gap-y-1">
+        <AssignRow
+          label="Bread"
+          placeholder="Quorum or individual"
+          assignment={meeting?.sacramentBread}
+          onChange={(a) => void setBread(a)}
+        />
+        <div />
+        <AssignRow
+          label="Blesser 1"
+          placeholder="First blesser"
+          assignment={b1}
+          onChange={(a) => void setBlesser(0, a)}
+        />
+        <AssignRow
+          label="Blesser 2"
+          placeholder="Second blesser"
+          assignment={b2}
+          onChange={(a) => void setBlesser(1, a)}
+        />
+      </div>
+    </ProgramSection>
   );
 }

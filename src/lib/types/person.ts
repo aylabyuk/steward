@@ -7,21 +7,12 @@ export const personSchema = z.object({
 });
 export type Person = z.infer<typeof personSchema>;
 
-export const ASSIGNMENT_STATUSES = [
-  "not_assigned",
-  "draft",
-  "invite_printed",
-  "invite_emailed",
-  "notified",
-  "accepted",
-  "declined",
-  "completed",
-] as const;
-export const assignmentStatusSchema = z.enum(ASSIGNMENT_STATUSES);
-export type AssignmentStatus = z.infer<typeof assignmentStatusSchema>;
-
 export const assignmentSchema = z.object({
   person: personSchema.nullable(),
-  status: assignmentStatusSchema,
+  confirmed: z.boolean().default(false),
 });
 export type Assignment = z.infer<typeof assignmentSchema>;
+
+export function emptyAssignment(): Assignment {
+  return { person: null, confirmed: false };
+}

@@ -3,10 +3,7 @@ import type { WithId } from "@/hooks/_sub";
 import type { Assignment, SacramentMeeting, Speaker } from "@/lib/types";
 import { checkMeetingReadiness } from "./readiness";
 
-const person: Assignment = {
-  person: { name: "Alice" },
-  status: "not_assigned",
-};
+const confirmed: Assignment = { person: { name: "Alice" }, confirmed: true };
 
 const complete: SacramentMeeting = {
   meetingType: "regular",
@@ -15,15 +12,18 @@ const complete: SacramentMeeting = {
   wardBusiness: "",
   stakeBusiness: "",
   announcements: "",
+  showAnnouncements: true,
   openingHymn: { number: 1, title: "a" },
   sacramentHymn: { number: 2, title: "b" },
   closingHymn: { number: 3, title: "c" },
-  openingPrayer: person,
-  benediction: person,
-  pianist: person,
-  chorister: person,
-  sacramentBread: person,
-  sacramentBlessers: [person, person],
+  openingPrayer: confirmed,
+  benediction: confirmed,
+  pianist: confirmed,
+  chorister: confirmed,
+  sacramentBread: confirmed,
+  sacramentBlessers: [confirmed, confirmed],
+  presiding: confirmed,
+  conducting: confirmed,
 };
 
 const twoSpeakers: WithId<Speaker>[] = [
@@ -32,26 +32,40 @@ const twoSpeakers: WithId<Speaker>[] = [
 ];
 
 describe("checkMeetingReadiness", () => {
-  it("returns empty for a fully-filled regular meeting", () => {
-    expect(checkMeetingReadiness(complete, twoSpeakers, "regular")).toEqual([]);
+  it("marks a fully-filled regular meeting ready", () => {
+    const r = checkMeetingReadiness(complete, twoSpeakers, "regular");
+    expect(r.ready).toBe(true);
+    expect(r.missing).toEqual([]);
+    expect(r.unconfirmed).toEqual([]);
   });
 
   it("flags a not-yet-created meeting", () => {
-    expect(checkMeetingReadiness(null, [], "regular")).toEqual(["Meeting not created yet"]);
+    const r = checkMeetingReadiness(null, [], "regular");
+    expect(r.ready).toBe(false);
+    expect(r.missing).toEqual(["Meeting not created yet"]);
   });
 
   it("flags missing speakers for regular meetings", () => {
-    const out = checkMeetingReadiness(complete, [twoSpeakers[0]!], "regular");
-    expect(out).toContain("1 more speaker(s) needed");
+    const r = checkMeetingReadiness(complete, [twoSpeakers[0]!], "regular");
+    expect(r.missing).toContain("1 more speaker(s) needed");
+    expect(r.ready).toBe(false);
   });
 
   it("does not require speakers for fast Sunday", () => {
-    const out = checkMeetingReadiness(
-      { ...complete, meetingType: "fast" },
-      [],
-      "fast",
+    const r = checkMeetingReadiness({ ...complete, meetingType: "fast" }, [], "fast");
+    expect(r.ready).toBe(true);
+  });
+
+  it("separates 'missing' (no assignment) from 'unconfirmed' (assigned but not confirmed)", () => {
+    const draft: Assignment = { person: { name: "Bob" }, confirmed: false };
+    const r = checkMeetingReadiness(
+      { ...complete, openingPrayer: draft },
+      twoSpeakers,
+      "regular",
     );
-    expect(out).toEqual([]);
+    expect(r.missing).not.toContain("Opening prayer — not assigned");
+    expect(r.unconfirmed).toContain("Opening prayer — not confirmed");
+    expect(r.ready).toBe(false);
   });
 
   it("flags every missing hymn + assignment on an empty regular meeting", () => {
@@ -62,20 +76,23 @@ describe("checkMeetingReadiness", () => {
       wardBusiness: "",
       stakeBusiness: "",
       announcements: "",
+      showAnnouncements: true,
     };
-    const out = checkMeetingReadiness(empty, [], "regular");
-    expect(out).toContain("Opening hymn");
-    expect(out).toContain("Sacrament hymn");
-    expect(out).toContain("Closing hymn");
-    expect(out).toContain("Opening prayer");
-    expect(out).toContain("Benediction");
-    expect(out).toContain("Pianist");
-    expect(out).toContain("Chorister");
-    expect(out).toContain("Sacrament bread");
+    const r = checkMeetingReadiness(empty, [], "regular");
+    expect(r.missing).toContain("Opening hymn");
+    expect(r.missing).toContain("Sacrament hymn");
+    expect(r.missing).toContain("Closing hymn");
+    expect(r.missing).toContain("Presiding — not assigned");
+    expect(r.missing).toContain("Conducting — not assigned");
+    expect(r.missing).toContain("Opening prayer — not assigned");
+    expect(r.missing).toContain("Benediction — not assigned");
+    expect(r.missing).toContain("Pianist — not assigned");
+    expect(r.missing).toContain("Chorister — not assigned");
+    expect(r.missing).toContain("Sacrament bread — not assigned");
   });
 
-  it("returns empty for non-regular meeting types", () => {
-    expect(checkMeetingReadiness(complete, [], "stake")).toEqual([]);
-    expect(checkMeetingReadiness(complete, [], "general")).toEqual([]);
+  it("is ready for non-regular meeting types without extra checks", () => {
+    expect(checkMeetingReadiness(complete, [], "stake").ready).toBe(true);
+    expect(checkMeetingReadiness(complete, [], "general").ready).toBe(true);
   });
 });

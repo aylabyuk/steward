@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { OverflowMenu } from "@/components/ui/OverflowMenu";
 import { CommentThread } from "@/features/comments/CommentThread";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
@@ -9,18 +8,23 @@ import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
-import { CopyFromPreviousButton } from "./CopyFromPreviousButton";
-import { EditorSection } from "./EditorSection";
 import { defaultMeetingType } from "./ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
-import { formatLongDate, HIDE_SPEAKER_TYPES, NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
-import { WeekEditorActions } from "./WeekEditorActions";
+import { NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
+import { requestApproval } from "./approvals";
+import { checkMeetingReadiness } from "./readiness";
 import { BusinessSection } from "./sections/BusinessSection";
 import { HymnsSection } from "./sections/HymnsSection";
+import { LeadersSection } from "./sections/LeadersSection";
 import { MusicSection } from "./sections/MusicSection";
 import { PrayersSection } from "./sections/PrayersSection";
 import { SacramentSection } from "./sections/SacramentSection";
 import { SpeakersSection } from "./sections/SpeakersSection";
+import { ProgramApproval } from "./program/ProgramApproval";
+import { ProgramHead } from "./program/ProgramHead";
+import { ProgramRail } from "./program/ProgramRail";
+import { ProgramSaveBar } from "./program/ProgramSaveBar";
+import { buildRailSections } from "./program/railSections";
 import { cancelMeeting } from "./updateMeeting";
 
 interface Props {
@@ -35,6 +39,7 @@ export function WeekEditor({ date }: Props) {
   const speakers = useSpeakers(date);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
   const markRead = useCommentReadStore((s) => s.markRead);
 
   useEffect(() => {
@@ -47,109 +52,93 @@ export function WeekEditor({ date }: Props) {
   const type = meeting.data?.meetingType ?? defaultMeetingType(date, nonMeeting);
   const cancellation = meeting.data?.cancellation;
   const isNonMeeting = NO_MEETING_TYPES.has(type);
-  const showSpeakers = !HIDE_SPEAKER_TYPES.has(type);
   const canCancel = !isNonMeeting && !cancellation?.cancelled;
+  const report = checkMeetingReadiness(meeting.data, speakers.data, type);
+  const rail = buildRailSections(meeting.data, speakers.data, type, report);
+
   const menuItems = [
     { label: "History", onSelect: () => setHistoryOpen(true) },
     ...(canCancel
-      ? [
-          {
-            label: "Cancel meeting…",
-            onSelect: () => setConfirmingCancel(true),
-            destructive: true,
-          },
-        ]
+      ? [{ label: "Cancel meeting…", onSelect: () => setConfirmingCancel(true), destructive: true }]
       : []),
   ];
 
+  async function handleRequestApproval() {
+    setBusy(true);
+    try {
+      await requestApproval(wardId!, date);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const sectionProps = {
+    wardId,
+    date,
+    meeting: meeting.data,
+    nonMeetingSundays: nonMeeting,
+  };
+
   return (
-    <main className="mx-auto max-w-5xl p-4 sm:p-6">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/schedule" className="hover:text-walnut">
-          ← Schedule
-        </Link>
-      </nav>
-      <header className="mb-6 flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold text-walnut">{formatLongDate(date)}</h1>
-          <p className="text-sm text-walnut-2">{TYPE_LABELS[type]}</p>
-        </div>
-        <OverflowMenu items={menuItems} />
-      </header>
+    <main className="max-w-295 mx-auto px-4 sm:px-8 pt-7 pb-30">
+      <div className="grid gap-10 items-start min-[900px]:grid-cols-[minmax(0,1fr)_220px]">
+        <div>
+          <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
 
-      <CancellationBanner wardId={wardId} date={date} cancellation={cancellation} />
-      {!isNonMeeting && (
-        <WeekEditorActions wardId={wardId} date={date} type={type} meeting={meeting.data} />
-      )}
-      <CancelDialog
-        open={confirmingCancel}
-        onClose={() => setConfirmingCancel(false)}
-        onConfirm={async (reason) => {
-          if (!authUid) return;
-          await cancelMeeting(wardId, date, reason, authUid, nonMeeting);
-        }}
-      />
-
-      {isNonMeeting ? (
-        <div className="rounded-md border border-border bg-parchment-2 p-4 text-sm text-walnut-2">
-          No sacrament meeting is held on {TYPE_LABELS[type].toLowerCase()} Sundays.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <EditorSection title="Prayers">
-            <PrayersSection
-              wardId={wardId}
-              date={date}
-              meeting={meeting.data}
-              nonMeetingSundays={nonMeeting}
-            />
-          </EditorSection>
-          <EditorSection title="Music">
-            <MusicSection
-              wardId={wardId}
-              date={date}
-              meeting={meeting.data}
-              nonMeetingSundays={nonMeeting}
-            />
-            <div className="mt-3 border-t border-border pt-3">
-              <CopyFromPreviousButton
-                wardId={wardId}
-                date={date}
-                meeting={meeting.data}
-                nonMeetingSundays={nonMeeting}
-              />
-            </div>
-          </EditorSection>
-          <EditorSection title="Sacrament">
-            <SacramentSection
-              wardId={wardId}
-              date={date}
-              meeting={meeting.data}
-              nonMeetingSundays={nonMeeting}
-            />
-          </EditorSection>
-          {showSpeakers && <SpeakersSection speakers={speakers.data} />}
-          <EditorSection title="Hymns" className="lg:col-span-2">
-            <HymnsSection
-              wardId={wardId}
-              date={date}
-              meeting={meeting.data}
-              type={type}
-              nonMeetingSundays={nonMeeting}
-            />
-          </EditorSection>
-          <BusinessSection
-            wardId={wardId}
-            date={date}
-            meeting={meeting.data}
-            nonMeetingSundays={nonMeeting}
+          <CancellationBanner wardId={wardId} date={date} cancellation={cancellation} />
+          <CancelDialog
+            open={confirmingCancel}
+            onClose={() => setConfirmingCancel(false)}
+            onConfirm={async (reason) => {
+              if (!authUid) return;
+              await cancelMeeting(wardId, date, reason, authUid, nonMeeting);
+            }}
           />
+
+          {isNonMeeting ? (
+            <div className="rounded-xl border border-border bg-parchment-2 p-5 text-sm text-walnut-2">
+              No sacrament meeting is held on {TYPE_LABELS[type].toLowerCase()} Sundays.
+            </div>
+          ) : (
+            <>
+              <ProgramApproval
+                report={report}
+                status={meeting.data?.status ?? "draft"}
+                onRequestApproval={() => void handleRequestApproval()}
+                busy={busy}
+              />
+              <LeadersSection {...sectionProps} />
+              <PrayersSection {...sectionProps} />
+              <MusicSection {...sectionProps} />
+              <SacramentSection {...sectionProps} />
+              {type === "regular" && (
+                <SpeakersSection
+                  wardId={wardId}
+                  date={date}
+                  speakers={speakers.data}
+                  mid={meeting.data?.mid}
+                />
+              )}
+              <HymnsSection {...sectionProps} type={type} />
+              <BusinessSection {...sectionProps} />
+              <div id="sec-comments" className="bg-chalk border border-border rounded-xl p-5 mb-4 scroll-mt-22.5">
+                <CommentThread wardId={wardId} date={date} />
+              </div>
+            </>
+          )}
         </div>
-      )}
+
+        {!isNonMeeting && <ProgramRail sections={rail} />}
+      </div>
+
       {!isNonMeeting && (
-        <div className="mt-6">
-          <CommentThread wardId={wardId} date={date} />
-        </div>
+        <ProgramSaveBar
+          savedAt={new Date()}
+          ready={report.ready}
+          remaining={report.missing.length + report.unconfirmed.length}
+          busy={busy}
+          onRequestApproval={() => void handleRequestApproval()}
+        />
       )}
       <HistoryModal date={date} open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </main>

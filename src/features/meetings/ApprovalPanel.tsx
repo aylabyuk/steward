@@ -53,8 +53,9 @@ export function ApprovalPanel({ wardId, date, type, meeting }: Props) {
   const status = meeting.status;
   const canApprove = me?.data.active === true && me.data.role === "bishopric";
   const alreadyApproved = authUser ? live.some((a) => a.uid === authUser.uid) : false;
-  const missing = checkMeetingReadiness(meeting, speakers, type);
-  const ready = missing.length === 0;
+  const report = checkMeetingReadiness(meeting, speakers, type);
+  const missing = report.missing;
+  const ready = report.ready;
 
   async function handleRequest() {
     setBusy(true);
