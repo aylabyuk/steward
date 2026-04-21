@@ -52,7 +52,7 @@ export function SpeakerListRow({ speaker: s, index, isLast, ...drag }: SpeakerRo
     <li
       {...useDragProps(drag)}
       className={cn(
-        "group/row grid grid-cols-[28px_minmax(0,1fr)_auto] gap-3 items-center py-2.5 border-b border-dashed border-border rounded cursor-grab transition-colors hover:bg-parchment",
+        "group/row grid grid-cols-[28px_minmax(0,1fr)_auto] gap-3 items-center py-2.5 px-5 border-b border-dashed border-border cursor-grab transition-colors hover:bg-parchment",
         isLast && "border-b-0",
         drag.isDragging && "opacity-40",
         drag.isOver && "bg-brass-soft/30 shadow-[inset_0_-2px_0_var(--color-bordeaux-deep),inset_0_2px_0_var(--color-bordeaux-deep)]",
@@ -88,7 +88,7 @@ export function MidPlaceholderRow({ label, isLast, ...drag }: MidRowProps) {
       {...useDragProps(drag)}
       aria-label="Musical interlude"
       className={cn(
-        "group/row grid grid-cols-[28px_minmax(0,1fr)_auto] gap-3 items-center py-2.5 border-y border-dashed border-brass-soft bg-[linear-gradient(180deg,rgba(224,190,135,0.18),rgba(224,190,135,0.05))] cursor-grab transition-colors",
+        "group/row grid grid-cols-[28px_minmax(0,1fr)_auto] gap-3 items-center py-2.5 px-5 border-y border-dashed border-brass-soft bg-[linear-gradient(180deg,rgba(224,190,135,0.18),rgba(224,190,135,0.05))] cursor-grab transition-colors",
         isLast && "border-b-0",
         drag.isDragging && "opacity-40",
         drag.isOver && "bg-brass-soft/60 shadow-[inset_0_-2px_0_var(--color-bordeaux-deep),inset_0_2px_0_var(--color-bordeaux-deep)]",
