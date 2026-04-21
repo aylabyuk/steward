@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
+import { SaveIndicator } from "./SaveIndicator";
 
 interface Props {
-  savedAt?: Date | null;
   status: string;
   ready: boolean;
   remaining: number;
@@ -11,7 +11,6 @@ interface Props {
 }
 
 export function ProgramSaveBar({
-  savedAt,
   status,
   ready,
   remaining,
@@ -19,35 +18,39 @@ export function ProgramSaveBar({
   onRequestApproval,
   onPreview,
 }: Props) {
-  const label = savedAt ? `Autosaved · ${formatRelative(savedAt)}` : "Autosave on";
   const isPending = status === "pending_approval";
   const isApproved = status === "approved";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center gap-3.5 px-5 sm:px-8 py-3 bg-chalk border-t border-border shadow-[0_-6px_20px_rgba(35,24,21,0.08)]">
-      <div className="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-walnut-3">
-        <span className="w-1.5 h-1.5 rounded-full bg-success" />
-        {label}
+    <div className="fixed bottom-0 left-0 right-0 z-30 bg-chalk border-t border-border shadow-[0_-6px_20px_rgba(35,24,21,0.08)]">
+      {/* Mobile: stack the indicator above the buttons so a long error
+          message ("Couldn't save — Connection failed…") doesn't wrap
+          inside a cramped row next to a big CTA. Desktop: everything
+          on one line. */}
+      <div className="flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:gap-3.5 sm:px-8 sm:py-3">
+        <SaveIndicator />
+        <span className="hidden sm:block sm:flex-1" />
+        <div className="flex items-center gap-2.5">
+          {onPreview && (
+            <button
+              type="button"
+              onClick={onPreview}
+              className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
+            >
+              Preview print
+            </button>
+          )}
+          <ApprovalCta
+            status={status}
+            ready={ready}
+            remaining={remaining}
+            busy={busy}
+            onRequestApproval={onRequestApproval}
+            isPending={isPending}
+            isApproved={isApproved}
+          />
+        </div>
       </div>
-      <span className="flex-1" />
-      {onPreview && (
-        <button
-          type="button"
-          onClick={onPreview}
-          className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
-        >
-          Preview print
-        </button>
-      )}
-      <ApprovalCta
-        status={status}
-        ready={ready}
-        remaining={remaining}
-        busy={busy}
-        onRequestApproval={onRequestApproval}
-        isPending={isPending}
-        isApproved={isApproved}
-      />
     </div>
   );
 }
@@ -113,10 +116,3 @@ function ClockIcon() {
   );
 }
 
-function formatRelative(d: Date): string {
-  const diff = Math.round((Date.now() - d.getTime()) / 1000);
-  if (diff < 5) return "just now";
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.round(diff / 60)}m ago`;
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-}

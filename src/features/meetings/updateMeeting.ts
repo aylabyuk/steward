@@ -1,5 +1,6 @@
 import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import type { NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { writeMeetingPatch } from "./approvals";
 import { ensureMeetingDoc } from "./ensureMeetingDoc";
@@ -11,8 +12,15 @@ export async function updateMeetingField(
   nonMeetingSundays: readonly NonMeetingSunday[],
   patch: Partial<SacramentMeeting>,
 ): Promise<void> {
-  await ensureMeetingDoc(wardId, date, nonMeetingSundays);
-  await writeMeetingPatch(wardId, date, patch);
+  reportSaving();
+  try {
+    await ensureMeetingDoc(wardId, date, nonMeetingSundays);
+    await writeMeetingPatch(wardId, date, patch);
+    reportSaved();
+  } catch (e) {
+    reportSaveError(e);
+    throw e;
+  }
 }
 
 export async function cancelMeeting(
