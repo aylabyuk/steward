@@ -1,4 +1,5 @@
 import type { Approval } from "@/lib/types";
+import { useAuthStore } from "@/stores/authStore";
 
 interface DraftProps {
   missing: string[];
@@ -55,6 +56,7 @@ export function ApprovedBody({ approvals }: { approvals: readonly Approval[] }) 
 }
 
 function ApproverList({ approvals }: { approvals: readonly Approval[] }) {
+  const currentUid = useAuthStore((s) => s.user?.uid);
   if (approvals.length === 0) return null;
   return (
     <ul className="flex flex-col gap-1 mb-1 list-none p-0 m-0">
@@ -66,6 +68,7 @@ function ApproverList({ approvals }: { approvals: readonly Approval[] }) {
             </svg>
           </span>
           {a.displayName}
+          {a.uid === currentUid && <span className="text-walnut-3"> (You)</span>}
         </li>
       ))}
     </ul>
