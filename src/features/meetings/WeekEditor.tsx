@@ -126,9 +126,7 @@ export function WeekEditor({ date }: Props) {
               )}
               <HymnsSection {...sectionProps} type={type} />
               <BusinessSection {...sectionProps} />
-              <div id="sec-comments" className="bg-chalk border border-border rounded-xl p-5 mb-4 scroll-mt-22.5">
-                <CommentThread wardId={wardId} date={date} />
-              </div>
+              <CommentThread wardId={wardId} date={date} />
             </>
           )}
         </div>
