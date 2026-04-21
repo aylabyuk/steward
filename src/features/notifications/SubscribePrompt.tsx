@@ -55,45 +55,49 @@ export function SubscribePrompt() {
 
   if (mode === "ios-nudge") {
     return (
-      <div className="mb-4 flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-        <div className="flex-1">
-          <p className="font-medium">Install Steward to enable push notifications</p>
-          <p className="mt-1 text-xs">
-            iOS only delivers Web Push to apps installed on your home screen. Tap the Share button
-            in Safari and choose "Add to Home Screen", then open Steward from the icon.
-          </p>
+      <div className="mb-4 rounded-lg border border-warning-soft bg-warning-soft/40 p-4 text-sm text-brass-deep">
+        <p className="font-sans font-semibold text-walnut">
+          Install Steward to enable push notifications
+        </p>
+        <p className="mt-1 text-[13px] text-walnut-2">
+          iOS only delivers Web Push to apps installed on your home screen. Tap the Share button
+          in Safari and choose "Add to Home Screen", then open Steward from the icon.
+        </p>
+        <div className="mt-3 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={dismissIosNudge}
+            className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
+          >
+            Not now
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={dismissIosNudge}
-          className="text-xs text-amber-800 underline"
-        >
-          Not now
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="mb-4 flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
-      <div className="flex-1">
-        <p className="font-medium text-slate-800">Get notified about program updates</p>
-        <p className="mt-1 text-xs text-slate-600">
-          Push notifications cover comments, change alerts, and finalization nudges.
-        </p>
-        {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-      </div>
-      <div className="flex flex-col items-end gap-1">
+    <div className="mb-4 rounded-lg border border-border bg-chalk p-4 text-sm">
+      <p className="font-sans font-semibold text-walnut">Get notified about program updates</p>
+      <p className="mt-1 text-[13px] text-walnut-2">
+        Push notifications cover comments, change alerts, and finalization nudges.
+      </p>
+      {error && <p className="mt-2 text-xs text-bordeaux">{error}</p>}
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={dismissPrompt}
+          className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
+        >
+          Not now
+        </button>
         <button
           type="button"
           onClick={() => void subscribe()}
           disabled={busy}
-          className="rounded-md bg-slate-900 px-3 py-1 text-xs text-white disabled:opacity-50"
+          className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {busy ? "Subscribing…" : "Enable"}
-        </button>
-        <button type="button" onClick={dismissPrompt} className="text-xs text-slate-500 underline">
-          Not now
         </button>
       </div>
     </div>
