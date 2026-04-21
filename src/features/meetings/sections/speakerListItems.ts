@@ -6,7 +6,7 @@ export type Item =
   | { kind: "mid"; id: "__mid__"; label: string };
 
 export function sortByOrder(speakers: readonly WithId<Speaker>[]): WithId<Speaker>[] {
-  return [...speakers].sort((a, b) => {
+  return speakers.toSorted((a, b) => {
     const oa = a.data.order ?? Number.MAX_SAFE_INTEGER;
     const ob = b.data.order ?? Number.MAX_SAFE_INTEGER;
     if (oa !== ob) return oa - ob;

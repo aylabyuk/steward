@@ -1,5 +1,4 @@
 import type { SacramentMeeting } from "@/lib/types";
-import type { WithId } from "@/hooks/_sub";
 
 export interface MonthGroup {
   year: number;
@@ -30,7 +29,7 @@ export function groupByMonth(
     });
   }
 
-  return Array.from(groups.values()).sort((a, b) => {
+  return Array.from(groups.values()).toSorted((a, b) => {
     if (a.year !== b.year) return a.year - b.year;
     return a.month - b.month;
   });

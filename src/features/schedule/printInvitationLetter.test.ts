@@ -13,7 +13,6 @@ describe("printInvitationLetter", () => {
     };
 
     // Mock window.open to capture the HTML
-    let capturedHtml = "";
     const originalOpen = window.open;
     window.open = ((url: string) => {
       if (url.startsWith("blob:")) {

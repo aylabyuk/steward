@@ -60,7 +60,7 @@ test.describe("Schedule Page", () => {
     await expect(page.locator("main")).toBeVisible();
   });
 
-  test("shows cancellation banner when meeting is cancelled", async ({ page }) => {
+  test("shows cancellation banner when meeting is cancelled", async ({ page: _page }) => {
     // This would require a meeting doc with cancellation in the test data
     // Skip or implement with Firebase emulator seeding
   });
@@ -97,7 +97,7 @@ test.describe("Week View", () => {
   test("displays speakers section for regular meetings", async ({ page }) => {
     // Check for speakers section (only for regular/fast meetings)
     const speakersSection = page.locator("text=Speakers");
-    const isSpeakerVisible = await speakersSection.isVisible().catch(() => false);
+    await speakersSection.isVisible().catch(() => false);
     // May not be visible depending on meeting type
   });
 });
