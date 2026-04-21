@@ -3,9 +3,25 @@ import { writeMeetingPatch } from "@/features/meetings/approvals";
 import { ensureMeetingDoc } from "@/features/meetings/ensureMeetingDoc";
 import { appendHistoryEvent, currentActor } from "@/features/meetings/history";
 import { db } from "@/lib/firebase";
+import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import type { HistoryChange, NonMeetingSunday, SpeakerRole, SpeakerStatus } from "@/lib/types";
 
 export { reorderSpeakers } from "./reorderSpeakers";
+
+/** Surface save errors to the inline save-status indicator and re-throw
+ *  so callers can still handle them (e.g. abort the rest of a batch
+ *  save, or render a local error message next to a dialog button). */
+async function withSaveError<T>(fn: () => Promise<T>): Promise<T> {
+  reportSaving();
+  try {
+    const result = await fn();
+    reportSaved();
+    return result;
+  } catch (e) {
+    reportSaveError(e);
+    throw e;
+  }
+}
 
 function speakerRef(wardId: string, date: string, speakerId: string) {
   return doc(db, "wards", wardId, "meetings", date, "speakers", speakerId);
@@ -22,35 +38,37 @@ export interface CreateSpeakerInput {
 }
 
 export async function createSpeaker(input: CreateSpeakerInput): Promise<void> {
-  // Creating a speaker before the meeting doc exists would orphan the
-  // subcollection entry. Ensure the parent meeting is there first.
-  await ensureMeetingDoc(input.wardId, input.date, input.nonMeetingSundays);
-  const ref = doc(collection(db, "wards", input.wardId, "meetings", input.date, "speakers"));
-  const data: Record<string, unknown> = {
-    name: input.name,
-    status: "planned",
-    role: input.role || "Member",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  if (input.email) data.email = input.email;
-  if (input.topic) data.topic = input.topic;
+  return withSaveError(async () => {
+    // Creating a speaker before the meeting doc exists would orphan the
+    // subcollection entry. Ensure the parent meeting is there first.
+    await ensureMeetingDoc(input.wardId, input.date, input.nonMeetingSundays);
+    const ref = doc(collection(db, "wards", input.wardId, "meetings", input.date, "speakers"));
+    const data: Record<string, unknown> = {
+      name: input.name,
+      status: "planned",
+      role: input.role || "Member",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    if (input.email) data.email = input.email;
+    if (input.topic) data.topic = input.topic;
 
-  const batch = writeBatch(db);
-  batch.set(ref, data);
-  const actor = currentActor();
-  if (actor) {
-    const changes: HistoryChange[] = [{ field: "name", new: input.name }];
-    if (input.topic) changes.push({ field: "topic", new: input.topic });
-    appendHistoryEvent(batch, input.wardId, input.date, actor, {
-      target: "speaker",
-      targetId: ref.id,
-      action: "create",
-      changes,
-    });
-  }
-  await batch.commit();
-  await writeMeetingPatch(input.wardId, input.date, {});
+    const batch = writeBatch(db);
+    batch.set(ref, data);
+    const actor = currentActor();
+    if (actor) {
+      const changes: HistoryChange[] = [{ field: "name", new: input.name }];
+      if (input.topic) changes.push({ field: "topic", new: input.topic });
+      appendHistoryEvent(batch, input.wardId, input.date, actor, {
+        target: "speaker",
+        targetId: ref.id,
+        action: "create",
+        changes,
+      });
+    }
+    await batch.commit();
+    await writeMeetingPatch(input.wardId, input.date, {});
+  });
 }
 
 export async function updateSpeaker(
@@ -66,25 +84,27 @@ export async function updateSpeaker(
     order: number;
   }>,
 ): Promise<void> {
-  const data: Record<string, unknown> = { updatedAt: serverTimestamp(), ...updates };
-  const batch = writeBatch(db);
-  batch.update(speakerRef(wardId, date, speakerId), data);
+  return withSaveError(async () => {
+    const data: Record<string, unknown> = { updatedAt: serverTimestamp(), ...updates };
+    const batch = writeBatch(db);
+    batch.update(speakerRef(wardId, date, speakerId), data);
 
-  const actor = currentActor();
-  if (actor) {
-    const changes: HistoryChange[] = Object.entries(updates).map(([field, value]) => ({
-      field,
-      new: value,
-    }));
-    appendHistoryEvent(batch, wardId, date, actor, {
-      target: "speaker",
-      targetId: speakerId,
-      action: "update",
-      changes,
-    });
-  }
-  await batch.commit();
-  await writeMeetingPatch(wardId, date, {});
+    const actor = currentActor();
+    if (actor) {
+      const changes: HistoryChange[] = Object.entries(updates).map(([field, value]) => ({
+        field,
+        new: value,
+      }));
+      appendHistoryEvent(batch, wardId, date, actor, {
+        target: "speaker",
+        targetId: speakerId,
+        action: "update",
+        changes,
+      });
+    }
+    await batch.commit();
+    await writeMeetingPatch(wardId, date, {});
+  });
 }
 
 export async function deleteSpeaker(
@@ -92,18 +112,20 @@ export async function deleteSpeaker(
   date: string,
   speakerId: string,
 ): Promise<void> {
-  const batch = writeBatch(db);
-  batch.delete(speakerRef(wardId, date, speakerId));
-  const actor = currentActor();
-  if (actor) {
-    appendHistoryEvent(batch, wardId, date, actor, {
-      target: "speaker",
-      targetId: speakerId,
-      action: "delete",
-      changes: [],
-    });
-  }
-  await batch.commit();
-  await writeMeetingPatch(wardId, date, {});
+  return withSaveError(async () => {
+    const batch = writeBatch(db);
+    batch.delete(speakerRef(wardId, date, speakerId));
+    const actor = currentActor();
+    if (actor) {
+      appendHistoryEvent(batch, wardId, date, actor, {
+        target: "speaker",
+        targetId: speakerId,
+        action: "delete",
+        changes: [],
+      });
+    }
+    await batch.commit();
+    await writeMeetingPatch(wardId, date, {});
+  });
 }
 
