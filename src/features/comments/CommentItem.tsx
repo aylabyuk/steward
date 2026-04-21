@@ -56,6 +56,7 @@ export function CommentItem({ wardId, date, comment }: Props) {
       <header className="flex items-baseline justify-between gap-3 mb-1.5">
         <span className="font-sans text-[13px] font-semibold text-walnut truncate">
           {comment.data.authorDisplayName}
+          {isAuthor && <span className="text-walnut-3 font-normal"> (You)</span>}
         </span>
         <span className="font-mono text-[10px] uppercase tracking-widest text-walnut-3 shrink-0">
           {formatWhen(comment.data.createdAt)}
