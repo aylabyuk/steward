@@ -19,64 +19,6 @@ function formatWhen(raw: unknown): string {
   return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
 }
 
-function EditForm({
-  draft,
-  setDraft,
-  onSave,
-  onCancel,
-  busy,
-}: {
-  draft: string;
-  setDraft: (v: string) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  busy: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <textarea
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        rows={3}
-        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-      />
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={busy || draft.trim().length === 0}
-          className="rounded-md bg-slate-900 px-3 py-1 text-xs text-white disabled:opacity-50"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function CommentBody({
-  deleted,
-  editing,
-  body,
-  editProps,
-}: {
-  deleted: boolean;
-  editing: boolean;
-  body: string;
-  editProps: React.ComponentProps<typeof EditForm>;
-}) {
-  if (deleted) return <p className="italic text-slate-400">[deleted]</p>;
-  if (editing) return <EditForm {...editProps} />;
-  return <p className="whitespace-pre-wrap text-slate-900">{body}</p>;
-}
-
 export function CommentItem({ wardId, date, comment }: Props) {
   const user = useAuthStore((s) => s.user);
   const { data: members } = useWardMembers();
@@ -110,35 +52,36 @@ export function CommentItem({ wardId, date, comment }: Props) {
   }
 
   return (
-    <li className="flex flex-col gap-1 rounded-md border border-slate-200 bg-white p-3 text-sm">
-      <header className="flex items-baseline justify-between text-xs text-slate-500">
-        <span className="font-medium text-slate-700">{comment.data.authorDisplayName}</span>
-        <span>
+    <li className="rounded-md border border-border bg-parchment px-3.5 py-2.5">
+      <header className="flex items-baseline justify-between gap-3 mb-1.5">
+        <span className="font-sans text-[13px] font-semibold text-walnut truncate">
+          {comment.data.authorDisplayName}
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-widest text-walnut-3 shrink-0">
           {formatWhen(comment.data.createdAt)}
           {edited && !deleted && " · edited"}
         </span>
       </header>
-      <CommentBody
-        deleted={deleted}
-        editing={editing}
-        body={comment.data.body}
-        editProps={{
-          draft,
-          setDraft,
-          onSave: () => void save(),
-          onCancel: () => {
-            setEditing(false);
-            setDraft(comment.data.body);
-          },
-          busy,
-        }}
-      />
+
+      {deleted ? (
+        <p className="font-serif italic text-[13px] text-walnut-3">[deleted]</p>
+      ) : editing ? (
+        <EditForm draft={draft} setDraft={setDraft} onSave={() => void save()} onCancel={() => {
+          setEditing(false);
+          setDraft(comment.data.body);
+        }} busy={busy} />
+      ) : (
+        <p className="whitespace-pre-wrap font-sans text-[13.5px] text-walnut leading-relaxed">
+          {comment.data.body}
+        </p>
+      )}
+
       {isAuthor && !deleted && !editing && (
-        <div className="flex gap-3 text-xs">
+        <div className="flex gap-4 mt-2">
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="text-blue-600 hover:underline"
+            className="font-sans text-[12px] font-semibold text-bordeaux hover:text-bordeaux-deep hover:underline hover:underline-offset-2 transition-colors"
           >
             Edit
           </button>
@@ -146,12 +89,50 @@ export function CommentItem({ wardId, date, comment }: Props) {
             type="button"
             onClick={() => void remove()}
             disabled={busy}
-            className="text-red-600 hover:underline disabled:opacity-50"
+            className="font-sans text-[12px] font-semibold text-walnut-3 hover:text-bordeaux transition-colors disabled:opacity-50"
           >
             Delete
           </button>
         </div>
       )}
     </li>
+  );
+}
+
+interface EditFormProps {
+  draft: string;
+  setDraft: (v: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  busy: boolean;
+}
+
+function EditForm({ draft, setDraft, onSave, onCancel, busy }: EditFormProps) {
+  return (
+    <div className="flex flex-col gap-2 mt-1">
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={3}
+        className="font-sans text-[13.5px] leading-relaxed px-3 py-2 bg-chalk border border-border rounded-md text-walnut w-full resize-y transition-colors focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15"
+      />
+      <div className="flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="font-sans text-[12.5px] font-semibold px-3 py-1.5 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={busy || draft.trim().length === 0}
+          className="font-sans text-[12.5px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment hover:bg-bordeaux-deep shadow-[0_1px_0_rgba(35,24,21,0.18)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        >
+          {busy ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </div>
   );
 }
