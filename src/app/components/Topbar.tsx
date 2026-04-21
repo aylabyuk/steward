@@ -5,7 +5,7 @@ export function Topbar() {
   const ward = useWardSettings();
   const wardName = ward.data?.name;
   return (
-    <div className="sticky top-0 z-20 border-b border-border bg-parchment/82 backdrop-blur-sm">
+    <div className="border-b border-border bg-parchment/82 backdrop-blur-sm">
       <div className="flex items-center gap-4 px-8 py-3.5">
         {/* Brand */}
         <div className="flex items-center gap-2.5 flex-shrink-0">

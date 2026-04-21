@@ -3,6 +3,7 @@ import { computeContentHash } from "@/features/meetings/contentHash";
 import { appendHistoryEvent, currentActor } from "@/features/meetings/history";
 import { buildInvalidationPatch } from "@/features/meetings/writeMeetingPatch";
 import { db } from "@/lib/firebase";
+import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import { sacramentMeetingSchema, speakerSchema } from "@/lib/types";
 
 function speakerRef(wardId: string, date: string, speakerId: string) {
@@ -22,6 +23,21 @@ function speakerRef(wardId: string, date: string, speakerId: string) {
  * transaction; for our data (≤ ~5 speakers per meeting) that's cheap.
  */
 export async function reorderSpeakers(
+  wardId: string,
+  date: string,
+  orderedIds: readonly string[],
+): Promise<void> {
+  reportSaving();
+  try {
+    await doReorder(wardId, date, orderedIds);
+    reportSaved();
+  } catch (e) {
+    reportSaveError(e);
+    throw e;
+  }
+}
+
+async function doReorder(
   wardId: string,
   date: string,
   orderedIds: readonly string[],

@@ -144,7 +144,6 @@ export function WeekEditor({ date }: Props) {
 
       {!isNonMeeting && (
         <ProgramSaveBar
-          savedAt={new Date()}
           status={currentStatus}
           ready={report.ready}
           remaining={report.missing.length + report.unconfirmed.length}
