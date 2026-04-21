@@ -109,7 +109,12 @@ export function SundayCard({ date, meeting, fallbackType, leadTimeDays, nonMeeti
         onClose={() => setAssignDialogOpen(false)}
         onSave={handleSave}
       >
-        <SpeakerEditList ref={editListRef} date={date} wardId={wardId} />
+        <SpeakerEditList
+          ref={editListRef}
+          date={date}
+          wardId={wardId}
+          nonMeetingSundays={nonMeetingSundays}
+        />
       </AssignDialog>
     </article>
   );

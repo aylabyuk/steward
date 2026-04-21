@@ -8,7 +8,7 @@ import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
-import { defaultMeetingType } from "./ensureMeetingDoc";
+import { defaultMeetingType, ensureMeetingDoc } from "./ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
 import { NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
 import { requestApproval } from "./approvals";
@@ -46,6 +46,16 @@ export function WeekEditor({ date }: Props) {
   useEffect(() => {
     if (wardId) markRead(wardId, date);
   }, [wardId, date, markRead]);
+
+  // Auto-create the meeting doc on first visit so we don't sit on
+  // "Meeting not created yet". Gated on ward settings being loaded
+  // so we pick the right default meetingType (fast Sundays, overrides).
+  const settingsLoaded = Boolean(settings.data);
+  useEffect(() => {
+    if (!wardId || !settingsLoaded) return;
+    const nonMeetingSundays = settings.data?.settings.nonMeetingSundays ?? [];
+    void ensureMeetingDoc(wardId, date, nonMeetingSundays);
+  }, [wardId, date, settingsLoaded, settings.data]);
 
   if (!wardId) return null;
 
