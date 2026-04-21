@@ -14,7 +14,7 @@ export function MembersPage() {
   const canEdit = me?.data.role === "bishopric" && me.data.active;
 
   return (
-    <main className="max-w-3xl mx-auto pb-12">
+    <main className="pb-12">
       <nav className="mb-4 text-sm text-walnut-2">
         <Link to="/settings" className="hover:text-walnut">
           ← Settings
