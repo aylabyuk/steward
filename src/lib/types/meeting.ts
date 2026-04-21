@@ -44,6 +44,15 @@ export const approvalSchema = z.object({
 });
 export type Approval = z.infer<typeof approvalSchema>;
 
+// Visiting authorities, ward members, or other guests to be recognized
+// from the stand (stake leaders, mission president, etc.). `details`
+// is free-form — typically their calling or a short descriptor.
+export const visitorSchema = z.object({
+  name: z.string().min(1),
+  details: z.string().optional(),
+});
+export type Visitor = z.infer<typeof visitorSchema>;
+
 // Mid-meeting item: between sacrament and speakers, a rest hymn OR a
 // musical number (performer only) OR none. `midAfter` chooses which speaker
 // index to pin the placeholder row below in the Program speaker list.
@@ -86,6 +95,7 @@ export const sacramentMeetingSchema = z.object({
   showAnnouncements: z.boolean().default(true),
   presiding: assignmentSchema.optional(),
   conducting: assignmentSchema.optional(),
+  visitors: z.array(visitorSchema).default([]),
   lastNudgedAt: z.any().optional(),
   updatedAt: z.any().optional(),
   createdAt: z.any().optional(),
