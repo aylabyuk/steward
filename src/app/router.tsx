@@ -24,10 +24,16 @@ export const router = createBrowserRouter([
       { path: "settings/notifications", element: <NotificationSettingsPage /> },
     ],
   },
-  // Print views render standalone — no AppShell / topbar — so the printed
-  // page doesn't include app chrome. They still gate on auth + approval
-  // internally.
-  { path: "/print/:date/congregation", element: <CongregationProgram /> },
-  { path: "/print/:date/conducting", element: <ConductingProgram /> },
+  // Print views share AuthGate's auth + ward resolution (so
+  // currentWardStore.wardId gets populated for useMeeting / useSpeakers)
+  // but skip the AppShell wrapper, so the printed page doesn't include
+  // the topbar or centered content column.
+  {
+    element: <AuthGate appShell={false} />,
+    children: [
+      { path: "/print/:date/congregation", element: <CongregationProgram /> },
+      { path: "/print/:date/conducting", element: <ConductingProgram /> },
+    ],
+  },
   { path: "/login", element: <Login /> },
 ]);
