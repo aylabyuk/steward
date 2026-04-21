@@ -108,7 +108,7 @@ export function WeekEditor({ date }: Props) {
                 onRequestApproval={() => void handleRequestApproval()}
                 busy={busy}
               />
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-4 min-[900px]:hidden">
                 <StatusLegend />
               </div>
               <LeadersSection {...sectionProps} />
@@ -131,8 +131,11 @@ export function WeekEditor({ date }: Props) {
         </div>
 
         {!isNonMeeting && (
-          <div className="flex flex-col gap-4 min-w-0">
+          <div className="flex flex-col gap-4 min-w-0 min-[900px]:sticky min-[900px]:top-22.5 min-[900px]:self-start min-[900px]:max-h-[calc(100vh-6rem)] min-[900px]:overflow-y-auto min-[900px]:pb-4">
             <ProgramRail sections={rail} />
+            <div className="hidden min-[900px]:flex">
+              <StatusLegend />
+            </div>
             <CommentThread wardId={wardId} date={date} />
           </div>
         )}
