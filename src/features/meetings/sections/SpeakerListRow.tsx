@@ -2,10 +2,7 @@ import type { WithId } from "@/hooks/_sub";
 import type { Speaker } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
-interface Props {
-  speaker: WithId<Speaker>;
-  index: number;
-  isLast: boolean;
+interface DragHandlers {
   isDragging: boolean;
   isOver: boolean;
   onDragStart: () => void;
@@ -14,82 +11,87 @@ interface Props {
   onDrop: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
-  midLabel: string | null;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 }
 
-export function SpeakerListRow({
-  speaker: s,
-  index,
-  isLast,
-  isDragging,
-  isOver,
-  onDragStart,
-  onDragOver,
-  onDragEnd,
-  onDrop,
-  onMoveUp,
-  onMoveDown,
-  midLabel,
-}: Props) {
+function useDragProps(d: DragHandlers) {
+  return {
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.effectAllowed = "move";
+      d.onDragStart();
+    },
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault();
+      d.onDragOver();
+    },
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      d.onDrop();
+    },
+    onDragEnd: d.onDragEnd,
+  };
+}
+
+interface SpeakerRowProps extends DragHandlers {
+  speaker: WithId<Speaker>;
+  index: number;
+  isLast: boolean;
+}
+
+export function SpeakerListRow({ speaker: s, index, isLast, ...drag }: SpeakerRowProps) {
   return (
-    <>
-      <li
-        draggable
-        onDragStart={(e) => {
-          e.dataTransfer.effectAllowed = "move";
-          onDragStart();
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          onDragOver();
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          onDrop();
-        }}
-        onDragEnd={onDragEnd}
-        className={cn(
-          "grid grid-cols-[44px_minmax(0,1fr)_auto_64px] gap-3 items-center py-2.5 border-b border-dashed border-border rounded cursor-grab transition-colors",
-          isLast && !midLabel && "border-b-0",
-          isDragging && "opacity-40",
-          isOver && "bg-brass-soft/30 shadow-[inset_0_-2px_0_var(--color-bordeaux-deep),inset_0_2px_0_var(--color-bordeaux-deep)]",
-          "hover:bg-parchment",
-        )}
-      >
-        <div className="inline-flex items-center gap-1 text-walnut-3">
-          <span className="font-mono text-[10.5px] tracking-[0.08em] text-brass-deep">
-            {String(index + 1).padStart(2, "0")}
-          </span>
-          <span className="text-[14px] opacity-50" aria-hidden>⠿</span>
+    <li
+      {...useDragProps(drag)}
+      className={cn(
+        "grid grid-cols-[44px_minmax(0,1fr)_auto_64px] gap-3 items-center py-2.5 border-b border-dashed border-border rounded cursor-grab transition-colors hover:bg-parchment",
+        isLast && "border-b-0",
+        drag.isDragging && "opacity-40",
+        drag.isOver && "bg-brass-soft/30 shadow-[inset_0_-2px_0_var(--color-bordeaux-deep),inset_0_2px_0_var(--color-bordeaux-deep)]",
+      )}
+    >
+      <div className="inline-flex items-center gap-1 text-walnut-3">
+        <span className="font-mono text-[10.5px] tracking-[0.08em] text-brass-deep">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span className="text-[14px] opacity-50" aria-hidden>⠿</span>
+      </div>
+      <div className="min-w-0">
+        <div className="font-sans text-[14.5px] font-semibold text-walnut leading-tight truncate">
+          {s.data.name}
         </div>
-        <div className="min-w-0">
-          <div className="font-sans text-[14.5px] font-semibold text-walnut leading-tight truncate">
-            {s.data.name}
-          </div>
-          <div className="font-serif italic text-[13px] text-walnut-2 mt-0.5 truncate">
-            {s.data.topic || (
-              <span className="text-walnut-3 not-italic">No topic assigned</span>
-            )}
-          </div>
+        <div className="font-serif italic text-[13px] text-walnut-2 mt-0.5 truncate">
+          {s.data.topic || <span className="text-walnut-3 not-italic">No topic assigned</span>}
         </div>
-        <StatusPill status={s.data.status} />
-        <div className="inline-flex gap-0.5">
-          <OrderBtn onClick={onMoveUp} disabled={index === 0} label="Move up">▲</OrderBtn>
-          <OrderBtn onClick={onMoveDown} disabled={false} label="Move down">▼</OrderBtn>
-        </div>
-      </li>
-      {midLabel && <MidPlaceholderRow label={midLabel} />}
-    </>
+      </div>
+      <StatusPill status={s.data.status} />
+      <OrderButtons {...drag} />
+    </li>
   );
 }
 
-export function MidPlaceholderRow({ label }: { label: string }) {
+interface MidRowProps extends DragHandlers {
+  label: string;
+  isLast: boolean;
+}
+
+export function MidPlaceholderRow({ label, isLast, ...drag }: MidRowProps) {
   return (
     <li
-      className="grid grid-cols-[44px_minmax(0,1fr)] gap-3 items-center py-2.5 px-1 border-y border-dashed border-brass-soft bg-[linear-gradient(180deg,rgba(224,190,135,0.18),rgba(224,190,135,0.05))]"
+      {...useDragProps(drag)}
       aria-label="Musical interlude"
+      className={cn(
+        "grid grid-cols-[44px_minmax(0,1fr)_auto_64px] gap-3 items-center py-2.5 px-1 border-y border-dashed border-brass-soft bg-[linear-gradient(180deg,rgba(224,190,135,0.18),rgba(224,190,135,0.05))] cursor-grab transition-colors",
+        isLast && "border-b-0",
+        drag.isDragging && "opacity-40",
+        drag.isOver && "bg-brass-soft/60 shadow-[inset_0_-2px_0_var(--color-bordeaux-deep),inset_0_2px_0_var(--color-bordeaux-deep)]",
+      )}
     >
-      <div className="font-serif text-[18px] text-bordeaux text-center">♪</div>
+      <div className="inline-flex items-center gap-1 text-walnut-3 justify-center">
+        <span className="font-serif text-[18px] text-bordeaux leading-none">♪</span>
+        <span className="text-[14px] opacity-50" aria-hidden>⠿</span>
+      </div>
       <div className="min-w-0">
         <div className="font-serif italic font-medium text-[14px] text-bordeaux-deep truncate">
           {label}
@@ -98,6 +100,8 @@ export function MidPlaceholderRow({ label }: { label: string }) {
           Musical interlude
         </div>
       </div>
+      <span />
+      <OrderButtons {...drag} />
     </li>
   );
 }
@@ -116,6 +120,15 @@ function StatusPill({ status }: { status: Speaker["status"] }) {
     >
       {s}
     </span>
+  );
+}
+
+function OrderButtons({ canMoveUp, canMoveDown, onMoveUp, onMoveDown }: DragHandlers) {
+  return (
+    <div className="inline-flex gap-0.5">
+      <OrderBtn onClick={onMoveUp} disabled={!canMoveUp} label="Move up">▲</OrderBtn>
+      <OrderBtn onClick={onMoveDown} disabled={!canMoveDown} label="Move down">▼</OrderBtn>
+    </div>
   );
 }
 
