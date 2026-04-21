@@ -69,14 +69,6 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
     }
   }
 
-  function move(i: number, delta: number) {
-    const j = i + delta;
-    if (j < 0 || j >= items.length) return;
-    const next = [...items];
-    [next[i], next[j]] = [next[j]!, next[i]!];
-    persist(next);
-  }
-
   function handleDrop(i: number) {
     if (dragIdx == null || dragIdx === i) {
       setDragIdx(null);
@@ -125,10 +117,6 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
               setOverIdx(null);
             },
             onDrop: () => handleDrop(i),
-            onMoveUp: () => move(i, -1),
-            onMoveDown: () => move(i, +1),
-            canMoveUp: i > 0,
-            canMoveDown: i < items.length - 1,
           };
           const isLast = i === items.length - 1;
           if (item.kind === "mid") {
