@@ -60,8 +60,15 @@ export function checkMeetingReadiness(
     else if (!isConfirmed(a)) unconfirmed.push(`${label} — not confirmed`);
   }
 
-  if (REQUIRES_SPEAKERS.has(type) && speakers.length < MIN_SPEAKERS) {
-    missing.unshift(`${MIN_SPEAKERS - speakers.length} more speaker(s) needed`);
+  if (REQUIRES_SPEAKERS.has(type)) {
+    if (speakers.length < MIN_SPEAKERS) {
+      missing.unshift(`${MIN_SPEAKERS - speakers.length} more speaker(s) needed`);
+    }
+    for (const s of speakers) {
+      if (s.data.status !== "confirmed") {
+        unconfirmed.push(`${s.data.name} — not confirmed`);
+      }
+    }
   }
   if (!meeting.openingHymn) missing.push("Opening hymn");
   if (!meeting.sacramentHymn) missing.push("Sacrament hymn");
@@ -72,8 +79,11 @@ export function checkMeetingReadiness(
     missing.push("Musical number performer");
   }
 
+  const speakerItems = REQUIRES_SPEAKERS.has(type)
+    ? Math.max(MIN_SPEAKERS, speakers.length)
+    : 0;
   const totalItems =
-    personRows.length + 3 /*hymns*/ + (meeting.mid && meeting.mid.mode !== "none" ? 1 : 0) + (REQUIRES_SPEAKERS.has(type) ? MIN_SPEAKERS : 0);
+    personRows.length + 3 /*hymns*/ + (meeting.mid && meeting.mid.mode !== "none" ? 1 : 0) + speakerItems;
   const doneCount = Math.max(0, totalItems - missing.length - unconfirmed.length);
   const ready = missing.length === 0 && unconfirmed.length === 0;
 

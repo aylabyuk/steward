@@ -80,6 +80,26 @@ export async function updateSpeaker(
   await writeMeetingPatch(wardId, date, {});
 }
 
+export async function deleteSpeaker(
+  wardId: string,
+  date: string,
+  speakerId: string,
+): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(speakerRef(wardId, date, speakerId));
+  const actor = currentActor();
+  if (actor) {
+    appendHistoryEvent(batch, wardId, date, actor, {
+      target: "speaker",
+      targetId: speakerId,
+      action: "delete",
+      changes: [],
+    });
+  }
+  await batch.commit();
+  await writeMeetingPatch(wardId, date, {});
+}
+
 /**
  * Persist a new order for all speakers in the given date. Writes `order` on
  * every speaker in a single batch so the UI and Firestore never disagree.
