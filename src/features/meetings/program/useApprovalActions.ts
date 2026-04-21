@@ -1,37 +1,68 @@
 import { useState } from "react";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
+import type { Approval } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
-import { requestApproval, resetToDraft } from "../approvals";
+import { AlreadyApprovedError, approveMeeting, requestApproval, resetToDraft } from "../approvals";
 
 interface UseApprovalActions {
   wardId: string;
   date: string;
+  approvals: readonly Approval[];
 }
 
 /**
- * Encapsulates the two approval write paths on the Program page:
+ * Encapsulates the approval write paths on the Program page:
  *   - requestApproval (with bishopric self-approval shortcut)
- *   - resetToDraft   (confirm dialog)
+ *   - approveMeeting  (second bishopric vote)
+ *   - resetToDraft    (confirm dialog)
  *
- * Keeps WeekEditor under the 150-line component cap.
+ * Also exposes `canApprove` — true when the signed-in user is an
+ * active bishopric member who hasn't already approved the live
+ * version of this meeting.
  */
-export function useApprovalActions({ wardId, date }: UseApprovalActions) {
+export function useApprovalActions({ wardId, date, approvals }: UseApprovalActions) {
   const authUser = useAuthStore((s) => s.user);
   const me = useCurrentMember();
   const [busy, setBusy] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isActiveBishopric = me?.data.active === true && me.data.role === "bishopric";
+  const alreadyApproved = authUser
+    ? approvals.some((a) => a.uid === authUser.uid && !a.invalidated)
+    : false;
+  const canApprove = Boolean(authUser && isActiveBishopric && !alreadyApproved);
 
   async function handleRequestApproval() {
     if (!authUser) return;
     setBusy(true);
+    setError(null);
     try {
-      const isActiveBishopric = me?.data.active === true && me.data.role === "bishopric";
       await requestApproval(wardId, date, {
         uid: authUser.uid,
         email: authUser.email ?? "",
         displayName: authUser.displayName ?? authUser.email ?? "",
         isBishopric: isActiveBishopric,
       });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleApprove() {
+    if (!authUser) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await approveMeeting({
+        wardId,
+        date,
+        uid: authUser.uid,
+        email: authUser.email ?? "",
+        displayName: me?.data.displayName ?? authUser.displayName ?? authUser.email ?? "",
+      });
+    } catch (e) {
+      setError(e instanceof AlreadyApprovedError ? e.message : (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -44,10 +75,14 @@ export function useApprovalActions({ wardId, date }: UseApprovalActions) {
 
   return {
     busy,
+    error,
+    canApprove,
+    alreadyApproved,
     resetDialogOpen,
     openResetDialog: () => setResetDialogOpen(true),
     closeResetDialog: () => setResetDialogOpen(false),
     requestApproval: () => void handleRequestApproval(),
+    approve: () => void handleApprove(),
     resetToDraft: () => handleResetToDraft(),
   };
 }
