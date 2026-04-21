@@ -64,42 +64,38 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
 
   useImperativeHandle(ref, () => ({
     async save() {
-      const tasks: Promise<void>[] = [];
-      // Persisted deletions first so any re-indexing/hash recompute settles
-      // before we issue create/update for the remaining rows.
+      // Speaker mutations each internally call writeMeetingPatch to
+      // recompute the meeting content hash, so run them serially — parallel
+      // saves would each read a stale speakers snapshot and the final
+      // hash would not reflect the final speaker set.
       for (const id of deletedIds) {
-        tasks.push(deleteSpeaker(wardId, date, id));
+        await deleteSpeaker(wardId, date, id);
       }
       for (const d of drafts) {
         const name = d.name.trim();
         if (!name) continue;
         if (d.id === null) {
-          tasks.push(
-            createSpeaker({
-              wardId,
-              date,
-              nonMeetingSundays,
-              name,
-              email: d.email.trim() || undefined,
-              topic: d.topic.trim() || undefined,
-              role: d.role,
-            }),
-          );
+          await createSpeaker({
+            wardId,
+            date,
+            nonMeetingSundays,
+            name,
+            email: d.email.trim() || undefined,
+            topic: d.topic.trim() || undefined,
+            role: d.role,
+          });
         } else {
           const original = originalsRef.current.get(d.tempId) ?? null;
           if (!isDirty(d, original)) continue;
-          tasks.push(
-            updateSpeaker(wardId, date, d.id, {
-              name,
-              email: d.email.trim(),
-              topic: d.topic.trim(),
-              role: d.role,
-              status: d.status,
-            }),
-          );
+          await updateSpeaker(wardId, date, d.id, {
+            name,
+            email: d.email.trim(),
+            topic: d.topic.trim(),
+            role: d.role,
+            status: d.status,
+          });
         }
       }
-      await Promise.all(tasks);
       setDeletedIds([]);
     },
   }), [drafts, deletedIds, wardId, date, nonMeetingSundays]);
