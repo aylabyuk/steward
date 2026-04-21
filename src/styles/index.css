@@ -83,6 +83,11 @@
    Base Styles
    ========================================================= */
 @layer base {
+  html {
+    /* Always reserve room for the scrollbar so the centered main element
+       doesn't shift horizontally between short and long pages. */
+    scrollbar-gutter: stable;
+  }
   html,
   body {
     @apply bg-parchment text-walnut font-sans text-base leading-relaxed antialiased;
