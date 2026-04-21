@@ -27,7 +27,7 @@ export function ConductingProgram() {
   const m = meeting.data;
   const approved = m?.status === "approved";
 
-  if (ready && !approved) return <Navigate to="/schedule" replace />;
+  if (ready && !approved) return <NotApproved date={date} />;
 
   const wardName = ward.data?.name ?? "our ward";
   const dateLong = formatLongDate(date);
@@ -131,5 +131,19 @@ export function ConductingProgram() {
         <RowLabeled label="Benediction" value={personName(m?.benediction)} />
       </RowSection>
     </PrintLayout>
+  );
+}
+
+function NotApproved({ date }: { date: string }) {
+  return (
+    <div className="min-h-screen grid place-items-center bg-parchment p-8 text-center">
+      <div className="max-w-md">
+        <p className="font-display text-[20px] text-walnut mb-2">Not yet approved</p>
+        <p className="font-serif italic text-[13.5px] text-walnut-2">
+          The program for <strong>{formatLongDate(date)}</strong> needs two bishopric approvals
+          before it can be printed.
+        </p>
+      </div>
+    </div>
   );
 }
