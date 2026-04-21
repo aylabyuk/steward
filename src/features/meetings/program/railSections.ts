@@ -21,6 +21,7 @@ export function buildRailSections(
       label: "Leaders",
       done: hasPerson(m?.presiding) && hasPerson(m?.conducting),
     },
+    { id: "sec-notes", label: "Announcements", done: true },
     {
       id: "sec-prayers",
       label: "Prayers",
@@ -53,6 +54,5 @@ export function buildRailSections(
     label: "Hymns & music",
     done: Boolean(m?.openingHymn && m?.sacramentHymn && m?.closingHymn),
   });
-  sections.push({ id: "sec-notes", label: "Announcements", done: true });
   return sections;
 }
