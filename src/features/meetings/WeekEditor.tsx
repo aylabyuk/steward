@@ -24,6 +24,7 @@ import { ProgramApproval } from "./program/ProgramApproval";
 import { ProgramHead } from "./program/ProgramHead";
 import { ProgramRail } from "./program/ProgramRail";
 import { ProgramSaveBar } from "./program/ProgramSaveBar";
+import { StatusLegend } from "./program/StatusLegend";
 import { buildRailSections } from "./program/railSections";
 import { cancelMeeting } from "./updateMeeting";
 
@@ -107,6 +108,9 @@ export function WeekEditor({ date }: Props) {
                 onRequestApproval={() => void handleRequestApproval()}
                 busy={busy}
               />
+              <div className="flex justify-center mb-4">
+                <StatusLegend />
+              </div>
               <LeadersSection {...sectionProps} />
               <PrayersSection {...sectionProps} />
               <MusicSection {...sectionProps} />
