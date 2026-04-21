@@ -58,11 +58,7 @@ describe("checkMeetingReadiness", () => {
 
   it("separates 'missing' (no assignment) from 'unconfirmed' (assigned but not confirmed)", () => {
     const draft: Assignment = { person: { name: "Bob" }, confirmed: false };
-    const r = checkMeetingReadiness(
-      { ...complete, openingPrayer: draft },
-      twoSpeakers,
-      "regular",
-    );
+    const r = checkMeetingReadiness({ ...complete, openingPrayer: draft }, twoSpeakers, "regular");
     expect(r.missing).not.toContain("Opening prayer — not assigned");
     expect(r.unconfirmed).toContain("Opening prayer — not confirmed");
     expect(r.ready).toBe(false);

@@ -67,10 +67,16 @@ export function CommentItem({ wardId, date, comment }: Props) {
       {deleted ? (
         <p className="font-serif italic text-[13px] text-walnut-3">[deleted]</p>
       ) : editing ? (
-        <EditForm draft={draft} setDraft={setDraft} onSave={() => void save()} onCancel={() => {
-          setEditing(false);
-          setDraft(comment.data.body);
-        }} busy={busy} />
+        <EditForm
+          draft={draft}
+          setDraft={setDraft}
+          onSave={() => void save()}
+          onCancel={() => {
+            setEditing(false);
+            setDraft(comment.data.body);
+          }}
+          busy={busy}
+        />
       ) : (
         <p className="whitespace-pre-wrap font-sans text-[13.5px] text-walnut leading-relaxed">
           {comment.data.body}

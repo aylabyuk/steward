@@ -34,7 +34,16 @@ export function ProgramHead({ date, type, rightSlot }: Props) {
         to="/schedule"
         className="inline-flex items-center gap-1.5 font-sans text-[13px] text-walnut-2 hover:text-bordeaux transition-colors py-1 mb-2"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M15 18l-6-6 6-6" />
         </svg>
         Schedule

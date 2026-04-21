@@ -117,9 +117,7 @@ export async function writeMeetingPatch(
 }
 
 async function readSpeakers(wardId: string, date: string): Promise<WithId<Speaker>[]> {
-  const snap = await getDocs(
-    collection(db, "wards", wardId, "meetings", date, "speakers"),
-  );
+  const snap = await getDocs(collection(db, "wards", wardId, "meetings", date, "speakers"));
   const speakers: WithId<Speaker>[] = [];
   for (const d of snap.docs) {
     const parsed = speakerSchema.safeParse(d.data());

@@ -16,7 +16,14 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
-export function ProgramSections({ wardId, date, meeting, type, speakers, nonMeetingSundays }: Props) {
+export function ProgramSections({
+  wardId,
+  date,
+  meeting,
+  type,
+  speakers,
+  nonMeetingSundays,
+}: Props) {
   const sectionProps = { wardId, date, meeting, nonMeetingSundays };
   return (
     <>

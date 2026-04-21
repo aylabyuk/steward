@@ -50,7 +50,9 @@ export function ResetToDraftDialog({ open, status, liveApprovals, onConfirm, onC
           Edit this {STATUS_LABEL[status] ?? status} program?
         </h2>
         <p className="font-serif italic text-[13.5px] text-walnut-2 mb-4 leading-snug">
-          Making changes will return the program to <strong className="not-italic font-semibold text-walnut">draft</strong> status. {approvalCopy} You'll need to request approval again afterward.
+          Making changes will return the program to{" "}
+          <strong className="not-italic font-semibold text-walnut">draft</strong> status.{" "}
+          {approvalCopy} You'll need to request approval again afterward.
         </p>
         <div className="flex items-center justify-end gap-2">
           <button

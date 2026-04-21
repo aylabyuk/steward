@@ -60,5 +60,12 @@
       }
     }
   ],
-  "ignorePatterns": ["dist", "node_modules", "playwright-report", "test-results", "coverage", "design"]
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "playwright-report",
+    "test-results",
+    "coverage",
+    "design"
+  ]
 }

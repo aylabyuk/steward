@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Hymn } from "@/lib/types";
-import { cn } from "@/lib/cn";
 import { HYMNS } from "./hymns";
 import { HymnPickerPopover } from "./HymnPickerPopover";
+import { HymnPickerTrigger } from "./HymnPickerTrigger";
 
 interface Props {
   label: string;
@@ -14,7 +14,13 @@ interface Props {
 
 const MAX_RESULTS = 40;
 
-export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hymn", onChange }: Props) {
+export function HymnPicker({
+  label,
+  hymn,
+  suggestions,
+  placeholder = "Pick a hymn",
+  onChange,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(-1);
@@ -22,8 +28,6 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const hasValue = Boolean(hymn?.number);
 
   useEffect(() => {
     if (!open) return;
@@ -50,9 +54,7 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
     const rect = triggerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
-    setDirection(
-      spaceBelow < MAX_POPOVER + GAP && spaceAbove > spaceBelow ? "up" : "down",
-    );
+    setDirection(spaceBelow < MAX_POPOVER + GAP && spaceAbove > spaceBelow ? "up" : "down");
   }, [open]);
 
   const q = query.trim().toLowerCase();
@@ -90,50 +92,26 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
   }
 
   return (
-    <div ref={containerRef} className="grid grid-cols-[86px_minmax(0,1fr)] items-center gap-3 py-2.5 border-b border-dashed border-border last:border-b-0">
+    <div
+      ref={containerRef}
+      className="grid grid-cols-[86px_minmax(0,1fr)] items-center gap-3 py-2.5 border-b border-dashed border-border last:border-b-0"
+    >
       <div className="text-[13.5px] font-sans font-medium text-walnut-2">{label}</div>
       <div className="relative">
-        <button
-          ref={triggerRef}
-          type="button"
-          onClick={() => {
+        <HymnPickerTrigger
+          triggerRef={triggerRef}
+          hymn={hymn}
+          open={open}
+          placeholder={placeholder}
+          onOpen={() => {
             setOpen(true);
             setTimeout(() => inputRef.current?.focus(), 0);
           }}
-          className={cn(
-            "w-full grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 px-3 py-1.5 rounded-md border cursor-pointer transition-colors text-left",
-            open
-              ? "border-bordeaux bg-chalk shadow-[0_0_0_2px_rgba(139,46,42,0.12)]"
-              : "border-border bg-parchment hover:border-border-strong hover:bg-chalk",
-          )}
-        >
-          {hasValue && hymn ? (
-            <>
-              <span className="font-mono text-[13px] font-semibold text-bordeaux-deep tracking-[0.04em] min-w-7">
-                {hymn.number}
-              </span>
-              <span className="font-serif text-[14.5px] text-walnut truncate">{hymn.title}</span>
-              <span
-                role="button"
-                aria-label="Clear hymn"
-                tabIndex={0}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange(null);
-                  setQuery("");
-                }}
-                className="w-5 h-5 inline-flex items-center justify-center rounded-full text-walnut-3 hover:bg-parchment-2 hover:text-bordeaux"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-              </span>
-            </>
-          ) : (
-            <span className="col-span-3 font-serif italic text-[14px] text-walnut-3">{placeholder}</span>
-          )}
-          <svg className="text-walnut-3" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
+          onClear={() => {
+            onChange(null);
+            setQuery("");
+          }}
+        />
         {open && (
           <HymnPickerPopover
             inputRef={inputRef}
@@ -153,4 +131,3 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
     </div>
   );
 }
-

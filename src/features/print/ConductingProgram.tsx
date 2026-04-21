@@ -4,12 +4,7 @@ import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
 import { PrintLayout } from "./PrintLayout";
-import {
-  formatLongDate,
-  orderedSpeakers,
-  personName,
-  speakerSequence,
-} from "./programData";
+import { formatLongDate, orderedSpeakers, personName, speakerSequence } from "./programData";
 import { RowFreeform, RowHymn, RowLabeled, ScriptLine } from "./programRows";
 
 function Group({ children }: { children: ReactNode }) {
@@ -85,7 +80,12 @@ export function ConductingProgram() {
       </Group>
 
       <Group>
-        <RowHymn label="Opening hymn" number={m?.openingHymn?.number} title={m?.openingHymn?.title} dense />
+        <RowHymn
+          label="Opening hymn"
+          number={m?.openingHymn?.number}
+          title={m?.openingHymn?.title}
+          dense
+        />
         <RowLabeled label="Invocation" value={personName(m?.openingPrayer)} dense />
       </Group>
 
@@ -112,7 +112,9 @@ export function ConductingProgram() {
       <Group>
         <ScriptLine dense>
           Introduce <strong className="not-italic">{speaker1 ?? "Speaker 1"}</strong>
-          {sequence.some((e) => e.kind === "mid") && <> and the musical number / rest hymn that follows.</>}
+          {sequence.some((e) => e.kind === "mid") && (
+            <> and the musical number / rest hymn that follows.</>
+          )}
         </ScriptLine>
         {sequence.map((entry, i) =>
           entry.kind === "speaker" ? (
@@ -136,7 +138,12 @@ export function ConductingProgram() {
       </Group>
 
       <Group>
-        <RowHymn label="Closing hymn" number={m?.closingHymn?.number} title={m?.closingHymn?.title} dense />
+        <RowHymn
+          label="Closing hymn"
+          number={m?.closingHymn?.number}
+          title={m?.closingHymn?.title}
+          dense
+        />
         <RowLabeled label="Benediction" value={personName(m?.benediction)} dense />
       </Group>
     </PrintLayout>

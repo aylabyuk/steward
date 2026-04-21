@@ -28,7 +28,10 @@ const CLOSING_SUGGESTIONS = [30, 85, 86, 89];
 export function HymnsSection({ wardId, date, meeting, type, nonMeetingSundays }: Props) {
   const showSacramentHymn = type !== "stake" && type !== "general";
 
-  async function setHymn(field: "openingHymn" | "sacramentHymn" | "closingHymn", next: Hymn | null) {
+  async function setHymn(
+    field: "openingHymn" | "sacramentHymn" | "closingHymn",
+    next: Hymn | null,
+  ) {
     await updateMeetingField(wardId, date, nonMeetingSundays, { [field]: next });
   }
   async function setMid(next: MidItemType) {

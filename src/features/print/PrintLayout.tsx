@@ -56,7 +56,10 @@ export function PrintLayout({ ready, dense, landscape, children }: Props) {
 function PrintStyles({
   dense,
   landscape,
-}: { dense?: boolean | undefined; landscape?: boolean | undefined }) {
+}: {
+  dense?: boolean | undefined;
+  landscape?: boolean | undefined;
+}) {
   // Page-level print rules. Using a literal <style> keeps the rules scoped
   // to the print layout tree without touching the global stylesheet.
   const margin = dense ? "0.35in" : "0.5in";

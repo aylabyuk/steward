@@ -15,10 +15,7 @@ interface Props {
  */
 export function ProgramSection({ id, label, count, helper, rightSlot, children }: Props) {
   return (
-    <section
-      id={id}
-      className="bg-chalk border border-border rounded-xl p-5 mb-4 scroll-mt-22.5"
-    >
+    <section id={id} className="bg-chalk border border-border rounded-xl p-5 mb-4 scroll-mt-22.5">
       <div className="flex items-center gap-2.5 mb-3.5">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep">
           {label}
@@ -28,9 +25,7 @@ export function ProgramSection({ id, label, count, helper, rightSlot, children }
             {count}
           </span>
         )}
-        {helper && (
-          <span className="ml-auto inline-flex items-center gap-2">{helper}</span>
-        )}
+        {helper && <span className="ml-auto inline-flex items-center gap-2">{helper}</span>}
         {rightSlot}
       </div>
       {children}

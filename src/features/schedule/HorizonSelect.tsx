@@ -62,12 +62,19 @@ export function HorizonSelect({ value, onChange }: Props) {
         onClick={() => setOpen(!open)}
         className={cn(
           "w-full sm:w-auto inline-flex items-center gap-2.5 px-3.5 py-2 text-walnut bg-chalk border rounded-lg hover:bg-parchment-2 hover:border-walnut-3 transition-all duration-120",
-          open ? "border-walnut" : "border-border-strong"
+          open ? "border-walnut" : "border-border-strong",
         )}
       >
-        <span className="text-[9.5px] uppercase tracking-[0.18em] text-walnut-3 font-medium">Showing</span>
+        <span className="text-[9.5px] uppercase tracking-[0.18em] text-walnut-3 font-medium">
+          Showing
+        </span>
         <span className="font-display text-sm font-medium tracking-[-0.005em]">{display}</span>
-        <span className={cn("text-xs text-walnut-3 transition-transform duration-120 ml-auto sm:ml-0.5", open && "rotate-180")}>
+        <span
+          className={cn(
+            "text-xs text-walnut-3 transition-transform duration-120 ml-auto sm:ml-0.5",
+            open && "rotate-180",
+          )}
+        >
           ▼
         </span>
       </button>
