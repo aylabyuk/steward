@@ -8,6 +8,7 @@ import {
   type User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useCurrentWardStore } from "@/stores/currentWardStore";
 
 export type AuthStatus = "loading" | "signed_out" | "signed_in";
 
@@ -39,6 +40,15 @@ export function handleAuthChange(user: User | null): void {
     user,
     status: user ? "signed_in" : "signed_out",
   });
+  // Reset the selected ward synchronously on sign-out so wardId-dependent
+  // Firestore listeners tear down in the same tick. Leaving a stale wardId
+  // in the store keeps zombie snapshot listeners attached through the
+  // auth transition, which trips an internal Firestore assertion
+  // (Unexpected state ID: b815 / ca9) when the next auth change races
+  // against the listener cleanup.
+  if (!user) {
+    useCurrentWardStore.setState({ wardId: null });
+  }
 }
 
 let listenerAttached = false;

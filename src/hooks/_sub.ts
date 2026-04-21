@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import type { ZodType } from "zod";
 import { db } from "@/lib/firebase";
+import { useAuthStore } from "@/stores/authStore";
 
 export interface SubState<T> {
   data: T;
@@ -21,7 +22,9 @@ export function useDocSnapshot<T>(
   segments: readonly (string | null | undefined)[],
   schema: ZodType<T>,
 ): DocSubState<T> {
-  const ready = segments.every((s): s is string => typeof s === "string" && s.length > 0);
+  const signedIn = useAuthStore((s) => s.status === "signed_in");
+  const ready =
+    signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
   const [state, setState] = useState<DocSubState<T>>({
     data: null,
@@ -66,7 +69,9 @@ export function useCollectionSnapshot<T>(
   segments: readonly (string | null | undefined)[],
   schema: ZodType<T>,
 ): SubState<WithId<T>[]> {
-  const ready = segments.every((s): s is string => typeof s === "string" && s.length > 0);
+  const signedIn = useAuthStore((s) => s.status === "signed_in");
+  const ready =
+    signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
   const [state, setState] = useState<SubState<WithId<T>[]>>({
     data: [],
