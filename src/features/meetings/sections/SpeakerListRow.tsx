@@ -30,6 +30,17 @@ function useDragProps(d: DragHandlers) {
   };
 }
 
+function Grip() {
+  return (
+    <span
+      aria-hidden
+      className="text-[14px] text-walnut-3 opacity-40 group-hover/row:opacity-80 transition-opacity leading-none"
+    >
+      ⠿
+    </span>
+  );
+}
+
 interface SpeakerRowProps extends DragHandlers {
   speaker: WithId<Speaker>;
   index: number;
@@ -41,18 +52,15 @@ export function SpeakerListRow({ speaker: s, index, isLast, ...drag }: SpeakerRo
     <li
       {...useDragProps(drag)}
       className={cn(
-        "grid grid-cols-[44px_minmax(0,1fr)_auto] gap-3 items-center py-2.5 border-b border-dashed border-border rounded cursor-grab transition-colors hover:bg-parchment",
+        "group/row grid grid-cols-[28px_minmax(0,1fr)_auto] gap-3 items-center py-2.5 border-b border-dashed border-border rounded cursor-grab transition-colors hover:bg-parchment",
         isLast && "border-b-0",
         drag.isDragging && "opacity-40",
         drag.isOver && "bg-brass-soft/30 shadow-[inset_0_-2px_0_var(--color-bordeaux-deep),inset_0_2px_0_var(--color-bordeaux-deep)]",
       )}
     >
-      <div className="inline-flex items-center gap-1 text-walnut-3">
-        <span className="font-mono text-[10.5px] tracking-[0.08em] text-brass-deep">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-        <span className="text-[14px] opacity-50" aria-hidden>⠿</span>
-      </div>
+      <span className="font-mono text-[10.5px] tracking-[0.08em] text-brass-deep">
+        {String(index + 1).padStart(2, "0")}
+      </span>
       <div className="min-w-0">
         <div className="font-sans text-[14.5px] font-semibold text-walnut leading-tight truncate">
           {s.data.name}
@@ -61,7 +69,10 @@ export function SpeakerListRow({ speaker: s, index, isLast, ...drag }: SpeakerRo
           {s.data.topic || <span className="text-walnut-3 not-italic">No topic assigned</span>}
         </div>
       </div>
-      <StatusPill status={s.data.status} />
+      <div className="flex items-center gap-2.5">
+        <StatusPill status={s.data.status} />
+        <Grip />
+      </div>
     </li>
   );
 }
@@ -77,16 +88,13 @@ export function MidPlaceholderRow({ label, isLast, ...drag }: MidRowProps) {
       {...useDragProps(drag)}
       aria-label="Musical interlude"
       className={cn(
-        "grid grid-cols-[44px_minmax(0,1fr)] gap-3 items-center py-2.5 px-1 border-y border-dashed border-brass-soft bg-[linear-gradient(180deg,rgba(224,190,135,0.18),rgba(224,190,135,0.05))] cursor-grab transition-colors",
+        "group/row grid grid-cols-[28px_minmax(0,1fr)_auto] gap-3 items-center py-2.5 border-y border-dashed border-brass-soft bg-[linear-gradient(180deg,rgba(224,190,135,0.18),rgba(224,190,135,0.05))] cursor-grab transition-colors",
         isLast && "border-b-0",
         drag.isDragging && "opacity-40",
         drag.isOver && "bg-brass-soft/60 shadow-[inset_0_-2px_0_var(--color-bordeaux-deep),inset_0_2px_0_var(--color-bordeaux-deep)]",
       )}
     >
-      <div className="inline-flex items-center gap-1 text-walnut-3 justify-center">
-        <span className="font-serif text-[18px] text-bordeaux leading-none">♪</span>
-        <span className="text-[14px] opacity-50" aria-hidden>⠿</span>
-      </div>
+      <span className="font-serif text-[18px] text-bordeaux leading-none">♪</span>
       <div className="min-w-0">
         <div className="font-serif italic font-medium text-[14px] text-bordeaux-deep truncate">
           {label}
@@ -94,6 +102,9 @@ export function MidPlaceholderRow({ label, isLast, ...drag }: MidRowProps) {
         <div className="font-mono text-[10px] uppercase tracking-widest text-walnut-3 mt-0.5">
           Musical interlude
         </div>
+      </div>
+      <div className="flex items-center">
+        <Grip />
       </div>
     </li>
   );
