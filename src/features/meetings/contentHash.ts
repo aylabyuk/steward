@@ -49,6 +49,7 @@ export function canonicalizeContent(
     `conducting:${assignKey(m.conducting)}`,
     `bread:${assignKey(m.sacramentBread)}`,
     `blessers:${blessers}`,
+    `visitors:${(m.visitors ?? []).map((v) => `${v.name}|${v.details ?? ""}`).join(";")}`,
     `mid:${midKey(m.mid)}`,
     `showAnnouncements:${m.showAnnouncements === false ? "0" : "1"}`,
     `wardBusiness:${m.wardBusiness ?? ""}`,
