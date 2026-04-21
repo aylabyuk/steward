@@ -38,9 +38,16 @@ describe("SundayCard", () => {
     expect(screen.getByText(/In \d|Past|Today/)).toBeInTheDocument();
   });
 
-  it("shows no-meeting variant for stake/general", () => {
+  it("shows Stake Conference variant with stake-wide stamp", () => {
     renderCard({ ...mockMeeting, meetingType: "stake" });
-    expect(screen.getByText(/Stake|no sacrament meeting/)).toBeInTheDocument();
+    expect(screen.getByText(/Stake Conference/)).toBeInTheDocument();
+    expect(screen.getAllByText(/stake-wide session/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows Fast Sunday variant with testimony stamp", () => {
+    renderCard({ ...mockMeeting, meetingType: "fast" });
+    expect(screen.getByText(/Fast Sunday/)).toBeInTheDocument();
+    expect(screen.getByText(/member testimonies/i)).toBeInTheDocument();
   });
 
   it("shows cancellation message and strikethrough", () => {
