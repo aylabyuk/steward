@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Hymn } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { HYMNS } from "./hymns";
@@ -17,7 +17,9 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(-1);
+  const [direction, setDirection] = useState<"down" | "up">("down");
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const hasValue = Boolean(hymn?.number);
@@ -36,6 +38,20 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
       document.removeEventListener("mousedown", onOutside);
       document.removeEventListener("keydown", onEsc);
     };
+  }, [open]);
+
+  // Flip the popover above the trigger if there isn't room for the full
+  // max-height (~340px) below. Measured pre-paint so there's no jump.
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const MAX_POPOVER = 340;
+    const GAP = 16;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    setDirection(
+      spaceBelow < MAX_POPOVER + GAP && spaceAbove > spaceBelow ? "up" : "down",
+    );
   }, [open]);
 
   const q = query.trim().toLowerCase();
@@ -77,6 +93,7 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
       <div className="text-[13.5px] font-sans font-medium text-walnut-2">{label}</div>
       <div className="relative">
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => {
             setOpen(true);
@@ -128,6 +145,7 @@ export function HymnPicker({ label, hymn, suggestions, placeholder = "Pick a hym
             current={hymn}
             onPick={pick}
             onKeyDown={onKeyDown}
+            direction={direction}
           />
         )}
       </div>
@@ -146,6 +164,7 @@ interface PopoverProps {
   current: Hymn | null | undefined;
   onPick: (h: Hymn) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  direction: "down" | "up";
 }
 
 function HymnPickerPopover({
@@ -159,9 +178,17 @@ function HymnPickerPopover({
   current,
   onPick,
   onKeyDown,
+  direction,
 }: PopoverProps) {
   return (
-    <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-chalk border border-walnut-3 rounded-lg shadow-elev-3 overflow-hidden flex flex-col max-h-85 animate-[menuIn_120ms_ease-out]">
+    <div
+      className={cn(
+        "absolute left-0 right-0 z-30 bg-chalk border border-walnut-3 rounded-lg shadow-elev-3 overflow-hidden flex flex-col max-h-85",
+        direction === "down"
+          ? "top-full mt-1 animate-[menuIn_120ms_ease-out]"
+          : "bottom-full mb-1 animate-[menuInUp_120ms_ease-out]",
+      )}
+    >
       <div className="p-2 border-b border-border bg-parchment">
         <input
           ref={inputRef}
