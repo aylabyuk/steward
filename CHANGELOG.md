@@ -7,6 +7,18 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-21
+
+First feature release on the new branch-PR workflow.
+
+### Added
+- **Version label in the topbar** (#5). Shows `v{version}` directly
+  below the "Steward" wordmark, centered, in a quiet mono eyebrow.
+  Clicking opens the matching GitHub Release in a new tab. Version
+  is pulled from `package.json` at build time via a Vite `define`
+  (`__APP_VERSION__`), so the bundle always carries the version the
+  commit was tagged with.
+
 ## [0.1.2] — 2026-04-21
 
 Backlog scaffolding: a skill for filing issues mid-session plus issue
@@ -161,7 +173,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/aylabyuk/steward/releases/tag/v0.2.0
 [0.1.2]: https://github.com/aylabyuk/steward/releases/tag/v0.1.2
 [0.1.1]: https://github.com/aylabyuk/steward/releases/tag/v0.1.1
 [0.1.0]: https://github.com/aylabyuk/steward/releases/tag/v0.1.0
