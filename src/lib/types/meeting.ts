@@ -44,15 +44,25 @@ export const approvalSchema = z.object({
 });
 export type Approval = z.infer<typeof approvalSchema>;
 
-// Specific-number is a lightweight variant of Assignment with performer + piece.
-export const specialNumberSchema = z
-  .object({
-    performer: z.string().min(1),
-    piece: z.string().optional(),
-    status: assignmentSchema.shape.status,
-  })
-  .nullable();
-export type SpecialNumber = z.infer<typeof specialNumberSchema>;
+// Mid-meeting item: between sacrament and speakers, a rest hymn OR a
+// musical number (performer only) OR none. `midAfter` chooses which speaker
+// index to pin the placeholder row below in the Program speaker list.
+export const MID_MODES = ["none", "rest", "musical"] as const;
+export const midModeSchema = z.enum(MID_MODES);
+export type MidMode = z.infer<typeof midModeSchema>;
+
+export const midItemSchema = z.object({
+  mode: midModeSchema.default("none"),
+  rest: hymnSchema.nullable().optional(),
+  musical: z
+    .object({
+      performer: z.string(),
+    })
+    .nullable()
+    .optional(),
+  midAfter: z.number().int().min(0).default(1),
+});
+export type MidItem = z.infer<typeof midItemSchema>;
 
 export const sacramentMeetingSchema = z.object({
   meetingType: meetingTypeSchema,
@@ -69,10 +79,11 @@ export const sacramentMeetingSchema = z.object({
   chorister: assignmentSchema.optional(),
   sacramentBread: assignmentSchema.optional(),
   sacramentBlessers: z.array(assignmentSchema).max(2).optional(),
-  specialNumber: specialNumberSchema.optional(),
+  mid: midItemSchema.optional(),
   wardBusiness: z.string().default(""),
   stakeBusiness: z.string().default(""),
   announcements: z.string().default(""),
+  showAnnouncements: z.boolean().default(true),
   presiding: assignmentSchema.optional(),
   conducting: assignmentSchema.optional(),
   lastNudgedAt: z.any().optional(),
@@ -87,6 +98,7 @@ export const speakerSchema = z.object({
   topic: z.string().optional(),
   status: speakerStatusSchema,
   role: speakerRoleSchema.default("Member"),
+  order: z.number().int().min(0).optional(),
   createdAt: z.any().optional(),
   updatedAt: z.any().optional(),
 });

@@ -1,5 +1,5 @@
 import type { WithId } from "@/hooks/_sub";
-import type { Assignment, Hymn, SacramentMeeting, Speaker, SpecialNumber } from "@/lib/types";
+import type { Assignment, Hymn, MidItem, SacramentMeeting, Speaker } from "@/lib/types";
 
 function hymnKey(h: Hymn | null | undefined): string {
   if (!h) return "∅";
@@ -10,16 +10,18 @@ function assignKey(a: Assignment | null | undefined): string {
   if (!a) return "∅";
   const name = a.person?.name ?? "";
   const email = a.person?.email ?? "";
-  return `${name}|${email}|${a.status}`;
+  return `${name}|${email}|${a.confirmed ? "1" : "0"}`;
 }
 
-function specialKey(s: SpecialNumber | null | undefined): string {
-  if (!s) return "∅";
-  return `${s.performer}|${s.piece ?? ""}|${s.status}`;
+function midKey(m: MidItem | null | undefined): string {
+  if (!m) return "∅";
+  if (m.mode === "rest") return `rest|${hymnKey(m.rest)}|after:${m.midAfter}`;
+  if (m.mode === "musical") return `musical|${m.musical?.performer ?? ""}|after:${m.midAfter}`;
+  return "none";
 }
 
 function speakerKey(s: Speaker): string {
-  return [s.name, s.email ?? "", s.topic ?? "", s.status, s.role].join("|");
+  return [s.name, s.email ?? "", s.topic ?? "", s.status, s.role, s.order ?? 0].join("|");
 }
 
 /**
@@ -47,7 +49,8 @@ export function canonicalizeContent(
     `conducting:${assignKey(m.conducting)}`,
     `bread:${assignKey(m.sacramentBread)}`,
     `blessers:${blessers}`,
-    `specialNumber:${specialKey(m.specialNumber)}`,
+    `mid:${midKey(m.mid)}`,
+    `showAnnouncements:${m.showAnnouncements === false ? "0" : "1"}`,
     `wardBusiness:${m.wardBusiness ?? ""}`,
     `stakeBusiness:${m.stakeBusiness ?? ""}`,
     `announcements:${m.announcements ?? ""}`,

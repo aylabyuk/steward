@@ -56,6 +56,7 @@ export async function updateSpeaker(
     topic: string;
     status: SpeakerStatus;
     role: SpeakerRole;
+    order: number;
   }>,
 ): Promise<void> {
   const data: Record<string, unknown> = { updatedAt: serverTimestamp(), ...updates };
@@ -73,6 +74,34 @@ export async function updateSpeaker(
       targetId: speakerId,
       action: "update",
       changes,
+    });
+  }
+  await batch.commit();
+  await writeMeetingPatch(wardId, date, {});
+}
+
+/**
+ * Persist a new order for all speakers in the given date. Writes `order` on
+ * every speaker in a single batch so the UI and Firestore never disagree.
+ * History: one aggregated "reorder" event rather than N individual updates.
+ */
+export async function reorderSpeakers(
+  wardId: string,
+  date: string,
+  orderedIds: readonly string[],
+): Promise<void> {
+  const batch = writeBatch(db);
+  orderedIds.forEach((id, i) => {
+    batch.update(speakerRef(wardId, date, id), { order: i, updatedAt: serverTimestamp() });
+  });
+
+  const actor = currentActor();
+  if (actor) {
+    appendHistoryEvent(batch, wardId, date, actor, {
+      target: "speaker",
+      targetId: "reorder",
+      action: "update",
+      changes: [{ field: "order", new: orderedIds.join(",") }],
     });
   }
   await batch.commit();
