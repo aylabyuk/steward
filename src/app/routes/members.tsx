@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { AddMemberDialog } from "@/features/settings/AddMemberDialog";
+import { InviteMemberDialog } from "@/features/invites/InviteMemberDialog";
+import { PendingInvitesList } from "@/features/invites/PendingInvitesList";
 import { MemberList } from "@/features/settings/MemberList";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardMembers } from "@/hooks/useWardMembers";
+import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 
 export function MembersPage() {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
+  const ward = useWardSettings();
   const { data: members, loading } = useWardMembers();
-  const [addOpen, setAddOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const canEdit = me?.data.role === "bishopric" && me.data.active;
 
   return (
@@ -30,13 +33,14 @@ export function MembersPage() {
         {canEdit && (
           <button
             type="button"
-            onClick={() => setAddOpen(true)}
+            onClick={() => setInviteOpen(true)}
             className="rounded-md bg-walnut px-3 py-1 text-sm text-white"
           >
-            Add member
+            Invite member
           </button>
         )}
       </header>
+      {wardId && <PendingInvitesList wardId={wardId} canEdit={Boolean(canEdit)} />}
       {loading && <p className="text-sm text-walnut-2">Loading…</p>}
       {!loading && wardId && (
         <MemberList wardId={wardId} members={members} canEdit={Boolean(canEdit)} />
@@ -45,7 +49,13 @@ export function MembersPage() {
         <p className="mt-3 text-xs text-walnut-2">Only bishopric members can edit the roster.</p>
       )}
       {wardId && (
-        <AddMemberDialog wardId={wardId} open={addOpen} onClose={() => setAddOpen(false)} />
+        <InviteMemberDialog
+          wardId={wardId}
+          ward={ward.data}
+          inviter={me ? { uid: me.id, displayName: me.data.displayName } : null}
+          open={inviteOpen}
+          onClose={() => setInviteOpen(false)}
+        />
       )}
     </main>
   );
