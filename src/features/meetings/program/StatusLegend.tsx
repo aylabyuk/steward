@@ -5,7 +5,7 @@
  */
 export function StatusLegend() {
   return (
-    <div className="inline-flex items-center gap-5 px-3.5 py-2 rounded-lg border border-border bg-chalk">
+    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 px-3.5 py-2 rounded-lg border border-border bg-chalk w-full">
       <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-walnut-3">
         Status
       </span>
