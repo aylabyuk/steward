@@ -12,12 +12,15 @@ export function Topbar() {
           <img src="/icons/logo-monogram.svg" alt="Steward" className="h-6 w-6" />
           <div className="flex flex-col items-center leading-none">
             <span className="font-display text-base font-semibold tracking-tight">Steward</span>
-            <span
-              aria-label={`Version ${__APP_VERSION__}`}
-              className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-walnut-3"
+            <a
+              href={`https://github.com/aylabyuk/steward/releases/tag/v${__APP_VERSION__}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Version ${__APP_VERSION__} — open release notes`}
+              className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut hover:underline underline-offset-2 transition-colors"
             >
               v{__APP_VERSION__}
-            </span>
+            </a>
           </div>
           {wardName && (
             <>
