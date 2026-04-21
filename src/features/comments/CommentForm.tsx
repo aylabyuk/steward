@@ -46,14 +46,14 @@ export function CommentForm({ wardId, date }: Props) {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={3}
-        placeholder="Leave a comment. Use @Name to mention a ward member."
-        className="w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+        placeholder="Leave a note for the bishopric. Use @Name to mention a ward member."
+        className="font-sans text-[14px] leading-[1.55] px-3 py-2.5 bg-parchment border border-transparent rounded-md text-walnut min-h-17.5 w-full resize-y transition-colors placeholder:text-walnut-3 placeholder:italic hover:border-border-strong hover:bg-chalk focus:outline-none focus:border-bordeaux focus:bg-chalk focus:ring-2 focus:ring-bordeaux/15"
       />
       <div className="flex justify-end">
         <button
           type="submit"
           disabled={busy || body.trim().length === 0}
-          className="rounded-md bg-slate-900 px-3 py-1 text-sm text-white disabled:opacity-50"
+          className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment hover:bg-bordeaux-deep shadow-[0_1px_0_rgba(35,24,21,0.18)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {busy ? "Posting…" : "Post comment"}
         </button>
