@@ -17,7 +17,7 @@ export function QuarterSection({ title, count, children }: Props) {
           {count} Sundays
         </span>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(3,365px)] gap-4 lg:gap-4.5 lg:justify-center">{children}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,365px))] gap-4 lg:gap-4.5">{children}</div>
     </section>
   );
 }
