@@ -1,14 +1,19 @@
-import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import type { KindVariant } from "./kindLabel";
 import { formatShortDate, formatCountdown } from "./dateFormat";
+import { SundayTypeMenu } from "./SundayTypeMenu";
 
 interface Props {
   date: string;
+  wardId: string;
+  currentType: MeetingType;
+  nonMeetingSundays: readonly NonMeetingSunday[];
   urgent?: boolean;
   badge?: string;
   variant?: KindVariant;
+  locked?: boolean;
 }
 
 const BADGE_CLS: Record<KindVariant, string> = {
@@ -18,19 +23,16 @@ const BADGE_CLS: Record<KindVariant, string> = {
   general: "text-bordeaux border-danger-soft bg-danger-soft",
 };
 
-export function SundayCardHeader({ date, urgent, badge, variant = "regular" }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
-
+export function SundayCardHeader({
+  date,
+  wardId,
+  currentType,
+  nonMeetingSundays,
+  urgent,
+  badge,
+  variant = "regular",
+  locked = false,
+}: Props) {
   return (
     <div className="flex items-start justify-between gap-3 p-4 pb-2">
       <Link to={`/week/${date}`} className="flex-1 hover:opacity-80 transition-opacity">
@@ -55,26 +57,13 @@ export function SundayCardHeader({ date, urgent, badge, variant = "regular" }: P
             {badge}
           </span>
         )}
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="text-walnut-3 hover:text-walnut p-1 text-lg leading-none"
-            aria-label="Sunday options"
-            aria-expanded={menuOpen}
-          >
-            ⋯
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 mt-1 w-40 bg-chalk border border-border rounded-md shadow-elev-2 z-10 overflow-hidden text-sm">
-              <button className="w-full px-4 py-2 text-left text-walnut hover:bg-parchment transition">
-                Change type
-              </button>
-              <button className="w-full px-4 py-2 text-left text-bordeaux hover:bg-danger-soft transition">
-                Cancel meeting
-              </button>
-            </div>
-          )}
-        </div>
+        <SundayTypeMenu
+          wardId={wardId}
+          date={date}
+          currentType={currentType}
+          locked={locked}
+          nonMeetingSundays={nonMeetingSundays}
+        />
       </div>
     </div>
   );
