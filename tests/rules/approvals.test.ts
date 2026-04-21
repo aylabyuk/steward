@@ -165,4 +165,101 @@ describe("meeting approval rules", () => {
       }),
     );
   });
+
+  it("blocks a clerk from rewriting an existing approval under their own uid", async () => {
+    await seedMeeting(env, {
+      ...draft,
+      status: "approved",
+      approvals: [approvalOf("bishop1", "b1@x.com"), approvalOf("bishop2", "b2@x.com")],
+    });
+    const db = authedAs(env, "clerk", "c@x.com").firestore();
+    // Same length, same status, but swaps bishop1 → clerk (a forged approval).
+    await assertFails(
+      setDoc(doc(db, M_PATH), {
+        ...draft,
+        status: "approved",
+        approvals: [approvalOf("clerk", "c@x.com"), approvalOf("bishop2", "b2@x.com")],
+      }),
+    );
+  });
+
+  it("blocks rewriting an approval's displayName while preserving uid", async () => {
+    await seedMeeting(env, {
+      ...draft,
+      status: "approved",
+      approvals: [approvalOf("bishop1", "b1@x.com")],
+    });
+    const db = authedAs(env, "clerk", "c@x.com").firestore();
+    const tampered = { ...approvalOf("bishop1", "b1@x.com"), displayName: "Bishop X" };
+    await assertFails(
+      setDoc(doc(db, M_PATH), {
+        ...draft,
+        status: "approved",
+        approvals: [tampered],
+      }),
+    );
+  });
+
+  it("blocks rewriting approvedVersionHash on an existing approval", async () => {
+    await seedMeeting(env, {
+      ...draft,
+      status: "approved",
+      approvals: [approvalOf("bishop1", "b1@x.com")],
+    });
+    const db = authedAs(env, "clerk", "c@x.com").firestore();
+    const tampered = { ...approvalOf("bishop1", "b1@x.com"), approvedVersionHash: "forged" };
+    await assertFails(
+      setDoc(doc(db, M_PATH), { ...draft, status: "approved", approvals: [tampered] }),
+    );
+  });
+
+  it("blocks un-invalidating an invalidated approval", async () => {
+    await seedMeeting(env, {
+      ...draft,
+      status: "draft",
+      approvals: [{ ...approvalOf("bishop1", "b1@x.com"), invalidated: true }],
+    });
+    const db = authedAs(env, "bishop1", "b1@x.com").firestore();
+    await assertFails(
+      setDoc(doc(db, M_PATH), {
+        ...draft,
+        status: "approved",
+        approvals: [approvalOf("bishop1", "b1@x.com")], // invalidated: false
+      }),
+    );
+  });
+
+  it("still allows invalidating an existing approval (edit path)", async () => {
+    await seedMeeting(env, {
+      ...draft,
+      status: "approved",
+      approvals: [approvalOf("bishop1", "b1@x.com")],
+    });
+    const db = authedAs(env, "clerk", "c@x.com").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, M_PATH), {
+        ...draft,
+        status: "draft",
+        approvals: [{ ...approvalOf("bishop1", "b1@x.com"), invalidated: true }],
+        contentVersionHash: "newhash",
+      }),
+    );
+  });
+
+  it("blocks appending while also tampering with the prior entry", async () => {
+    await seedMeeting(env, {
+      ...draft,
+      status: "pending_approval",
+      approvals: [approvalOf("bishop1", "b1@x.com")],
+    });
+    const db = authedAs(env, "bishop2", "b2@x.com").firestore();
+    const tamperedFirst = { ...approvalOf("bishop1", "b1@x.com"), approvedVersionHash: "forged" };
+    await assertFails(
+      setDoc(doc(db, M_PATH), {
+        ...draft,
+        status: "approved",
+        approvals: [tamperedFirst, approvalOf("bishop2", "b2@x.com")],
+      }),
+    );
+  });
 });
