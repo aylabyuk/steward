@@ -5,4 +5,5 @@ export * from "./history";
 export * from "./member";
 export * from "./invite";
 export * from "./template";
+export * from "./speakerInvitation";
 export * from "./ward";
