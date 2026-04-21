@@ -19,7 +19,7 @@ describe("HorizonSelect", () => {
 
   it("persists selection to localStorage", async () => {
     const onChange = vi.fn();
-    const { rerender } = render(<HorizonSelect value={9} onChange={onChange} />);
+    render(<HorizonSelect value={9} onChange={onChange} />);
 
     const button = screen.getByRole("button", { name: /Next 2 months/ });
     await userEvent.click(button);

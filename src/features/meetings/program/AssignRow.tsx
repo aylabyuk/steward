@@ -27,7 +27,7 @@ export function AssignRow({ label, placeholder, assignment, showStatus = true, o
     const trimmed = local.trim();
     if (trimmed === (a.person?.name ?? "")) return;
     onChange({
-      person: trimmed ? { ...(a.person ?? {}), name: trimmed } : null,
+      person: trimmed ? { ...a.person, name: trimmed } : null,
       confirmed: trimmed ? a.confirmed : false,
     });
   }

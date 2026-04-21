@@ -8,8 +8,8 @@ export interface OrderedSpeaker {
 }
 
 export function orderedSpeakers(speakers: readonly WithId<Speaker>[]): OrderedSpeaker[] {
-  return [...speakers]
-    .sort((a, b) => {
+  return speakers
+    .toSorted((a, b) => {
       const oa = a.data.order ?? Number.MAX_SAFE_INTEGER;
       const ob = b.data.order ?? Number.MAX_SAFE_INTEGER;
       if (oa !== ob) return oa - ob;
