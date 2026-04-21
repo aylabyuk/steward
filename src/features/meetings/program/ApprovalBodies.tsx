@@ -38,7 +38,8 @@ export function PendingBody({ approvals }: { approvals: readonly Approval[] }) {
         Waiting on the bishopric
       </p>
       <p className="font-serif italic text-[13px] text-walnut-2 mb-3">
-        The program is ready. Bishopric members have been notified by push notification and can review and approve.
+        The program is ready. Bishopric members have been notified by push notification and can
+        review and approve.
       </p>
       <ApproverList approvals={approvals} />
     </>
@@ -83,7 +84,16 @@ function PrintButton({ href, title, subtitle }: { href: string; title: string; s
       className="flex-1 inline-flex flex-col gap-0.5 px-3.5 py-2.5 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 hover:border-walnut-3 transition-colors"
     >
       <span className="font-sans text-[13px] font-semibold inline-flex items-center gap-1.5">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M6 9V2h12v7" />
           <rect x="3" y="9" width="18" height="9" rx="2" />
           <path d="M6 14h12v7H6z" />
@@ -108,7 +118,16 @@ function ApproverList({ approvals }: { approvals: readonly Approval[] }) {
       {approvals.map((a) => (
         <li key={a.uid} className="flex items-center gap-2 font-sans text-[13px] text-walnut">
           <span className="text-success">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M20 6L9 17l-5-5" />
             </svg>
           </span>

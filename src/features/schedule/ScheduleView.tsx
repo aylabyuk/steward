@@ -28,7 +28,9 @@ export function ScheduleView() {
   if (!wardId) return null;
 
   if (error) {
-    return <main className="p-6 text-sm text-red-700">Failed to load schedule: {error.message}</main>;
+    return (
+      <main className="p-6 text-sm text-red-700">Failed to load schedule: {error.message}</main>
+    );
   }
 
   const meetings = new Map(slots.map((s) => [s.date, s.meeting]));

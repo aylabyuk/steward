@@ -33,7 +33,13 @@ export function checkMeetingReadiness(
   type: MeetingType,
 ): ReadinessReport {
   if (!meeting) {
-    return { missing: ["Meeting not created yet"], unconfirmed: [], totalItems: 1, doneCount: 0, ready: false };
+    return {
+      missing: ["Meeting not created yet"],
+      unconfirmed: [],
+      totalItems: 1,
+      doneCount: 0,
+      ready: false,
+    };
   }
   if (!REQUIRES_PROGRAM.has(type) && type !== "fast") {
     return { missing: [], unconfirmed: [], totalItems: 0, doneCount: 0, ready: true };
@@ -79,11 +85,12 @@ export function checkMeetingReadiness(
     missing.push("Musical number performer");
   }
 
-  const speakerItems = REQUIRES_SPEAKERS.has(type)
-    ? Math.max(MIN_SPEAKERS, speakers.length)
-    : 0;
+  const speakerItems = REQUIRES_SPEAKERS.has(type) ? Math.max(MIN_SPEAKERS, speakers.length) : 0;
   const totalItems =
-    personRows.length + 3 /*hymns*/ + (meeting.mid && meeting.mid.mode !== "none" ? 1 : 0) + speakerItems;
+    personRows.length +
+    3 /*hymns*/ +
+    (meeting.mid && meeting.mid.mode !== "none" ? 1 : 0) +
+    speakerItems;
   const doneCount = Math.max(0, totalItems - missing.length - unconfirmed.length);
   const ready = missing.length === 0 && unconfirmed.length === 0;
 

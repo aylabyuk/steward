@@ -44,9 +44,7 @@ export function OverflowMenu({ items, ariaLabel = "More actions" }: Props) {
     const GAP = 16;
     const spaceBelow = window.innerHeight - trigger.bottom;
     const spaceAbove = trigger.top;
-    setDirection(
-      spaceBelow < menuHeight + GAP && spaceAbove > spaceBelow ? "up" : "down",
-    );
+    setDirection(spaceBelow < menuHeight + GAP && spaceAbove > spaceBelow ? "up" : "down");
   }, [open]);
 
   return (

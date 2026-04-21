@@ -22,13 +22,16 @@ export function emptyDraft(): Draft {
   };
 }
 
-export function fromSpeaker(id: string, s: {
-  name: string;
-  email?: string;
-  topic?: string;
-  status: SpeakerStatus;
-  role: SpeakerRole;
-}): Draft {
+export function fromSpeaker(
+  id: string,
+  s: {
+    name: string;
+    email?: string;
+    topic?: string;
+    status: SpeakerStatus;
+    role: SpeakerRole;
+  },
+): Draft {
   return {
     id,
     tempId: `p-${id}`,

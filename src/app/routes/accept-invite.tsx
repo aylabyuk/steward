@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { doc, getDoc } from "firebase/firestore";
-import {
-  AcceptInviteBody,
-  type AcceptInviteState,
-} from "@/features/invites/AcceptInviteBody";
-import {
-  acceptInvite,
-  findInvitesForEmail,
-} from "@/features/invites/inviteActions";
+import { AcceptInviteBody, type AcceptInviteState } from "@/features/invites/AcceptInviteBody";
+import { acceptInvite, findInvitesForEmail } from "@/features/invites/inviteActions";
 import { db } from "@/lib/firebase";
 import { inviteSchema } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";

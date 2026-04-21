@@ -21,13 +21,9 @@ export function SpeakerRow({ number, speaker }: Props) {
         {String(number).padStart(2, "0")}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-sans text-sm font-semibold text-walnut truncate">
-          {speaker.name}
-        </div>
+        <div className="font-sans text-sm font-semibold text-walnut truncate">{speaker.name}</div>
         {speaker.topic && (
-          <div className="font-serif italic text-sm text-walnut-2 truncate">
-            {speaker.topic}
-          </div>
+          <div className="font-serif italic text-sm text-walnut-2 truncate">{speaker.topic}</div>
         )}
       </div>
       <div

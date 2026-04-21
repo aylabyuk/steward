@@ -9,10 +9,7 @@ import {
   speakerSequence,
 } from "./programData";
 
-function speaker(
-  id: string,
-  partial: Partial<Speaker> & { name: string },
-): WithId<Speaker> {
+function speaker(id: string, partial: Partial<Speaker> & { name: string }): WithId<Speaker> {
   return {
     id,
     data: {
@@ -35,10 +32,7 @@ describe("orderedSpeakers", () => {
   });
 
   it("breaks ties by id.localeCompare", () => {
-    const list = [
-      speaker("z", { name: "Z", order: 5 }),
-      speaker("a", { name: "A", order: 5 }),
-    ];
+    const list = [speaker("z", { name: "Z", order: 5 }), speaker("a", { name: "A", order: 5 })];
     expect(orderedSpeakers(list).map((s) => s.id)).toEqual(["a", "z"]);
   });
 
@@ -55,10 +49,7 @@ describe("orderedSpeakers", () => {
   });
 
   it("does not mutate the input array", () => {
-    const list = [
-      speaker("b", { name: "B", order: 2 }),
-      speaker("a", { name: "A", order: 1 }),
-    ];
+    const list = [speaker("b", { name: "B", order: 2 }), speaker("a", { name: "A", order: 1 })];
     const snapshot = list.map((s) => s.id);
     orderedSpeakers(list);
     expect(list.map((s) => s.id)).toEqual(snapshot);
@@ -95,9 +86,7 @@ describe("midLabel", () => {
 
   it("returns null for musical mode without a performer", () => {
     expect(midLabel({ mode: "musical", midAfter: 1 })).toBeNull();
-    expect(
-      midLabel({ mode: "musical", musical: { performer: "" }, midAfter: 1 }),
-    ).toBeNull();
+    expect(midLabel({ mode: "musical", musical: { performer: "" }, midAfter: 1 })).toBeNull();
   });
 });
 
@@ -121,23 +110,20 @@ describe("formatLongDate", () => {
 describe("personName", () => {
   it("returns the assigned name", () => {
     const meeting = { presiding: { person: { name: "Bishop Paul" }, confirmed: true } };
-    expect(personName(meeting.presiding as SacramentMeeting["presiding"])).toBe(
-      "Bishop Paul",
-    );
+    expect(personName(meeting.presiding as SacramentMeeting["presiding"])).toBe("Bishop Paul");
   });
 
   it("returns an empty string when missing", () => {
     expect(personName(undefined)).toBe("");
-    expect(
-      personName({ person: null, confirmed: false } as SacramentMeeting["presiding"]),
-    ).toBe("");
+    expect(personName({ person: null, confirmed: false } as SacramentMeeting["presiding"])).toBe(
+      "",
+    );
   });
 });
 
 const s = (id: string, name: string) => ({ id, name, topic: null });
 
 describe("speakerSequence", () => {
-
   it("returns speakers only when mid is none", () => {
     const seq = speakerSequence([s("a", "A"), s("b", "B")], undefined);
     expect(seq.map((e) => e.kind)).toEqual(["speaker", "speaker"]);

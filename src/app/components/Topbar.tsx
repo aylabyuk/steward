@@ -13,7 +13,9 @@ export function Topbar() {
           <span className="font-display text-base font-semibold tracking-tight">Steward</span>
           {wardName && (
             <>
-              <span aria-hidden className="text-walnut-3">·</span>
+              <span aria-hidden className="text-walnut-3">
+                ·
+              </span>
               <span className="font-serif text-[14px] text-walnut-2 truncate max-w-[40vw]">
                 {wardName}
               </span>

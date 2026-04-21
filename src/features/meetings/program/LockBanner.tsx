@@ -27,7 +27,8 @@ export function LockBanner({ status, onUnlock }: Props) {
         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
       </svg>
       <span className="font-sans text-[13.5px] text-walnut flex-1 min-w-0">
-        This program is <strong className="font-semibold">{label}</strong> and locked. Return it to draft to make changes.
+        This program is <strong className="font-semibold">{label}</strong> and locked. Return it to
+        draft to make changes.
       </span>
       <button
         type="button"

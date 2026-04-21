@@ -46,19 +46,13 @@ export function buildRailSections(
     {
       id: "sec-sacrament",
       label: "Sacrament",
-      state: peopleState([
-        m?.sacramentBread,
-        m?.sacramentBlessers?.[0],
-        m?.sacramentBlessers?.[1],
-      ]),
+      state: peopleState([m?.sacramentBread, m?.sacramentBlessers?.[0], m?.sacramentBlessers?.[1]]),
     },
   ];
   if (type === "regular") {
     let speakerState: RailState = "missing";
     if (speakers.length >= 2) {
-      speakerState = speakers.every((s) => s.data.status === "confirmed")
-        ? "done"
-        : "unconfirmed";
+      speakerState = speakers.every((s) => s.data.status === "confirmed") ? "done" : "unconfirmed";
     }
     sections.push({
       id: "sec-speakers",

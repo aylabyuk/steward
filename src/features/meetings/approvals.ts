@@ -1,9 +1,4 @@
-import {
-  doc,
-  runTransaction,
-  serverTimestamp,
-  Timestamp,
-} from "firebase/firestore";
+import { doc, runTransaction, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { type Approval, sacramentMeetingSchema } from "@/lib/types";
 import { appendHistoryEvent, currentActor, type HistoryActor } from "./history";
@@ -91,9 +86,7 @@ export async function requestApproval(
     let liveAfter = approvals.filter((a) => !a.invalidated).length;
 
     if (selfApprover?.isBishopric) {
-      const alreadyApproved = approvals.some(
-        (a) => a.uid === selfApprover.uid && !a.invalidated,
-      );
+      const alreadyApproved = approvals.some((a) => a.uid === selfApprover.uid && !a.invalidated);
       if (!alreadyApproved) {
         const selfApproval: Approval = {
           uid: selfApprover.uid,

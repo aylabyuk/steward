@@ -34,15 +34,10 @@ export function PendingInvitesList({ wardId, canEdit }: Props) {
           {invites.length} waiting
         </span>
       </div>
-      {error && (
-        <p className="mb-2 font-sans text-[12.5px] text-bordeaux">{error}</p>
-      )}
+      {error && <p className="mb-2 font-sans text-[12.5px] text-bordeaux">{error}</p>}
       <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-chalk">
         {invites.map((inv) => (
-          <li
-            key={inv.id}
-            className="flex items-center gap-3 px-3.5 py-2.5"
-          >
+          <li key={inv.id} className="flex items-center gap-3 px-3.5 py-2.5">
             <div className="min-w-0 flex-1">
               <div className="truncate font-sans text-[13.5px] font-semibold text-walnut">
                 {inv.data.displayName}

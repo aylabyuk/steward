@@ -1,8 +1,5 @@
 import { useEffect } from "react";
-import {
-  useOnlineStatusEffect,
-  useOnlineStatusStore,
-} from "@/stores/onlineStatusStore";
+import { useOnlineStatusEffect, useOnlineStatusStore } from "@/stores/onlineStatusStore";
 import { cn } from "@/lib/cn";
 
 const RECONNECTED_VISIBLE_MS = 4000;
@@ -39,10 +36,7 @@ export function OnlineStatusBanner() {
     >
       <div className="mx-auto flex max-w-380 items-center gap-2.5">
         <span
-          className={cn(
-            "inline-block h-2 w-2 rounded-full",
-            online ? "bg-success" : "bg-warning",
-          )}
+          className={cn("inline-block h-2 w-2 rounded-full", online ? "bg-success" : "bg-warning")}
         />
         <span>
           {online

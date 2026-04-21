@@ -16,11 +16,7 @@ function assigned(name: string, confirmed: boolean): Assignment {
   return { person: { name }, confirmed };
 }
 
-function speaker(
-  id: string,
-  status: Speaker["status"],
-  name = id,
-): WithId<Speaker> {
+function speaker(id: string, status: Speaker["status"], name = id): WithId<Speaker> {
   return { id, data: { name, status, role: "Member" } };
 }
 
@@ -39,10 +35,7 @@ function meeting(overrides: Partial<SacramentMeeting> = {}): SacramentMeeting {
   };
 }
 
-function pickState(
-  sections: ReturnType<typeof buildRailSections>,
-  id: string,
-): string {
+function pickState(sections: ReturnType<typeof buildRailSections>, id: string): string {
   const s = sections.find((x) => x.id === id);
   if (!s) throw new Error(`no section ${id}`);
   return s.state;
@@ -50,22 +43,12 @@ function pickState(
 
 describe("buildRailSections — approval overview", () => {
   it("is done when the readiness report is ready", () => {
-    const sections = buildRailSections(
-      meeting(),
-      [],
-      "regular",
-      { ...emptyReport, ready: true },
-    );
+    const sections = buildRailSections(meeting(), [], "regular", { ...emptyReport, ready: true });
     expect(pickState(sections, "sec-overview")).toBe("done");
   });
 
   it("is missing when the readiness report is not ready", () => {
-    const sections = buildRailSections(
-      meeting(),
-      [],
-      "regular",
-      { ...emptyReport, ready: false },
-    );
+    const sections = buildRailSections(meeting(), [], "regular", { ...emptyReport, ready: false });
     expect(pickState(sections, "sec-overview")).toBe("missing");
   });
 });
@@ -189,12 +172,7 @@ describe("buildRailSections — music & hymns", () => {
   });
 
   it("is missing when all hymns are set but chorister is missing", () => {
-    const sections = buildRailSections(
-      meeting({ ...withAllHymns }),
-      [],
-      "regular",
-      emptyReport,
-    );
+    const sections = buildRailSections(meeting({ ...withAllHymns }), [], "regular", emptyReport);
     expect(pickState(sections, "sec-music")).toBe("missing");
   });
 

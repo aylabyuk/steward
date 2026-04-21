@@ -39,10 +39,12 @@ export function SundayCardHeader({
         <div className="text-2xl font-display font-semibold text-walnut leading-tight">
           {formatShortDate(date)}
         </div>
-        <div className={cn(
-          "text-[11px] font-mono tracking-[0.08em] uppercase mt-1",
-          urgent ? "text-bordeaux font-semibold" : "text-walnut-3",
-        )}>
+        <div
+          className={cn(
+            "text-[11px] font-mono tracking-[0.08em] uppercase mt-1",
+            urgent ? "text-bordeaux font-semibold" : "text-walnut-3",
+          )}
+        >
           {formatCountdown(date)}
         </div>
       </Link>
