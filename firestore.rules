@@ -122,6 +122,17 @@ service cloud.firestore {
         allow create, update, delete: if isActiveMember(wardId);
       }
 
+      // Speaker invitations: frozen snapshots of a letter at send time.
+      // Public read — the doc ID is the shareable token, and Firestore
+      // auto-IDs are cryptographically random (~120 bits) so the URL
+      // itself authorizes access. The recipient has no other way into
+      // the ward. Writes still require an active member so only the
+      // bishopric or clerks can send.
+      match /speakerInvitations/{token} {
+        allow read: if true;
+        allow create, update, delete: if isActiveMember(wardId);
+      }
+
       // Invites: bishopric creates/lists/revokes pending invites keyed by
       // the invitee's lower-cased email. The invitee themselves can read
       // the doc targeted at their email (so an invite-acceptance page can

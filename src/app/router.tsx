@@ -4,6 +4,7 @@ import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
 import { AcceptInvitePage } from "./routes/accept-invite";
+import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
 import { NotificationSettingsPage } from "./routes/notification-settings";
@@ -42,5 +43,9 @@ export const router = createBrowserRouter([
   // yet — AccessRequired would block them. The page handles its own
   // signed-in check.
   { path: "/accept-invite/:wardId", element: <AcceptInvitePage /> },
+  // Speaker invitation landing: fully public (no auth at all). The
+  // unguessable token in the URL authorizes the read per Firestore
+  // rules.
+  { path: "/invite/speaker/:wardId/:token", element: <SpeakerInvitationLandingPage /> },
   { path: "/login", element: <Login /> },
 ]);
