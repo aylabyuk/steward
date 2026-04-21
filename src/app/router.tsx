@@ -3,6 +3,7 @@ import { CongregationProgram } from "@/features/print/CongregationProgram";
 import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
+import { AcceptInvitePage } from "./routes/accept-invite";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
 import { NotificationSettingsPage } from "./routes/notification-settings";
@@ -35,5 +36,9 @@ export const router = createBrowserRouter([
       { path: "/print/:date/conducting", element: <ConductingProgram /> },
     ],
   },
+  // Accept-invite skips AuthGate because the invitee isn't a ward member
+  // yet — AccessRequired would block them. The page handles its own
+  // signed-in check.
+  { path: "/accept-invite/:wardId", element: <AcceptInvitePage /> },
   { path: "/login", element: <Login /> },
 ]);

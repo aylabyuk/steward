@@ -1,7 +1,7 @@
-import { doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import type { WithId } from "@/hooks/_sub";
 import { db } from "@/lib/firebase";
-import { type Calling, callingToRole, type Member, memberSchema } from "@/lib/types";
+import { type Calling, callingToRole, type Member } from "@/lib/types";
 
 export class LastBishopricError extends Error {
   override name = "LastBishopricError";
@@ -24,32 +24,6 @@ export function wouldRemoveLastBishopric(
     return countActiveBishopric(members) === 1;
   }
   return false;
-}
-
-export interface AddMemberInput {
-  wardId: string;
-  uid: string;
-  email: string;
-  displayName: string;
-  calling: Calling;
-}
-
-export async function addMember(input: AddMemberInput): Promise<void> {
-  const role = callingToRole(input.calling);
-  const data = memberSchema.parse({
-    email: input.email,
-    displayName: input.displayName,
-    calling: input.calling,
-    role,
-    active: true,
-    ccOnEmails: true,
-    fcmTokens: [],
-  });
-  await setDoc(doc(db, "wards", input.wardId, "members", input.uid), {
-    ...data,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
 }
 
 export async function updateCalling(
