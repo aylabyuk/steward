@@ -1,11 +1,13 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel, type KindVariant } from "./kindLabel";
 import { SpeakerEditList, type SpeakerEditListHandle } from "./SpeakerEditList";
+import { SpeakerInvitationLauncher } from "./SpeakerInvitationLauncher";
 import { AssignDialog } from "./AssignDialog";
+import { EditFooter, InviteFooter } from "./AssignDialogFooters";
 import { SundayCardBody } from "./SundayCardBody";
 import { SundayCardHeader } from "./SundayCardHeader";
 import { SundayCardSpecial } from "./SundayCardSpecial";
@@ -23,6 +25,8 @@ const CARD_BG: Record<KindVariant, string> = {
   stake: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
   general: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
 };
+
+type Step = "edit" | "invite";
 
 interface Props {
   date: string;
@@ -45,10 +49,16 @@ export function SundayCard({
   const cancelled = Boolean(meeting?.cancellation?.cancelled);
   const { data: speakers } = useSpeakers(date);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [step, setStep] = useState<Step>("edit");
   const [saving, setSaving] = useState(false);
   const editListRef = useRef<SpeakerEditListHandle>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
+
+  // Always start on step 1 whenever the dialog opens.
+  useEffect(() => {
+    if (assignDialogOpen) setStep("edit");
+  }, [assignDialogOpen]);
 
   if (cancelled) {
     return (
@@ -66,12 +76,18 @@ export function SundayCard({
     if (!editListRef.current) return;
     setSaving(true);
     try {
-      await editListRef.current.save();
-      setAssignDialogOpen(false);
+      const plannedCount = await editListRef.current.save();
+      // If nobody's left in "planned", there's nothing to invite —
+      // close the modal entirely. Otherwise advance to step 2.
+      if (plannedCount === 0) setAssignDialogOpen(false);
+      else setStep("invite");
     } finally {
       setSaving(false);
     }
   }
+
+  const title =
+    step === "invite" ? `Send invitations — ${formatShortDate(date)}` : formatShortDate(date);
 
   return (
     <article
@@ -110,17 +126,33 @@ export function SundayCard({
 
       <AssignDialog
         open={assignDialogOpen}
-        title={formatShortDate(date)}
-        saving={saving}
+        title={title}
         onClose={() => setAssignDialogOpen(false)}
-        onSave={handleSave}
+        footerSlot={
+          step === "edit" ? (
+            <EditFooter
+              saving={saving}
+              onCancel={() => setAssignDialogOpen(false)}
+              onSave={handleSave}
+            />
+          ) : (
+            <InviteFooter
+              onBack={() => setStep("edit")}
+              onDone={() => setAssignDialogOpen(false)}
+            />
+          )
+        }
       >
-        <SpeakerEditList
-          ref={editListRef}
-          date={date}
-          wardId={wardId}
-          nonMeetingSundays={nonMeetingSundays}
-        />
+        {step === "edit" ? (
+          <SpeakerEditList
+            ref={editListRef}
+            date={date}
+            wardId={wardId}
+            nonMeetingSundays={nonMeetingSundays}
+          />
+        ) : (
+          <SpeakerInvitationLauncher date={date} />
+        )}
       </AssignDialog>
     </article>
   );

@@ -19,7 +19,11 @@ interface Props {
 const MAX_SPEAKERS = 4;
 
 export interface SpeakerEditListHandle {
-  save: () => Promise<void>;
+  /** Persist all changes. Resolves with the count of speakers still
+   *  in "planned" status after save — the caller uses that to decide
+   *  whether to advance to the Invite Launcher (step 2) or close the
+   *  modal when there's no one left to invite. */
+  save: () => Promise<number>;
 }
 
 export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function SpeakerEditList(
@@ -81,9 +85,11 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
         for (const id of deletedIds) {
           await deleteSpeaker(wardId, date, id);
         }
+        let plannedCount = 0;
         for (const d of drafts) {
           const name = d.name.trim();
           if (!name) continue;
+          if (d.status === "planned") plannedCount += 1;
           if (d.id === null) {
             await createSpeaker({
               wardId,
@@ -109,6 +115,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
           }
         }
         setDeletedIds([]);
+        return plannedCount;
       },
     }),
     [drafts, deletedIds, wardId, date, nonMeetingSundays],
