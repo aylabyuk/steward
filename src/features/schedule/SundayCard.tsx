@@ -56,14 +56,20 @@ export function SundayCard({
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
   const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
+  // Captured at open-time inside the effect below so `needsApply`
+  // snapshot changes (e.g. Apply-as-confirmed flipping it back to
+  // false) don't re-enter the effect and yank the bishop back to
+  // step 1 mid-interaction.
+  const needsApplyRef = useRef(needsApply);
+  needsApplyRef.current = needsApply;
 
-  // When the dialog opens, default to step 2 if there's a pending
-  // response the bishop should review; otherwise step 1 (edit) as
-  // before. Bishop can always use "Back to edit" in step 2 to reach
-  // the editor if they actually want to change speakers.
+  // Only fires on open/close transitions — deliberately omits
+  // needsApply from deps. The ref captures the current value at
+  // open time; subsequent changes don't trigger re-entry.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (assignDialogOpen) setStep(needsApply ? "invite" : "edit");
-  }, [assignDialogOpen, needsApply]);
+    if (assignDialogOpen) setStep(needsApplyRef.current ? "invite" : "edit");
+  }, [assignDialogOpen]);
 
   if (cancelled) {
     return (
