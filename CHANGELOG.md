@@ -7,6 +7,131 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-22
+
+Streamlined speaker-invitation flow (#26). The three-button Planned
+action strip (Mark invited / Print letter / Send email) collapses
+into a single **Prepare invitation** button that opens a full-page
+editor in a new tab — letter body + footer MDXEditors on the left,
+pinch-zoomable 8.5 × 11 paper preview on the right, and an
+icon-only toolbar with confirm dialogs for every terminal action.
+The ward template settings page (`/settings/templates/speakers`)
+and the public invitation landing page get the same preview +
+print chrome so all three surfaces feel like one system.
+
+### Added
+
+- **Prepare Invitation page** at
+  `/week/:date/speaker/:speakerId/prepare`, opened in a new tab
+  from the "Prepare invitation" button. Runs outside the AppShell
+  for full-viewport real estate. Sticky header with speaker name
+  and email target on the left, X close top-right, toolbar
+  centered below (mobile) or floating top-right inside the
+  preview (desktop).
+- **Zoomable / pannable letter preview** (shared
+  `<ScaledLetterPreview>` component): wheel + pinch zoom,
+  click-drag + touch-drag pan, double-click reset. Fit-to-container
+  computed from a new `useFitScale` hook (ResizeObserver + CSS
+  `zoom`). Bottom-left pill shows current magnification percentage
+  with step + reset controls. Applied to:
+  1. The Prepare Invitation editor
+  2. The ward template settings page
+     (`/settings/templates/speakers`)
+  3. The public speaker landing page
+     (`/invite/speaker/:wardId/:token`)
+- **Icon-only toolbar** with tooltips: Revert / Mark invited only
+  / Print / Send email on the editor, Reset / Save on the ward
+  template page. Connected button group, smaller on mobile, Cancel
+  split out as the header X.
+- **Confirm modals** (`<ConfirmDialog>`) gate every destructive
+  or side-effecting action:
+  - **Revert** distinguishes "discard unsaved edits" vs "clear
+    saved override" copy based on whether an override exists.
+  - **Mark invited only** explains the status-flip-no-email path
+    for phone / in-person / already-reached cases.
+  - **Send email** explains the snapshot + mailto + status flip,
+    and reassures the bishop the message is still reviewable in
+    their email client before actually sending.
+  - **Save as ward default** explains future invitations will use
+    the new text + existing sent invitations are frozen snapshots.
+  - **Reset to defaults** clarifies the ward template on file
+    stays until you click Save.
+- **Editable speaker-email body template** (#26, slice 1 / #27):
+  new ward template at `wards/{wardId}/templates/speakerEmail`
+  edited from `/settings/templates/speaker-email`. Replaces the
+  hardcoded "Please open your invitation letter at the link below"
+  that looked like phishing — default now names purpose, sender,
+  and Sunday upfront.
+- **Editor guide**: collapsible `<SpeakerLetterGuide>` above the
+  body / footer editors listing every supported variable
+  (`{{speakerName}}`, `{{topic}}`, `{{date}}`, `{{today}}`,
+  `{{wardName}}`, `{{inviterName}}`) with a short description.
+- **Mobile preview FAB**: `<MobileLetterPreviewButton>` — fixed
+  bottom-right pill on mobile only, opens the 8.5 × 11 preview
+  as a full-viewport overlay when the desktop preview column is
+  hidden.
+- **Print pipeline**: `<PrintOnlyLetter>` React Portal mounts a
+  copy of the letter at `document.body` level on every page that
+  exposes a Print button. Global `@media print` rules in
+  `src/styles/index.css` hide every other body-level child via
+  `body > *:not([data-print-only-letter]) { display: none }`
+  so printing is WYSIWYG with no blank trailing pages or
+  mis-scaled sheets. `@page { size: letter; margin: 0 }` +
+  reset body/html margins for edge-to-edge printing.
+
+### Changed
+
+- **Speaker action strip** on the schedule view: three buttons
+  (Mark invited / Print letter / Send email) collapse to a single
+  **Prepare invitation** primary button. The card-header "Edit
+  letter" is gone — the Prepare page is the one place letter
+  editing happens.
+- **`sendSpeakerInvitation`** simplified: takes the resolved
+  letter body + footer from the caller instead of running its
+  own override + template lookup. One `getDoc` (ward name) per
+  send instead of three.
+- **Letter spacing** in `<LetterCanvas>` trimmed
+  (`pt-[0.85in] pb-[0.6in]`, shorter margins between the
+  header / date / callout / signature / footer blocks) so a
+  typical 4-paragraph letter fits on one 11 in sheet. Letter
+  side margins dropped from 1.1 in to 0.75 in for more body
+  width.
+- **Settings index** now marks the speakers template link as
+  "↗ new tab" and opens it with `target="_blank"` to match the
+  Prepare flow.
+- **`/settings/templates/speakers`** moves outside the AppShell
+  entirely — sticky header with X close, icon toolbar inside
+  the preview. Same full-viewport rhythm as the Prepare page.
+- **MDXEditor sizing**: `min-h-[220px]` moves from the
+  `className` prop (which applies to popup containers) to
+  `contentEditableClassName` (which applies to the editable
+  area). Fixes a bug where two empty popup containers were
+  adding ~440 px of phantom height and forcing a page
+  scrollbar.
+
+### Removed
+
+- `SpeakerLetterOverrideDialog` + `useLetterOverrideForm` +
+  `OverrideDialogFooter` — consolidated into the Prepare page.
+- `PrepareInvitationEmailTab` + `PrepareInvitationTabs` +
+  `speakerEmailOverride` — per-speaker email editing dropped
+  (email is tweaked in the mail client after mailto).
+- `TemplateSaveActions` — replaced by the icon-only
+  `<WardTemplateToolbar>` with confirm modals.
+- `printInvitationLetter` + its test — replaced by
+  `window.print()` + `<PrintOnlyLetter>`.
+- `fullWidth` prop on `AppShell` / `AuthGate` — dead code
+  after the speakers template page moved outside the shell.
+
+### Infrastructure
+
+- Dependency: `react-zoom-pan-pinch` ^4.0.3 (~200k weekly
+  downloads, maintained through 2025). Drives the
+  pinch / zoom / pan UX on every letter preview.
+- 194 unit tests (down 3 from v0.3.0 — the removed
+  `printInvitationLetter.test.ts` accounted for the delta) +
+  86 Firestore rules tests (unchanged).
+
 ## [0.3.0] — 2026-04-22
 
 Editable Markdown templates across both outbound surfaces. Bishops and
@@ -247,7 +372,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/aylabyuk/steward/releases/tag/v0.4.0
 [0.3.0]: https://github.com/aylabyuk/steward/releases/tag/v0.3.0
 [0.2.0]: https://github.com/aylabyuk/steward/releases/tag/v0.2.0
 [0.1.2]: https://github.com/aylabyuk/steward/releases/tag/v0.1.2
