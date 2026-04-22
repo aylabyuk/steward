@@ -17,15 +17,6 @@ export const TWILIO_CONVERSATIONS_SERVICE_SID = defineSecret("TWILIO_CONVERSATIO
 /** Canadian long-code number the service uses for outbound SMS. */
 export const TWILIO_FROM_NUMBER = defineSecret("TWILIO_FROM_NUMBER");
 
-/** SendGrid API key (transactional email). SendGrid is a Twilio
- *  company, so this ends up on the same invoice. */
-export const SENDGRID_API_KEY = defineSecret("SENDGRID_API_KEY");
-
-/** Verified sender address used for the From header on
- *  invitation + notification emails. The display-name portion is
- *  constructed per-message from the bishop's name. */
-export const INVITATION_FROM_EMAIL = defineSecret("INVITATION_FROM_EMAIL");
-
 /** Public origin of the web app (e.g. https://steward-app.ca) —
  *  used by Cloud Functions to build invite URLs in outbound
  *  correspondence. Runtime-configurable, not a secret. */
@@ -34,8 +25,7 @@ export const STEWARD_ORIGIN = defineString("STEWARD_ORIGIN", {
 });
 
 /** All Twilio-touching secrets bundled for convenient spread onto a
- *  function's `secrets` array. Functions that need email too spread
- *  SENDGRID_SECRETS too. */
+ *  function's `secrets` array. */
 export const TWILIO_SECRETS = [
   TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN,
@@ -45,4 +35,10 @@ export const TWILIO_SECRETS = [
   TWILIO_FROM_NUMBER,
 ];
 
-export const SENDGRID_SECRETS = [SENDGRID_API_KEY, INVITATION_FROM_EMAIL];
+// SendGrid (SENDGRID_API_KEY / INVITATION_FROM_EMAIL) is intentionally
+// NOT declared via defineSecret — doing so would force Firebase to
+// prompt for them at every deploy even when no function binds them.
+// The sendgrid/client.ts module reads process.env at runtime and
+// throws if unset; callers already try/catch that. Re-enable by
+// adding `defineSecret` calls here + threading the binding through
+// the two consuming functions.
