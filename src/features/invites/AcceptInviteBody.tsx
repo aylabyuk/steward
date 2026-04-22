@@ -1,10 +1,11 @@
+import Markdown from "react-markdown";
 import type { PendingInvite } from "@/features/invites/inviteActions";
 import { CALLING_LABELS } from "@/features/settings/callingLabels";
 
 export type AcceptInviteState =
   | { kind: "loading" }
   | { kind: "signed-out" }
-  | { kind: "ready"; invite: PendingInvite }
+  | { kind: "ready"; invite: PendingInvite; messageBody?: string }
   | { kind: "accepting" }
   | { kind: "done" }
   | { kind: "no-invite"; email: string }
@@ -31,7 +32,7 @@ export function AcceptInviteBody({ state, onAccept, onSignOut }: Props) {
   if (state.kind === "wrong-ward") {
     return <WrongWard elsewhere={state.elsewhere} />;
   }
-  return <ReadyBody invite={state.invite} onAccept={onAccept} />;
+  return <ReadyBody invite={state.invite} messageBody={state.messageBody} onAccept={onAccept} />;
 }
 
 function NoInvite({ email, onSignOut }: { email: string; onSignOut: () => void }) {
@@ -82,9 +83,22 @@ function WrongWard({ elsewhere }: { elsewhere: readonly PendingInvite[] }) {
   );
 }
 
-function ReadyBody({ invite, onAccept }: { invite: PendingInvite; onAccept: () => void }) {
+function ReadyBody({
+  invite,
+  messageBody,
+  onAccept,
+}: {
+  invite: PendingInvite;
+  messageBody?: string | undefined;
+  onAccept: () => void;
+}) {
   return (
     <>
+      {messageBody && messageBody.trim().length > 0 && (
+        <div className="prose prose-sm max-w-none font-serif text-[14px] text-walnut-2 leading-relaxed mb-5">
+          <Markdown>{messageBody}</Markdown>
+        </div>
+      )}
       <h1 className="font-display text-[22px] font-semibold text-walnut mb-2">
         Join {invite.wardName}?
       </h1>

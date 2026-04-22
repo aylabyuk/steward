@@ -21,5 +21,10 @@ export const inviteSchema = z.object({
   invitedBy: z.string().min(1),
   invitedByName: z.string().min(1),
   invitedAt: z.any(),
+  // Pre-rendered Markdown greeting snapshotted at send time (ward
+  // template or per-invite override, with variables interpolated). The
+  // accept page reads this without needing to read the template doc
+  // (which the invitee can't access — they're not a member yet).
+  messageBody: z.string().optional(),
 });
 export type Invite = z.infer<typeof inviteSchema>;
