@@ -34,7 +34,7 @@ export function ScaledLetterPreview({
   const [zoomPercent, setZoomPercent] = useState(() => Math.round(fitScale * 100));
   return (
     <div
-      className="rounded-md border border-border-strong bg-parchment-2/40 overflow-hidden"
+      className="rounded-md border border-border bg-parchment-2/40 overflow-hidden"
       style={{ height }}
     >
       <div ref={ref} className="relative h-full w-full overflow-hidden select-none">
