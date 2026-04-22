@@ -1,13 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-  type DocumentData,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { speakerInvitationSchema, type SpeakerInvitation } from "@/lib/types";
 
@@ -19,10 +11,16 @@ export interface LatestInvitationState {
 }
 
 /** Live query for the most recent `speakerInvitations` doc pointing
- *  at the given (meetingDate, speakerId) pair. Used by the Prepare
- *  page to conditionally mount the chat pane once an invitation has
- *  been sent. Each resend creates a new doc — we always show the
- *  latest. */
+ *  at the given (meetingDate, speakerId) pair.
+ *
+ *  Implementation note: we filter only by `speakerRef.meetingDate`
+ *  server-side (a single-field where — no composite index needed),
+ *  then pick the right speaker + newest createdAt client-side. The
+ *  previous orderBy-on-createdAt + two-field-where combo required a
+ *  composite index that wasn't deployed; the query failed silently
+ *  and the hook returned null for every speaker. Keeping this
+ *  client-filtered is cheap — a Sunday has ~2–4 invitation docs
+ *  typically, even with resends. */
 export function useLatestInvitation(
   wardId: string | null,
   meetingDate: string | null,
@@ -38,29 +36,40 @@ export function useLatestInvitation(
     const q = query(
       collection(db, "wards", wardId, "speakerInvitations"),
       where("speakerRef.meetingDate", "==", meetingDate),
-      where("speakerRef.speakerId", "==", speakerId),
-      orderBy("createdAt", "desc"),
-      limit(1),
     );
     const unsub = onSnapshot(
       q,
       (snap) => {
-        if (snap.empty) {
+        const candidates = snap.docs
+          .map((d) => ({ id: d.id, data: d.data() as DocumentData }))
+          .filter((d) => (d.data.speakerRef as { speakerId: string } | undefined)?.speakerId === speakerId);
+        if (candidates.length === 0) {
           setState({ loading: false, invitation: null });
           return;
         }
-        const d = snap.docs[0]!;
-        const parsed = speakerInvitationSchema.safeParse(d.data() as DocumentData);
+        candidates.sort((a, b) => millisOf(b.data.createdAt) - millisOf(a.data.createdAt));
+        const chosen = candidates[0]!;
+        const parsed = speakerInvitationSchema.safeParse(chosen.data);
         if (!parsed.success) {
           setState({ loading: false, invitation: null });
           return;
         }
-        setState({ loading: false, invitation: { ...parsed.data, token: d.id } });
+        setState({ loading: false, invitation: { ...parsed.data, token: chosen.id } });
       },
-      () => setState({ loading: false, invitation: null }),
+      (err) => {
+        console.error("useLatestInvitation snapshot error", err);
+        setState({ loading: false, invitation: null });
+      },
     );
     return () => unsub();
   }, [wardId, meetingDate, speakerId]);
 
   return state;
+}
+
+function millisOf(v: unknown): number {
+  if (v && typeof v === "object" && "toMillis" in v && typeof v.toMillis === "function") {
+    return (v as { toMillis: () => number }).toMillis();
+  }
+  return 0;
 }
