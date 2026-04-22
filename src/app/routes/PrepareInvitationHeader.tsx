@@ -43,7 +43,7 @@ export function PrepareInvitationHeader(props: Props) {
           <RemoveIcon />
         </button>
       </div>
-      <div className="flex justify-center">
+      <div className="lg:hidden flex justify-center">
         <PrepareInvitationActionBar
           busy={props.busy}
           canSend={props.canSend}
