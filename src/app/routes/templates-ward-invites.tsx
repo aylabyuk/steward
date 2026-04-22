@@ -35,10 +35,10 @@ export function WardInviteTemplatePage() {
     () =>
       renderWardInviteMessage(
         {
-          inviteeName: "Sister Hannah Reeves",
+          inviteeName: "Brother Lloyd Flores",
           wardName: wardName || "Your Ward",
           inviterName: me?.data.displayName ?? "Bishop",
-          calling: "ward_clerk",
+          calling: "executive_secretary",
           role: "clerk",
         },
         { override: body, template: null },
