@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 import { LetterCanvas } from "@/features/templates/LetterCanvas";
+import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation";
 
 /**
@@ -14,10 +15,20 @@ export function SpeakerInvitationLandingPage() {
   const state = useSpeakerInvitation(wardId, token);
 
   return (
-    <main className="min-h-dvh bg-[#e6ddc7] py-10 px-4 sm:px-6 flex items-start justify-center print:bg-white print:py-0 print:px-0">
-      {state.kind === "ready" && <PrintToolbar />}
+    <main className="min-h-dvh bg-[#e6ddc7] py-10 px-4 sm:px-6 flex items-start justify-center">
+      {state.kind === "ready" && (
+        <>
+          <PrintToolbar />
+          <PrintOnlyLetter
+            wardName={state.invitation.wardName}
+            assignedDate={state.invitation.assignedDate}
+            today={state.invitation.sentOn}
+            bodyMarkdown={state.invitation.bodyMarkdown}
+            footerMarkdown={state.invitation.footerMarkdown}
+          />
+        </>
+      )}
       <Body state={state} />
-      <PrintStyles />
     </main>
   );
 }
@@ -78,27 +89,6 @@ function PrinterIcon() {
       <rect x="3" y="9" width="18" height="9" rx="2" />
       <path d="M6 14h12v7H6z" />
     </svg>
-  );
-}
-
-/**
- * Print-only overrides for the landing page. The letter itself is
- * designed to look like a physical page (8.5×11, parchment border
- * inset, mono eyebrows) — print CSS just needs to flatten the
- * drop shadow, zero the page margins (the letter has its own inner
- * margin), and keep the whole letter on one sheet.
- */
-function PrintStyles() {
-  return (
-    <style>{`
-      @media print {
-        @page { size: letter; margin: 0; }
-        html, body { background: #ffffff !important; }
-        .print\\:hidden { display: none !important; }
-        /* Drop any LetterCanvas shadow in print */
-        [class*="shadow-"] { box-shadow: none !important; }
-      }
-    `}</style>
   );
 }
 
