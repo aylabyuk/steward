@@ -3,9 +3,6 @@ import { useParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { BishopInvitationChat } from "@/features/invitations/BishopInvitationChat";
-import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
-import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
 import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
@@ -29,7 +26,6 @@ export function PrepareInvitationPage() {
   const [done, setDone] = useState(false);
 
   const speaker = speakers.data?.find((s) => s.id === speakerId) ?? null;
-  const latest = useLatestInvitation(wardId ?? null, date ?? null, speakerId ?? null);
   const form = usePrepareInvitation({
     wardId: wardId ?? "",
     date: date ?? "",
@@ -119,38 +115,29 @@ export function PrepareInvitationPage() {
   };
 
   return (
-    <TwilioChatProvider>
-      <main className="min-h-dvh bg-parchment flex flex-col">
-        <PrepareInvitationHeader
-          email={email}
-          hasEmail={hasEmail}
-          onCancel={() => window.close()}
-          {...toolbarProps}
-        />
-        <div className="flex-1 min-h-0 px-5 sm:px-8 pt-5 pb-4 flex flex-col gap-4">
-          {form.hydrated ? (
-            <PrepareInvitationLetterTab
-              key={form.resetKey}
-              body={form.letterBody}
-              footer={form.letterFooter}
-              setBody={form.setLetterBody}
-              setFooter={form.setLetterFooter}
-              vars={vars}
-              previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
-            />
-          ) : (
-            <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
-          )}
-          {form.error && <p className="font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
-          {latest.invitation && (
-            <BishopInvitationChat
-              wardId={wardId}
-              token={latest.invitation.token}
-              invitation={latest.invitation}
-            />
-          )}
-        </div>
-      </main>
-    </TwilioChatProvider>
+    <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
+      <PrepareInvitationHeader
+        email={email}
+        hasEmail={hasEmail}
+        onCancel={() => window.close()}
+        {...toolbarProps}
+      />
+      <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
+        {form.hydrated ? (
+          <PrepareInvitationLetterTab
+            key={form.resetKey}
+            body={form.letterBody}
+            footer={form.letterFooter}
+            setBody={form.setLetterBody}
+            setFooter={form.setLetterFooter}
+            vars={vars}
+            previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
+          />
+        ) : (
+          <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
+        )}
+        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
+      </div>
+    </main>
   );
 }
