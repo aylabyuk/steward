@@ -2,11 +2,8 @@ import { getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { sendEmail } from "./sendgrid/client.js";
-import {
-  addSmsParticipant,
-  deleteConversation,
-  postMessage,
-} from "./twilio/conversations.js";
+import { deleteConversation } from "./twilio/conversations.js";
+import { sendSmsDirect } from "./twilio/messaging.js";
 import { buildEmailHtml, buildEmailText, buildSmsBody } from "./invitationEmailBody.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 import type { DeliveryEntry, SendSpeakerInvitationRequest } from "./sendSpeakerInvitation.types.js";
@@ -46,16 +43,6 @@ export async function cleanupPriorConversations(
   }
 }
 
-export async function tryAddSms(conversationSid: string, speakerPhone: string): Promise<void> {
-  const from = process.env.TWILIO_FROM_NUMBER;
-  if (!from) throw new HttpsError("failed-precondition", "TWILIO_FROM_NUMBER missing.");
-  try {
-    await addSmsParticipant(conversationSid, speakerPhone, from);
-  } catch (err) {
-    logger.warn("failed to add SMS participant", { err: (err as Error).message });
-  }
-}
-
 type EmailArgs = Parameters<typeof buildEmailText>[0];
 
 export async function tryEmail(
@@ -81,17 +68,11 @@ export async function tryEmail(
 }
 
 export async function trySms(
-  conversationSid: string,
-  authorIdentity: string,
+  speakerPhone: string,
   emailArgs: EmailArgs,
 ): Promise<DeliveryEntry> {
   try {
-    const sid = await postMessage({
-      conversationSid,
-      author: authorIdentity,
-      body: buildSmsBody(emailArgs),
-      attributes: { kind: "invitation" },
-    });
+    const sid = await sendSmsDirect({ to: speakerPhone, body: buildSmsBody(emailArgs) });
     return { channel: "sms", status: "sent", providerId: sid, at: new Date() };
   } catch (err) {
     logger.error("initial SMS send failed", { err: (err as Error).message });

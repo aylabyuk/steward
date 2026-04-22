@@ -5,6 +5,7 @@ import { buildEmailHtml, buildEmailText } from "./invitationEmailBody.js";
 import { filterRecipients, type RecipientCandidate } from "./recipients.js";
 import { STEWARD_ORIGIN } from "./secrets.js";
 import { sendEmail } from "./sendgrid/client.js";
+import { sendSmsDirect } from "./twilio/messaging.js";
 import type { FcmToken, MemberDoc, WardDoc } from "./types.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
@@ -38,10 +39,26 @@ export async function pushToBishopric(inv: ResolvedInvitation, body: string): Pr
   });
 }
 
+/** Bishop posted → one-off SMS to the speaker via Twilio Messaging
+ *  REST. We used to rely on the conversation's SMS participant
+ *  binding to auto-deliver; after switching the speaker to a chat
+ *  participant, that path is gone, so the webhook fires this
+ *  directly. Silently no-op if the invitation has no phone on file. */
+export async function smsSpeaker(inv: ResolvedInvitation, body: string): Promise<void> {
+  if (!inv.speakerPhone) return;
+  const preview = truncate(body, 300);
+  const text = `${inv.inviterName} (Steward): ${preview}`;
+  try {
+    await sendSmsDirect({ to: inv.speakerPhone, body: text });
+  } catch (err) {
+    logger.error("reply SMS failed", { err: (err as Error).message, token: inv.token });
+  }
+}
+
 /** Bishop posted → SendGrid email to the speaker with a preview.
- *  Twilio already handles SMS delivery via the participant's SMS
- *  binding (if they have one); this gives them the second
- *  notification channel. */
+ *  No-ops if the invitation has no email on file or if SendGrid
+ *  isn't configured — the surrounding try/catch keeps the webhook
+ *  alive so the SMS fan-out still fires. */
 export async function emailSpeaker(inv: ResolvedInvitation, body: string): Promise<void> {
   if (!inv.speakerEmail) return;
   const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();

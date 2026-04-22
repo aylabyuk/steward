@@ -5,7 +5,6 @@ import { addChatParticipant, createConversation } from "./twilio/conversations.j
 import {
   assertActiveMember,
   cleanupPriorConversations,
-  tryAddSms,
   tryEmail,
   trySms,
 } from "./sendSpeakerInvitation.helpers.js";
@@ -45,7 +44,6 @@ export const sendSpeakerInvitation = onCall(
       attributes: { wardId: input.wardId, speakerId: input.speakerId },
     });
     await addChatParticipant(conversationSid, `uid:${auth.uid}`);
-    if (wantsSms) await tryAddSms(conversationSid, input.speakerPhone!);
 
     const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
       speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
@@ -65,6 +63,12 @@ export const sendSpeakerInvitation = onCall(
       createdAt: FieldValue.serverTimestamp(),
     });
 
+    // Speaker's Twilio identity = `speaker:{invitationToken}`. The same
+    // identity is minted into their JWT by issueTwilioToken, so the
+    // token the URL carries is all they need to join this conversation
+    // as a chat participant and see/post messages live.
+    await addChatParticipant(conversationSid, `speaker:${docRef.id}`);
+
     const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
     const emailArgs = {
       speakerName: input.speakerName,
@@ -76,7 +80,7 @@ export const sendSpeakerInvitation = onCall(
 
     const deliveryRecord: DeliveryEntry[] = [];
     if (wantsEmail) deliveryRecord.push(await tryEmail(input, emailArgs));
-    if (wantsSms) deliveryRecord.push(await trySms(conversationSid, `uid:${auth.uid}`, emailArgs));
+    if (wantsSms) deliveryRecord.push(await trySms(input.speakerPhone!, emailArgs));
     await docRef.update({ deliveryRecord });
 
     return { token: docRef.id, conversationSid, deliveryRecord };
