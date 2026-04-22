@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
-import { LetterCanvas } from "@/features/templates/LetterCanvas";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
+import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation";
 
 /**
@@ -9,14 +9,19 @@ import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation"
  * full letter-sheet proportions. No auth — the unguessable token in
  * the URL IS the auth. Rendered content is the frozen snapshot
  * created at `sendSpeakerInvitation` time.
+ *
+ * The letter is wrapped in `<ScaledLetterPreview>` so the viewer can
+ * wheel/pinch to zoom, drag to pan, and double-click to reset. Keeps
+ * the paper at true 8.5×11 proportions on mobile too, where the full
+ * sheet wouldn't otherwise fit the viewport.
  */
 export function SpeakerInvitationLandingPage() {
   const { wardId, token } = useParams<{ wardId: string; token: string }>();
   const state = useSpeakerInvitation(wardId, token);
 
   return (
-    <main className="min-h-dvh bg-[#e6ddc7] py-10 overflow-x-auto">
-      {state.kind === "ready" && (
+    <main className="h-dvh bg-[#e6ddc7] overflow-hidden">
+      {state.kind === "ready" ? (
         <>
           <PrintToolbar />
           <PrintOnlyLetter
@@ -26,14 +31,24 @@ export function SpeakerInvitationLandingPage() {
             bodyMarkdown={state.invitation.bodyMarkdown}
             footerMarkdown={state.invitation.footerMarkdown}
           />
+          <ScaledLetterPreview
+            naked
+            height="100dvh"
+            wardName={state.invitation.wardName}
+            assignedDate={state.invitation.assignedDate}
+            today={state.invitation.sentOn}
+            bodyMarkdown={state.invitation.bodyMarkdown}
+            footerMarkdown={state.invitation.footerMarkdown}
+          />
         </>
+      ) : (
+        <NonReadyState state={state} />
       )}
-      <Body state={state} />
     </main>
   );
 }
 
-function Body({ state }: { state: ReturnType<typeof useSpeakerInvitation> }) {
+function NonReadyState({ state }: { state: ReturnType<typeof useSpeakerInvitation> }) {
   if (state.kind === "loading") {
     return (
       <div className="mt-20 mx-auto max-w-md text-center font-serif italic text-[14px] text-walnut-2">
@@ -50,18 +65,7 @@ function Body({ state }: { state: ReturnType<typeof useSpeakerInvitation> }) {
       </div>
     );
   }
-  const { invitation } = state;
-  return (
-    <div className="w-fit mx-auto">
-      <LetterCanvas
-        wardName={invitation.wardName}
-        assignedDate={invitation.assignedDate}
-        today={invitation.sentOn}
-        bodyMarkdown={invitation.bodyMarkdown}
-        footerMarkdown={invitation.footerMarkdown}
-      />
-    </div>
-  );
+  return null;
 }
 
 function PrintToolbar() {
