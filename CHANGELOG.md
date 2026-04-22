@@ -7,6 +7,80 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-22
+
+Editable Markdown templates across both outbound surfaces. Bishops and
+clerks can now author the speaker invitation letter and the ward-member
+invitation message in their ward's voice — defaults ship polished, but
+every word is editable from Settings, and individual sends can override
+the ward default when a specific speaker or invitee needs different
+copy. Closes #8 and #9.
+
+### Added
+
+- **Speaker invitation letter template** (#8). New ward-level template
+  at `wards/{wardId}/templates/speakerLetter` (two Markdown blocks —
+  body + scripture footer) with a live preview at
+  `/settings/templates/speakers`. Variables: `{{speakerName}}`,
+  `{{topic}}`, `{{date}}`, `{{wardName}}`, `{{inviterName}}`,
+  `{{today}}`.
+- **Public speaker invitation landing page** at
+  `/invite/speaker/:wardId/:token`. Fully public — the unguessable
+  Firestore auto-ID in the URL is the authorization. Shows the full
+  letter on a `bg-parchment` sheet with "Print / Save as PDF" toolbar
+  that hides under `@media print`; `@page { size: letter; margin: 0 }`
+  for a clean one-page portrait PDF.
+- **Send email → landing URL flow**: "Send email" on a persisted
+  planned speaker now snapshots the current template + ward + speaker
+  into `wards/{wardId}/speakerInvitations/{autoId}` and opens a
+  `mailto:` with the landing URL in the body. Frozen snapshot pattern —
+  the letter is immutable once sent, so recipients keep the exact text.
+- **Per-speaker letter override** (Slice 4 of #8). `Edit letter` on a
+  SpeakerEditCard opens a side-by-side MDXEditor + LetterCanvas preview
+  dialog. Override lives on the speaker doc; precedence on send is
+  override → ward template → seed default.
+- **Ward-member invitation message template** (#9). Second template
+  at `wards/{wardId}/templates/wardInvite` (single Markdown block) with
+  editor + preview at `/settings/templates/ward-invites`. Variables:
+  `{{inviteeName}}`, `{{wardName}}`, `{{inviterName}}`, `{{calling}}`
+  (pretty-printed via `CALLING_LABELS`), `{{role}}`.
+- **Per-invite message override** in `InviteMemberDialog` (collapsible
+  "Customize message" panel). On send, the rendered greeting is
+  snapshotted onto the invite doc as `messageBody` so the accept page
+  can display it without needing template-doc access (the invitee
+  isn't a member yet).
+- **Rendered greeting on the accept-invite page**: above the
+  existing "Join X Ward?" CTA, rendered as Markdown from the
+  snapshotted `messageBody`.
+- **Shared template primitives** reused by both features:
+  `interpolate()` (whitespace-tolerant `{{var}}` replacement, 7 unit
+  tests), `LetterCanvas` (ornament / eyebrow / title / scripture
+  footer chrome), `SpeakerLetterEditor` (thin MDXEditor wrapper with
+  headings / lists / quotes / inline formatting).
+
+### Changed
+
+- `openInviteMailto` now takes a pre-rendered `messageBody` and appends
+  the accept URL + "— Sent from Steward" footer automatically, so the
+  template can focus on the personal greeting.
+- Firestore rule `match /templates/{templateId}` covers every ward
+  template under one permissive rule (active members read + write) —
+  both the speaker letter and ward invite share the same access model.
+
+### Security
+
+- New public-read rule for `/speakerInvitations/{token}` (anonymous
+  read, active-member write). Safe by construction: Firestore auto-IDs
+  provide ~120 bits of entropy, and each invitation is a self-contained
+  frozen snapshot (no ward doc or template reads needed).
+
+### Infrastructure
+
+- MDXEditor (`@mdxeditor/editor`) + `react-markdown` added as
+  dependencies for template authoring and preview rendering.
+- 197 unit tests (+7 from `interpolate`) and 85 Firestore rules tests
+  (+15 across `templates.test.ts` and the new `speakerInvitations.test.ts`).
+
 ## [0.2.0] — 2026-04-21
 
 First feature release on the new branch-PR workflow.
@@ -173,7 +247,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/aylabyuk/steward/releases/tag/v0.3.0
 [0.2.0]: https://github.com/aylabyuk/steward/releases/tag/v0.2.0
 [0.1.2]: https://github.com/aylabyuk/steward/releases/tag/v0.1.2
 [0.1.1]: https://github.com/aylabyuk/steward/releases/tag/v0.1.1
