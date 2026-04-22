@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { useFitScale } from "@/hooks/useFitScale";
 import { LetterCanvas, LETTER_CANVAS_HEIGHT_PX, LETTER_CANVAS_WIDTH_PX } from "./LetterCanvas";
+import { LetterPreviewZoomControls } from "./LetterPreviewZoomControls";
 
 interface Props {
   wardName: string;
@@ -18,8 +19,8 @@ interface Props {
  *  pinch zoom + touch pan (mobile). Initial scale is computed to
  *  fit the paper inside the container at its natural 8.5×11
  *  proportions; user can zoom in to inspect details and pan around.
- *  Text selection inside the paper is disabled so click-and-drag
- *  reads as panning, not text selection. */
+ *  Bottom-left toolbar shows current magnification and lets the
+ *  user step zoom or reset. */
 export function ScaledLetterPreview({
   wardName,
   assignedDate,
@@ -30,9 +31,10 @@ export function ScaledLetterPreview({
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const fitScale = useFitScale(ref, LETTER_CANVAS_WIDTH_PX, LETTER_CANVAS_HEIGHT_PX);
+  const [zoomPercent, setZoomPercent] = useState(() => Math.round(fitScale * 100));
   return (
     <div className="rounded-md bg-parchment-2/40 p-4 sm:p-6" style={{ height }}>
-      <div ref={ref} className="h-full w-full overflow-hidden select-none">
+      <div ref={ref} className="relative h-full w-full overflow-hidden select-none">
         {/* `key` reseeds initialScale when the container size changes
             so a window resize re-fits to the new column. */}
         <TransformWrapper
@@ -46,19 +48,31 @@ export function ScaledLetterPreview({
           wheel={{ step: 0.1 }}
           pinch={{ step: 5 }}
           panning={{ velocityDisabled: true }}
+          onTransformed={(_, state) => setZoomPercent(Math.round(state.scale * 100))}
+          onInit={(api) => setZoomPercent(Math.round(api.state.scale * 100))}
         >
-          <TransformComponent
-            wrapperStyle={{ width: "100%", height: "100%", cursor: "grab" }}
-            contentStyle={{ width: LETTER_CANVAS_WIDTH_PX, height: "auto" }}
-          >
-            <LetterCanvas
-              wardName={wardName}
-              assignedDate={assignedDate}
-              today={today}
-              bodyMarkdown={bodyMarkdown}
-              footerMarkdown={footerMarkdown}
-            />
-          </TransformComponent>
+          {({ zoomIn, zoomOut, resetTransform }) => (
+            <>
+              <TransformComponent
+                wrapperStyle={{ width: "100%", height: "100%", cursor: "grab" }}
+                contentStyle={{ width: LETTER_CANVAS_WIDTH_PX, height: "auto" }}
+              >
+                <LetterCanvas
+                  wardName={wardName}
+                  assignedDate={assignedDate}
+                  today={today}
+                  bodyMarkdown={bodyMarkdown}
+                  footerMarkdown={footerMarkdown}
+                />
+              </TransformComponent>
+              <LetterPreviewZoomControls
+                zoomPercent={zoomPercent}
+                onZoomIn={() => zoomIn()}
+                onZoomOut={() => zoomOut()}
+                onReset={() => resetTransform()}
+              />
+            </>
+          )}
         </TransformWrapper>
       </div>
     </div>
