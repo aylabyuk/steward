@@ -38,10 +38,6 @@ export function SpeakerLetterTemplatePage() {
   const [seeded, setSeeded] = useState(false);
   const [resetKey, setResetKey] = useState(0);
 
-  // Hydrate editor state from Firestore once data lands. The editor
-  // is gated on `seeded` so MDXEditor mounts with the hydrated values
-  // (its `markdown` prop is initial-only; a post-mount change is
-  // ignored by the editor even though React state updates correctly).
   useEffect(() => {
     if (loading || seeded) return;
     if (template) {
@@ -83,75 +79,83 @@ export function SpeakerLetterTemplatePage() {
   }
 
   return (
-    <main className="pb-16">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/settings" className="hover:text-walnut">
-          ← Settings
-        </Link>
-      </nav>
-      <header className="mb-6 flex flex-col gap-1">
-        <h1 className="font-display text-[24px] font-semibold text-walnut">
+    <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
+      <header className="sticky top-0 z-20 shrink-0 flex flex-col gap-1 border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
+        <nav className="text-sm">
+          <Link
+            to="/settings"
+            className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3 hover:text-bordeaux"
+          >
+            ← Settings
+          </Link>
+        </nav>
+        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
+          Ward template
+        </div>
+        <h1 className="font-display text-[20px] sm:text-[22px] font-semibold text-walnut leading-tight">
           Speaker invitation letter
         </h1>
-        <p className="font-serif text-[14px] text-walnut-2">
-          The ward default. Edit the body and footer; the letterhead, date, assigned-Sunday callout,
-          and signature are fixed.
+        <p className="font-serif italic text-[12.5px] text-walnut-3">
+          The ward default — edit the body and footer; the letterhead, date, assigned-Sunday
+          callout, and signature are fixed.
         </p>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
-        <div
-          key={resetKey}
-          className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-9rem)] lg:overflow-y-auto lg:pr-2"
-        >
-          <MobileLetterPreviewButton
-            wardName={wardName}
-            assignedDate={PREVIEW_VARS.date}
-            today={PREVIEW_VARS.today}
-            bodyMarkdown={renderedBody}
-            footerMarkdown={renderedFooter}
-          />
-          <SpeakerLetterGuide />
-          {seeded ? (
-            <>
-              <EditorSection
-                label="Letter body"
-                initialMarkdown={body}
-                onChange={setBody}
-                disabled={!canEdit}
-              />
-              <EditorSection
-                label="Footer (scripture)"
-                initialMarkdown={footer}
-                onChange={setFooter}
-                disabled={!canEdit}
-              />
-            </>
-          ) : (
-            <p className="font-serif italic text-[14px] text-walnut-3">Loading template…</p>
-          )}
-          {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
-          <TemplateSaveActions
-            canEdit={canEdit}
-            busy={saving || !seeded}
-            saving={saving}
-            onSave={() => void handleSave()}
-            onReset={resetToDefaults}
-          />
-        </div>
-        <aside className="hidden lg:flex flex-col gap-2 min-w-0 lg:sticky lg:top-24 lg:self-start">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            Preview — 8.5 × 11 in · sample data
+      <div className="flex-1 min-h-0 lg:overflow-hidden px-4 sm:px-8 pt-5 pb-4">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
+          <div
+            key={resetKey}
+            className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-12rem)] lg:overflow-y-auto lg:pr-2"
+          >
+            <MobileLetterPreviewButton
+              wardName={wardName}
+              assignedDate={PREVIEW_VARS.date}
+              today={PREVIEW_VARS.today}
+              bodyMarkdown={renderedBody}
+              footerMarkdown={renderedFooter}
+            />
+            <SpeakerLetterGuide />
+            {seeded ? (
+              <>
+                <EditorSection
+                  label="Letter body"
+                  initialMarkdown={body}
+                  onChange={setBody}
+                  disabled={!canEdit}
+                />
+                <EditorSection
+                  label="Footer (scripture)"
+                  initialMarkdown={footer}
+                  onChange={setFooter}
+                  disabled={!canEdit}
+                />
+              </>
+            ) : (
+              <p className="font-serif italic text-[14px] text-walnut-3">Loading template…</p>
+            )}
+            {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
+            <TemplateSaveActions
+              canEdit={canEdit}
+              busy={saving || !seeded}
+              saving={saving}
+              onSave={() => void handleSave()}
+              onReset={resetToDefaults}
+            />
           </div>
-          <ScaledLetterPreview
-            wardName={wardName}
-            assignedDate={PREVIEW_VARS.date}
-            today={PREVIEW_VARS.today}
-            bodyMarkdown={renderedBody}
-            footerMarkdown={renderedFooter}
-            height="calc(100dvh - 9rem)"
-          />
-        </aside>
+          <aside className="hidden lg:flex flex-col gap-2 min-w-0">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
+              Preview — 8.5 × 11 in · sample data
+            </div>
+            <ScaledLetterPreview
+              wardName={wardName}
+              assignedDate={PREVIEW_VARS.date}
+              today={PREVIEW_VARS.today}
+              bodyMarkdown={renderedBody}
+              footerMarkdown={renderedFooter}
+              height="calc(100dvh - 12rem)"
+            />
+          </aside>
+        </div>
       </div>
     </main>
   );
