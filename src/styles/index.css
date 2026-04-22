@@ -227,3 +227,50 @@
     opacity: 1;
   }
 }
+
+/* --------------------------------------------------------------------
+   Speaker-letter print rules. A `<PrintOnlyLetter>` portal mounts a
+   copy of the letter at `document.body` level; on screen it stays
+   `display: none`, in print it's the only thing that renders. Keeps
+   the print layout independent of the page chrome (editor columns,
+   sticky header, mobile FAB) so the browser can't mistakenly
+   reserve vertical space for hidden siblings and spill into a
+   second blank page.
+   -------------------------------------------------------------------- */
+
+[data-print-only-letter] {
+  display: none;
+}
+
+@page {
+  size: letter;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    height: auto !important;
+  }
+
+  /* Hide every top-level body child except the portal. */
+  body > *:not([data-print-only-letter]) {
+    display: none !important;
+  }
+
+  [data-print-only-letter] {
+    display: block !important;
+    width: 8.5in !important;
+  }
+
+  /* The letter itself: drop the screen shadow, pin width. Height
+     stays natural so long letters can legitimately flow to page 2. */
+  [data-print-only-letter] > * {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 8.5in !important;
+  }
+}

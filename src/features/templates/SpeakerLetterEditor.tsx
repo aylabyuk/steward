@@ -77,8 +77,12 @@ export function SpeakerLetterEditor({ initialMarkdown, onChange, ariaLabel }: Pr
             ),
           }),
         ]}
-        className="min-h-[220px]"
-        contentEditableClassName="prose prose-sm max-w-none px-4 py-3 font-serif text-walnut text-[15px] leading-relaxed focus:outline-none"
+        // `className` here is forwarded to MDXEditor's popup container
+        // (a portal sibling), not the editor root — applying size classes
+        // there creates a phantom tall element in the DOM that pushes the
+        // page scrollbar. Size the content via `contentEditableClassName`
+        // instead, which lands on the actual editable area.
+        contentEditableClassName="prose prose-sm max-w-none min-h-[220px] px-4 py-3 font-serif text-walnut text-[15px] leading-relaxed focus:outline-none"
       />
     </div>
   );

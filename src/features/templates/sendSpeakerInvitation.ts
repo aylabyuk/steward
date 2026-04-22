@@ -1,16 +1,7 @@
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import {
-  speakerLetterTemplateSchema,
-  speakerSchema,
-  type SpeakerInvitation,
-  wardSchema,
-} from "@/lib/types";
+import { type SpeakerInvitation, wardSchema } from "@/lib/types";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
-import {
-  DEFAULT_SPEAKER_LETTER_BODY,
-  DEFAULT_SPEAKER_LETTER_FOOTER,
-} from "./speakerLetterDefaults";
 import { interpolate } from "./interpolate";
 import { formatAssignedDate, formatToday } from "./letterDates";
 
@@ -21,10 +12,16 @@ export interface SendSpeakerInvitationInput {
   speakerName: string;
   speakerTopic?: string | undefined;
   inviterName: string;
+  /** Letter body Markdown (may still contain `{{tokens}}` like
+   *  `{{today}}` that we resolve here at send time). Caller resolves
+   *  override > ward template > default before passing in. */
+  bodyMarkdown: string;
+  /** Letter footer Markdown (may still contain `{{tokens}}`). */
+  footerMarkdown: string;
 }
 
 /**
- * Snapshot the current ward template + speaker details into a new
+ * Snapshot the letter into a new
  * `wards/{wardId}/speakerInvitations/{autoId}` doc and return the
  * token (= doc ID). The caller uses the token to build the public
  * landing URL.
@@ -38,24 +35,8 @@ export async function sendSpeakerInvitation(
 ): Promise<{ token: string }> {
   reportSaving();
   try {
-    const [templateSnap, wardSnap, speakerSnap] = await Promise.all([
-      getDoc(doc(db, "wards", input.wardId, "templates", "speakerLetter")),
-      getDoc(doc(db, "wards", input.wardId)),
-      getDoc(
-        doc(db, "wards", input.wardId, "meetings", input.meetingDate, "speakers", input.speakerId),
-      ),
-    ]);
-    const parsedTemplate = templateSnap.exists()
-      ? speakerLetterTemplateSchema.safeParse(templateSnap.data())
-      : null;
-    const template = parsedTemplate?.success ? parsedTemplate.data : null;
+    const wardSnap = await getDoc(doc(db, "wards", input.wardId));
     const wardName = wardSnap.exists() ? wardSchema.parse(wardSnap.data()).name : "";
-    const parsedSpeaker = speakerSnap.exists() ? speakerSchema.safeParse(speakerSnap.data()) : null;
-    // Per-speaker override wins over the ward default, if present.
-    const source =
-      parsedSpeaker?.success && parsedSpeaker.data.letterOverride
-        ? parsedSpeaker.data.letterOverride
-        : template;
 
     const vars = {
       speakerName: input.speakerName,
@@ -69,11 +50,8 @@ export async function sendSpeakerInvitation(
       inviterName: input.inviterName,
     };
 
-    const bodyMarkdown = interpolate(source?.bodyMarkdown ?? DEFAULT_SPEAKER_LETTER_BODY, vars);
-    const footerMarkdown = interpolate(
-      source?.footerMarkdown ?? DEFAULT_SPEAKER_LETTER_FOOTER,
-      vars,
-    );
+    const bodyMarkdown = interpolate(input.bodyMarkdown, vars);
+    const footerMarkdown = interpolate(input.footerMarkdown, vars);
 
     const payload: Omit<SpeakerInvitation, "createdAt"> = {
       speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },

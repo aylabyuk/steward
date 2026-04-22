@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
-import { LetterCanvas } from "@/features/templates/LetterCanvas";
-import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
+import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
+import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
+import { SpeakerLetterTemplateEditorColumn } from "./SpeakerLetterTemplateEditorColumn";
+import { SpeakerLetterTemplateHeader } from "./SpeakerLetterTemplateHeader";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
   DEFAULT_SPEAKER_LETTER_FOOTER,
@@ -9,6 +10,7 @@ import {
 import { interpolate } from "@/features/templates/interpolate";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { writeSpeakerLetterTemplate } from "@/features/templates/writeSpeakerLetterTemplate";
+import { WardTemplateToolbar } from "@/features/templates/WardTemplateToolbar";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -33,10 +35,8 @@ export function SpeakerLetterTemplatePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seeded, setSeeded] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
 
-  // Hydrate editor state from Firestore once data lands. The `seeded`
-  // flag prevents the initial defaults from being clobbered by the
-  // first `loading: true → false` tick.
   useEffect(() => {
     if (loading || seeded) return;
     if (template) {
@@ -74,74 +74,71 @@ export function SpeakerLetterTemplatePage() {
   function resetToDefaults() {
     setBody(DEFAULT_SPEAKER_LETTER_BODY);
     setFooter(DEFAULT_SPEAKER_LETTER_FOOTER);
+    setResetKey((k) => k + 1);
   }
 
-  return (
-    <main className="pb-16">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/settings" className="hover:text-walnut">
-          ← Settings
-        </Link>
-      </nav>
-      <header className="mb-6 flex flex-col gap-1">
-        <h1 className="font-display text-[24px] font-semibold text-walnut">
-          Speaker invitation letter
-        </h1>
-        <p className="font-serif text-[14px] text-walnut-2">
-          The ward default. Edit the body and footer; the letterhead, date, assigned-Sunday callout,
-          and signature are fixed. Variables: <code>{"{{speakerName}}"}</code>,{" "}
-          <code>{"{{topic}}"}</code>, <code>{"{{date}}"}</code>, <code>{"{{wardName}}"}</code>,{" "}
-          <code>{"{{inviterName}}"}</code>, <code>{"{{today}}"}</code>.
-        </p>
-      </header>
+  const toolbarProps = {
+    canEdit,
+    busy: saving || !seeded,
+    saving,
+    onSave: () => void handleSave(),
+    onReset: resetToDefaults,
+  };
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-4">
-          <EditorSection
-            label="Letter body"
-            initialMarkdown={body}
-            onChange={setBody}
-            disabled={!canEdit}
-          />
-          <EditorSection
-            label="Footer (scripture)"
-            initialMarkdown={footer}
-            onChange={setFooter}
-            disabled={!canEdit}
-          />
-          {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={!canEdit || saving}
-              className="rounded-md border border-bordeaux bg-bordeaux px-3.5 py-2 font-sans text-[13px] font-semibold text-chalk hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {saving ? "Saving…" : "Save template"}
-            </button>
-            <button
-              type="button"
-              onClick={resetToDefaults}
-              disabled={!canEdit || saving}
-              className="rounded-md border border-border-strong bg-chalk px-3.5 py-2 font-sans text-[13px] font-semibold text-walnut hover:bg-parchment-2 disabled:opacity-60"
-            >
-              Reset to defaults
-            </button>
-          </div>
-        </div>
-        <aside className="flex flex-col gap-2">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            Preview — sample data
-          </div>
-          <LetterCanvas
-            compact
+  return (
+    <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
+      <PrintOnlyLetter
+        wardName={wardName}
+        assignedDate={PREVIEW_VARS.date}
+        today={PREVIEW_VARS.today}
+        bodyMarkdown={renderedBody}
+        footerMarkdown={renderedFooter}
+      />
+      <SpeakerLetterTemplateHeader
+        canEdit={canEdit}
+        busy={saving || !seeded}
+        saving={saving}
+        onSave={() => void handleSave()}
+        onReset={resetToDefaults}
+        onClose={() => window.close()}
+      />
+
+      <div className="flex-1 min-h-0 lg:overflow-hidden px-4 sm:px-8 pt-5 pb-4">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
+          <SpeakerLetterTemplateEditorColumn
+            resetKey={resetKey}
+            body={body}
+            footer={footer}
+            setBody={setBody}
+            setFooter={setFooter}
+            canEdit={canEdit}
+            seeded={seeded}
+            error={error}
             wardName={wardName}
-            assignedDate={PREVIEW_VARS.date}
-            today={PREVIEW_VARS.today}
-            bodyMarkdown={renderedBody}
-            footerMarkdown={renderedFooter}
+            sampleDate={PREVIEW_VARS.date}
+            sampleToday={PREVIEW_VARS.today}
+            renderedBody={renderedBody}
+            renderedFooter={renderedFooter}
           />
-        </aside>
+          <aside className="hidden lg:flex flex-col gap-2 min-w-0">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
+              Preview — 8.5 × 11 in · sample data
+            </div>
+            <div className="relative">
+              <ScaledLetterPreview
+                wardName={wardName}
+                assignedDate={PREVIEW_VARS.date}
+                today={PREVIEW_VARS.today}
+                bodyMarkdown={renderedBody}
+                footerMarkdown={renderedFooter}
+                height="calc(100dvh - 10rem)"
+              />
+              <div className="absolute top-3 right-3 z-10">
+                <WardTemplateToolbar {...toolbarProps} />
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
     </main>
   );
