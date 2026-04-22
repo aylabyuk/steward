@@ -131,7 +131,7 @@ export function SpeakerLetterTemplatePage() {
             )}
             {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
           </div>
-          <aside className="hidden lg:flex flex-col gap-2 min-w-0">
+          <aside data-print-target-host className="hidden lg:flex flex-col gap-2 min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
               Preview — 8.5 × 11 in · sample data
             </div>

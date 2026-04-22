@@ -8,7 +8,6 @@ import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
-import { PrintSpeakerLetterPage } from "./routes/print-speaker-letter";
 import { NotificationSettingsPage } from "./routes/notification-settings";
 import { SettingsIndex } from "./routes/settings";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
@@ -47,10 +46,6 @@ export const router = createBrowserRouter([
       {
         path: "/week/:date/speaker/:speakerId/prepare",
         element: <PrepareInvitationPage />,
-      },
-      {
-        path: "/week/:date/speaker/:speakerId/print-letter",
-        element: <PrintSpeakerLetterPage />,
       },
     ],
   },

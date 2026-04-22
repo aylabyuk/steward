@@ -46,7 +46,7 @@ export function PrepareInvitationLetterTab({
         <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
         <EditorSection label="Footer (scripture)" initialMarkdown={footer} onChange={setFooter} />
       </div>
-      <aside className="hidden lg:flex flex-col gap-2 min-w-0">
+      <aside data-print-target-host className="hidden lg:flex flex-col gap-2 min-w-0">
         <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
           Preview — 8.5 × 11 in
         </div>

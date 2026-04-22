@@ -11,7 +11,6 @@ import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTem
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
 import { usePrepareInvitationActions } from "@/features/templates/usePrepareInvitationActions";
-import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { isValidEmail } from "@/lib/email";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -97,18 +96,6 @@ export function PrepareInvitationPage() {
     );
   }
 
-  async function handlePrint() {
-    if (!date || !speakerId) return;
-    form.setError(null);
-    try {
-      await form.persistOverrides();
-      const url = `/week/${encodeURIComponent(date)}/speaker/${encodeURIComponent(speakerId)}/print-letter`;
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      form.setError(friendlyWriteError(e));
-    }
-  }
-
   const email = (speaker.data.email ?? "").trim();
   const hasEmail = email.length > 0;
   const emailValid = isValidEmail(email);
@@ -127,7 +114,9 @@ export function PrepareInvitationPage() {
     speakerName: speaker.data.name,
     onRevert: () => void form.clearLetterOverride(),
     onMarkInvited: actions.markInvited,
-    onPrint: () => void handlePrint(),
+    // Global `@media print` rules pin the preview's LetterCanvas to
+    // the sheet at true 8.5×11 — WYSIWYG, no new route, no re-read.
+    onPrint: () => window.print(),
     onSend: actions.send,
   };
 

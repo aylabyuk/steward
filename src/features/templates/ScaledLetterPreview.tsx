@@ -60,13 +60,15 @@ export function ScaledLetterPreview({
                 wrapperStyle={{ width: "100%", height: "100%", cursor: "grab" }}
                 contentStyle={{ width: LETTER_CANVAS_WIDTH_PX, height: "auto" }}
               >
-                <LetterCanvas
-                  wardName={wardName}
-                  assignedDate={assignedDate}
-                  today={today}
-                  bodyMarkdown={bodyMarkdown}
-                  footerMarkdown={footerMarkdown}
-                />
+                <div data-print-target>
+                  <LetterCanvas
+                    wardName={wardName}
+                    assignedDate={assignedDate}
+                    today={today}
+                    bodyMarkdown={bodyMarkdown}
+                    footerMarkdown={footerMarkdown}
+                  />
+                </div>
               </TransformComponent>
               <LetterPreviewZoomControls
                 zoomPercent={zoomPercent}
