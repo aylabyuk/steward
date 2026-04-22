@@ -1,0 +1,48 @@
+import { defineSecret, defineString } from "firebase-functions/params";
+
+/** Twilio REST + Conversations API credentials. */
+export const TWILIO_ACCOUNT_SID = defineSecret("TWILIO_ACCOUNT_SID");
+export const TWILIO_AUTH_TOKEN = defineSecret("TWILIO_AUTH_TOKEN");
+
+/** Dedicated API Key + Secret used to sign chat access tokens
+ *  (JWTs). Separate from the Account token so rotating them doesn't
+ *  invalidate server-side REST calls. */
+export const TWILIO_API_KEY_SID = defineSecret("TWILIO_API_KEY_SID");
+export const TWILIO_API_KEY_SECRET = defineSecret("TWILIO_API_KEY_SECRET");
+
+/** Conversations Service SID — groups all ward conversations into a
+ *  single service and scopes JWT grants. */
+export const TWILIO_CONVERSATIONS_SERVICE_SID = defineSecret("TWILIO_CONVERSATIONS_SERVICE_SID");
+
+/** Canadian long-code number the service uses for outbound SMS. */
+export const TWILIO_FROM_NUMBER = defineSecret("TWILIO_FROM_NUMBER");
+
+/** SendGrid API key (transactional email). SendGrid is a Twilio
+ *  company, so this ends up on the same invoice. */
+export const SENDGRID_API_KEY = defineSecret("SENDGRID_API_KEY");
+
+/** Verified sender address used for the From header on
+ *  invitation + notification emails. The display-name portion is
+ *  constructed per-message from the bishop's name. */
+export const INVITATION_FROM_EMAIL = defineSecret("INVITATION_FROM_EMAIL");
+
+/** Public origin of the web app (e.g. https://steward-app.ca) —
+ *  used by Cloud Functions to build invite URLs in outbound
+ *  correspondence. Runtime-configurable, not a secret. */
+export const STEWARD_ORIGIN = defineString("STEWARD_ORIGIN", {
+  default: "https://steward-app.ca",
+});
+
+/** All Twilio-touching secrets bundled for convenient spread onto a
+ *  function's `secrets` array. Functions that need email too spread
+ *  SENDGRID_SECRETS too. */
+export const TWILIO_SECRETS = [
+  TWILIO_ACCOUNT_SID,
+  TWILIO_AUTH_TOKEN,
+  TWILIO_API_KEY_SID,
+  TWILIO_API_KEY_SECRET,
+  TWILIO_CONVERSATIONS_SERVICE_SID,
+  TWILIO_FROM_NUMBER,
+];
+
+export const SENDGRID_SECRETS = [SENDGRID_API_KEY, INVITATION_FROM_EMAIL];
