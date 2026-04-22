@@ -8,12 +8,15 @@ interface Props {
   busy: boolean;
   canSend: boolean;
   canSendReason: string | null;
+  canSms: boolean;
+  canSmsReason: string | null;
   hasOverride: boolean;
   onCancel: () => void;
   onRevert: () => void;
   onMarkInvited: () => void;
   onPrint: () => void;
   onSend: () => void;
+  onSendSms: () => void;
 }
 
 /** Sticky page header for the Prepare Invitation page: title block on
@@ -48,12 +51,15 @@ export function PrepareInvitationHeader(props: Props) {
           busy={props.busy}
           canSend={props.canSend}
           canSendReason={props.canSendReason}
+          canSms={props.canSms}
+          canSmsReason={props.canSmsReason}
           hasOverride={props.hasOverride}
           speakerName={props.speakerName}
           onRevert={props.onRevert}
           onMarkInvited={props.onMarkInvited}
           onPrint={props.onPrint}
           onSend={props.onSend}
+          onSendSms={props.onSendSms}
         />
       </div>
     </header>

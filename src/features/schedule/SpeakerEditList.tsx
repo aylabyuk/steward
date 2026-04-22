@@ -31,6 +31,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
       fromSpeaker(s.id, {
         name: s.data.name,
         email: s.data.email,
+        phone: s.data.phone,
         topic: s.data.topic,
         status: s.data.status,
         role: s.data.role,
@@ -83,6 +84,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
               nonMeetingSundays,
               name,
               email: d.email.trim() || undefined,
+              phone: d.phone.trim() || undefined,
               topic: d.topic.trim() || undefined,
               role: d.role,
             });
@@ -92,6 +94,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
             await updateSpeaker(wardId, date, d.id, {
               name,
               email: d.email.trim(),
+              phone: d.phone.trim(),
               topic: d.topic.trim(),
               role: d.role,
               status: d.status,
