@@ -15,14 +15,15 @@ interface Props {
   onSend: () => void;
 }
 
-type PendingConfirm = "revert" | "markInvited" | null;
+type PendingConfirm = "revert" | "markInvited" | "send" | null;
 
 /** Top-of-page action toolbar for the Prepare Invitation page. Four
  *  icon-only buttons in a connected group — labels travel via `title`
  *  (desktop tooltip) and `aria-label` (screen readers). Destructive /
- *  silent-state-change actions (Revert, Mark invited only) gate on a
- *  confirm modal so an accidental tap doesn't flip status or wipe an
- *  override. Cancel lives on the page chrome, not in this toolbar. */
+ *  silent-state-change / side-effecting actions (Revert, Mark invited
+ *  only, Send email) gate on a confirm modal so an accidental tap
+ *  doesn't flip status, wipe an override, or fire a live mailto.
+ *  Cancel lives on the page chrome, not in this toolbar. */
 export function PrepareInvitationActionBar({
   busy,
   canSend,
@@ -44,6 +45,11 @@ export function PrepareInvitationActionBar({
   function confirmMarkInvited() {
     setPending(null);
     onMarkInvited();
+  }
+
+  function confirmSend() {
+    setPending(null);
+    onSend();
   }
 
   return (
@@ -72,7 +78,7 @@ export function PrepareInvitationActionBar({
         <GroupBtn
           position="last"
           label="Send email"
-          onClick={onSend}
+          onClick={() => setPending("send")}
           disabled={busy || !canSend}
           primary
         >
@@ -104,6 +110,14 @@ export function PrepareInvitationActionBar({
         body={`${speakerName}'s status will be set to "invited" — no email is sent. Use this if you've already reached them another way (phone, in person, separate email).`}
         confirmLabel="Mark invited"
         onConfirm={confirmMarkInvited}
+        onCancel={() => setPending(null)}
+      />
+      <ConfirmDialog
+        open={pending === "send"}
+        title={`Send invitation to ${speakerName}?`}
+        body="This snapshots the letter into a new invitation link, opens your email client with the message pre-filled, and marks the speaker as invited. You'll still review the message in your email client before hitting send there."
+        confirmLabel="Open email"
+        onConfirm={confirmSend}
         onCancel={() => setPending(null)}
       />
     </div>
