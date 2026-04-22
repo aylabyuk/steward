@@ -3,7 +3,6 @@ import { useParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { printInvitationLetter } from "@/features/schedule/printInvitationLetter";
 import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
@@ -12,6 +11,7 @@ import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTem
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
 import { usePrepareInvitationActions } from "@/features/templates/usePrepareInvitationActions";
+import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { isValidEmail } from "@/lib/email";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -97,6 +97,18 @@ export function PrepareInvitationPage() {
     );
   }
 
+  async function handlePrint() {
+    if (!date || !speakerId) return;
+    form.setError(null);
+    try {
+      await form.persistOverrides();
+      const url = `/week/${encodeURIComponent(date)}/speaker/${encodeURIComponent(speakerId)}/print-letter`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      form.setError(friendlyWriteError(e));
+    }
+  }
+
   const email = (speaker.data.email ?? "").trim();
   const hasEmail = email.length > 0;
   const emailValid = isValidEmail(email);
@@ -107,21 +119,25 @@ export function PrepareInvitationPage() {
       ? "Invalid email format."
       : null;
 
+  const toolbarProps = {
+    busy: form.busy,
+    canSend,
+    canSendReason,
+    hasOverride: form.letterHasOverride,
+    speakerName: speaker.data.name,
+    onRevert: () => void form.clearLetterOverride(),
+    onMarkInvited: actions.markInvited,
+    onPrint: () => void handlePrint(),
+    onSend: actions.send,
+  };
+
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
       <PrepareInvitationHeader
-        speakerName={speaker.data.name}
         email={email}
         hasEmail={hasEmail}
-        busy={form.busy}
-        canSend={canSend}
-        canSendReason={canSendReason}
-        hasOverride={form.letterHasOverride}
         onCancel={() => window.close()}
-        onRevert={() => void form.clearLetterOverride()}
-        onMarkInvited={actions.markInvited}
-        onPrint={() => void printInvitationLetter(speaker.data, date)}
-        onSend={actions.send}
+        {...toolbarProps}
       />
       <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
         {form.hydrated ? (
@@ -132,19 +148,7 @@ export function PrepareInvitationPage() {
             setBody={form.setLetterBody}
             setFooter={form.setLetterFooter}
             vars={vars}
-            previewToolbar={
-              <PrepareInvitationActionBar
-                busy={form.busy}
-                canSend={canSend}
-                canSendReason={canSendReason}
-                hasOverride={form.letterHasOverride}
-                speakerName={speaker.data.name}
-                onRevert={() => void form.clearLetterOverride()}
-                onMarkInvited={actions.markInvited}
-                onPrint={() => void printInvitationLetter(speaker.data, date)}
-                onSend={actions.send}
-              />
-            }
+            previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
           />
         ) : (
           <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
