@@ -43,12 +43,12 @@ describe("SpeakerInvitationLauncher", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders invited speakers under 'Already handled' with no button", () => {
+  it("renders invited speakers with a status badge and no button", () => {
     speakersState.data = [
       { id: "s1", data: makeSpeaker({ name: "Brother Lee", status: "invited" }) },
     ];
     render(<SpeakerInvitationLauncher date="2026-04-26" />);
-    expect(screen.getByText("Already handled")).toBeInTheDocument();
+    expect(screen.getByText("Brother Lee")).toBeInTheDocument();
     expect(screen.getByText("Invited ✓")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Open prepare invitation/i }),

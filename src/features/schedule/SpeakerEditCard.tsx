@@ -3,13 +3,11 @@ import { cn } from "@/lib/cn";
 import { isValidEmail } from "@/lib/email";
 import { SpeakerCardHeader } from "./SpeakerCardHeader";
 import type { Draft } from "./speakerDraft";
-import { InviteAction } from "./SpeakerInviteAction";
 import { SpeakerStatusPills } from "./SpeakerStatusPills";
 
 interface Props {
   draft: Draft;
   index: number;
-  date: string;
   onChange: (partial: Partial<Draft>) => void;
   onRemove: () => void;
 }
@@ -19,14 +17,12 @@ const INPUT_CLS =
 
 const LABEL_CLS = "font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep font-medium";
 
-export function SpeakerEditCard({ draft, index, date, onChange, onRemove }: Props) {
+export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
   return (
     <div className="bg-chalk border border-border rounded-lg p-3">
       <SpeakerCardHeader index={index} onRemove={onRemove} />
 
       <SpeakerStatusPills status={draft.status} onChange={(status) => onChange({ status })} />
-
-      {draft.status === "planned" && <InviteAction draft={draft} date={date} />}
 
       <div className="flex flex-col gap-2.5">
         <label className="flex flex-col gap-1">
