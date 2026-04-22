@@ -5,6 +5,10 @@ import { cn } from "@/lib/cn";
  *  8.5 in × 96 dpi = 816 px. Exported so preview wrappers can compute
  *  a fit-to-container scale factor (see `useFitScale`). */
 export const LETTER_CANVAS_WIDTH_PX = 816;
+/** Natural min-height (11 in × 96 dpi). Actual height grows if the
+ *  letter body is long; scaling to this value keeps the typical
+ *  one-page letter in view with no preview scrollbar. */
+export const LETTER_CANVAS_HEIGHT_PX = 1056;
 
 interface Props {
   wardName: string;

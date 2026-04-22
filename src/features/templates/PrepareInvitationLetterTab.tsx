@@ -57,7 +57,7 @@ export function PrepareInvitationLetterTab({
           today={vars.today}
           bodyMarkdown={renderedBody}
           footerMarkdown={renderedFooter}
-          maxH="calc(100dvh - 11rem)"
+          height="calc(100dvh - 11rem)"
         />
       </aside>
     </div>
