@@ -13,6 +13,10 @@ interface Props {
   /** CSS `height` for the outer frame. The pan/zoom wrapper fills
    *  this and clips overflow internally — no scrollbar ever shows. */
   height?: string;
+  /** When true, drop the default rounded border + parchment bg so the
+   *  preview can sit naked inside an already-framed parent (e.g. the
+   *  public landing page whose main provides its own background). */
+  naked?: boolean;
 }
 
 /** Letter preview with mouse-wheel zoom + drag pan (desktop) and
@@ -28,13 +32,18 @@ export function ScaledLetterPreview({
   bodyMarkdown,
   footerMarkdown,
   height = "calc(100dvh - 10rem)",
+  naked,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const fitScale = useFitScale(ref, LETTER_CANVAS_WIDTH_PX, LETTER_CANVAS_HEIGHT_PX);
   const [zoomPercent, setZoomPercent] = useState(() => Math.round(fitScale * 100));
   return (
     <div
-      className="rounded-md border border-border bg-parchment-2/40 overflow-hidden"
+      className={
+        naked
+          ? "overflow-hidden"
+          : "rounded-md border border-border bg-parchment-2/40 overflow-hidden"
+      }
       style={{ height }}
     >
       <div ref={ref} className="relative h-full w-full overflow-hidden select-none">
