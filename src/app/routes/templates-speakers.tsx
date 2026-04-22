@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
+import { MobileLetterPreviewButton } from "@/features/templates/MobileLetterPreviewButton";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { SpeakerLetterGuide } from "@/features/templates/SpeakerLetterGuide";
+import { TemplateSaveActions } from "@/features/templates/TemplateSaveActions";
 import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
@@ -102,6 +104,13 @@ export function SpeakerLetterTemplatePage() {
           key={resetKey}
           className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-9rem)] lg:overflow-y-auto lg:pr-2"
         >
+          <MobileLetterPreviewButton
+            wardName={wardName}
+            assignedDate={PREVIEW_VARS.date}
+            today={PREVIEW_VARS.today}
+            bodyMarkdown={renderedBody}
+            footerMarkdown={renderedFooter}
+          />
           <SpeakerLetterGuide />
           {seeded ? (
             <>
@@ -122,26 +131,15 @@ export function SpeakerLetterTemplatePage() {
             <p className="font-serif italic text-[14px] text-walnut-3">Loading template…</p>
           )}
           {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={!canEdit || saving || !seeded}
-              className="rounded-md border border-bordeaux bg-bordeaux px-3.5 py-2 font-sans text-[13px] font-semibold text-chalk hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {saving ? "Saving…" : "Save template"}
-            </button>
-            <button
-              type="button"
-              onClick={resetToDefaults}
-              disabled={!canEdit || saving || !seeded}
-              className="rounded-md border border-border-strong bg-chalk px-3.5 py-2 font-sans text-[13px] font-semibold text-walnut hover:bg-parchment-2 disabled:opacity-60"
-            >
-              Reset to defaults
-            </button>
-          </div>
+          <TemplateSaveActions
+            canEdit={canEdit}
+            busy={saving || !seeded}
+            saving={saving}
+            onSave={() => void handleSave()}
+            onReset={resetToDefaults}
+          />
         </div>
-        <aside className="flex flex-col gap-2 min-w-0 lg:sticky lg:top-24 lg:self-start">
+        <aside className="hidden lg:flex flex-col gap-2 min-w-0 lg:sticky lg:top-24 lg:self-start">
           <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
             Preview — 8.5 × 11 in · sample data
           </div>
