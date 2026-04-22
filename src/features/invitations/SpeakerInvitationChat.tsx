@@ -15,6 +15,10 @@ interface Props {
    *  map so the speaker's own messages render with their real name
    *  even when Twilio participant attributes aren't available. */
   speakerName: string;
+  /** Active bishopric + clerk snapshot from send time. Lets bishop
+   *  message bubbles show real names on the speaker's side — they
+   *  can't read ward members directly. */
+  bishopricParticipants: readonly { uid: string; displayName: string; role: "bishopric" | "clerk" }[];
   speakerEmail?: string | undefined;
   /** True when the invitation already has a response recorded. Quick
    *  actions are hidden, composer stays available for ongoing chat. */
@@ -41,6 +45,9 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const resolvedAuthors: AuthorMap = useMemo(() => {
     const map = new Map<string, AuthorInfo>();
     map.set(`speaker:${props.token}`, { displayName: props.speakerName, role: "speaker" });
+    for (const m of props.bishopricParticipants) {
+      map.set(`uid:${m.uid}`, { displayName: m.displayName, role: m.role });
+    }
     if (user?.photoURL && twilio.identity) {
       const existing = map.get(twilio.identity);
       map.set(twilio.identity, {
@@ -54,7 +61,15 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
       map.set(id, { ...existing, ...info });
     }
     return map;
-  }, [props.token, props.speakerName, twilio.identity, user?.photoURL, user?.displayName, authors]);
+  }, [
+    props.token,
+    props.speakerName,
+    props.bishopricParticipants,
+    twilio.identity,
+    user?.photoURL,
+    user?.displayName,
+    authors,
+  ]);
 
   async function ensureReady(): Promise<boolean> {
     setMismatch(null);

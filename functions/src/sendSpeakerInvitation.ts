@@ -47,7 +47,7 @@ export const sendSpeakerInvitation = onCall(
     // Group-chat model: every active bishopric + clerk joins, each
     // carrying their displayName via participant attributes so the
     // speaker's UI can label message bubbles with real names.
-    await addBishopricParticipants(input.wardId, conversationSid);
+    const bishopricParticipants = await addBishopricParticipants(input.wardId, conversationSid);
 
     const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
       speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
@@ -64,6 +64,7 @@ export const sendSpeakerInvitation = onCall(
       expiresAt: new Date(input.expiresAtMillis),
       conversationSid,
       deliveryRecord: [],
+      bishopricParticipants,
       createdAt: FieldValue.serverTimestamp(),
     });
 

@@ -96,14 +96,6 @@ function Group({ group }: { group: MessageGroup }) {
   });
   return (
     <div className={cn("flex flex-col gap-1", group.mine ? "items-end" : "items-start")}>
-      <span
-        className={cn(
-          "font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3",
-          group.mine ? "mr-10" : "ml-10",
-        )}
-      >
-        {group.info.displayName}
-      </span>
       <div
         className={cn(
           "flex items-end gap-2 max-w-[85%]",
@@ -112,6 +104,9 @@ function Group({ group }: { group: MessageGroup }) {
       >
         {!group.mine && <ConversationAvatar author={group.info} />}
         <div className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}>
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3 mb-0.5">
+            {group.info.displayName}
+          </span>
           {group.messages.map((m, i) => (
             <ConversationBubble
               key={m.sid}
@@ -120,18 +115,11 @@ function Group({ group }: { group: MessageGroup }) {
               position={bubblePositionOf(i, group.messages.length)}
             />
           ))}
+          {timestamp && (
+            <span className="font-mono text-[9.5px] text-walnut-3 mt-0.5">{timestamp}</span>
+          )}
         </div>
       </div>
-      {timestamp && (
-        <span
-          className={cn(
-            "font-mono text-[9.5px] text-walnut-3 mt-0.5",
-            group.mine ? "mr-2" : "ml-10",
-          )}
-        >
-          {timestamp}
-        </span>
-      )}
     </div>
   );
 }

@@ -24,6 +24,19 @@ export const speakerInvitationDeliverySchema = z.object({
 });
 export type SpeakerInvitationDelivery = z.infer<typeof speakerInvitationDeliverySchema>;
 
+/** Snapshot of the active bishopric + clerk members at send time.
+ *  Lets the speaker's public invite page show real names on bishop
+ *  message bubbles — the speaker has no access to the ward members
+ *  collection via Firestore rules, so we bake the minimum needed
+ *  (uid + displayName + role) into the invitation itself. Grows
+ *  stale as the ward changes; fine for one-invitation scope. */
+export const speakerInvitationStaffSchema = z.object({
+  uid: z.string(),
+  displayName: z.string(),
+  role: z.enum(["bishopric", "clerk"]),
+});
+export type SpeakerInvitationStaff = z.infer<typeof speakerInvitationStaffSchema>;
+
 /** Captured the first time the speaker taps Yes or No on the web side.
  *  SMS-only speakers who just text their answer back won't populate this
  *  — the bishop reads the thread and decides manually. */
@@ -84,6 +97,11 @@ export const speakerInvitationSchema = z.object({
    *  sendSpeakerInvitation callable; displayed on the Prepare page as
    *  a small per-channel status strip. */
   deliveryRecord: z.array(speakerInvitationDeliverySchema).default([]),
+
+  /** Active bishopric/clerk snapshot at send time. Used by the
+   *  speaker's public invite page to label message bubbles by real
+   *  name without needing to read the ward members collection. */
+  bishopricParticipants: z.array(speakerInvitationStaffSchema).default([]),
 
   /** Populated by the speaker's Yes/No tap; acknowledged by the bishop
    *  via the Apply-response action. */
