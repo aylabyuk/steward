@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
-import { LetterCanvas } from "@/features/templates/LetterCanvas";
+import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
+import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation";
 
 /**
@@ -8,43 +9,63 @@ import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation"
  * full letter-sheet proportions. No auth — the unguessable token in
  * the URL IS the auth. Rendered content is the frozen snapshot
  * created at `sendSpeakerInvitation` time.
+ *
+ * The letter is wrapped in `<ScaledLetterPreview>` so the viewer can
+ * wheel/pinch to zoom, drag to pan, and double-click to reset. Keeps
+ * the paper at true 8.5×11 proportions on mobile too, where the full
+ * sheet wouldn't otherwise fit the viewport.
  */
 export function SpeakerInvitationLandingPage() {
   const { wardId, token } = useParams<{ wardId: string; token: string }>();
   const state = useSpeakerInvitation(wardId, token);
 
   return (
-    <main className="min-h-dvh bg-[#e6ddc7] py-10 px-4 sm:px-6 flex items-start justify-center print:bg-white print:py-0 print:px-0">
-      {state.kind === "ready" && <PrintToolbar />}
-      <Body state={state} />
-      <PrintStyles />
+    <main className="h-dvh bg-[#e6ddc7] overflow-hidden">
+      {state.kind === "ready" ? (
+        <>
+          <PrintToolbar />
+          <PrintOnlyLetter
+            wardName={state.invitation.wardName}
+            assignedDate={state.invitation.assignedDate}
+            today={state.invitation.sentOn}
+            bodyMarkdown={state.invitation.bodyMarkdown}
+            footerMarkdown={state.invitation.footerMarkdown}
+          />
+          <ScaledLetterPreview
+            naked
+            height="100dvh"
+            wardName={state.invitation.wardName}
+            assignedDate={state.invitation.assignedDate}
+            today={state.invitation.sentOn}
+            bodyMarkdown={state.invitation.bodyMarkdown}
+            footerMarkdown={state.invitation.footerMarkdown}
+          />
+        </>
+      ) : (
+        <NonReadyState state={state} />
+      )}
     </main>
   );
 }
 
-function Body({ state }: { state: ReturnType<typeof useSpeakerInvitation> }) {
+function NonReadyState({ state }: { state: ReturnType<typeof useSpeakerInvitation> }) {
   if (state.kind === "loading") {
-    return <div className="mt-20 font-serif italic text-[14px] text-walnut-2">Loading letter…</div>;
+    return (
+      <div className="mt-20 mx-auto max-w-md text-center font-serif italic text-[14px] text-walnut-2">
+        Loading letter…
+      </div>
+    );
   }
   if (state.kind === "not-found") return <NotFound />;
   if (state.kind === "error") {
     return (
-      <div className="mt-20 max-w-md rounded-lg border border-border bg-chalk p-6 text-center">
+      <div className="mt-20 mx-auto max-w-md rounded-lg border border-border bg-chalk p-6 text-center">
         <p className="font-display text-[20px] text-walnut mb-2">We couldn't load the letter</p>
         <p className="font-serif italic text-[13.5px] text-walnut-2">{state.message}</p>
       </div>
     );
   }
-  const { invitation } = state;
-  return (
-    <LetterCanvas
-      wardName={invitation.wardName}
-      assignedDate={invitation.assignedDate}
-      today={invitation.sentOn}
-      bodyMarkdown={invitation.bodyMarkdown}
-      footerMarkdown={invitation.footerMarkdown}
-    />
-  );
+  return null;
 }
 
 function PrintToolbar() {
@@ -81,30 +102,9 @@ function PrinterIcon() {
   );
 }
 
-/**
- * Print-only overrides for the landing page. The letter itself is
- * designed to look like a physical page (8.5×11, parchment border
- * inset, mono eyebrows) — print CSS just needs to flatten the
- * drop shadow, zero the page margins (the letter has its own inner
- * margin), and keep the whole letter on one sheet.
- */
-function PrintStyles() {
-  return (
-    <style>{`
-      @media print {
-        @page { size: letter; margin: 0; }
-        html, body { background: #ffffff !important; }
-        .print\\:hidden { display: none !important; }
-        /* Drop any LetterCanvas shadow in print */
-        [class*="shadow-"] { box-shadow: none !important; }
-      }
-    `}</style>
-  );
-}
-
 function NotFound() {
   return (
-    <div className="mt-20 max-w-md rounded-lg border border-border bg-chalk p-6 text-center">
+    <div className="mt-20 mx-auto max-w-md rounded-lg border border-border bg-chalk p-6 text-center">
       <p className="font-display text-[20px] text-walnut mb-2">Invitation not found</p>
       <p className="font-serif italic text-[13.5px] text-walnut-2">
         The link may have been mistyped, retracted, or expired. Ask whoever sent it for a fresh
