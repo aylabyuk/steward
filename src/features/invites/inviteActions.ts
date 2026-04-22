@@ -24,6 +24,10 @@ export interface SendInviteInput {
   calling: Calling;
   invitedBy: string;
   invitedByName: string;
+  /** Pre-rendered greeting (template/override already interpolated).
+   *  Snapshotted onto the invite so the accept page can display it
+   *  without needing template-doc access. */
+  messageBody: string;
 }
 
 export async function sendInvite(input: SendInviteInput): Promise<void> {
@@ -37,6 +41,7 @@ export async function sendInvite(input: SendInviteInput): Promise<void> {
     invitedBy: input.invitedBy,
     invitedByName: input.invitedByName,
     invitedAt: null,
+    messageBody: input.messageBody,
   });
   await setDoc(doc(db, "wards", input.wardId, "invites", emailKey), {
     ...data,
