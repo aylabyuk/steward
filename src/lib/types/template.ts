@@ -21,3 +21,21 @@ export const speakerLetterTemplateSchema = z.object({
   updatedAt: z.any().optional(),
 });
 export type SpeakerLetterTemplate = z.infer<typeof speakerLetterTemplateSchema>;
+
+/**
+ * Ward-level editable template for the ward-member invitation message.
+ *
+ * Single Markdown block authored by the bishopric/clerks. Renders as a
+ * greeting at the top of the accept-invite page AND as the body of the
+ * `mailto:` link the bishop sends. The accept URL, sign-in prompt, and
+ * "— Sent from Steward" signature are appended automatically so the
+ * template can focus on the personal greeting.
+ *
+ * Variables: `{{inviteeName}}`, `{{wardName}}`, `{{inviterName}}`,
+ * `{{calling}}` (pretty-printed), `{{role}}` (`bishopric` | `clerk`).
+ */
+export const wardInviteTemplateSchema = z.object({
+  bodyMarkdown: z.string(),
+  updatedAt: z.any().optional(),
+});
+export type WardInviteTemplate = z.infer<typeof wardInviteTemplateSchema>;

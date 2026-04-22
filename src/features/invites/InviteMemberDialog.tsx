@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { isValidEmail } from "@/lib/email";
-import { type Calling, type Ward } from "@/lib/types";
+import { callingToRole, type Calling, type Ward } from "@/lib/types";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import { CALLING_OPTIONS } from "../settings/callingLabels";
+import { renderWardInviteMessage } from "@/features/templates/renderWardInviteMessage";
+import { useWardInviteTemplate } from "@/features/templates/useWardInviteTemplate";
+import { DEFAULT_WARD_INVITE_BODY } from "@/features/templates/wardInviteDefaults";
 import { sendInvite } from "./inviteActions";
-import { INVITE_INPUT_CLS, InviteField } from "./inviteFormField";
+import { InviteMemberFields } from "./InviteMemberFields";
+import { InviteMessageOverridePanel } from "./InviteMessageOverridePanel";
 import { openInviteMailto } from "./inviteMailto";
 
 interface Props {
@@ -20,15 +23,22 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [calling, setCalling] = useState<Calling>("ward_clerk");
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customBody, setCustomBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { data: template } = useWardInviteTemplate();
   useLockBodyScroll(open);
   if (!open) return null;
+
+  const templateBody = template?.bodyMarkdown ?? DEFAULT_WARD_INVITE_BODY;
 
   function reset() {
     setEmail("");
     setDisplayName("");
     setCalling("ward_clerk");
+    setCustomOpen(false);
+    setCustomBody("");
     setBusy(false);
     setError(null);
   }
@@ -39,6 +49,16 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
     if (!inviter || !ward) return;
     setBusy(true);
     setError(null);
+    const messageBody = renderWardInviteMessage(
+      {
+        inviteeName: displayName.trim(),
+        wardName: ward.name,
+        inviterName: inviter.displayName,
+        calling,
+        role: callingToRole(calling),
+      },
+      { override: customOpen ? customBody : null, template: template?.bodyMarkdown },
+    );
     try {
       await sendInvite({
         wardId,
@@ -48,14 +68,9 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
         calling,
         invitedBy: inviter.uid,
         invitedByName: inviter.displayName,
+        messageBody,
       });
-      openInviteMailto({
-        email,
-        displayName,
-        wardName: ward.name,
-        wardId,
-        inviterName: inviter.displayName,
-      });
+      openInviteMailto({ email, wardName: ward.name, wardId, messageBody });
       reset();
       onClose();
     } catch (e) {
@@ -72,7 +87,7 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
       aria-modal="true"
       aria-label="Invite member"
     >
-      <div className="w-full max-w-md rounded-[14px] border border-border-strong bg-chalk p-6 shadow-elev-3">
+      <div className="w-full max-w-md rounded-[14px] border border-border-strong bg-chalk p-6 shadow-elev-3 max-h-[90vh] overflow-y-auto">
         <h2 className="font-display text-[20px] font-semibold text-walnut tracking-[-0.005em]">
           Invite member
         </h2>
@@ -81,36 +96,24 @@ export function InviteMemberDialog({ wardId, ward, inviter, open, onClose }: Pro
           accept it in one click.
         </p>
         <div className="mt-4 flex flex-col gap-3">
-          <InviteField label="Email">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={INVITE_INPUT_CLS}
-              placeholder="name@example.com"
-            />
-          </InviteField>
-          <InviteField label="Display name">
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className={INVITE_INPUT_CLS}
-              placeholder="Jane Doe"
-            />
-          </InviteField>
-          <InviteField label="Calling">
-            <select
-              value={calling}
-              onChange={(e) => setCalling(e.target.value as Calling)}
-              className={INVITE_INPUT_CLS}
-            >
-              {CALLING_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </InviteField>
+          <InviteMemberFields
+            email={email}
+            setEmail={setEmail}
+            displayName={displayName}
+            setDisplayName={setDisplayName}
+            calling={calling}
+            setCalling={setCalling}
+          />
+          <InviteMessageOverridePanel
+            open={customOpen}
+            onToggle={() => {
+              if (!customOpen) setCustomBody(templateBody);
+              setCustomOpen((v) => !v);
+            }}
+            initialBody={customBody || templateBody}
+            onChange={setCustomBody}
+            disabled={busy}
+          />
         </div>
         {error && <p className="mt-3 font-sans text-[12.5px] text-bordeaux">{error}</p>}
         <div className="mt-5 flex justify-end gap-2">
