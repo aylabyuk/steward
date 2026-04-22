@@ -104,9 +104,11 @@ function Group({ group }: { group: MessageGroup }) {
       >
         {!group.mine && <ConversationAvatar author={group.info} />}
         <div className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}>
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3 mb-0.5">
-            {group.info.displayName}
-          </span>
+          {!group.mine && (
+            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3 mb-0.5">
+              {group.info.displayName}
+            </span>
+          )}
           {group.messages.map((m, i) => (
             <ConversationBubble
               key={m.sid}
