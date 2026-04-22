@@ -29,6 +29,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@mdxeditor/editor": "^3.55.0",
+    "@twilio/conversations": "^3.0.0",
     "clsx": "^2.1.1",
     "firebase": "^12.12.0",
     "react": "^19.1.0",

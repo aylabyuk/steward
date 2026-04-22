@@ -125,12 +125,24 @@ service cloud.firestore {
       // Speaker invitations: frozen snapshots of a letter at send time.
       // Public read — the doc ID is the shareable token, and Firestore
       // auto-IDs are cryptographically random (~120 bits) so the URL
-      // itself authorizes access. The recipient has no other way into
-      // the ward. Writes still require an active member so only the
-      // bishopric or clerks can send.
+      // itself authorizes access. Creates + deletes stay member-only.
+      // Updates have two paths: active members can change anything, and
+      // a signed-in speaker whose verified Google email matches the
+      // snapshotted `speakerEmail` can update ONLY the `response`
+      // subtree, and only before the invitation's `expiresAt`. This
+      // lets the speaker self-respond without creating a ward member
+      // doc, while preventing any edit of the letter itself.
       match /speakerInvitations/{token} {
         allow read: if true;
-        allow create, update, delete: if isActiveMember(wardId);
+        allow create, delete: if isActiveMember(wardId);
+        allow update: if isActiveMember(wardId)
+          || (isSignedIn()
+              && request.auth.token.email_verified == true
+              && request.time < resource.data.expiresAt
+              && resource.data.speakerEmail != null
+              && request.auth.token.email.lower() == resource.data.speakerEmail.lower()
+              && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['response']));
       }
 
       // Invites: bishopric creates/lists/revokes pending invites keyed by
