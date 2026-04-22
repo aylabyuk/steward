@@ -4,6 +4,7 @@ import type { SpeakerEmailTemplate } from "@/lib/types";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { renderSpeakerEmailBody } from "./renderSpeakerEmailBody";
 import { sendSpeakerInvitation } from "./sendSpeakerInvitation";
+import { openSmsInvitation, renderSmsBody } from "./smsInvitation";
 import type { LetterVars } from "./prepareInvitationVars";
 
 interface FormState {
@@ -20,6 +21,7 @@ interface Args {
   speakerId: string;
   speakerName: string;
   speakerEmail: string;
+  speakerPhone: string;
   speakerTopic: string;
   inviterName: string;
   vars: LetterVars;
@@ -30,7 +32,7 @@ interface Args {
   onDone: () => void;
 }
 
-/** Wraps Mark invited / Print / Send with automatic override
+/** Wraps Mark invited / Print / Send / SMS with automatic override
  *  persistence + busy/error bookkeeping. Every terminal action
  *  snapshots the editor state onto the speaker doc as an override;
  *  the bishop can undo that by clicking "Revert" in the toolbar,
@@ -52,6 +54,20 @@ export function usePrepareInvitationActions(args: Args) {
     }
   }
 
+  async function snapshotInvitation(): Promise<string> {
+    const { token } = await sendSpeakerInvitation({
+      wardId: args.wardId,
+      meetingDate: args.date,
+      speakerId: args.speakerId,
+      speakerName: args.speakerName,
+      speakerTopic: args.speakerTopic.trim() || undefined,
+      inviterName: args.inviterName,
+      bodyMarkdown: form.letterBody,
+      footerMarkdown: form.letterFooter,
+    });
+    return `${window.location.origin}/invite/speaker/${args.wardId}/${token}`;
+  }
+
   return {
     markInvited: () =>
       void runAction(() =>
@@ -59,17 +75,7 @@ export function usePrepareInvitationActions(args: Args) {
       ),
     send: () =>
       void runAction(async () => {
-        const { token } = await sendSpeakerInvitation({
-          wardId: args.wardId,
-          meetingDate: args.date,
-          speakerId: args.speakerId,
-          speakerName: args.speakerName,
-          speakerTopic: args.speakerTopic.trim() || undefined,
-          inviterName: args.inviterName,
-          bodyMarkdown: form.letterBody,
-          footerMarkdown: form.letterFooter,
-        });
-        const inviteUrl = `${window.location.origin}/invite/speaker/${args.wardId}/${token}`;
+        const inviteUrl = await snapshotInvitation();
         const body = renderSpeakerEmailBody(
           { ...args.vars, inviteUrl },
           { template: args.emailTemplate?.bodyMarkdown },
@@ -82,5 +88,30 @@ export function usePrepareInvitationActions(args: Args) {
         });
         await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
       }),
+    sendSms: () =>
+      void runAction(async () => {
+        const inviteUrl = await snapshotInvitation();
+        openSmsInvitation({
+          phone: args.speakerPhone,
+          body: renderSmsBody({
+            speakerName: args.speakerName,
+            date: shortDate(args.date),
+            inviteUrl,
+          }),
+        });
+        await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
+      }),
   };
+}
+
+/** Short-form date for the SMS body ("Apr 26") — the letter preview
+ *  uses the long form, but we want one segment (160 chars) on the
+ *  text. Returns the raw ISO if it can't parse. */
+function shortDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }

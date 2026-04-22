@@ -7,6 +7,64 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-22
+
+Speaker invitations over SMS (#15). Adds a one-tap **Send SMS**
+action next to Send email in the Prepare Invitation toolbar —
+native `sms:` hand-off to the device's Messages app, no paid
+gateway, no new Cloud Function. Bishops can now reach speakers
+who answer texts faster than email without leaving the app.
+
+### Added
+
+- **Phone field on speakers** (`speakerSchema.phone`, optional).
+  Surfaced as a new input on the speaker editor card, between
+  Email and Topic, labeled "optional, enables Send SMS".
+- **Send SMS icon button** in the Prepare Invitation toolbar
+  (between Print and Send email). Disabled when no plausible
+  phone on file. Confirm modal matches the Send email pattern:
+  snapshots the letter into a new invitation link, opens the
+  native Messages composer pre-filled with a short text + invite
+  URL, and flips status to `invited`.
+- **`smsInvitation.ts`** helper: `buildSmsHref`,
+  `normalizePhone` (strips parens / spaces / dashes / dots,
+  preserves a leading `+`), `isPlausiblePhone` (lax ≥ 7-digit
+  threshold), and `renderSmsBody` with a hardcoded default
+  ("Hi {speakerName}, you've been invited to speak in sacrament
+  meeting on {date}. Full invitation: {inviteUrl}") short
+  enough to fit one SMS segment with a typical token URL.
+- **Tests**: 10 unit tests for the URL / phone helpers + 5
+  component tests for the toolbar's SMS button state, confirm
+  modal gating, and cancel path. 209 tests passing total
+  (+12 from this release).
+
+### Changed
+
+- `canSendReason` copy on the toolbar updated to include SMS as
+  a path: "No email on file — print, text, or mark invited
+  instead" instead of "print or mark invited".
+
+### Infrastructure
+
+- No new deps. No Cloud Function added — `sms:` URLs are pure
+  client-side hand-off, respecting the "exactly three Cloud
+  Functions" hard rule.
+- No Firestore rule changes (reusing the existing speaker write
+  path, no new fields on invitations / audit docs).
+
+### Deliberately out of scope
+
+- Paid gateway (Twilio / Vonage / etc.).
+- `smsInvitedAt` audit-trail field — status flip matches the
+  email path.
+- Editable ward-level SMS template — hardcoded default ships
+  here; can follow the email-template pattern later.
+- iMessage / WhatsApp deep links.
+- Playwright e2e — covered by unit + component tests since the
+  prepare-invitation route needs auth + seeded emulator speaker
+  data + editor hydration, which didn't add confidence over
+  the tight tests on URL construction and button gating.
+
 ## [0.4.0] — 2026-04-22
 
 Streamlined speaker-invitation flow (#26). The three-button Planned
@@ -372,7 +430,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/aylabyuk/steward/releases/tag/v0.5.0
 [0.4.0]: https://github.com/aylabyuk/steward/releases/tag/v0.4.0
 [0.3.0]: https://github.com/aylabyuk/steward/releases/tag/v0.3.0
 [0.2.0]: https://github.com/aylabyuk/steward/releases/tag/v0.2.0
