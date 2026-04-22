@@ -4,17 +4,24 @@ import { SpeakerRow } from "./SpeakerRow";
 
 interface Props {
   speakers: WithId<Speaker>[];
+  date: string;
   onAddSpeaker: () => void;
 }
 
-export function SundayCardBody({ speakers, onAddSpeaker }: Props) {
+export function SundayCardBody({ speakers, date, onAddSpeaker }: Props) {
   const hasSpeakers = speakers.length > 0;
   return (
     <div className="px-4 pb-4">
       {hasSpeakers ? (
         <ul className="list-none m-0 p-0 mb-2">
           {speakers.map((s, idx) => (
-            <SpeakerRow key={s.id} number={idx + 1} speaker={s.data} />
+            <SpeakerRow
+              key={s.id}
+              number={idx + 1}
+              speaker={s.data}
+              speakerId={s.id}
+              date={date}
+            />
           ))}
         </ul>
       ) : (
