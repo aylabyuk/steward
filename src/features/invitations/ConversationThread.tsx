@@ -1,15 +1,12 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { ConversationAvatar } from "./ConversationAvatar";
+import { ConversationBubble, bubblePositionOf } from "./ConversationBubble";
 import type { AuthorInfo, AuthorMap, ChatMessage } from "./useConversation";
 
 interface Props {
   messages: readonly ChatMessage[];
   currentIdentity: string | null;
-  /** Resolves author identity → `{ displayName, role, photoURL? }`.
-   *  Merged across Twilio participant attributes + ward-members
-   *  fallback + the current user's auth profile before being passed
-   *  in. Used for bubble labels + avatars. */
   authors: AuthorMap;
   loading?: boolean;
 }
@@ -22,10 +19,11 @@ interface MessageGroup {
   messages: readonly ChatMessage[];
 }
 
-/** Bubble list for a Twilio conversation. Consecutive messages by
- *  the same author are collapsed into one group — one avatar + one
- *  author label + a tight stack of bubbles + a single timestamp at
- *  the end of the group. Mine = right-aligned; others = left. */
+/** Bubble list styled after Messenger: consecutive messages by the
+ *  same author collapse into one group, one avatar at the bottom
+ *  (theirs) or no avatar (mine), bubbles stack tight with shaped
+ *  border-radius so the group reads as a single connected shape on
+ *  the avatar-facing side. */
 export function ConversationThread({
   messages,
   currentIdentity,
@@ -51,7 +49,7 @@ export function ConversationThread({
   const groups = groupMessages(messages, currentIdentity, authors);
 
   return (
-    <div ref={scrollRef} className="flex flex-col gap-3 p-4 overflow-y-auto max-h-[60vh]">
+    <div ref={scrollRef} className="flex flex-col gap-4 p-4 overflow-y-auto max-h-[60vh]">
       {groups.map((g) => (
         <Group key={g.key} group={g} />
       ))}
@@ -90,57 +88,50 @@ function fallbackAuthor(identity: string): AuthorInfo {
 
 function Group({ group }: { group: MessageGroup }) {
   const lastMessage = group.messages.at(-1)!;
+  const timestamp = lastMessage.dateCreated?.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
   return (
-    <div
-      className={cn(
-        "flex items-start gap-2 max-w-[85%]",
-        group.mine ? "self-end flex-row-reverse" : "self-start",
-      )}
-    >
-      <ConversationAvatar author={group.info} />
-      <div className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}>
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
-          {group.info.displayName}
-        </span>
-        <div className={cn("flex flex-col gap-0.5", group.mine ? "items-end" : "items-start")}>
-          {group.messages.map((m) => (
-            <Bubble key={m.sid} message={m} mine={group.mine} />
-          ))}
-        </div>
-        {lastMessage.dateCreated && (
-          <span className="font-mono text-[9.5px] text-walnut-3 mt-0.5">
-            {lastMessage.dateCreated.toLocaleString(undefined, {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Bubble({ message, mine }: { message: ChatMessage; mine: boolean }) {
-  const responseType = message.attributes?.responseType as "yes" | "no" | undefined;
-  return (
-    <div className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
-      {responseType && (
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep mb-0.5">
-          {responseType === "yes" ? "Response · Yes" : "Response · No"}
-        </span>
-      )}
-      <div
+    <div className={cn("flex flex-col gap-1", group.mine ? "items-end" : "items-start")}>
+      <span
         className={cn(
-          "rounded-[12px] px-3 py-2 text-[13.5px] leading-snug whitespace-pre-wrap wrap-break-word",
-          mine ? "bg-bordeaux text-parchment" : "bg-parchment-2 border border-border text-walnut",
-          responseType === "yes" && "border-success border-2",
-          responseType === "no" && "border-bordeaux border-2",
+          "font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3",
+          group.mine ? "mr-10" : "ml-10",
         )}
       >
-        {message.body}
+        {group.info.displayName}
+      </span>
+      <div
+        className={cn(
+          "flex items-end gap-2 max-w-[85%]",
+          group.mine ? "flex-row-reverse" : "flex-row",
+        )}
+      >
+        {!group.mine && <ConversationAvatar author={group.info} />}
+        <div className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}>
+          {group.messages.map((m, i) => (
+            <ConversationBubble
+              key={m.sid}
+              message={m}
+              mine={group.mine}
+              position={bubblePositionOf(i, group.messages.length)}
+            />
+          ))}
+        </div>
       </div>
+      {timestamp && (
+        <span
+          className={cn(
+            "font-mono text-[9.5px] text-walnut-3 mt-0.5",
+            group.mine ? "mr-2" : "ml-10",
+          )}
+        >
+          {timestamp}
+        </span>
+      )}
     </div>
   );
 }
