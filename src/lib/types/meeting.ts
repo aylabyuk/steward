@@ -109,6 +109,17 @@ export const sacramentMeetingSchema = z.object({
 });
 export type SacramentMeeting = z.infer<typeof sacramentMeetingSchema>;
 
+// Per-speaker override of the ward invitation letter template. Stored
+// as Markdown with `{{variable}}` tokens still intact — tokens are
+// resolved at send time so `{{today}}` etc. stay current. Absent
+// override means "use the ward default template".
+export const speakerLetterOverrideSchema = z.object({
+  bodyMarkdown: z.string(),
+  footerMarkdown: z.string(),
+  updatedAt: z.any().optional(),
+});
+export type SpeakerLetterOverride = z.infer<typeof speakerLetterOverrideSchema>;
+
 // Tolerate legacy speaker docs that stored a status outside the current
 // enum (e.g. "draft", "sent") — fall back to "planned" rather than failing
 // the whole list parse.
@@ -119,6 +130,7 @@ export const speakerSchema = z.object({
   status: speakerStatusSchema.catch("planned"),
   role: speakerRoleSchema.catch("Member"),
   order: z.number().int().min(0).optional(),
+  letterOverride: speakerLetterOverrideSchema.optional(),
   createdAt: z.any().optional(),
   updatedAt: z.any().optional(),
 });
