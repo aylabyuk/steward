@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { LetterCanvas } from "./LetterCanvas";
-import { PrepareInvitationGuide } from "./PrepareInvitationGuide";
+import { SpeakerLetterGuide } from "./SpeakerLetterGuide";
 import { EditorSection } from "./SpeakerLetterEditor";
 import { interpolate } from "./interpolate";
 import type { LetterVars } from "./prepareInvitationVars";
@@ -43,7 +43,7 @@ export function PrepareInvitationLetterTab({
           onRevertToDefault={onRevertToDefault}
           onClearOverride={onClearOverride}
         />
-        <PrepareInvitationGuide />
+        <SpeakerLetterGuide />
         <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
         <EditorSection label="Footer (scripture)" initialMarkdown={footer} onChange={setFooter} />
       </div>
