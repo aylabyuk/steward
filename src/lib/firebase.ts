@@ -1,6 +1,7 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
+import { connectFunctionsEmulator, getFunctions, type Functions } from "firebase/functions";
 import { getMessaging, isSupported, type Messaging } from "firebase/messaging";
 
 const requiredEnv = [
@@ -29,17 +30,19 @@ function readConfig() {
   };
 }
 
-function connectEmulators(auth: Auth, db: Firestore): void {
+function connectEmulators(auth: Auth, db: Firestore, functions: Functions): void {
   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
   connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 }
 
 export const app: FirebaseApp = initializeApp(readConfig());
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
+export const functions: Functions = getFunctions(app);
 
 if (import.meta.env.VITE_USE_EMULATORS === "true") {
-  connectEmulators(auth, db);
+  connectEmulators(auth, db, functions);
 }
 
 let messagingPromise: Promise<Messaging | null> | null = null;

@@ -1,10 +1,7 @@
-import { buildMailto } from "@/features/speakers/buildMailto";
 import { updateSpeaker } from "@/features/speakers/speakerActions";
-import type { SpeakerEmailTemplate } from "@/lib/types";
+import { useAuthStore } from "@/stores/authStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import { renderSpeakerEmailBody } from "./renderSpeakerEmailBody";
 import { sendSpeakerInvitation } from "./sendSpeakerInvitation";
-import { openSmsInvitation, renderSmsBody } from "./smsInvitation";
 import type { LetterVars } from "./prepareInvitationVars";
 
 interface FormState {
@@ -26,19 +23,18 @@ interface Args {
   inviterName: string;
   vars: LetterVars;
   form: FormState;
-  emailTemplate: SpeakerEmailTemplate | null;
-  /** Called after a terminal action succeeds. Page typically flips to
-   *  a "Done" state so the bishop can close the tab. */
+  /** Called after a terminal action succeeds. */
   onDone: () => void;
 }
 
-/** Wraps Mark invited / Print / Send / SMS with automatic override
- *  persistence + busy/error bookkeeping. Every terminal action
- *  snapshots the editor state onto the speaker doc as an override;
- *  the bishop can undo that by clicking "Revert" in the toolbar,
- *  which clears the override and resets the editor to ward default. */
+/** Wraps Mark invited / Send (email) / SMS with automatic override
+ *  persistence + busy/error bookkeeping. Send / SMS now route through
+ *  the `sendSpeakerInvitation` Cloud Function, which handles snapshot
+ *  creation, Twilio Conversation setup, and delivery via
+ *  SendGrid + Twilio. No more mailto:/sms: hand-offs. */
 export function usePrepareInvitationActions(args: Args) {
   const { form } = args;
+  const bishopEmail = useAuthStore((s) => s.user?.email ?? "");
 
   async function runAction(fn: () => Promise<void> | void) {
     form.setBusy(true);
@@ -54,18 +50,22 @@ export function usePrepareInvitationActions(args: Args) {
     }
   }
 
-  async function snapshotInvitation(): Promise<string> {
-    const { token } = await sendSpeakerInvitation({
+  async function sendVia(channels: ("email" | "sms")[]): Promise<void> {
+    await sendSpeakerInvitation({
       wardId: args.wardId,
       meetingDate: args.date,
       speakerId: args.speakerId,
       speakerName: args.speakerName,
-      speakerTopic: args.speakerTopic.trim() || undefined,
+      ...(args.speakerTopic.trim() ? { speakerTopic: args.speakerTopic.trim() } : {}),
+      speakerEmail: args.speakerEmail,
+      speakerPhone: args.speakerPhone,
       inviterName: args.inviterName,
+      bishopReplyToEmail: bishopEmail,
       bodyMarkdown: form.letterBody,
       footerMarkdown: form.letterFooter,
+      channels,
     });
-    return `${window.location.origin}/invite/speaker/${args.wardId}/${token}`;
+    await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
   }
 
   return {
@@ -73,45 +73,7 @@ export function usePrepareInvitationActions(args: Args) {
       void runAction(() =>
         updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" }),
       ),
-    send: () =>
-      void runAction(async () => {
-        const inviteUrl = await snapshotInvitation();
-        const body = renderSpeakerEmailBody(
-          { ...args.vars, inviteUrl },
-          { template: args.emailTemplate?.bodyMarkdown },
-        );
-        window.location.href = buildMailto({
-          to: args.speakerEmail.trim(),
-          cc: [],
-          subject: `Invitation to speak — ${args.vars.date}`,
-          body,
-        });
-        await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
-      }),
-    sendSms: () =>
-      void runAction(async () => {
-        const inviteUrl = await snapshotInvitation();
-        openSmsInvitation({
-          phone: args.speakerPhone,
-          body: renderSmsBody({
-            speakerName: args.speakerName,
-            date: shortDate(args.date),
-            inviteUrl,
-          }),
-        });
-        await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
-      }),
+    send: () => void runAction(() => sendVia(["email"])),
+    sendSms: () => void runAction(() => sendVia(["sms"])),
   };
-}
-
-/** Short-form date for the SMS body ("Apr 26") — the letter preview
- *  uses the long form, but we want one segment (160 chars) on the
- *  text. Returns the raw ISO if it can't parse. */
-function shortDate(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
 }
