@@ -4,6 +4,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { printInvitationLetter } from "@/features/schedule/printInvitationLetter";
+import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
@@ -131,6 +132,19 @@ export function PrepareInvitationPage() {
             setBody={form.setLetterBody}
             setFooter={form.setLetterFooter}
             vars={vars}
+            previewToolbar={
+              <PrepareInvitationActionBar
+                busy={form.busy}
+                canSend={canSend}
+                canSendReason={canSendReason}
+                hasOverride={form.letterHasOverride}
+                speakerName={speaker.data.name}
+                onRevert={() => void form.clearLetterOverride()}
+                onMarkInvited={actions.markInvited}
+                onPrint={() => void printInvitationLetter(speaker.data, date)}
+                onSend={actions.send}
+              />
+            }
           />
         ) : (
           <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>

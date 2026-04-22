@@ -12,13 +12,23 @@ interface Props {
   setBody: (v: string) => void;
   setFooter: (v: string) => void;
   vars: LetterVars;
+  /** Desktop-only toolbar rendered absolute-top-right inside the
+   *  preview container. Mobile uses the page-header toolbar instead. */
+  previewToolbar?: React.ReactNode;
 }
 
 /** Letter-editor column on the left, paper-sized preview on the right.
  *  The preview mimics a real 8.5×11 sheet so the bishop sees the
  *  letter at its true proportions before printing or sending. Revert /
  *  override management lives on the page toolbar, not this tab. */
-export function PrepareInvitationLetterTab({ body, footer, setBody, setFooter, vars }: Props) {
+export function PrepareInvitationLetterTab({
+  body,
+  footer,
+  setBody,
+  setFooter,
+  vars,
+  previewToolbar,
+}: Props) {
   const renderedBody = useMemo(() => interpolate(body, vars), [body, vars]);
   const renderedFooter = useMemo(() => interpolate(footer, vars), [footer, vars]);
 
@@ -40,14 +50,17 @@ export function PrepareInvitationLetterTab({ body, footer, setBody, setFooter, v
         <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
           Preview — 8.5 × 11 in
         </div>
-        <ScaledLetterPreview
-          wardName={vars.wardName}
-          assignedDate={vars.date}
-          today={vars.today}
-          bodyMarkdown={renderedBody}
-          footerMarkdown={renderedFooter}
-          height="calc(100dvh - 11rem)"
-        />
+        <div className="relative">
+          <ScaledLetterPreview
+            wardName={vars.wardName}
+            assignedDate={vars.date}
+            today={vars.today}
+            bodyMarkdown={renderedBody}
+            footerMarkdown={renderedFooter}
+            height="calc(100dvh - 11rem)"
+          />
+          {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
+        </div>
       </aside>
     </div>
   );
