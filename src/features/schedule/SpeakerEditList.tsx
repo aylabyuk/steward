@@ -126,21 +126,27 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
-      {drafts.map((d, i) => (
-        <SpeakerEditCard
-          key={d.tempId}
-          draft={d}
-          index={i}
-          onChange={(partial) => updateDraft(d.tempId, partial)}
-          onRemove={() => removeDraft(d.tempId)}
+    <div className="flex flex-col gap-3">
+      <p className="font-serif text-[13.5px] text-walnut-2">
+        Add or edit speakers for this Sunday. Save when you're ready, then we'll walk through
+        sending each invitation in the next step.
+      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
+        {drafts.map((d, i) => (
+          <SpeakerEditCard
+            key={d.tempId}
+            draft={d}
+            index={i}
+            onChange={(partial) => updateDraft(d.tempId, partial)}
+            onRemove={() => removeDraft(d.tempId)}
+          />
+        ))}
+        <AddSpeakerCard
+          onClick={addDraft}
+          disabled={drafts.length >= MAX_SPEAKERS}
+          max={MAX_SPEAKERS}
         />
-      ))}
-      <AddSpeakerCard
-        onClick={addDraft}
-        disabled={drafts.length >= MAX_SPEAKERS}
-        max={MAX_SPEAKERS}
-      />
+      </div>
     </div>
   );
 });
