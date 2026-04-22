@@ -53,6 +53,7 @@ export function SpeakerInvitationLandingPage(): React.ReactElement {
               token={token}
               conversationSid={invitation.conversationSid}
               speakerName={invitation.speakerName}
+              bishopricParticipants={invitation.bishopricParticipants}
               speakerEmail={invitation.speakerEmail}
               hasResponse={!!invitation.response}
             />

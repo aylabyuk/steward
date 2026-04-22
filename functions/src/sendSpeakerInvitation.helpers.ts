@@ -21,18 +21,27 @@ export async function assertActiveMember(wardId: string, uid: string): Promise<v
  *  Conversation for this (wardId, speakerId, meetingDate). Twilio
  *  refuses to bind the same (phone, proxy) pair twice, so a re-send
  *  for the same speaker would otherwise fail at addSmsParticipant. */
+export interface BishopricSnapshot {
+  uid: string;
+  displayName: string;
+  role: "bishopric" | "clerk";
+}
+
 /** Pulls every active bishopric + clerk member from the ward and
  *  adds them to the new conversation with displayName + role
- *  attributes, so the speaker's UI can show who's speaking on each
- *  message. Returns the count of participants added — used only for
- *  logging. Per-add failures are logged and swallowed; the
- *  conversation stays usable with whichever participants succeeded. */
+ *  attributes. Returns the list of successfully-added members so
+ *  the caller can snapshot it onto the invitation doc — the
+ *  speaker's public invite page uses that snapshot to label chat
+ *  bubbles when Twilio attributes aren't available (e.g. older
+ *  conversations, or while the client is still loading).
+ *  Per-add failures are logged and swallowed; the conversation
+ *  stays usable with whichever participants succeeded. */
 export async function addBishopricParticipants(
   wardId: string,
   conversationSid: string,
-): Promise<number> {
+): Promise<BishopricSnapshot[]> {
   const snap = await getFirestore().collection(`wards/${wardId}/members`).get();
-  let added = 0;
+  const added: BishopricSnapshot[] = [];
   for (const doc of snap.docs) {
     const member = doc.data() as MemberDoc;
     if (!member.active) continue;
@@ -42,7 +51,7 @@ export async function addBishopricParticipants(
         displayName: member.displayName,
         role: member.role,
       });
-      added += 1;
+      added.push({ uid: doc.id, displayName: member.displayName, role: member.role });
     } catch (err) {
       logger.warn("failed to add chat participant", {
         uid: doc.id,
