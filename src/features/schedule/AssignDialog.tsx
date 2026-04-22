@@ -47,7 +47,7 @@ export function AssignDialog({ open, title, onClose, onSave, saving, children }:
           "bg-chalk border border-border-strong shadow-elev-3 overflow-hidden flex flex-col w-full",
           isMobile
             ? "absolute bottom-0 left-0 right-0 rounded-t-[14px] max-h-[95vh] animate-[slideIn_200ms_ease-out]"
-            : "relative rounded-[14px] w-[96vw] max-w-140 lg:max-w-4xl xl:max-w-350 max-h-[94vh] animate-[fadePop_200ms_ease-out]",
+            : "relative rounded-[14px] w-[96vw] max-w-140 lg:max-w-4xl xl:max-w-350 2xl:max-w-450 max-h-[94vh] animate-[fadePop_200ms_ease-out]",
         )}
       >
         {/* Header */}
