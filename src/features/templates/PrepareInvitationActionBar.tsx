@@ -1,64 +1,62 @@
+import { CheckIcon, PrintIcon, RemoveIcon, SendIcon } from "@/features/schedule/SpeakerInviteIcons";
+
 interface Props {
-  saveAsOverride: boolean;
-  setSaveAsOverride: (v: boolean) => void;
   busy: boolean;
-  canSend: boolean; // email is present + valid + speaker persisted
-  canSendReason: string | null; // inline hint when !canSend
+  canSend: boolean;
+  canSendReason: string | null;
+  hasOverride: boolean;
   onCancel: () => void;
+  onRevert: () => void;
   onMarkInvited: () => void;
   onPrint: () => void;
   onSend: () => void;
 }
 
-/** Top-of-page action bar for PrepareInvitationDialog/Page. Four
- *  terminal actions rendered as a connected button group so they take
- *  less horizontal room than individual buttons with gaps — important
- *  on mobile where the header wraps tightly. */
+/** Top-of-page action toolbar for the Prepare Invitation page.
+ *  Icon-only buttons in a connected group — tight on space, labels
+ *  travel in `title` (tooltip on desktop hover) and `aria-label` (for
+ *  screen readers + mobile assistive tech). On mobile the whole group
+ *  centers below the title block; on desktop it right-aligns. */
 export function PrepareInvitationActionBar({
-  saveAsOverride,
-  setSaveAsOverride,
   busy,
   canSend,
   canSendReason,
+  hasOverride,
   onCancel,
+  onRevert,
   onMarkInvited,
   onPrint,
   onSend,
 }: Props) {
   return (
-    <div className="flex flex-col gap-1.5 items-end">
-      <label className="flex items-center gap-2 font-sans text-[11px] sm:text-[12px] text-walnut-2 select-none">
-        <input
-          type="checkbox"
-          checked={saveAsOverride}
-          onChange={(e) => setSaveAsOverride(e.target.checked)}
-          disabled={busy}
-          className="accent-bordeaux"
-        />
-        <span className="hidden sm:inline">Save as per-speaker override</span>
-        <span className="sm:hidden">Save as override</span>
-      </label>
+    <div className="w-full lg:w-auto flex flex-col items-center lg:items-end gap-1">
       <div className="inline-flex isolate rounded-md shadow-[0_1px_0_rgba(35,24,21,0.08)]">
-        <GroupBtn onClick={onCancel} disabled={busy} position="first">
-          Cancel
+        <GroupBtn position="first" label="Cancel" onClick={onCancel} disabled={busy}>
+          <RemoveIcon />
         </GroupBtn>
-        <GroupBtn onClick={onMarkInvited} disabled={busy} position="mid">
-          <span className="hidden sm:inline">Mark invited only</span>
-          <span className="sm:hidden">Mark invited</span>
+        <GroupBtn
+          position="mid"
+          label={hasOverride ? "Clear per-speaker override" : "Revert to ward default"}
+          indicator={hasOverride}
+          onClick={onRevert}
+          disabled={busy}
+        >
+          <RevertIcon />
         </GroupBtn>
-        <GroupBtn onClick={onPrint} disabled={busy} position="mid">
-          <span className="hidden sm:inline">Print letter</span>
-          <span className="sm:hidden">Print</span>
+        <GroupBtn position="mid" label="Mark invited only" onClick={onMarkInvited} disabled={busy}>
+          <CheckIcon />
         </GroupBtn>
-        <GroupBtn onClick={onSend} disabled={busy || !canSend} position="last" primary>
-          {busy ? (
-            "…"
-          ) : (
-            <>
-              <span className="hidden sm:inline">Send email</span>
-              <span className="sm:hidden">Send</span>
-            </>
-          )}
+        <GroupBtn position="mid" label="Print letter" onClick={onPrint} disabled={busy}>
+          <PrintIcon />
+        </GroupBtn>
+        <GroupBtn
+          position="last"
+          label="Send email"
+          onClick={onSend}
+          disabled={busy || !canSend}
+          primary
+        >
+          <SendIcon />
         </GroupBtn>
       </div>
       {canSendReason && (
@@ -74,20 +72,34 @@ interface GroupBtnProps {
   onClick: () => void;
   disabled?: boolean;
   primary?: boolean;
+  /** Small walnut dot tucked under the icon to signal "this speaker
+   *  currently has an override that Revert will clear". */
+  indicator?: boolean;
   position: "first" | "mid" | "last";
+  label: string;
   children: React.ReactNode;
 }
 
-function GroupBtn({ onClick, disabled, primary, position, children }: GroupBtnProps) {
+function GroupBtn({
+  onClick,
+  disabled,
+  primary,
+  indicator,
+  position,
+  label,
+  children,
+}: GroupBtnProps) {
   const rounded = position === "first" ? "rounded-l-md" : position === "last" ? "rounded-r-md" : "";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
+      aria-label={label}
+      title={label}
       className={[
-        "px-2.5 py-1.5 sm:px-3 sm:py-1.5 font-sans text-[11.5px] sm:text-[12.5px] font-semibold",
-        "border whitespace-nowrap transition-colors focus:outline-none focus:z-10",
+        "relative inline-flex items-center justify-center px-3 py-2 sm:px-3.5 sm:py-2.5",
+        "border transition-colors focus:outline-none focus:z-10 focus:ring-2 focus:ring-bordeaux/30",
         "disabled:opacity-60 disabled:cursor-not-allowed",
         rounded,
         position !== "first" && "-ml-px",
@@ -99,6 +111,28 @@ function GroupBtn({ onClick, disabled, primary, position, children }: GroupBtnPr
         .join(" ")}
     >
       {children}
+      {indicator && (
+        <span aria-hidden className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-bordeaux" />
+      )}
     </button>
+  );
+}
+
+function RevertIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M3 7v6h6" />
+      <path d="M3 13a9 9 0 1 0 3-7.7L3 9" />
+    </svg>
   );
 }

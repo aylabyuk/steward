@@ -25,7 +25,6 @@ export function PrepareInvitationPage() {
   const speakers = useSpeakers(date ?? null);
   const { data: letterTemplate } = useSpeakerLetterTemplate();
   const { data: emailTemplate } = useSpeakerEmailTemplate();
-  const [saveAsOverride, setSaveAsOverride] = useState(false);
   const [done, setDone] = useState(false);
 
   const speaker = speakers.data?.find((s) => s.id === speakerId) ?? null;
@@ -62,7 +61,6 @@ export function PrepareInvitationPage() {
     speakerTopic: speaker?.data.topic ?? "",
     inviterName,
     vars,
-    saveAsOverride,
     form,
     emailTemplate,
     onDone: () => setDone(true),
@@ -123,12 +121,12 @@ export function PrepareInvitationPage() {
           </p>
         </div>
         <PrepareInvitationActionBar
-          saveAsOverride={saveAsOverride}
-          setSaveAsOverride={setSaveAsOverride}
           busy={form.busy}
           canSend={canSend}
           canSendReason={canSendReason}
+          hasOverride={form.letterHasOverride}
           onCancel={() => window.close()}
+          onRevert={() => void form.clearLetterOverride()}
           onMarkInvited={actions.markInvited}
           onPrint={() => void printInvitationLetter(speaker.data, date)}
           onSend={actions.send}
@@ -142,11 +140,7 @@ export function PrepareInvitationPage() {
             footer={form.letterFooter}
             setBody={form.setLetterBody}
             setFooter={form.setLetterFooter}
-            hasOverride={form.letterHasOverride}
-            disabled={form.busy}
             vars={vars}
-            onRevertToDefault={form.revertLetterToWardDefault}
-            onClearOverride={() => void form.clearLetterOverride()}
           />
         ) : (
           <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
