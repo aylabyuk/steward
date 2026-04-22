@@ -142,14 +142,16 @@ export function SpeakerLetterTemplatePage() {
           <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
             Preview — 8.5 × 11 in · sample data
           </div>
-          <div className="overflow-auto rounded-md bg-parchment-2/40 p-4 sm:p-6 flex justify-center lg:max-h-[calc(100dvh-9rem)]">
-            <LetterCanvas
-              wardName={wardName}
-              assignedDate={PREVIEW_VARS.date}
-              today={PREVIEW_VARS.today}
-              bodyMarkdown={renderedBody}
-              footerMarkdown={renderedFooter}
-            />
+          <div className="overflow-auto rounded-md bg-parchment-2/40 p-4 sm:p-6 lg:max-h-[calc(100dvh-9rem)]">
+            <div className="mx-auto w-fit">
+              <LetterCanvas
+                wardName={wardName}
+                assignedDate={PREVIEW_VARS.date}
+                today={PREVIEW_VARS.today}
+                bodyMarkdown={renderedBody}
+                footerMarkdown={renderedFooter}
+              />
+            </div>
           </div>
         </aside>
       </div>
