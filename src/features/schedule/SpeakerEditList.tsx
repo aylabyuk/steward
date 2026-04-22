@@ -112,20 +112,22 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {drafts.map((d, i) => (
-        <SpeakerEditCard
-          key={d.tempId}
-          draft={d}
-          index={i}
-          date={date}
-          onChange={(partial) => updateDraft(d.tempId, partial)}
-          onRemove={() => removeDraft(d.tempId)}
-        />
-      ))}
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 lg:gap-3.5 items-start">
+        {drafts.map((d, i) => (
+          <SpeakerEditCard
+            key={d.tempId}
+            draft={d}
+            index={i}
+            date={date}
+            onChange={(partial) => updateDraft(d.tempId, partial)}
+            onRemove={() => removeDraft(d.tempId)}
+          />
+        ))}
+      </div>
       <button
         onClick={addDraft}
-        className="self-start font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 inline-flex items-center gap-1.5 transition-colors mt-1"
+        className="self-start font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 inline-flex items-center gap-1.5 transition-colors"
       >
         <svg
           width="12"
