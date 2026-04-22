@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
@@ -18,7 +18,12 @@ interface Props {
   /** Active bishopric + clerk snapshot from send time. Lets bishop
    *  message bubbles show real names on the speaker's side — they
    *  can't read ward members directly. */
-  bishopricParticipants: readonly { uid: string; displayName: string; role: "bishopric" | "clerk" }[];
+  bishopricParticipants: readonly {
+    uid: string;
+    displayName: string;
+    role: "bishopric" | "clerk";
+    email?: string;
+  }[];
   /** True when the invitation already has a response recorded. Quick
    *  actions are hidden, composer stays available for ongoing chat. */
   hasResponse: boolean;
@@ -39,15 +44,19 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     const map = new Map<string, AuthorInfo>();
     map.set(`speaker:${props.token}`, { displayName: props.speakerName, role: "speaker" });
     for (const m of props.bishopricParticipants) {
-      map.set(`uid:${m.uid}`, { displayName: m.displayName, role: m.role });
+      const info: AuthorInfo = { displayName: m.displayName, role: m.role };
+      if (m.email) info.email = m.email;
+      map.set(`uid:${m.uid}`, info);
     }
-    if (user?.photoURL && twilio.identity) {
+    if (user && twilio.identity) {
       const existing = map.get(twilio.identity);
-      map.set(twilio.identity, {
+      const info: AuthorInfo = {
         displayName: existing?.displayName ?? user.displayName ?? "You",
-        ...(existing?.role ? { role: existing.role } : {}),
-        photoURL: user.photoURL,
-      });
+      };
+      if (existing?.role) info.role = existing.role;
+      if (user.photoURL) info.photoURL = user.photoURL;
+      if (user.email) info.email = user.email;
+      map.set(twilio.identity, info);
     }
     for (const [id, info] of authors) {
       const existing = map.get(id);
@@ -59,10 +68,36 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     props.speakerName,
     props.bishopricParticipants,
     twilio.identity,
-    user?.photoURL,
-    user?.displayName,
+    user,
     authors,
   ]);
+
+  // Publish the speaker's signed-in email as their own Twilio
+  // participant attribute so the bishop's client can label the
+  // bubbles with it + drive the identity banner without reading the
+  // invitation's response doc. Fires once Twilio is ready; ignored
+  // silently if the participant isn't found yet (next render will
+  // retry via the effect's auth deps).
+  useEffect(() => {
+    if (twilio.status !== "ready" || !conversation || !user?.email) return;
+    const identity = `speaker:${props.token}`;
+    (async () => {
+      try {
+        const p = await conversation.getParticipantByIdentity(identity);
+        if (!p) return;
+        const existing = (p.attributes as Record<string, unknown> | null) ?? {};
+        await p.updateAttributes({
+          ...existing,
+          displayName: props.speakerName,
+          role: "speaker",
+          email: user.email,
+          ...(user.photoURL ? { photoURL: user.photoURL } : {}),
+        });
+      } catch {
+        // Non-fatal — bishop's banner falls back to response.actorEmail.
+      }
+    })();
+  }, [twilio.status, conversation, user, props.token, props.speakerName]);
 
   async function ensureReady(): Promise<boolean> {
     if (!user) await signIn();

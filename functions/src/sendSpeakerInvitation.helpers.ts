@@ -25,6 +25,7 @@ export interface BishopricSnapshot {
   uid: string;
   displayName: string;
   role: "bishopric" | "clerk";
+  email: string;
 }
 
 /** Pulls every active bishopric + clerk member from the ward and
@@ -50,8 +51,14 @@ export async function addBishopricParticipants(
       await addChatParticipant(conversationSid, `uid:${doc.id}`, {
         displayName: member.displayName,
         role: member.role,
+        email: member.email,
       });
-      added.push({ uid: doc.id, displayName: member.displayName, role: member.role });
+      added.push({
+        uid: doc.id,
+        displayName: member.displayName,
+        role: member.role,
+        email: member.email,
+      });
     } catch (err) {
       logger.warn("failed to add chat participant", {
         uid: doc.id,

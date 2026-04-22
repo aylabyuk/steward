@@ -22,6 +22,10 @@ export interface AuthorInfo {
    *  the current user; other participants fall through to initials
    *  unless we're fed a URL from somewhere else. */
   photoURL?: string;
+  /** Signed-in Google email — the chat bubble eyebrow renders this
+   *  instead of displayName, and the bishop's identity banner uses
+   *  it to show "speaker verified / mismatch". */
+  email?: string;
 }
 
 /** Map keyed by participant identity (e.g. `uid:abc123`,
@@ -53,9 +57,16 @@ function toChatMessage(m: Message): ChatMessage {
 }
 
 function parseAuthorInfo(p: Participant): AuthorInfo | null {
-  const attrs = p.attributes as { displayName?: string; role?: AuthorInfo["role"] } | null;
+  const attrs = p.attributes as {
+    displayName?: string;
+    role?: AuthorInfo["role"];
+    email?: string;
+  } | null;
   if (!attrs?.displayName) return null;
-  return attrs.role ? { displayName: attrs.displayName, role: attrs.role } : { displayName: attrs.displayName };
+  const info: AuthorInfo = { displayName: attrs.displayName };
+  if (attrs.role) info.role = attrs.role;
+  if (attrs.email) info.email = attrs.email;
+  return info;
 }
 
 /** Subscribes to a single conversation's message stream and loads
