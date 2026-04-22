@@ -148,7 +148,7 @@ export function SpeakerLetterTemplatePage() {
             today={PREVIEW_VARS.today}
             bodyMarkdown={renderedBody}
             footerMarkdown={renderedFooter}
-            maxH="calc(100dvh - 9rem)"
+            height="calc(100dvh - 9rem)"
           />
         </aside>
       </div>
