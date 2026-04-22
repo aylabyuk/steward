@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { defaultMeetingType } from "@/features/meetings/ensureMeetingDoc";
+import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
 import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
 import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "@/hooks/useUpcomingMeetings";
@@ -40,6 +41,7 @@ export function ScheduleView() {
 
   return (
     <TwilioChatProvider>
+      <TwilioAutoConnect wardId={wardId} />
       <main className="pb-12">
         <SubscribePrompt />
 

@@ -29,6 +29,14 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
     if (twilio.status === "idle") void twilio.connect({ wardId });
   }, [twilio, wardId]);
 
+  // Mark-read horizon bumps whenever the bishop is actively viewing
+  // the thread and new messages land. Clears the unread badge on the
+  // Sunday card's chat icon without additional plumbing.
+  useEffect(() => {
+    if (!conversation || messages.length === 0) return;
+    void conversation.setAllMessagesRead();
+  }, [conversation, messages.length]);
+
   async function onApply() {
     if (!user) return;
     setApplying(true);
