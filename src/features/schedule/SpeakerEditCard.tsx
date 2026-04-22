@@ -3,6 +3,7 @@ import { cn } from "@/lib/cn";
 import { isValidEmail } from "@/lib/email";
 import { SpeakerCardHeader } from "./SpeakerCardHeader";
 import type { Draft } from "./speakerDraft";
+import { SpeakerLockedBand } from "./SpeakerLockedBand";
 import { SpeakerStatusPills } from "./SpeakerStatusPills";
 
 interface Props {
@@ -10,19 +11,30 @@ interface Props {
   index: number;
   onChange: (partial: Partial<Draft>) => void;
   onRemove: () => void;
+  /** Step-2 read-only mode: disables all inputs, hides the remove
+   *  button, and swaps the status pills for a Prepare-invitation
+   *  action (planned) or an "already handled" note (invited /
+   *  confirmed). The same card shell renders in both modes so the
+   *  modal's dimensions stay stable across steps. */
+  locked?: { date: string };
 }
 
 const INPUT_CLS =
-  "font-sans text-[13.5px] px-2.5 py-2 bg-chalk border border-border-strong rounded-md text-walnut w-full transition-colors placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15";
+  "font-sans text-[13.5px] px-2.5 py-2 bg-chalk border border-border-strong rounded-md text-walnut w-full transition-colors placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15 disabled:bg-parchment-2 disabled:text-walnut-2 disabled:cursor-not-allowed";
 
 const LABEL_CLS = "font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep font-medium";
 
-export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
+export function SpeakerEditCard({ draft, index, onChange, onRemove, locked }: Props) {
+  const readOnly = Boolean(locked);
   return (
-    <div className="bg-chalk border border-border rounded-lg p-3">
-      <SpeakerCardHeader index={index} onRemove={onRemove} />
+    <div className="bg-chalk border border-border rounded-lg p-3 flex flex-col">
+      <SpeakerCardHeader index={index} onRemove={readOnly ? null : onRemove} />
 
-      <SpeakerStatusPills status={draft.status} onChange={(status) => onChange({ status })} />
+      {locked ? (
+        <SpeakerLockedBand draft={draft} date={locked.date} />
+      ) : (
+        <SpeakerStatusPills status={draft.status} onChange={(status) => onChange({ status })} />
+      )}
 
       <div className="flex flex-col gap-2.5">
         <label className="flex flex-col gap-1">
@@ -32,6 +44,7 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
           <input
             value={draft.name}
             onChange={(e) => onChange({ name: e.target.value })}
+            disabled={readOnly}
             placeholder="e.g. Sister Hannah Reeves"
             className={INPUT_CLS}
           />
@@ -48,6 +61,7 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
             type="email"
             value={draft.email}
             onChange={(e) => onChange({ email: e.target.value })}
+            disabled={readOnly}
             placeholder="name@example.com"
             aria-invalid={draft.email.trim().length > 0 && !isValidEmail(draft.email)}
             className={cn(
@@ -57,7 +71,7 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
                 "border-bordeaux focus:border-bordeaux focus:ring-bordeaux/25",
             )}
           />
-          {draft.email.trim().length > 0 && !isValidEmail(draft.email) && (
+          {!readOnly && draft.email.trim().length > 0 && !isValidEmail(draft.email) && (
             <span className="font-sans text-[11.5px] text-bordeaux mt-0.5">
               Enter a valid email address (e.g. name@example.com).
             </span>
@@ -75,6 +89,7 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
             type="tel"
             value={draft.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
+            disabled={readOnly}
             placeholder="555-123-4567"
             className={INPUT_CLS}
           />
@@ -90,6 +105,7 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
           <input
             value={draft.topic}
             onChange={(e) => onChange({ topic: e.target.value })}
+            disabled={readOnly}
             placeholder="e.g. On the still, small voice"
             className={INPUT_CLS}
           />
@@ -101,11 +117,12 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove }: Props) {
               <button
                 key={r}
                 onClick={() => onChange({ role: r })}
+                disabled={readOnly}
                 className={cn(
-                  "font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border transition-colors",
+                  "font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border transition-colors disabled:cursor-not-allowed",
                   draft.role === r
-                    ? "bg-walnut text-parchment border-walnut"
-                    : "bg-chalk text-walnut-2 border-border-strong hover:bg-parchment-2",
+                    ? "bg-walnut text-parchment border-walnut disabled:opacity-80"
+                    : "bg-chalk text-walnut-2 border-border-strong hover:bg-parchment-2 disabled:opacity-60 disabled:hover:bg-chalk",
                 )}
               >
                 {r}
