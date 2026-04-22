@@ -39,3 +39,21 @@ export const wardInviteTemplateSchema = z.object({
   updatedAt: z.any().optional(),
 });
 export type WardInviteTemplate = z.infer<typeof wardInviteTemplateSchema>;
+
+/**
+ * Ward-level editable template for the **speaker email body** — the
+ * plain-text message that goes into the `mailto:` when a bishop clicks
+ * "Send email" for a planned speaker. Distinct from the speaker letter
+ * template (which governs the rich letter on the public landing page):
+ * this is what lands in the recipient's inbox before they click the
+ * link. A good default names purpose, sender, and Sunday upfront so
+ * the email doesn't read like a phishing attempt.
+ *
+ * Variables: `{{speakerName}}`, `{{date}}`, `{{wardName}}`,
+ * `{{inviterName}}`, `{{topic}}`, `{{inviteUrl}}`.
+ */
+export const speakerEmailTemplateSchema = z.object({
+  bodyMarkdown: z.string(),
+  updatedAt: z.any().optional(),
+});
+export type SpeakerEmailTemplate = z.infer<typeof speakerEmailTemplateSchema>;

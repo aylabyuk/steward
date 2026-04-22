@@ -92,4 +92,19 @@ describe("letter template rules", () => {
       }),
     );
   });
+
+  it("covers the speakerEmail template under the same rule", async () => {
+    const db = authedAs(env, "clerk", "c@x.com").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `wards/${WARD}/templates/speakerEmail`), {
+        bodyMarkdown: "Dear {{speakerName}}, …",
+      }),
+    );
+    const stranger = authedAs(env, "stranger", "s@x.com").firestore();
+    await assertFails(
+      setDoc(doc(stranger, `wards/${WARD}/templates/speakerEmail`), {
+        bodyMarkdown: "tampered",
+      }),
+    );
+  });
 });
