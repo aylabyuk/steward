@@ -19,16 +19,25 @@ export async function createConversation(input: CreateConversationInput): Promis
   return convo.sid;
 }
 
-/** Bishopric-side participant. Identity is `uid:{firebaseUid}` so the
- *  Twilio Access Token the client later mints against that identity
- *  can see this conversation. */
+/** Chat participant identified by a persistent string (not a phone
+ *  binding). Used for every bishopric / clerk in the ward (identity
+ *  `uid:{firebaseUid}`) plus the speaker (`speaker:{token}`).
+ *
+ *  Attributes travel with the participant and are readable by every
+ *  other client — that's how we carry display-name + role down so
+ *  the message list can show "Bishop Haymond" instead of a raw
+ *  `uid:abc123` on each bubble. */
 export async function addChatParticipant(
   conversationSid: string,
   identity: string,
+  attributes?: { displayName?: string; role?: "speaker" | "bishopric" | "clerk" },
 ): Promise<string> {
   const p = await service()
     .conversations(conversationSid)
-    .participants.create({ identity });
+    .participants.create({
+      identity,
+      ...(attributes ? { attributes: JSON.stringify(attributes) } : {}),
+    });
   return p.sid;
 }
 

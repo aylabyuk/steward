@@ -2,7 +2,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { sendEmail } from "./sendgrid/client.js";
-import { deleteConversation } from "./twilio/conversations.js";
+import { addChatParticipant, deleteConversation } from "./twilio/conversations.js";
 import { sendSmsDirect } from "./twilio/messaging.js";
 import { buildEmailHtml, buildEmailText, buildSmsBody } from "./invitationEmailBody.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
@@ -21,6 +21,38 @@ export async function assertActiveMember(wardId: string, uid: string): Promise<v
  *  Conversation for this (wardId, speakerId, meetingDate). Twilio
  *  refuses to bind the same (phone, proxy) pair twice, so a re-send
  *  for the same speaker would otherwise fail at addSmsParticipant. */
+/** Pulls every active bishopric + clerk member from the ward and
+ *  adds them to the new conversation with displayName + role
+ *  attributes, so the speaker's UI can show who's speaking on each
+ *  message. Returns the count of participants added — used only for
+ *  logging. Per-add failures are logged and swallowed; the
+ *  conversation stays usable with whichever participants succeeded. */
+export async function addBishopricParticipants(
+  wardId: string,
+  conversationSid: string,
+): Promise<number> {
+  const snap = await getFirestore().collection(`wards/${wardId}/members`).get();
+  let added = 0;
+  for (const doc of snap.docs) {
+    const member = doc.data() as MemberDoc;
+    if (!member.active) continue;
+    if (member.role !== "bishopric" && member.role !== "clerk") continue;
+    try {
+      await addChatParticipant(conversationSid, `uid:${doc.id}`, {
+        displayName: member.displayName,
+        role: member.role,
+      });
+      added += 1;
+    } catch (err) {
+      logger.warn("failed to add chat participant", {
+        uid: doc.id,
+        err: (err as Error).message,
+      });
+    }
+  }
+  return added;
+}
+
 export async function cleanupPriorConversations(
   wardId: string,
   speakerId: string,
