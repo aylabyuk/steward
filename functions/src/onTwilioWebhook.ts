@@ -8,7 +8,6 @@ import {
   type ResolvedInvitation,
 } from "./invitationReplyNotify.js";
 import {
-  SENDGRID_SECRETS,
   TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN,
   TWILIO_CONVERSATIONS_SERVICE_SID,
@@ -16,12 +15,15 @@ import {
 } from "./secrets.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
+// SendGrid secrets intentionally omitted — SMS-only v1. emailSpeaker()
+// already try/catches a missing-key failure, so the webhook still
+// handles speaker replies; it just no-ops on the bishop-reply email
+// fan-out until SendGrid is wired.
 const WEBHOOK_SECRETS = [
   TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN,
   TWILIO_CONVERSATIONS_SERVICE_SID,
   TWILIO_FROM_NUMBER,
-  ...SENDGRID_SECRETS,
 ];
 
 /** Twilio Conversations Service webhook. Wired to this endpoint via

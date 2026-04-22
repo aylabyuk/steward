@@ -1,7 +1,7 @@
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
-import { SENDGRID_SECRETS, STEWARD_ORIGIN, TWILIO_SECRETS } from "./secrets.js";
+import { STEWARD_ORIGIN, TWILIO_SECRETS } from "./secrets.js";
 import {
   addChatParticipant,
   addSmsParticipant,
@@ -18,7 +18,12 @@ import type {
 import type { MemberDoc } from "./types.js";
 
 export const sendSpeakerInvitation = onCall(
-  { secrets: [...TWILIO_SECRETS, ...SENDGRID_SECRETS] },
+  // SendGrid secrets are intentionally omitted — we're shipping SMS-only
+  // for v1. If the bishop asks for email delivery, the server attempts
+  // sendEmail() which throws on the missing key; the surrounding
+  // try/catch records the failure in deliveryRecord and the SMS path
+  // continues unaffected.
+  { secrets: TWILIO_SECRETS },
   async (
     request: CallableRequest<SendSpeakerInvitationRequest>,
   ): Promise<SendSpeakerInvitationResponse> => {
