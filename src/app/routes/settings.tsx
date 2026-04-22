@@ -22,6 +22,11 @@ const links = [
     desc: "Ward default template shown to speakers + printed letter",
   },
   {
+    to: "/settings/templates/speaker-email",
+    label: "Speaker invitation email",
+    desc: "Plain-text email body when you hit Send email on a planned speaker",
+  },
+  {
     to: "/settings/templates/ward-invites",
     label: "Ward invitation message",
     desc: "Greeting shown when you invite a new bishopric or clerk member",
