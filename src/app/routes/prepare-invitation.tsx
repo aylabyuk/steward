@@ -134,7 +134,7 @@ export function PrepareInvitationPage() {
           onSend={actions.send}
         />
       </header>
-      <div className="flex-1 overflow-auto px-5 sm:px-8 pt-5 pb-8">
+      <div className="flex-1 min-h-0 overflow-auto px-5 sm:px-8 pt-5 pb-8">
         {form.hydrated ? (
           <PrepareInvitationLetterTab
             key={form.resetKey}
