@@ -54,7 +54,6 @@ export function SpeakerInvitationLandingPage(): React.ReactElement {
               conversationSid={invitation.conversationSid}
               speakerName={invitation.speakerName}
               bishopricParticipants={invitation.bishopricParticipants}
-              speakerEmail={invitation.speakerEmail}
               hasResponse={!!invitation.response}
             />
           )}

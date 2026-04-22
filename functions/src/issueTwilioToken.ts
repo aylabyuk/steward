@@ -6,10 +6,8 @@ import type { MemberDoc } from "./types.js";
 
 interface Request {
   wardId: string;
-  /** Invitation token the speaker is trying to talk into. Speakers
-   *  must supply this; bishops may supply it for informational
-   *  logging but it doesn't affect scope (their JWT covers all
-   *  conversations in the service). */
+  /** Required on the speaker path (scopes the JWT identity to this
+   *  invitation). Bishopric callers may omit it. */
   invitationToken?: string;
 }
 
@@ -23,18 +21,20 @@ interface Response {
  *
  *  Two paths:
  *  - **Bishopric** — caller is an active ward member. Identity
- *    becomes `uid:{firebaseUid}`; the grant is service-wide so they
- *    can open any conversation they're a participant of.
- *  - **Speaker** — caller's verified Google email matches the
- *    invitation's `speakerEmail` snapshot. Identity is
- *    `speaker:{token}` (ephemeral per-invitation, not their uid, so
- *    Twilio's history doesn't accumulate a long-lived personal
- *    identity). Scoped to just that one conversation via
- *    participant membership (added at send time).
+ *    `uid:{firebaseUid}`; service-wide grant so they can see every
+ *    conversation they're a participant of.
+ *  - **Speaker** — any signed-in caller with a verified Google
+ *    account + a valid invitationToken. Identity `speaker:{token}`
+ *    (ephemeral per-invitation, not their uid). The token itself
+ *    is the authorization; no email-match against the invitation
+ *    is required. Pre-expiry only.
  *
- *  `failed-precondition` on missing speakerEmail (no phone/email on
- *  file), `deadline-exceeded` post-expiry, `permission-denied` on
- *  mismatch. The client uses the error code to pick the recovery UI. */
+ *  Errors:
+ *  - `unauthenticated` / `permission-denied` on unverified email
+ *  - `invalid-argument` on missing wardId / invitationToken
+ *  - `not-found` when the invitation doesn't exist
+ *  - `deadline-exceeded` post-expiry
+ *  The client uses the error code to pick the recovery UI. */
 export const issueTwilioToken = onCall(
   { secrets: TWILIO_SECRETS },
   async (request: CallableRequest<Request>): Promise<Response> => {
@@ -50,10 +50,11 @@ export const issueTwilioToken = onCall(
       return { jwt, identity: `uid:${auth.uid}`, expiresInSeconds: 3600 };
     }
 
-    // Speaker path — email match on the invitation snapshot.
+    // Speaker path — verified Google account + a valid, unexpired
+    // invitation token is enough. The URL-bearer is treated as the
+    // speaker; actor identity is recorded on any write they make.
     if (!invitationToken) throw new HttpsError("invalid-argument", "invitationToken required.");
-    const email = auth.token.email?.toLowerCase();
-    if (!email || auth.token.email_verified !== true) {
+    if (auth.token.email_verified !== true) {
       throw new HttpsError("permission-denied", "Verified Google email required.");
     }
 
@@ -61,20 +62,7 @@ export const issueTwilioToken = onCall(
       .doc(`wards/${wardId}/speakerInvitations/${invitationToken}`)
       .get();
     if (!snap.exists) throw new HttpsError("not-found", "Invitation not found.");
-    const invitation = snap.data() as {
-      speakerEmail?: string;
-      expiresAt?: FirebaseFirestore.Timestamp;
-    };
-
-    if (!invitation.speakerEmail) {
-      throw new HttpsError("failed-precondition", "This invitation has no email on file.");
-    }
-    if (invitation.speakerEmail.toLowerCase() !== email) {
-      throw new HttpsError(
-        "permission-denied",
-        `This invitation is addressed to ${maskEmail(invitation.speakerEmail)}.`,
-      );
-    }
+    const invitation = snap.data() as { expiresAt?: FirebaseFirestore.Timestamp };
     if (invitation.expiresAt && invitation.expiresAt.toMillis() <= Date.now()) {
       throw new HttpsError("deadline-exceeded", "This invitation has expired.");
     }
@@ -89,14 +77,4 @@ async function isActiveMember(wardId: string, uid: string): Promise<boolean> {
   const snap = await getFirestore().doc(`wards/${wardId}/members/${uid}`).get();
   if (!snap.exists) return false;
   return (snap.data() as MemberDoc).active === true;
-}
-
-function maskPart(s: string): string {
-  return s.length <= 2 ? s : `${s[0]}${"*".repeat(s.length - 2)}${s.at(-1)}`;
-}
-
-function maskEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return email;
-  return `${maskPart(local)}@${maskPart(domain)}`;
 }

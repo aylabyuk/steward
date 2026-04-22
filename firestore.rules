@@ -126,12 +126,12 @@ service cloud.firestore {
       // Public read — the doc ID is the shareable token, and Firestore
       // auto-IDs are cryptographically random (~120 bits) so the URL
       // itself authorizes access. Creates + deletes stay member-only.
-      // Updates have two paths: active members can change anything, and
-      // a signed-in speaker whose verified Google email matches the
-      // snapshotted `speakerEmail` can update ONLY the `response`
-      // subtree, and only before the invitation's `expiresAt`. This
-      // lets the speaker self-respond without creating a ward member
-      // doc, while preventing any edit of the letter itself.
+      // Updates have two paths: active members can change anything,
+      // and any signed-in user with a verified Google account can
+      // update ONLY the `response` subtree (and only before
+      // `expiresAt`). The invitation token in the URL is the auth
+      // factor — no email match required; actorUid on the response
+      // still records who wrote it.
       match /speakerInvitations/{token} {
         allow read: if true;
         allow create, delete: if isActiveMember(wardId);
@@ -139,8 +139,6 @@ service cloud.firestore {
           || (isSignedIn()
               && request.auth.token.email_verified == true
               && request.time < resource.data.expiresAt
-              && resource.data.speakerEmail != null
-              && request.auth.token.email.lower() == resource.data.speakerEmail.lower()
               && request.resource.data.diff(resource.data).affectedKeys()
                   .hasOnly(['response']));
       }
