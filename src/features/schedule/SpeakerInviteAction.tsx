@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
+import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { formatAssignedDate } from "@/features/templates/letterDates";
+import { renderSpeakerEmailBody } from "@/features/templates/renderSpeakerEmailBody";
 import { sendSpeakerInvitation } from "@/features/templates/sendSpeakerInvitation";
-import { cn } from "@/lib/cn";
+import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTemplate";
 import { isValidEmail } from "@/lib/email";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import type { Draft } from "./speakerDraft";
+import { InviteActionBtn } from "./SpeakerInviteActionBtn";
 import { CheckIcon, MailIcon, PrintIcon, SendIcon } from "./SpeakerInviteIcons";
 
 interface Props {
@@ -19,7 +23,9 @@ interface Props {
 export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
+  const ward = useWardSettings();
   const authUser = useAuthStore((s) => s.user);
+  const { data: emailTemplate } = useSpeakerEmailTemplate();
   const inviterName =
     me?.data.displayName ?? authUser?.displayName ?? authUser?.email ?? "The bishopric";
   const email = draft.email.trim();
@@ -43,12 +49,20 @@ export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
         speakerTopic: draft.topic.trim() || undefined,
         inviterName,
       });
-      const url = `${window.location.origin}/invite/speaker/${wardId}/${token}`;
-      const subject = encodeURIComponent(`Invitation to speak — ${prettyDate(date)}`);
-      const body = encodeURIComponent(
-        `Dear ${draft.name},\n\nPlease open your invitation letter at the link below:\n${url}\n\nWith gratitude,\nThe bishopric`,
+      const inviteUrl = `${window.location.origin}/invite/speaker/${wardId}/${token}`;
+      const body = renderSpeakerEmailBody(
+        {
+          speakerName: draft.name,
+          date: formatAssignedDate(date),
+          wardName: ward.data?.name ?? "",
+          inviterName,
+          topic: draft.topic.trim() || "a topic of your choosing",
+          inviteUrl,
+        },
+        { template: emailTemplate?.bodyMarkdown },
       );
-      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      const subject = encodeURIComponent(`Invitation to speak — ${prettyDate(date)}`);
+      window.location.href = `mailto:${email}?subject=${subject}&body=${encodeURIComponent(body)}`;
       onMarkInvited();
     } catch (e) {
       setError(friendlyWriteError(e));
@@ -82,21 +96,21 @@ export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
           )}
         </div>
         <div className="inline-flex gap-1.5 shrink-0 flex-wrap ml-auto">
-          <Btn onClick={onMarkInvited} icon={invited ? <CheckIcon /> : null}>
+          <InviteActionBtn onClick={onMarkInvited} icon={invited ? <CheckIcon /> : null}>
             Mark invited
-          </Btn>
-          <Btn onClick={onPrint} icon={<PrintIcon />} primary={!emailValid}>
+          </InviteActionBtn>
+          <InviteActionBtn onClick={onPrint} icon={<PrintIcon />} primary={!emailValid}>
             Print letter
-          </Btn>
+          </InviteActionBtn>
           {hasEmail && (
-            <Btn
+            <InviteActionBtn
               onClick={() => void handleSendEmail()}
               icon={<SendIcon />}
               primary
               disabled={!emailValid || !persisted || sending}
             >
               {sending ? "Sending…" : "Send email"}
-            </Btn>
+            </InviteActionBtn>
           )}
         </div>
       </div>
@@ -108,36 +122,6 @@ export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
       )}
       {error && <p className="font-sans text-[12px] text-bordeaux">{error}</p>}
     </div>
-  );
-}
-
-function Btn({
-  onClick,
-  icon,
-  primary,
-  disabled,
-  children,
-}: {
-  onClick: () => void;
-  icon?: React.ReactNode;
-  primary?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "font-sans text-[12.5px] font-semibold px-3 py-1.5 rounded-md border inline-flex items-center gap-1.5 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed",
-        primary
-          ? "bg-bordeaux text-parchment border-bordeaux-deep hover:bg-bordeaux-deep shadow-[0_1px_0_rgba(35,24,21,0.18)] disabled:hover:bg-bordeaux"
-          : "bg-chalk text-walnut border-border-strong hover:bg-parchment-2 disabled:hover:bg-chalk",
-      )}
-    >
-      {icon}
-      {children}
-    </button>
   );
 }
 

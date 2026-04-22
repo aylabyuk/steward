@@ -10,6 +10,7 @@ import { MembersPage } from "./routes/members";
 import { NotificationSettingsPage } from "./routes/notification-settings";
 import { SettingsIndex } from "./routes/settings";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
+import { SpeakerEmailTemplatePage } from "./routes/templates-speaker-email";
 import { WardInviteTemplatePage } from "./routes/templates-ward-invites";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: "settings/members", element: <MembersPage /> },
       { path: "settings/notifications", element: <NotificationSettingsPage /> },
       { path: "settings/templates/speakers", element: <SpeakerLetterTemplatePage /> },
+      { path: "settings/templates/speaker-email", element: <SpeakerEmailTemplatePage /> },
       { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
     ],
   },
