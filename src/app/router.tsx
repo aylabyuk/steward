@@ -4,10 +4,13 @@ import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
 import { AcceptInvitePage } from "./routes/accept-invite";
+import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
 import { NotificationSettingsPage } from "./routes/notification-settings";
 import { SettingsIndex } from "./routes/settings";
+import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
+import { WardInviteTemplatePage } from "./routes/templates-ward-invites";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
 
@@ -23,6 +26,8 @@ export const router = createBrowserRouter([
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/members", element: <MembersPage /> },
       { path: "settings/notifications", element: <NotificationSettingsPage /> },
+      { path: "settings/templates/speakers", element: <SpeakerLetterTemplatePage /> },
+      { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
     ],
   },
   // Print views share AuthGate's auth + ward resolution (so
@@ -40,5 +45,9 @@ export const router = createBrowserRouter([
   // yet — AccessRequired would block them. The page handles its own
   // signed-in check.
   { path: "/accept-invite/:wardId", element: <AcceptInvitePage /> },
+  // Speaker invitation landing: fully public (no auth at all). The
+  // unguessable token in the URL authorizes the read per Firestore
+  // rules.
+  { path: "/invite/speaker/:wardId/:token", element: <SpeakerInvitationLandingPage /> },
   { path: "/login", element: <Login /> },
 ]);
