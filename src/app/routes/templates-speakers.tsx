@@ -98,7 +98,10 @@ export function SpeakerLetterTemplatePage() {
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
-        <div key={resetKey} className="flex flex-col gap-4 min-w-0">
+        <div
+          key={resetKey}
+          className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-9rem)] lg:overflow-y-auto lg:pr-2"
+        >
           <SpeakerLetterGuide />
           {seeded ? (
             <>
