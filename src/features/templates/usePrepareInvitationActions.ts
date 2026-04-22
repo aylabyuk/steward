@@ -1,7 +1,27 @@
 import { updateSpeaker } from "@/features/speakers/speakerActions";
+import type { DeliveryEntry } from "@/features/invitations/invitationsCallable";
 import { useAuthStore } from "@/stores/authStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { sendSpeakerInvitation } from "./sendSpeakerInvitation";
+
+/** Throws a user-facing error if any requested channel reports
+ *  `status: "failed"` in the callable's deliveryRecord. Partial
+ *  failures (email ok + SMS failed, or vice-versa) are still raised
+ *  — the bishop needs to know which one didn't land. */
+function assertChannelsDelivered(
+  deliveryRecord: readonly DeliveryEntry[],
+  requested: readonly ("email" | "sms")[],
+): void {
+  const failed = deliveryRecord.filter(
+    (e) => requested.includes(e.channel) && e.status === "failed",
+  );
+  if (failed.length === 0) return;
+  const messages = failed.map((e) => {
+    const label = e.channel === "email" ? "Email" : "SMS";
+    return e.error ? `${label}: ${e.error}` : `${label} delivery failed.`;
+  });
+  throw new Error(messages.join(" · "));
+}
 
 interface FormState {
   letterBody: string;
@@ -49,7 +69,7 @@ export function usePrepareInvitationActions(args: Args) {
   }
 
   async function sendVia(channels: ("email" | "sms")[]): Promise<void> {
-    await sendSpeakerInvitation({
+    const res = await sendSpeakerInvitation({
       wardId: args.wardId,
       meetingDate: args.date,
       speakerId: args.speakerId,
@@ -63,6 +83,12 @@ export function usePrepareInvitationActions(args: Args) {
       footerMarkdown: form.letterFooter,
       channels,
     });
+    // The callable returns 200 even when one or more delivery channels
+    // fail (the invitation doc + Twilio conversation are still created
+    // — rerunning would create duplicates). Surface channel failures
+    // here as thrown errors so the bishop sees them in the form error
+    // slot instead of a silent "Done" screen.
+    assertChannelsDelivered(res.deliveryRecord, channels);
     await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
   }
 
