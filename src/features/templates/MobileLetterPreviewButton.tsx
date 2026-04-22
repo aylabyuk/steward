@@ -10,11 +10,11 @@ interface Props {
   footerMarkdown: string;
 }
 
-/** Full-screen preview trigger shown only on mobile (`lg:hidden`).
- *  Tapping opens the 8.5×11 letter sheet as an overlay that fills
- *  the viewport — gives the bishop a proper look at the letter even
- *  on a phone, without trying to cram a preview column beside the
- *  editor on a narrow screen. */
+/** Mobile-only floating action button that opens the 8.5×11 preview
+ *  as a full-viewport overlay. `fixed` bottom-right so it's always
+ *  reachable while the bishop edits the letter below. Hidden at
+ *  `lg:` where the preview column is always visible alongside the
+ *  editor. */
 export function MobileLetterPreviewButton(props: Props) {
   const [open, setOpen] = useState(false);
   useLockBodyScroll(open);
@@ -23,9 +23,11 @@ export function MobileLetterPreviewButton(props: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="lg:hidden inline-flex items-center gap-2 rounded-md border border-border-strong bg-chalk px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-2 hover:bg-parchment-2"
+        aria-label="Preview letter"
+        className="lg:hidden fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-full bg-bordeaux text-chalk px-4 py-3 font-sans text-[13px] font-semibold shadow-[0_8px_24px_rgba(58,37,25,0.35)] hover:bg-bordeaux-deep active:scale-95 transition-transform"
       >
-        <EyeIcon /> Preview letter
+        <EyeIcon />
+        Preview
       </button>
       {open && (
         <div
@@ -58,8 +60,8 @@ export function MobileLetterPreviewButton(props: Props) {
 function EyeIcon() {
   return (
     <svg
-      width="12"
-      height="12"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

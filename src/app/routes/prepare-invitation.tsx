@@ -4,8 +4,8 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { printInvitationLetter } from "@/features/schedule/printInvitationLetter";
-import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
+import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
 import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTemplate";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
@@ -108,30 +108,20 @@ export function PrepareInvitationPage() {
 
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
-      <header className="sticky top-0 z-20 shrink-0 flex items-start justify-between gap-4 flex-wrap border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
-            Prepare invitation
-          </div>
-          <h1 className="font-display text-[24px] font-semibold text-walnut leading-tight truncate">
-            {speaker.data.name}
-          </h1>
-          <p className="font-serif italic text-[13px] text-walnut-3 truncate">
-            {hasEmail ? `Will be emailed to ${email}.` : "No email on file."}
-          </p>
-        </div>
-        <PrepareInvitationActionBar
-          busy={form.busy}
-          canSend={canSend}
-          canSendReason={canSendReason}
-          hasOverride={form.letterHasOverride}
-          onCancel={() => window.close()}
-          onRevert={() => void form.clearLetterOverride()}
-          onMarkInvited={actions.markInvited}
-          onPrint={() => void printInvitationLetter(speaker.data, date)}
-          onSend={actions.send}
-        />
-      </header>
+      <PrepareInvitationHeader
+        speakerName={speaker.data.name}
+        email={email}
+        hasEmail={hasEmail}
+        busy={form.busy}
+        canSend={canSend}
+        canSendReason={canSendReason}
+        hasOverride={form.letterHasOverride}
+        onCancel={() => window.close()}
+        onRevert={() => void form.clearLetterOverride()}
+        onMarkInvited={actions.markInvited}
+        onPrint={() => void printInvitationLetter(speaker.data, date)}
+        onSend={actions.send}
+      />
       <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
         {form.hydrated ? (
           <PrepareInvitationLetterTab
