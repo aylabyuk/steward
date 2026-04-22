@@ -33,7 +33,10 @@ export function ScaledLetterPreview({
   const fitScale = useFitScale(ref, LETTER_CANVAS_WIDTH_PX, LETTER_CANVAS_HEIGHT_PX);
   const [zoomPercent, setZoomPercent] = useState(() => Math.round(fitScale * 100));
   return (
-    <div className="rounded-md bg-parchment-2/40 overflow-hidden" style={{ height }}>
+    <div
+      className="rounded-md border border-border-strong bg-parchment-2/40 overflow-hidden"
+      style={{ height }}
+    >
       <div ref={ref} className="relative h-full w-full overflow-hidden select-none">
         {/* `key` reseeds initialScale when the container size changes
             so a window resize re-fits to the new column. */}
