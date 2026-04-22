@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useSpeakers } from "@/hooks/useMeeting";
-import { useSundayInvitationsSummary } from "@/features/invitations/useSundayInvitationsSummary";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel, type KindVariant } from "./kindLabel";
@@ -56,20 +55,12 @@ export function SundayCard({
   const editListRef = useRef<SpeakerEditListHandle>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
-  const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
-  // Captured at open-time inside the effect below so `needsApply`
-  // snapshot changes (e.g. Apply-as-confirmed flipping it back to
-  // false) don't re-enter the effect and yank the bishop back to
-  // step 1 mid-interaction.
-  const needsApplyRef = useRef(needsApply);
-  needsApplyRef.current = needsApply;
 
-  // Only fires on open/close transitions — deliberately omits
-  // needsApply from deps. The ref captures the current value at
-  // open time; subsequent changes don't trigger re-entry.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Always start on step 1 whenever the dialog opens. Response review
+  // + apply now live on the per-speaker chat icon on the Sunday card,
+  // not inside step 2, so there's no reason to skip the editor.
   useEffect(() => {
-    if (assignDialogOpen) setStep(needsApplyRef.current ? "invite" : "edit");
+    if (assignDialogOpen) setStep("edit");
   }, [assignDialogOpen]);
 
   if (cancelled) {
@@ -109,7 +100,6 @@ export function SundayCard({
         {...(kind.badge ? { badge: kind.badge } : {})}
         variant={kind.variant}
         locked={hasConfirmedSpeaker}
-        onReviewResponse={() => setAssignDialogOpen(true)}
       />
 
       {!kind.isSpecial && severity !== "none" && (
