@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
@@ -19,29 +19,22 @@ interface Props {
    *  message bubbles show real names on the speaker's side — they
    *  can't read ward members directly. */
   bishopricParticipants: readonly { uid: string; displayName: string; role: "bishopric" | "clerk" }[];
-  speakerEmail?: string | undefined;
   /** True when the invitation already has a response recorded. Quick
    *  actions are hidden, composer stays available for ongoing chat. */
   hasResponse: boolean;
 }
 
-/** Speaker-side chat pane: sign-in + email-match on first write,
- *  then plain chat with optional Yes/No quick actions until a
- *  response is recorded. */
+/** Speaker-side chat pane: sign-in on first write (any verified
+ *  Google account), then plain chat with optional Yes/No quick
+ *  actions until a response is recorded. The invitation token in
+ *  the URL is the auth factor — no email-match against the
+ *  invitation is enforced. */
 export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const user = useAuthStore((s) => s.user);
   const signIn = useAuthStore((s) => s.signIn);
-  const signOut = useAuthStore((s) => s.signOut);
   const twilio = useTwilioChat();
   const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
-  const [mismatch, setMismatch] = useState<string | null>(null);
 
-  // Merge author resolution. The speaker can't read ward members
-  // (Firestore rules block it), so the only fallback we can seed
-  // locally is the speaker's own identity from the invitation
-  // snapshot + the current user's Firebase Auth photoURL for their
-  // own messages. Bishopric authors rely on Twilio participant
-  // attributes carried in new conversations.
   const resolvedAuthors: AuthorMap = useMemo(() => {
     const map = new Map<string, AuthorInfo>();
     map.set(`speaker:${props.token}`, { displayName: props.speakerName, role: "speaker" });
@@ -72,15 +65,9 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   ]);
 
   async function ensureReady(): Promise<boolean> {
-    setMismatch(null);
     if (!user) await signIn();
     const current = useAuthStore.getState().user;
     if (!current) return false;
-    const authEmail = current.email?.toLowerCase() ?? "";
-    if (props.speakerEmail && authEmail !== props.speakerEmail.toLowerCase()) {
-      setMismatch(maskEmail(props.speakerEmail));
-      return false;
-    }
     if (twilio.status === "idle" || twilio.status === "error") {
       await twilio.connect({ wardId: props.wardId, invitationToken: props.token });
     }
@@ -117,25 +104,6 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         </p>
       </header>
 
-      {mismatch && (
-        <div className="px-4 py-3 bg-danger-soft border-b border-border">
-          <p className="font-sans text-[12.5px] text-bordeaux">
-            This invitation is addressed to {mismatch}. Sign in with that Google account.
-          </p>
-          <button
-            type="button"
-            onClick={async () => {
-              await signOut();
-              await twilio.disconnect();
-              setMismatch(null);
-            }}
-            className="mt-1 font-sans text-[12.5px] font-semibold text-bordeaux-deep underline"
-          >
-            Sign in with a different account
-          </button>
-        </div>
-      )}
-
       <ConversationThread
         messages={messages}
         currentIdentity={twilio.identity}
@@ -158,14 +126,4 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
       />
     </section>
   );
-}
-
-function maskPart(s: string): string {
-  return s.length <= 2 ? s : `${s[0]}${"*".repeat(s.length - 2)}${s.at(-1)}`;
-}
-
-function maskEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return email;
-  return `${maskPart(local)}@${maskPart(domain)}`;
 }

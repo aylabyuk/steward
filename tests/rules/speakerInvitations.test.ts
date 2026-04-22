@@ -123,22 +123,16 @@ describe("speaker invitation rules", () => {
       actorEmail: SPEAKER_EMAIL,
     };
 
-    it("lets a signed-in speaker with matching email write the response subtree", async () => {
+    it("lets any signed-in user write the response subtree (email-match no longer required)", async () => {
       await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: FUTURE });
-      const db = authedAs(env, "speaker-uid", SPEAKER_EMAIL).firestore();
+      const db = authedAs(env, "any-uid", "anyone@example.com").firestore();
       await assertSucceeds(updateDoc(doc(db, PATH), { response: sampleResponse }));
     });
 
-    it("is case-insensitive on the email match", async () => {
-      await seedWithContext({ speakerEmail: "Speaker@Example.COM", expiresAt: FUTURE });
-      const db = authedAs(env, "speaker-uid", "speaker@example.com").firestore();
+    it("allows the response even without a speakerEmail on the invitation", async () => {
+      await seedWithContext({ expiresAt: FUTURE }); // no speakerEmail
+      const db = authedAs(env, "someone", "someone@example.com").firestore();
       await assertSucceeds(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks a signed-in user whose email does NOT match", async () => {
-      await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: FUTURE });
-      const db = authedAs(env, "stranger", "someone-else@example.com").firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
     });
 
     it("blocks an unauthenticated caller", async () => {
@@ -150,12 +144,6 @@ describe("speaker invitation rules", () => {
     it("blocks writes after expiresAt has passed", async () => {
       await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: PAST });
       const db = authedAs(env, "speaker-uid", SPEAKER_EMAIL).firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks when speakerEmail was never snapshotted", async () => {
-      await seedWithContext({ expiresAt: FUTURE }); // no speakerEmail
-      const db = authedAs(env, "someone", "someone@example.com").firestore();
       await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
     });
 
