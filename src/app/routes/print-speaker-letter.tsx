@@ -84,11 +84,31 @@ export function PrintSpeakerLetterPage() {
         @page { size: letter; margin: 0; }
         @media screen {
           html, body { background: #ede6d4; }
-          .print-stage { min-height: 100dvh; display: flex; justify-content: center; padding: 2rem 1rem; }
+          .print-stage {
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            padding: 2rem 1rem;
+          }
         }
         @media print {
-          html, body { background: white; }
-          .print-stage { padding: 0; }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            width: 8.5in;
+          }
+          .print-stage {
+            margin: 0;
+            padding: 0;
+            min-height: 0;
+            width: 8.5in;
+          }
+          .print-stage > * {
+            box-shadow: none !important;
+            margin: 0 !important;
+            width: 8.5in !important;
+          }
         }
       `}</style>
       <main className="print-stage">
