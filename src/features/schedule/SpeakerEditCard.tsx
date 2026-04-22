@@ -1,6 +1,7 @@
 import { SPEAKER_ROLES } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { isValidEmail } from "@/lib/email";
+import { isE164, toE164 } from "@/features/templates/smsInvitation";
 import { SpeakerCardHeader } from "./SpeakerCardHeader";
 import type { Draft } from "./speakerDraft";
 import { SpeakerLockedBand } from "./SpeakerLockedBand";
@@ -89,10 +90,25 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove, locked }: Pr
             type="tel"
             value={draft.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
+            onBlur={() => {
+              const normalized = toE164(draft.phone);
+              if (normalized !== draft.phone) onChange({ phone: normalized });
+            }}
             disabled={readOnly}
-            placeholder="555-123-4567"
-            className={INPUT_CLS}
+            placeholder="+1 416 555 1234"
+            aria-invalid={draft.phone.trim().length > 0 && !isE164(draft.phone)}
+            className={cn(
+              INPUT_CLS,
+              draft.phone.trim().length > 0 &&
+                !isE164(draft.phone) &&
+                "border-bordeaux focus:border-bordeaux focus:ring-bordeaux/25",
+            )}
           />
+          {!readOnly && draft.phone.trim().length > 0 && !isE164(draft.phone) && (
+            <span className="font-sans text-[11.5px] text-bordeaux mt-0.5">
+              Use international format: +1 then 10 digits, e.g. +14165551234.
+            </span>
+          )}
         </label>
         <label className="flex flex-col gap-1">
           <span className={LABEL_CLS}>
