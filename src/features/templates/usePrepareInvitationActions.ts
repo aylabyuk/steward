@@ -1,4 +1,5 @@
 import { buildMailto } from "@/features/speakers/buildMailto";
+import { updateSpeaker } from "@/features/speakers/speakerActions";
 import type { SpeakerEmailTemplate } from "@/lib/types";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { renderSpeakerEmailBody } from "./renderSpeakerEmailBody";
@@ -25,15 +26,16 @@ interface Args {
   saveAsOverride: boolean;
   form: FormState;
   emailTemplate: SpeakerEmailTemplate | null;
-  onClose: () => void;
-  onMarkInvited: () => void;
-  onPrint: () => void;
+  /** Called after a terminal action succeeds. Page typically flips to
+   *  a "Done" state so the bishop can close the tab. */
+  onDone: () => void;
 }
 
-/** Wraps the three terminal actions (Mark invited / Print / Send) with
- *  optional "save as override" persistence + busy/error bookkeeping.
- *  Send uses the ward speaker-email template directly for the mailto
- *  body — tweaks happen in the bishop's email client, not in-app. */
+/** Wraps Mark invited / Print / Send with optional "save as override"
+ *  persistence + busy/error bookkeeping. Used by the standalone
+ *  `/week/:date/speaker/:id/prepare` page — status flips and sends go
+ *  straight to Firestore here; the parent draft-state callback path
+ *  is gone because the page runs in its own tab. */
 export function usePrepareInvitationActions(args: Args) {
   const { form, saveAsOverride } = args;
 
@@ -43,7 +45,7 @@ export function usePrepareInvitationActions(args: Args) {
     try {
       if (saveAsOverride) await form.persistOverrides();
       await fn();
-      args.onClose();
+      args.onDone();
     } catch (e) {
       form.setError(friendlyWriteError(e));
     } finally {
@@ -52,8 +54,10 @@ export function usePrepareInvitationActions(args: Args) {
   }
 
   return {
-    markInvited: () => void runAction(() => args.onMarkInvited()),
-    print: () => void runAction(() => args.onPrint()),
+    markInvited: () =>
+      void runAction(() =>
+        updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" }),
+      ),
     send: () =>
       void runAction(async () => {
         const { token } = await sendSpeakerInvitation({
@@ -77,7 +81,7 @@ export function usePrepareInvitationActions(args: Args) {
           subject: `Invitation to speak — ${args.vars.date}`,
           body,
         });
-        args.onMarkInvited();
+        await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
       }),
   };
 }

@@ -7,6 +7,7 @@ import { AcceptInvitePage } from "./routes/accept-invite";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
+import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { NotificationSettingsPage } from "./routes/notification-settings";
 import { SettingsIndex } from "./routes/settings";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
@@ -32,15 +33,20 @@ export const router = createBrowserRouter([
       { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
     ],
   },
-  // Print views share AuthGate's auth + ward resolution (so
-  // currentWardStore.wardId gets populated for useMeeting / useSpeakers)
-  // but skip the AppShell wrapper, so the printed page doesn't include
-  // the topbar or centered content column.
+  // Print views + prepare-invitation share AuthGate's auth + ward
+  // resolution (so currentWardStore.wardId gets populated for
+  // useMeeting / useSpeakers) but skip the AppShell wrapper, so the
+  // page gets the full viewport — useful both for printing and for
+  // the full-screen editor opened in a new tab via window.open.
   {
     element: <AuthGate appShell={false} />,
     children: [
       { path: "/print/:date/congregation", element: <CongregationProgram /> },
       { path: "/print/:date/conducting", element: <ConductingProgram /> },
+      {
+        path: "/week/:date/speaker/:speakerId/prepare",
+        element: <PrepareInvitationPage />,
+      },
     ],
   },
   // Accept-invite skips AuthGate because the invitee isn't a ward member
