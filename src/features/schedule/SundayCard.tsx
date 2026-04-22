@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useSpeakers } from "@/hooks/useMeeting";
+import { useSundayInvitationsSummary } from "@/features/invitations/useSundayInvitationsSummary";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel, type KindVariant } from "./kindLabel";
@@ -54,11 +55,15 @@ export function SundayCard({
   const editListRef = useRef<SpeakerEditListHandle>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
+  const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
 
-  // Always start on step 1 whenever the dialog opens.
+  // When the dialog opens, default to step 2 if there's a pending
+  // response the bishop should review; otherwise step 1 (edit) as
+  // before. Bishop can always use "Back to edit" in step 2 to reach
+  // the editor if they actually want to change speakers.
   useEffect(() => {
-    if (assignDialogOpen) setStep("edit");
-  }, [assignDialogOpen]);
+    if (assignDialogOpen) setStep(needsApply ? "invite" : "edit");
+  }, [assignDialogOpen, needsApply]);
 
   if (cancelled) {
     return (
@@ -102,9 +107,10 @@ export function SundayCard({
         currentType={type}
         nonMeetingSundays={nonMeetingSundays}
         urgent={severity === "urgent"}
-        badge={kind.badge || undefined}
+        {...(kind.badge ? { badge: kind.badge } : {})}
         variant={kind.variant}
         locked={hasConfirmedSpeaker}
+        onReviewResponse={() => setAssignDialogOpen(true)}
       />
 
       {!kind.isSpecial && severity !== "none" && (
