@@ -32,9 +32,10 @@ export interface CreateSpeakerInput {
   date: string;
   name: string;
   nonMeetingSundays: readonly NonMeetingSunday[];
-  email?: string;
-  topic?: string;
-  role?: SpeakerRole;
+  email?: string | undefined;
+  phone?: string | undefined;
+  topic?: string | undefined;
+  role?: SpeakerRole | undefined;
 }
 
 export async function createSpeaker(input: CreateSpeakerInput): Promise<void> {
@@ -51,6 +52,7 @@ export async function createSpeaker(input: CreateSpeakerInput): Promise<void> {
       updatedAt: serverTimestamp(),
     };
     if (input.email) data.email = input.email;
+    if (input.phone) data.phone = input.phone;
     if (input.topic) data.topic = input.topic;
 
     const batch = writeBatch(db);
@@ -78,6 +80,7 @@ export async function updateSpeaker(
   updates: Partial<{
     name: string;
     email: string;
+    phone: string;
     topic: string;
     status: SpeakerStatus;
     role: SpeakerRole;

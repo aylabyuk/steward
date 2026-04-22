@@ -126,6 +126,10 @@ export type SpeakerLetterOverride = z.infer<typeof speakerLetterOverrideSchema>;
 export const speakerSchema = z.object({
   name: z.string().min(1),
   email: z.email().optional().or(z.literal("")),
+  // Free-form: bishops type what they'd text anyway (e.g. "555-123-4567",
+  // "+15551234567"). We sanitize to E.164-ish at send time for the `sms:`
+  // URL. Empty string tolerated so newly-added rows can persist as drafts.
+  phone: z.string().optional().or(z.literal("")),
   topic: z.string().optional(),
   status: speakerStatusSchema.catch("planned"),
   role: speakerRoleSchema.catch("Member"),
