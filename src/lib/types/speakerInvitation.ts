@@ -11,6 +11,37 @@ import { z } from "zod";
  * Snapshotting means the speaker keeps the exact letter they were
  * sent, even if the ward edits the template later.
  */
+/** One entry per channel the bishop asked us to deliver on at send time.
+ *  Lets the UI render a per-channel status ("email ✓ · SMS failed") and
+ *  gives ops a readable audit of exactly what went out. */
+export const speakerInvitationDeliverySchema = z.object({
+  channel: z.enum(["email", "sms"]),
+  status: z.enum(["sent", "failed", "fallback-sms"]),
+  /** SendGrid message id or Twilio message/conversation SID. */
+  providerId: z.string().optional(),
+  error: z.string().optional(),
+  at: z.any(),
+});
+export type SpeakerInvitationDelivery = z.infer<typeof speakerInvitationDeliverySchema>;
+
+/** Captured the first time the speaker taps Yes or No on the web side.
+ *  SMS-only speakers who just text their answer back won't populate this
+ *  — the bishop reads the thread and decides manually. */
+export const speakerInvitationResponseSchema = z.object({
+  answer: z.enum(["yes", "no"]),
+  reason: z.string().optional(),
+  respondedAt: z.any(),
+  /** Google uid + verified email of the signed-in speaker at submit. */
+  actorUid: z.string(),
+  actorEmail: z.string(),
+  /** Bishop pressed "Apply as confirmed/declined" and the mirror write
+   *  to `speaker.status` landed. Until then the schedule badge still
+   *  says "speaker replied — needs review". */
+  acknowledgedAt: z.any().optional(),
+  acknowledgedBy: z.string().optional(),
+});
+export type SpeakerInvitationResponse = z.infer<typeof speakerInvitationResponseSchema>;
+
 export const speakerInvitationSchema = z.object({
   /** Denormalized speaker reference back to the originating doc. */
   speakerRef: z.object({
@@ -30,5 +61,32 @@ export const speakerInvitationSchema = z.object({
   /** Scripture footer post-interpolation. */
   footerMarkdown: z.string(),
   createdAt: z.any().optional(),
+
+  /** Snapshotted at send time so Firestore rules + Cloud Functions can
+   *  gate writes without reading the live speaker doc. A signed-in
+   *  Google account can only write the response subtree when its
+   *  verified email matches (case-insensitive). Absent = speaker has no
+   *  email on file, web-side response is disabled for this invitation. */
+  speakerEmail: z.string().optional(),
+  speakerPhone: z.string().optional(),
+
+  /** Monday 00:00 local to the sender, written once at send time.
+   *  Rules reject speaker-side writes past this; reads stay open so the
+   *  bishopric can still review archived threads. */
+  expiresAt: z.any().optional(),
+
+  /** Twilio Conversation SID. Primary key the chat clients bootstrap
+   *  against. Missing on pre-#16 invitations — those render read-only
+   *  letters with no chat pane. */
+  conversationSid: z.string().optional(),
+
+  /** Delivery outcome(s) captured at send time. Populated by the
+   *  sendSpeakerInvitation callable; displayed on the Prepare page as
+   *  a small per-channel status strip. */
+  deliveryRecord: z.array(speakerInvitationDeliverySchema).default([]),
+
+  /** Populated by the speaker's Yes/No tap; acknowledged by the bishop
+   *  via the Apply-response action. */
+  response: speakerInvitationResponseSchema.optional(),
 });
 export type SpeakerInvitation = z.infer<typeof speakerInvitationSchema>;
