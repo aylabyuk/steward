@@ -1,9 +1,6 @@
-import { useState } from "react";
 import { SPEAKER_ROLES } from "@/lib/types";
-import { SpeakerLetterOverrideDialog } from "@/features/templates/SpeakerLetterOverrideDialog";
 import { cn } from "@/lib/cn";
 import { isValidEmail } from "@/lib/email";
-import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { printInvitationLetter } from "./printInvitationLetter";
 import { SpeakerCardHeader } from "./SpeakerCardHeader";
 import type { Draft } from "./speakerDraft";
@@ -24,31 +21,9 @@ const INPUT_CLS =
 const LABEL_CLS = "font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep font-medium";
 
 export function SpeakerEditCard({ draft, index, date, onChange, onRemove }: Props) {
-  const wardId = useCurrentWardStore((s) => s.wardId);
-  const [overrideOpen, setOverrideOpen] = useState(false);
-  const persisted = draft.id !== null;
-  const canEditLetter = persisted && Boolean(wardId);
-
   return (
     <div className="bg-chalk border border-border rounded-lg p-3">
-      <SpeakerCardHeader
-        index={index}
-        canEditLetter={canEditLetter}
-        onEditLetter={() => setOverrideOpen(true)}
-        onRemove={onRemove}
-      />
-
-      {wardId && draft.id && (
-        <SpeakerLetterOverrideDialog
-          wardId={wardId}
-          date={date}
-          speakerId={draft.id}
-          speakerName={draft.name}
-          speakerTopic={draft.topic}
-          open={overrideOpen}
-          onClose={() => setOverrideOpen(false)}
-        />
-      )}
+      <SpeakerCardHeader index={index} onRemove={onRemove} />
 
       <SpeakerStatusPills status={draft.status} onChange={(status) => onChange({ status })} />
 
