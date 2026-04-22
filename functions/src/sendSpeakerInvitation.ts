@@ -28,8 +28,8 @@ export const sendSpeakerInvitation = onCall(
     await assertActiveMember(input.wardId, auth.uid);
 
     const db = getFirestore();
-    const wantsEmail = input.channels.includes("email") && !!input.speakerEmail;
-    const wantsSms = input.channels.includes("sms") && !!input.speakerPhone;
+    const wantsEmail = input.channels.includes("email") && Boolean(input.speakerEmail);
+    const wantsSms = input.channels.includes("sms") && Boolean(input.speakerPhone);
 
     const conversationSid = await createConversation({
       friendlyName: `${input.speakerName} — ${input.meetingDate}`,

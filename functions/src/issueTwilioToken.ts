@@ -91,9 +91,12 @@ async function isActiveMember(wardId: string, uid: string): Promise<boolean> {
   return (snap.data() as MemberDoc).active === true;
 }
 
+function maskPart(s: string): string {
+  return s.length <= 2 ? s : `${s[0]}${"*".repeat(s.length - 2)}${s.at(-1)}`;
+}
+
 function maskEmail(email: string): string {
   const [local, domain] = email.split("@");
   if (!local || !domain) return email;
-  const mask = (s: string) => (s.length <= 2 ? s : `${s[0]}${"*".repeat(s.length - 2)}${s.at(-1)}`);
-  return `${mask(local)}@${mask(domain)}`;
+  return `${maskPart(local)}@${maskPart(domain)}`;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { speakerInvitationSchema, type SpeakerInvitation } from "@/lib/types";
 
@@ -10,9 +10,10 @@ export type SpeakerInvitationState =
   | { kind: "ready"; invitation: SpeakerInvitation };
 
 /**
- * One-shot public read of a speaker invitation by its token doc ID.
- * Not a live subscription — the letter content is a frozen snapshot,
- * so a single fetch is correct.
+ * Live public read of a speaker invitation by its token doc ID.
+ * Letter content is frozen, but the `response` subtree updates as
+ * the speaker taps Yes/No and the bishop acknowledges — the live
+ * subscription keeps both sides of the chat pane reactive.
  */
 export function useSpeakerInvitation(
   wardId: string | undefined,
@@ -25,11 +26,9 @@ export function useSpeakerInvitation(
       setState({ kind: "not-found" });
       return;
     }
-    let cancelled = false;
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, "wards", wardId, "speakerInvitations", token));
-        if (cancelled) return;
+    const unsub = onSnapshot(
+      doc(db, "wards", wardId, "speakerInvitations", token),
+      (snap) => {
         if (!snap.exists()) {
           setState({ kind: "not-found" });
           return;
@@ -40,14 +39,10 @@ export function useSpeakerInvitation(
           return;
         }
         setState({ kind: "ready", invitation: parsed.data });
-      } catch (e) {
-        if (cancelled) return;
-        setState({ kind: "error", message: (e as Error).message });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      },
+      (err) => setState({ kind: "error", message: err.message }),
+    );
+    return () => unsub();
   }, [wardId, token]);
 
   return state;
