@@ -1,6 +1,11 @@
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/cn";
 
+/** Natural width of the full letter-sheet variant, in CSS pixels.
+ *  8.5 in × 96 dpi = 816 px. Exported so preview wrappers can compute
+ *  a fit-to-container scale factor (see `useFitScale`). */
+export const LETTER_CANVAS_WIDTH_PX = 816;
+
 interface Props {
   wardName: string;
   assignedDate: string; // e.g. "Sunday, April 26, 2026"
