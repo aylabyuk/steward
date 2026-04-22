@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
+import { ConversationAvatar } from "./ConversationAvatar";
 import type { AuthorInfo, AuthorMap, ChatMessage } from "./useConversation";
 
 interface Props {
@@ -13,10 +14,18 @@ interface Props {
   loading?: boolean;
 }
 
-/** Bubble list for a Twilio conversation. Mine = right-aligned;
- *  others = left-aligned. Structured responseType messages get a
- *  border treatment. Avatar uses photoURL when present, otherwise
- *  two-letter initials from displayName. */
+interface MessageGroup {
+  key: string;
+  author: string;
+  mine: boolean;
+  info: AuthorInfo;
+  messages: readonly ChatMessage[];
+}
+
+/** Bubble list for a Twilio conversation. Consecutive messages by
+ *  the same author are collapsed into one group — one avatar + one
+ *  author label + a tight stack of bubbles + a single timestamp at
+ *  the end of the group. Mine = right-aligned; others = left. */
 export function ConversationThread({
   messages,
   currentIdentity,
@@ -39,24 +48,38 @@ export function ConversationThread({
     );
   }
 
+  const groups = groupMessages(messages, currentIdentity, authors);
+
   return (
     <div ref={scrollRef} className="flex flex-col gap-3 p-4 overflow-y-auto max-h-[60vh]">
-      {messages.map((m) => {
-        const mine = m.author === currentIdentity;
-        const author = authors.get(m.author) ?? fallbackAuthor(m.author);
-        const responseType = m.attributes?.responseType as "yes" | "no" | undefined;
-        return (
-          <Row
-            key={m.sid}
-            message={m}
-            mine={mine}
-            author={author}
-            responseType={responseType}
-          />
-        );
-      })}
+      {groups.map((g) => (
+        <Group key={g.key} group={g} />
+      ))}
     </div>
   );
+}
+
+function groupMessages(
+  messages: readonly ChatMessage[],
+  currentIdentity: string | null,
+  authors: AuthorMap,
+): MessageGroup[] {
+  const groups: MessageGroup[] = [];
+  for (const m of messages) {
+    const last = groups.at(-1);
+    if (last && last.author === m.author) {
+      last.messages = [...last.messages, m];
+      continue;
+    }
+    groups.push({
+      key: m.sid,
+      author: m.author,
+      mine: m.author === currentIdentity,
+      info: authors.get(m.author) ?? fallbackAuthor(m.author),
+      messages: [m],
+    });
+  }
+  return groups;
 }
 
 function fallbackAuthor(identity: string): AuthorInfo {
@@ -65,41 +88,28 @@ function fallbackAuthor(identity: string): AuthorInfo {
   return { displayName: "Unknown" };
 }
 
-interface RowProps {
-  message: ChatMessage;
-  mine: boolean;
-  author: AuthorInfo;
-  responseType: "yes" | "no" | undefined;
-}
-
-function Row({ message, mine, author, responseType }: RowProps) {
+function Group({ group }: { group: MessageGroup }) {
+  const lastMessage = group.messages.at(-1)!;
   return (
-    <div className={cn("flex items-start gap-2 max-w-[85%]", mine ? "self-end flex-row-reverse" : "self-start")}>
-      <Avatar author={author} />
-      <div className={cn("flex flex-col gap-0.5 min-w-0", mine ? "items-end" : "items-start")}>
+    <div
+      className={cn(
+        "flex items-start gap-2 max-w-[85%]",
+        group.mine ? "self-end flex-row-reverse" : "self-start",
+      )}
+    >
+      <ConversationAvatar author={group.info} />
+      <div className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}>
         <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
-          {author.displayName}
+          {group.info.displayName}
         </span>
-        {responseType && (
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep">
-            {responseType === "yes" ? "Response · Yes" : "Response · No"}
-          </span>
-        )}
-        <div
-          className={cn(
-            "rounded-[12px] px-3 py-2 text-[13.5px] leading-snug whitespace-pre-wrap wrap-break-word",
-            mine
-              ? "bg-bordeaux text-parchment"
-              : "bg-parchment-2 border border-border text-walnut",
-            responseType === "yes" && "border-success border-2",
-            responseType === "no" && "border-bordeaux border-2",
-          )}
-        >
-          {message.body}
+        <div className={cn("flex flex-col gap-0.5", group.mine ? "items-end" : "items-start")}>
+          {group.messages.map((m) => (
+            <Bubble key={m.sid} message={m} mine={group.mine} />
+          ))}
         </div>
-        {message.dateCreated && (
-          <span className="font-mono text-[9.5px] text-walnut-3">
-            {message.dateCreated.toLocaleString(undefined, {
+        {lastMessage.dateCreated && (
+          <span className="font-mono text-[9.5px] text-walnut-3 mt-0.5">
+            {lastMessage.dateCreated.toLocaleString(undefined, {
               month: "short",
               day: "numeric",
               hour: "numeric",
@@ -112,39 +122,26 @@ function Row({ message, mine, author, responseType }: RowProps) {
   );
 }
 
-function Avatar({ author }: { author: AuthorInfo }) {
-  const colorClass =
-    author.role === "speaker"
-      ? "bg-brass-soft border-brass-soft text-brass-deep"
-      : author.role === "clerk"
-        ? "bg-parchment-2 border-border-strong text-walnut-2"
-        : "bg-bordeaux border-bordeaux-deep text-parchment";
-  if (author.photoURL) {
-    return (
-      <img
-        src={author.photoURL}
-        alt=""
-        aria-hidden="true"
-        className="shrink-0 w-8 h-8 rounded-full object-cover border border-border"
-      />
-    );
-  }
+function Bubble({ message, mine }: { message: ChatMessage; mine: boolean }) {
+  const responseType = message.attributes?.responseType as "yes" | "no" | undefined;
   return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-display text-[11px] font-semibold border",
-        colorClass,
+    <div className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
+      {responseType && (
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep mb-0.5">
+          {responseType === "yes" ? "Response · Yes" : "Response · No"}
+        </span>
       )}
-    >
-      {initialsOf(author.displayName)}
+      <div
+        className={cn(
+          "rounded-[12px] px-3 py-2 text-[13.5px] leading-snug whitespace-pre-wrap wrap-break-word",
+          mine ? "bg-bordeaux text-parchment" : "bg-parchment-2 border border-border text-walnut",
+          responseType === "yes" && "border-success border-2",
+          responseType === "no" && "border-bordeaux border-2",
+        )}
+      >
+        {message.body}
+      </div>
     </div>
   );
 }
 
-function initialsOf(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return (parts[0]!.slice(0, 2) || "?").toUpperCase();
-  return `${parts[0]!.charAt(0)}${parts.at(-1)!.charAt(0)}`.toUpperCase();
-}
