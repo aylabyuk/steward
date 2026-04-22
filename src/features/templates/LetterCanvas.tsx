@@ -43,7 +43,7 @@ export function LetterCanvas({
         "bg-chalk text-walnut font-serif relative",
         compact
           ? "w-full max-w-[680px] px-8 py-10 rounded-md shadow-elev-3"
-          : "w-[8.5in] min-h-[11in] px-[1.1in] py-[1in] shadow-[0_12px_40px_rgba(58,37,25,0.18)]",
+          : "w-[8.5in] min-h-[11in] px-[0.75in] py-[1in] shadow-[0_12px_40px_rgba(58,37,25,0.18)]",
       )}
     >
       <div
