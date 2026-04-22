@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { isValidEmail } from "@/lib/email";
+import { PrepareInvitationActionBar } from "./PrepareInvitationActionBar";
 import { PrepareInvitationEmailTab } from "./PrepareInvitationEmailTab";
-import { PrepareInvitationFooter } from "./PrepareInvitationFooter";
 import { PrepareInvitationLetterTab } from "./PrepareInvitationLetterTab";
 import { PrepareInvitationTabs, type PrepareInvitationTab } from "./PrepareInvitationTabs";
 import { formatAssignedDate, formatToday } from "./letterDates";
@@ -95,54 +95,61 @@ export function PrepareInvitationDialog(props: Props) {
       aria-modal="true"
       aria-label={`Prepare invitation for ${speakerName}`}
     >
-      <div className="w-full h-full max-w-350 max-h-[96vh] overflow-auto rounded-[14px] border border-border-strong bg-chalk p-5 sm:p-6 shadow-elev-3">
-        <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
-          Prepare invitation
+      <div className="w-full h-full max-w-350 max-h-[96vh] flex flex-col rounded-[14px] border border-border-strong bg-chalk shadow-elev-3">
+        <header className="shrink-0 flex items-start justify-between gap-4 flex-wrap border-b border-border px-5 sm:px-6 pt-5 pb-4">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
+              Prepare invitation
+            </div>
+            <h2 className="font-display text-[20px] font-semibold text-walnut leading-tight truncate">
+              {speakerName}
+            </h2>
+            <p className="font-serif italic text-[13px] text-walnut-3 truncate">
+              {hasEmail ? `Will be emailed to ${email}.` : "No email on file."}
+            </p>
+          </div>
+          <PrepareInvitationActionBar
+            saveAsOverride={saveAsOverride}
+            setSaveAsOverride={setSaveAsOverride}
+            busy={form.busy}
+            canSend={canSend}
+            canSendReason={canSendReason}
+            onCancel={onClose}
+            onMarkInvited={actions.markInvited}
+            onPrint={actions.print}
+            onSend={actions.send}
+          />
+        </header>
+
+        <div className="flex-1 overflow-auto px-5 sm:px-6 pt-4 pb-5 sm:pb-6">
+          <PrepareInvitationTabs active={tab} onChange={setTab} />
+
+          {tab === "letter" ? (
+            <PrepareInvitationLetterTab
+              body={form.letterBody}
+              footer={form.letterFooter}
+              setBody={form.setLetterBody}
+              setFooter={form.setLetterFooter}
+              hasOverride={form.letterHasOverride}
+              disabled={form.busy}
+              vars={vars}
+              onRevertToDefault={form.revertLetterToWardDefault}
+              onClearOverride={() => void form.clearLetterOverride()}
+            />
+          ) : (
+            <PrepareInvitationEmailTab
+              body={form.emailBody}
+              setBody={form.setEmailBody}
+              hasOverride={form.emailHasOverride}
+              disabled={form.busy}
+              vars={previewEmailVars}
+              onRevertToDefault={form.revertEmailToWardDefault}
+              onClearOverride={() => void form.clearEmailOverride()}
+            />
+          )}
+
+          {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
         </div>
-        <h2 className="font-display text-[20px] font-semibold text-walnut">{speakerName}</h2>
-        <p className="mb-4 font-serif italic text-[13px] text-walnut-3">
-          {hasEmail ? `Will be emailed to ${email}.` : "No email on file."}
-        </p>
-
-        <PrepareInvitationTabs active={tab} onChange={setTab} />
-
-        {tab === "letter" ? (
-          <PrepareInvitationLetterTab
-            body={form.letterBody}
-            footer={form.letterFooter}
-            setBody={form.setLetterBody}
-            setFooter={form.setLetterFooter}
-            hasOverride={form.letterHasOverride}
-            disabled={form.busy}
-            vars={vars}
-            onRevertToDefault={form.revertLetterToWardDefault}
-            onClearOverride={() => void form.clearLetterOverride()}
-          />
-        ) : (
-          <PrepareInvitationEmailTab
-            body={form.emailBody}
-            setBody={form.setEmailBody}
-            hasOverride={form.emailHasOverride}
-            disabled={form.busy}
-            vars={previewEmailVars}
-            onRevertToDefault={form.revertEmailToWardDefault}
-            onClearOverride={() => void form.clearEmailOverride()}
-          />
-        )}
-
-        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
-
-        <PrepareInvitationFooter
-          saveAsOverride={saveAsOverride}
-          setSaveAsOverride={setSaveAsOverride}
-          busy={form.busy}
-          canSend={canSend}
-          canSendReason={canSendReason}
-          onCancel={onClose}
-          onMarkInvited={actions.markInvited}
-          onPrint={actions.print}
-          onSend={actions.send}
-        />
       </div>
     </div>
   );
