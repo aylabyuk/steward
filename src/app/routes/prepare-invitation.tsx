@@ -110,7 +110,7 @@ export function PrepareInvitationPage() {
 
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
-      <header className="shrink-0 flex items-start justify-between gap-4 flex-wrap border-b border-border bg-chalk px-5 sm:px-8 pt-5 pb-4">
+      <header className="sticky top-0 z-20 shrink-0 flex items-start justify-between gap-4 flex-wrap border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
             Prepare invitation
