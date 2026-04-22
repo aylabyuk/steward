@@ -151,7 +151,7 @@ export function SundayCard({
             nonMeetingSundays={nonMeetingSundays}
           />
         ) : (
-          <SpeakerInvitationLauncher date={date} />
+          <SpeakerInvitationLauncher date={date} speakers={speakers} />
         )}
       </AssignDialog>
     </article>
