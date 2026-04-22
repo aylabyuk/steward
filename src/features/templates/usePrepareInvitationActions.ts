@@ -2,7 +2,6 @@ import { updateSpeaker } from "@/features/speakers/speakerActions";
 import { useAuthStore } from "@/stores/authStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { sendSpeakerInvitation } from "./sendSpeakerInvitation";
-import type { LetterVars } from "./prepareInvitationVars";
 
 interface FormState {
   letterBody: string;
@@ -21,7 +20,6 @@ interface Args {
   speakerPhone: string;
   speakerTopic: string;
   inviterName: string;
-  vars: LetterVars;
   form: FormState;
   /** Called after a terminal action succeeds. */
   onDone: () => void;

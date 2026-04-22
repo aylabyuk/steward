@@ -3,19 +3,20 @@ import { useParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
+import { BishopInvitationChat } from "@/features/invitations/BishopInvitationChat";
+import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
+import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
 import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
-import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTemplate";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
 import { usePrepareInvitationActions } from "@/features/templates/usePrepareInvitationActions";
-import { isPlausiblePhone } from "@/features/templates/smsInvitation";
-import { isValidEmail } from "@/lib/email";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { PrepareInvitationPageMessage } from "./PrepareInvitationPageMessage";
+import { computeSendValidation } from "./prepare-invitation-validation";
 
 export function PrepareInvitationPage() {
   const { date, speakerId } = useParams<{ date: string; speakerId: string }>();
@@ -25,10 +26,10 @@ export function PrepareInvitationPage() {
   const ward = useWardSettings();
   const speakers = useSpeakers(date ?? null);
   const { data: letterTemplate } = useSpeakerLetterTemplate();
-  const { data: emailTemplate } = useSpeakerEmailTemplate();
   const [done, setDone] = useState(false);
 
   const speaker = speakers.data?.find((s) => s.id === speakerId) ?? null;
+  const latest = useLatestInvitation(wardId ?? null, date ?? null, speakerId ?? null);
   const form = usePrepareInvitation({
     wardId: wardId ?? "",
     date: date ?? "",
@@ -62,9 +63,7 @@ export function PrepareInvitationPage() {
     speakerPhone: speaker?.data.phone ?? "",
     speakerTopic: speaker?.data.topic ?? "",
     inviterName,
-    vars,
     form,
-    emailTemplate,
     onDone: () => setDone(true),
   });
 
@@ -98,18 +97,9 @@ export function PrepareInvitationPage() {
     );
   }
 
-  const email = (speaker.data.email ?? "").trim();
-  const hasEmail = email.length > 0;
-  const emailValid = isValidEmail(email);
-  const canSend = hasEmail && emailValid;
-  const canSendReason = !hasEmail
-    ? "No email on file — print, text, or mark invited instead."
-    : !emailValid
-      ? "Invalid email format."
-      : null;
-  const phone = (speaker.data.phone ?? "").trim();
-  const canSms = isPlausiblePhone(phone);
-  const canSmsReason = canSend || canSms ? null : !phone ? "No phone on file." : null;
+  const { email, hasEmail, canSend, canSendReason, canSms, canSmsReason } = computeSendValidation(
+    speaker.data,
+  );
 
   const toolbarProps = {
     busy: form.busy,
@@ -129,29 +119,38 @@ export function PrepareInvitationPage() {
   };
 
   return (
-    <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
-      <PrepareInvitationHeader
-        email={email}
-        hasEmail={hasEmail}
-        onCancel={() => window.close()}
-        {...toolbarProps}
-      />
-      <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
-        {form.hydrated ? (
-          <PrepareInvitationLetterTab
-            key={form.resetKey}
-            body={form.letterBody}
-            footer={form.letterFooter}
-            setBody={form.setLetterBody}
-            setFooter={form.setLetterFooter}
-            vars={vars}
-            previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
-          />
-        ) : (
-          <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
-        )}
-        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
-      </div>
-    </main>
+    <TwilioChatProvider>
+      <main className="min-h-dvh bg-parchment flex flex-col">
+        <PrepareInvitationHeader
+          email={email}
+          hasEmail={hasEmail}
+          onCancel={() => window.close()}
+          {...toolbarProps}
+        />
+        <div className="flex-1 min-h-0 px-5 sm:px-8 pt-5 pb-4 flex flex-col gap-4">
+          {form.hydrated ? (
+            <PrepareInvitationLetterTab
+              key={form.resetKey}
+              body={form.letterBody}
+              footer={form.letterFooter}
+              setBody={form.setLetterBody}
+              setFooter={form.setLetterFooter}
+              vars={vars}
+              previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
+            />
+          ) : (
+            <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
+          )}
+          {form.error && <p className="font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
+          {latest.invitation && (
+            <BishopInvitationChat
+              wardId={wardId}
+              token={latest.invitation.token}
+              invitation={latest.invitation}
+            />
+          )}
+        </div>
+      </main>
+    </TwilioChatProvider>
   );
 }

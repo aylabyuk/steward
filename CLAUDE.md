@@ -10,16 +10,17 @@ PWA for a ward bishopric to plan weekly sacrament meeting programs. Desktop + mo
 - **Hosting**: Vercel (app); Firebase is data + auth only
 - **State**: direct Firestore subscription hooks + Zustand for client state (no Redux, no React Query)
 - **Forms**: React Hook Form + Zod
-- **Email**: `mailto:` only (no server-side sending)
+- **Email**: SendGrid (transactional — invitation letters, chat reply notifications)
+- **SMS + in-app chat**: Twilio Conversations (bridges the speaker's phone SMS and their web invite page into a single thread — speakers can reply from either side)
 - **Lint**: oxlint &nbsp;·&nbsp; **Format**: Biome (formatter mode; linter disabled)
 - **Test**: Vitest + Playwright + `@firebase/rules-unit-testing`, against Firebase Local Emulator Suite
-- **Backend**: exactly three Firebase Cloud Functions (change notifications, finalization nudges, mention notifications). No API server.
+- **Backend**: six Firebase Cloud Functions — `onMeetingWrite` (change notifications), `scheduledNudges` (finalization cron), `onCommentCreate` (@mention notifications), `sendSpeakerInvitation` (callable: creates invitation + delivers email/SMS), `issueTwilioToken` (callable: mints chat JWT with email-match gate for speakers), `onTwilioWebhook` (HTTPS: receives Conversations events, fans out FCM to bishopric + email to speaker). No API server beyond these.
 
 ## Hard rules
 
 - **Everything is always editable.** No field locks based on status; status is a label, never a gate. Editing an `approved` program invalidates approvals (logged, not deleted).
 - **Components ≤ 150 LOC.** Enforced by oxlint `max-lines` + `max-lines-per-function` (error, not warn).
-- **Only three Cloud Functions.** No API server, no custom endpoints. Firestore rules are the rest of the backend.
+- **Six Cloud Functions, no API server.** The list above is the full surface; expanding it requires a deliberate scope decision. Firestore rules carry the rest of the authorization logic.
 - **Multi-ward from day one.** All data scoped under `wards/{wardId}/`.
 - **No direct pushes to `develop` or `main`.** Every change flows through a PR: feature branch → PR into `develop` (see the [`feature-branch-workflow`](.claude/skills/feature-branch-workflow.md) skill); releases go via PR from `develop` → `main` (see [`release-to-main`](.claude/skills/release-to-main.md)). GitHub's free tier doesn't enforce this — discipline does. No force-pushes to either branch, ever.
 - **Merge-commit is the only enabled merge method** at the repo level (squash + rebase disabled). Keeps `develop` and `main` SHA-aligned and prevents "N ahead / N behind" drift.
@@ -52,9 +53,13 @@ public/
   icons/
 functions/          # Firebase Cloud Functions
   src/
-    onMeetingWrite.ts      # change notifications
-    scheduledNudges.ts     # finalization nudges (hourly cron)
-    onCommentCreate.ts     # @mention notifications
+    onMeetingWrite.ts           # change notifications
+    scheduledNudges.ts          # finalization nudges (hourly cron)
+    onCommentCreate.ts          # @mention notifications
+    sendSpeakerInvitation.ts    # callable: create invitation + deliver via SendGrid + Twilio
+    issueTwilioToken.ts         # callable: mint Twilio Conversations JWT (email-match gate for speakers)
+    onTwilioWebhook.ts          # HTTPS: Twilio Conversations events → FCM / SendGrid fan-out
+    twilio/, sendgrid/          # thin transport wrappers
 ```
 
 ## Routes
