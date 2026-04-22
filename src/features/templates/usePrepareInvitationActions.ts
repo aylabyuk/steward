@@ -23,7 +23,6 @@ interface Args {
   speakerTopic: string;
   inviterName: string;
   vars: LetterVars;
-  saveAsOverride: boolean;
   form: FormState;
   emailTemplate: SpeakerEmailTemplate | null;
   /** Called after a terminal action succeeds. Page typically flips to
@@ -31,19 +30,19 @@ interface Args {
   onDone: () => void;
 }
 
-/** Wraps Mark invited / Print / Send with optional "save as override"
- *  persistence + busy/error bookkeeping. Used by the standalone
- *  `/week/:date/speaker/:id/prepare` page — status flips and sends go
- *  straight to Firestore here; the parent draft-state callback path
- *  is gone because the page runs in its own tab. */
+/** Wraps Mark invited / Print / Send with automatic override
+ *  persistence + busy/error bookkeeping. Every terminal action
+ *  snapshots the editor state onto the speaker doc as an override;
+ *  the bishop can undo that by clicking "Revert" in the toolbar,
+ *  which clears the override and resets the editor to ward default. */
 export function usePrepareInvitationActions(args: Args) {
-  const { form, saveAsOverride } = args;
+  const { form } = args;
 
   async function runAction(fn: () => Promise<void> | void) {
     form.setBusy(true);
     form.setError(null);
     try {
-      if (saveAsOverride) await form.persistOverrides();
+      await form.persistOverrides();
       await fn();
       args.onDone();
     } catch (e) {
