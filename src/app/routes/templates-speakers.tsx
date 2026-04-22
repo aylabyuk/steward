@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { LetterCanvas } from "@/features/templates/LetterCanvas";
+import { SpeakerLetterGuide } from "@/features/templates/SpeakerLetterGuide";
 import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
@@ -33,10 +34,12 @@ export function SpeakerLetterTemplatePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seeded, setSeeded] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
 
-  // Hydrate editor state from Firestore once data lands. The `seeded`
-  // flag prevents the initial defaults from being clobbered by the
-  // first `loading: true → false` tick.
+  // Hydrate editor state from Firestore once data lands. The editor
+  // is gated on `seeded` so MDXEditor mounts with the hydrated values
+  // (its `markdown` prop is initial-only; a post-mount change is
+  // ignored by the editor even though React state updates correctly).
   useEffect(() => {
     if (loading || seeded) return;
     if (template) {
@@ -74,6 +77,7 @@ export function SpeakerLetterTemplatePage() {
   function resetToDefaults() {
     setBody(DEFAULT_SPEAKER_LETTER_BODY);
     setFooter(DEFAULT_SPEAKER_LETTER_FOOTER);
+    setResetKey((k) => k + 1);
   }
 
   return (
@@ -89,32 +93,37 @@ export function SpeakerLetterTemplatePage() {
         </h1>
         <p className="font-serif text-[14px] text-walnut-2">
           The ward default. Edit the body and footer; the letterhead, date, assigned-Sunday callout,
-          and signature are fixed. Variables: <code>{"{{speakerName}}"}</code>,{" "}
-          <code>{"{{topic}}"}</code>, <code>{"{{date}}"}</code>, <code>{"{{wardName}}"}</code>,{" "}
-          <code>{"{{inviterName}}"}</code>, <code>{"{{today}}"}</code>.
+          and signature are fixed.
         </p>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-4">
-          <EditorSection
-            label="Letter body"
-            initialMarkdown={body}
-            onChange={setBody}
-            disabled={!canEdit}
-          />
-          <EditorSection
-            label="Footer (scripture)"
-            initialMarkdown={footer}
-            onChange={setFooter}
-            disabled={!canEdit}
-          />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
+        <div key={resetKey} className="flex flex-col gap-4 min-w-0">
+          <SpeakerLetterGuide />
+          {seeded ? (
+            <>
+              <EditorSection
+                label="Letter body"
+                initialMarkdown={body}
+                onChange={setBody}
+                disabled={!canEdit}
+              />
+              <EditorSection
+                label="Footer (scripture)"
+                initialMarkdown={footer}
+                onChange={setFooter}
+                disabled={!canEdit}
+              />
+            </>
+          ) : (
+            <p className="font-serif italic text-[14px] text-walnut-3">Loading template…</p>
+          )}
           {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => void handleSave()}
-              disabled={!canEdit || saving}
+              disabled={!canEdit || saving || !seeded}
               className="rounded-md border border-bordeaux bg-bordeaux px-3.5 py-2 font-sans text-[13px] font-semibold text-chalk hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {saving ? "Saving…" : "Save template"}
@@ -122,25 +131,26 @@ export function SpeakerLetterTemplatePage() {
             <button
               type="button"
               onClick={resetToDefaults}
-              disabled={!canEdit || saving}
+              disabled={!canEdit || saving || !seeded}
               className="rounded-md border border-border-strong bg-chalk px-3.5 py-2 font-sans text-[13px] font-semibold text-walnut hover:bg-parchment-2 disabled:opacity-60"
             >
               Reset to defaults
             </button>
           </div>
         </div>
-        <aside className="flex flex-col gap-2">
+        <aside className="flex flex-col gap-2 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            Preview — sample data
+            Preview — 8.5 × 11 in · sample data
           </div>
-          <LetterCanvas
-            compact
-            wardName={wardName}
-            assignedDate={PREVIEW_VARS.date}
-            today={PREVIEW_VARS.today}
-            bodyMarkdown={renderedBody}
-            footerMarkdown={renderedFooter}
-          />
+          <div className="overflow-x-auto rounded-md bg-parchment-2/40 p-4 sm:p-6 flex justify-center">
+            <LetterCanvas
+              wardName={wardName}
+              assignedDate={PREVIEW_VARS.date}
+              today={PREVIEW_VARS.today}
+              bodyMarkdown={renderedBody}
+              footerMarkdown={renderedFooter}
+            />
+          </div>
         </aside>
       </div>
     </main>

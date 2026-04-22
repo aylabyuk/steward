@@ -15,11 +15,13 @@ const VARIABLES: Variable[] = [
   { name: "inviterName", description: "Your display name from your member record." },
 ];
 
-/** Editor-column hint block for `PrepareInvitationLetterTab`. Lists
- *  the variables the letter template supports and a short formatting
- *  note. Variables wrapped in `{{braces}}` are substituted at send
- *  time — leave them as-is in the editor. */
-export function PrepareInvitationGuide() {
+/** Collapsible editor-column hint block. Lists the speaker-letter
+ *  variables and a short formatting note. Used both on the ward-level
+ *  settings editor (`/settings/templates/speakers`) and the
+ *  per-speaker Prepare Invitation page. Variables wrapped in
+ *  `{{braces}}` are substituted at send time — leave them as-is in
+ *  the editor. */
+export function SpeakerLetterGuide() {
   return (
     <details className="rounded-md border border-border bg-parchment-2 px-3.5 py-2.5 text-[13px] text-walnut-2 open:pb-3.5">
       <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep select-none">
