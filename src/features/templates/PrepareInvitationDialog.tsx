@@ -3,9 +3,7 @@ import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { isValidEmail } from "@/lib/email";
 import { PrepareInvitationActionBar } from "./PrepareInvitationActionBar";
-import { PrepareInvitationEmailTab } from "./PrepareInvitationEmailTab";
 import { PrepareInvitationLetterTab } from "./PrepareInvitationLetterTab";
-import { PrepareInvitationTabs, type PrepareInvitationTab } from "./PrepareInvitationTabs";
 import { formatAssignedDate, formatToday } from "./letterDates";
 import { useSpeakerEmailTemplate } from "./useSpeakerEmailTemplate";
 import { useSpeakerLetterTemplate } from "./useSpeakerLetterTemplate";
@@ -26,24 +24,14 @@ interface Props {
   onPrint: () => void;
 }
 
-const PLACEHOLDER_URL = "https://example.com/invite/speaker/your-ward/sample-token";
-
 export function PrepareInvitationDialog(props: Props) {
   const { wardId, date, speakerId, speakerName, speakerEmail, speakerTopic, inviterName } = props;
   const { open, onClose, onMarkInvited, onPrint } = props;
-  const [tab, setTab] = useState<PrepareInvitationTab>("letter");
   const [saveAsOverride, setSaveAsOverride] = useState(false);
   const ward = useWardSettings();
   const { data: letterTemplate } = useSpeakerLetterTemplate();
   const { data: emailTemplate } = useSpeakerEmailTemplate();
-  const form = usePrepareInvitation({
-    wardId,
-    date,
-    speakerId,
-    open,
-    letterTemplate,
-    emailTemplate,
-  });
+  const form = usePrepareInvitation({ wardId, date, speakerId, open, letterTemplate });
   useLockBodyScroll(open);
 
   const wardName = ward.data?.name ?? "";
@@ -58,7 +46,6 @@ export function PrepareInvitationDialog(props: Props) {
     }),
     [speakerName, speakerTopic, date, wardName, inviterName],
   );
-  const previewEmailVars = useMemo(() => ({ ...vars, inviteUrl: PLACEHOLDER_URL }), [vars]);
 
   const actions = usePrepareInvitationActions({
     wardId,
@@ -71,6 +58,7 @@ export function PrepareInvitationDialog(props: Props) {
     vars,
     saveAsOverride,
     form,
+    emailTemplate,
     onClose,
     onMarkInvited,
     onPrint,
@@ -122,31 +110,17 @@ export function PrepareInvitationDialog(props: Props) {
         </header>
 
         <div className="flex-1 overflow-auto px-5 sm:px-6 pt-4 pb-5 sm:pb-6">
-          <PrepareInvitationTabs active={tab} onChange={setTab} />
-
-          {tab === "letter" ? (
-            <PrepareInvitationLetterTab
-              body={form.letterBody}
-              footer={form.letterFooter}
-              setBody={form.setLetterBody}
-              setFooter={form.setLetterFooter}
-              hasOverride={form.letterHasOverride}
-              disabled={form.busy}
-              vars={vars}
-              onRevertToDefault={form.revertLetterToWardDefault}
-              onClearOverride={() => void form.clearLetterOverride()}
-            />
-          ) : (
-            <PrepareInvitationEmailTab
-              body={form.emailBody}
-              setBody={form.setEmailBody}
-              hasOverride={form.emailHasOverride}
-              disabled={form.busy}
-              vars={previewEmailVars}
-              onRevertToDefault={form.revertEmailToWardDefault}
-              onClearOverride={() => void form.clearEmailOverride()}
-            />
-          )}
+          <PrepareInvitationLetterTab
+            body={form.letterBody}
+            footer={form.letterFooter}
+            setBody={form.setLetterBody}
+            setFooter={form.setLetterFooter}
+            hasOverride={form.letterHasOverride}
+            disabled={form.busy}
+            vars={vars}
+            onRevertToDefault={form.revertLetterToWardDefault}
+            onClearOverride={() => void form.clearLetterOverride()}
+          />
 
           {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
         </div>

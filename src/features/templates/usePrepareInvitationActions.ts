@@ -1,4 +1,5 @@
 import { buildMailto } from "@/features/speakers/buildMailto";
+import type { SpeakerEmailTemplate } from "@/lib/types";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { renderSpeakerEmailBody } from "./renderSpeakerEmailBody";
 import { sendSpeakerInvitation } from "./sendSpeakerInvitation";
@@ -7,7 +8,6 @@ import type { LetterVars } from "./prepareInvitationVars";
 interface FormState {
   letterBody: string;
   letterFooter: string;
-  emailBody: string;
   persistOverrides: () => Promise<void>;
   setBusy: (b: boolean) => void;
   setError: (e: string | null) => void;
@@ -24,14 +24,16 @@ interface Args {
   vars: LetterVars;
   saveAsOverride: boolean;
   form: FormState;
+  emailTemplate: SpeakerEmailTemplate | null;
   onClose: () => void;
   onMarkInvited: () => void;
   onPrint: () => void;
 }
 
 /** Wraps the three terminal actions (Mark invited / Print / Send) with
- *  optional "save as override" persistence + busy/error bookkeeping,
- *  so `PrepareInvitationDialog` only has to wire them to buttons. */
+ *  optional "save as override" persistence + busy/error bookkeeping.
+ *  Send uses the ward speaker-email template directly for the mailto
+ *  body — tweaks happen in the bishop's email client, not in-app. */
 export function usePrepareInvitationActions(args: Args) {
   const { form, saveAsOverride } = args;
 
@@ -67,7 +69,7 @@ export function usePrepareInvitationActions(args: Args) {
         const inviteUrl = `${window.location.origin}/invite/speaker/${args.wardId}/${token}`;
         const body = renderSpeakerEmailBody(
           { ...args.vars, inviteUrl },
-          { override: form.emailBody, template: null },
+          { template: args.emailTemplate?.bodyMarkdown },
         );
         window.location.href = buildMailto({
           to: args.speakerEmail.trim(),
