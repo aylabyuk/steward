@@ -45,7 +45,11 @@ describe("PrepareInvitationActionBar — SMS", () => {
     // onSendSms doesn't fire until the primary confirm button is clicked
     expect(onSendSms).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole("button", { name: /Open Messages/i }));
+    // The SMS confirm dialog's primary button is also labeled "Send SMS".
+    // There are now two such buttons (the toolbar icon + the dialog primary);
+    // pick the last, which is the one rendered inside the dialog.
+    const sendSmsButtons = screen.getAllByRole("button", { name: /Send SMS/i });
+    await userEvent.click(sendSmsButtons.at(-1)!);
     expect(onSendSms).toHaveBeenCalledTimes(1);
   });
 
