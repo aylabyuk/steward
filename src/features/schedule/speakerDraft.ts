@@ -5,6 +5,7 @@ export interface Draft {
   tempId: string;
   name: string;
   email: string;
+  phone: string;
   topic: string;
   role: SpeakerRole;
   status: SpeakerStatus;
@@ -16,6 +17,7 @@ export function emptyDraft(): Draft {
     tempId: `new-${Math.random().toString(36).slice(2, 10)}`,
     name: "",
     email: "",
+    phone: "",
     topic: "",
     role: "Member",
     status: "planned",
@@ -26,8 +28,9 @@ export function fromSpeaker(
   id: string,
   s: {
     name: string;
-    email?: string;
-    topic?: string;
+    email?: string | undefined;
+    phone?: string | undefined;
+    topic?: string | undefined;
     status: SpeakerStatus;
     role: SpeakerRole;
   },
@@ -37,6 +40,7 @@ export function fromSpeaker(
     tempId: `p-${id}`,
     name: s.name,
     email: s.email ?? "",
+    phone: s.phone ?? "",
     topic: s.topic ?? "",
     role: s.role,
     status: s.status,
@@ -48,6 +52,7 @@ export function isDirty(draft: Draft, original: Draft | null): boolean {
   return (
     draft.name !== original.name ||
     draft.email !== original.email ||
+    draft.phone !== original.phone ||
     draft.topic !== original.topic ||
     draft.role !== original.role ||
     draft.status !== original.status
