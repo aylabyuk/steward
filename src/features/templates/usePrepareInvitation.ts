@@ -34,12 +34,15 @@ export function usePrepareInvitation(args: Args) {
   const [letterBody, setLetterBody] = useState("");
   const [letterFooter, setLetterFooter] = useState("");
   const [letterHasOverride, setLetterHasOverride] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setHydrated(false);
     (async () => {
       const snap = await getDoc(doc(db, "wards", wardId, "meetings", date, "speakers", speakerId));
       if (cancelled) return;
@@ -55,6 +58,7 @@ export function usePrepareInvitation(args: Args) {
       );
       setLetterHasOverride(Boolean(letterOverride));
       setError(null);
+      setHydrated(true);
     })();
     return () => {
       cancelled = true;
@@ -72,6 +76,7 @@ export function usePrepareInvitation(args: Args) {
   function revertLetterToWardDefault() {
     setLetterBody(letterTemplate?.bodyMarkdown ?? DEFAULT_SPEAKER_LETTER_BODY);
     setLetterFooter(letterTemplate?.footerMarkdown ?? DEFAULT_SPEAKER_LETTER_FOOTER);
+    setResetKey((k) => k + 1);
   }
 
   async function clearLetterOverride() {
@@ -94,6 +99,8 @@ export function usePrepareInvitation(args: Args) {
     setLetterBody,
     setLetterFooter,
     letterHasOverride,
+    hydrated,
+    resetKey,
     error,
     busy,
     setBusy,

@@ -135,17 +135,22 @@ export function PrepareInvitationPage() {
         />
       </header>
       <div className="flex-1 overflow-auto px-5 sm:px-8 pt-5 pb-8">
-        <PrepareInvitationLetterTab
-          body={form.letterBody}
-          footer={form.letterFooter}
-          setBody={form.setLetterBody}
-          setFooter={form.setLetterFooter}
-          hasOverride={form.letterHasOverride}
-          disabled={form.busy}
-          vars={vars}
-          onRevertToDefault={form.revertLetterToWardDefault}
-          onClearOverride={() => void form.clearLetterOverride()}
-        />
+        {form.hydrated ? (
+          <PrepareInvitationLetterTab
+            key={form.resetKey}
+            body={form.letterBody}
+            footer={form.letterFooter}
+            setBody={form.setLetterBody}
+            setFooter={form.setLetterFooter}
+            hasOverride={form.letterHasOverride}
+            disabled={form.busy}
+            vars={vars}
+            onRevertToDefault={form.revertLetterToWardDefault}
+            onClearOverride={() => void form.clearLetterOverride()}
+          />
+        ) : (
+          <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
+        )}
         {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
       </div>
     </main>
