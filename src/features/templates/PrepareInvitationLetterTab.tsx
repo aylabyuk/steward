@@ -47,11 +47,11 @@ export function PrepareInvitationLetterTab({
         <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
         <EditorSection label="Footer (scripture)" initialMarkdown={footer} onChange={setFooter} />
       </div>
-      <aside className="flex flex-col gap-2 min-w-0">
+      <aside className="flex flex-col gap-2 min-w-0 lg:sticky lg:top-0 lg:self-start">
         <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
           Preview — 8.5 × 11 in
         </div>
-        <div className="overflow-x-auto rounded-md bg-parchment-2/40 p-4 sm:p-6 flex justify-center">
+        <div className="overflow-auto rounded-md bg-parchment-2/40 p-4 sm:p-6 flex justify-center lg:max-h-[calc(100dvh-11rem)]">
           <LetterCanvas
             wardName={vars.wardName}
             assignedDate={vars.date}
