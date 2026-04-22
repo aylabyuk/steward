@@ -119,7 +119,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 lg:gap-3.5">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
       {drafts.map((d, i) => (
         <SpeakerEditCard
           key={d.tempId}
