@@ -34,6 +34,10 @@ export const speakerInvitationStaffSchema = z.object({
   uid: z.string(),
   displayName: z.string(),
   role: z.enum(["bishopric", "clerk"]),
+  /** Email address — lets the bishop-side identity banner + the
+   *  speaker-side bubble eyebrows show each staff member's email.
+   *  Optional for backward compat with pre-refinement docs. */
+  email: z.string().optional(),
 });
 export type SpeakerInvitationStaff = z.infer<typeof speakerInvitationStaffSchema>;
 

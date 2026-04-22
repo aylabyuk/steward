@@ -4,6 +4,8 @@ import { useAuthStore } from "@/stores/authStore";
 import type { SpeakerInvitation } from "@/lib/types";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
+import { ResponseStrip } from "./ResponseStrip";
+import { SpeakerIdentityBanner } from "./SpeakerIdentityBanner";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
 import { useTwilioChat } from "./twilioClientProvider";
@@ -40,23 +42,46 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
     for (const m of members.data ?? []) {
       if (m.data.role !== "bishopric" && m.data.role !== "clerk") continue;
       if (!m.data.active) continue;
-      map.set(`uid:${m.id}`, { displayName: m.data.displayName, role: m.data.role });
+      const info: AuthorInfo = { displayName: m.data.displayName, role: m.data.role };
+      if (m.data.email) info.email = m.data.email;
+      map.set(`uid:${m.id}`, info);
     }
-    map.set(`speaker:${token}`, { displayName: invitation.speakerName, role: "speaker" });
-    if (user?.uid && user.photoURL) {
+    const speakerInfo: AuthorInfo = { displayName: invitation.speakerName, role: "speaker" };
+    if (invitation.speakerEmail) speakerInfo.email = invitation.speakerEmail;
+    if (invitation.response?.actorEmail) speakerInfo.email = invitation.response.actorEmail;
+    map.set(`speaker:${token}`, speakerInfo);
+    if (user?.uid) {
       const existing = map.get(`uid:${user.uid}`);
-      map.set(`uid:${user.uid}`, {
+      const info: AuthorInfo = {
         displayName: existing?.displayName ?? user.displayName ?? "You",
-        ...(existing?.role ? { role: existing.role } : {}),
-        photoURL: user.photoURL,
-      });
+      };
+      if (existing?.role) info.role = existing.role;
+      if (user.photoURL) info.photoURL = user.photoURL;
+      const email = existing?.email ?? user.email;
+      if (email) info.email = email;
+      map.set(`uid:${user.uid}`, info);
     }
     for (const [id, info] of authors) {
       const existing = map.get(id);
       map.set(id, { ...existing, ...info });
     }
     return map;
-  }, [members.data, token, invitation.speakerName, user?.uid, user?.photoURL, user?.displayName, authors]);
+  }, [
+    members.data,
+    token,
+    invitation.speakerName,
+    invitation.speakerEmail,
+    invitation.response?.actorEmail,
+    user,
+    authors,
+  ]);
+
+  /** Speaker's actual signed-in email, for the identity banner.
+   *  Prefer the live Twilio attribute (resolvedAuthors wins merges
+   *  last for non-mine participants), fall back to the Firestore
+   *  response record (set when Yes/No is submitted). */
+  const speakerActualEmail =
+    resolvedAuthors.get(`speaker:${token}`)?.email ?? invitation.response?.actorEmail;
 
   useEffect(() => {
     if (twilio.status === "idle") void twilio.connect({ wardId });
@@ -94,6 +119,11 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
         </div>
       </header>
 
+      <SpeakerIdentityBanner
+        expectedEmail={invitation.speakerEmail}
+        actualEmail={speakerActualEmail}
+      />
+
       {response && (
         <ResponseStrip
           response={response}
@@ -120,45 +150,3 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
   );
 }
 
-interface StripProps {
-  response: NonNullable<SpeakerInvitation["response"]>;
-  needsApply: boolean;
-  applying: boolean;
-  onApply: () => void;
-  error: string | null;
-}
-
-function ResponseStrip({ response, needsApply, applying, onApply, error }: StripProps) {
-  const target = response.answer === "yes" ? "confirmed" : "declined";
-  return (
-    <div className="px-4 py-3 border-b border-border bg-parchment-2">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-            Response · {response.answer === "yes" ? "Yes" : "No"}
-          </span>
-          {response.reason && (
-            <p className="font-serif italic text-[12.5px] text-walnut-2 mt-0.5">
-              "{response.reason}"
-            </p>
-          )}
-        </div>
-        {needsApply ? (
-          <button
-            type="button"
-            onClick={onApply}
-            disabled={applying}
-            className="font-sans text-[12.5px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment hover:bg-bordeaux-deep disabled:opacity-60 shrink-0"
-          >
-            {applying ? "Applying…" : `Apply as ${target}`}
-          </button>
-        ) : (
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            Applied · status is {target}
-          </span>
-        )}
-      </div>
-      {error && <p className="font-sans text-[11.5px] text-bordeaux mt-1.5">{error}</p>}
-    </div>
-  );
-}

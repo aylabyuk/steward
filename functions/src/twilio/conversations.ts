@@ -30,7 +30,14 @@ export async function createConversation(input: CreateConversationInput): Promis
 export async function addChatParticipant(
   conversationSid: string,
   identity: string,
-  attributes?: { displayName?: string; role?: "speaker" | "bishopric" | "clerk" },
+  attributes?: {
+    displayName?: string;
+    role?: "speaker" | "bishopric" | "clerk";
+    /** Signed-in email, carried so other clients' `AuthorMap` can
+     *  render it in the bubble eyebrow + the bishop's identity
+     *  banner without round-tripping to Firestore. */
+    email?: string;
+  },
 ): Promise<string> {
   const p = await service()
     .conversations(conversationSid)
