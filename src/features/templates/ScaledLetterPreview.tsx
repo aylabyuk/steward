@@ -8,16 +8,16 @@ interface Props {
   today: string;
   bodyMarkdown: string;
   footerMarkdown: string;
-  /** CSS `height` applied on `lg:`. The preview box is given an
-   *  explicit height so the fit-scale hook can constrain on both
-   *  axes and the paper fits without any scrollbar. */
+  /** CSS `height` for the outer frame. The scaler fills this and
+   *  clips any overflow internally so no scrollbar ever shows. */
   height?: string;
 }
 
 /** Letter preview that fits any column width AND height without a
- *  scrollbar. Measures the outer box and applies CSS `zoom` so the
- *  paper scales down (max 1.0) to whichever dimension is more
- *  constraining, while keeping true 8.5 × 11 proportions. */
+ *  scrollbar. The outer div owns the padding + background; the inner
+ *  measured div (which we observe for fit-scale) has no padding, so
+ *  its `clientWidth` / `clientHeight` reflect the exact usable box
+ *  and the computed scale is correct to the pixel. */
 export function ScaledLetterPreview({
   wardName,
   assignedDate,
@@ -29,19 +29,17 @@ export function ScaledLetterPreview({
   const ref = useRef<HTMLDivElement>(null);
   const scale = useFitScale(ref, LETTER_CANVAS_WIDTH_PX, LETTER_CANVAS_HEIGHT_PX);
   return (
-    <div
-      ref={ref}
-      className="overflow-hidden rounded-md bg-parchment-2/40 p-4 sm:p-6 flex items-start justify-center"
-      style={{ height }}
-    >
-      <div style={{ zoom: scale }}>
-        <LetterCanvas
-          wardName={wardName}
-          assignedDate={assignedDate}
-          today={today}
-          bodyMarkdown={bodyMarkdown}
-          footerMarkdown={footerMarkdown}
-        />
+    <div className="rounded-md bg-parchment-2/40 p-4 sm:p-6" style={{ height }}>
+      <div ref={ref} className="h-full w-full flex items-center justify-center overflow-hidden">
+        <div style={{ zoom: scale }}>
+          <LetterCanvas
+            wardName={wardName}
+            assignedDate={assignedDate}
+            today={today}
+            bodyMarkdown={bodyMarkdown}
+            footerMarkdown={footerMarkdown}
+          />
+        </div>
       </div>
     </div>
   );
