@@ -32,38 +32,38 @@ afterEach(() => {
 });
 
 describe("SpeakerInvitationLauncher", () => {
-  it("renders planned speakers with an Open prepare button", () => {
+  it("renders planned speakers with a Prepare invitation button", () => {
     speakersState.data = [
       { id: "s1", data: makeSpeaker({ name: "Sister Reeves", email: "r@x.com" }) },
     ];
     render(<SpeakerInvitationLauncher date="2026-04-26" />);
-    expect(screen.getByText("Sister Reeves")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Sister Reeves")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Open prepare invitation for Sister Reeves/i }),
     ).toBeInTheDocument();
   });
 
-  it("renders invited speakers with a status badge and no button", () => {
+  it("renders invited speakers with an 'already invited' note and no button", () => {
     speakersState.data = [
       { id: "s1", data: makeSpeaker({ name: "Brother Lee", status: "invited" }) },
     ];
     render(<SpeakerInvitationLauncher date="2026-04-26" />);
-    expect(screen.getByText("Brother Lee")).toBeInTheDocument();
-    expect(screen.getByText("Invited ✓")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Brother Lee")).toBeInTheDocument();
+    expect(screen.getByText(/Already invited — open edit mode to change/i)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Open prepare invitation/i }),
     ).not.toBeInTheDocument();
   });
 
-  it("confirmed speakers render with a 'Confirmed ✓' badge", () => {
+  it("confirmed speakers render with an 'already confirmed' note", () => {
     speakersState.data = [
       { id: "s1", data: makeSpeaker({ name: "Sister Park", status: "confirmed" }) },
     ];
     render(<SpeakerInvitationLauncher date="2026-04-26" />);
-    expect(screen.getByText("Confirmed ✓")).toBeInTheDocument();
+    expect(screen.getByText(/Already confirmed — open edit mode to change/i)).toBeInTheDocument();
   });
 
-  it("Open prepare button calls window.open with the expected URL", async () => {
+  it("Prepare invitation button calls window.open with the expected URL", async () => {
     speakersState.data = [{ id: "speaker-abc", data: makeSpeaker({ name: "Sister Reeves" }) }];
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
     render(<SpeakerInvitationLauncher date="2026-04-26" />);
@@ -85,13 +85,13 @@ describe("SpeakerInvitationLauncher", () => {
     expect(screen.getByText(/No speakers yet/i)).toBeInTheDocument();
   });
 
-  it("hides declined speakers from both lists", () => {
+  it("hides declined speakers from the grid", () => {
     speakersState.data = [
       { id: "s1", data: makeSpeaker({ name: "Planned Person" }) },
       { id: "s2", data: makeSpeaker({ name: "Declined Person", status: "declined" }) },
     ];
     render(<SpeakerInvitationLauncher date="2026-04-26" />);
-    expect(screen.getByText("Planned Person")).toBeInTheDocument();
-    expect(screen.queryByText("Declined Person")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("Planned Person")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("Declined Person")).not.toBeInTheDocument();
   });
 });
