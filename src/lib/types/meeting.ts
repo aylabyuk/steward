@@ -120,15 +120,6 @@ export const speakerLetterOverrideSchema = z.object({
 });
 export type SpeakerLetterOverride = z.infer<typeof speakerLetterOverrideSchema>;
 
-// Per-speaker override of the speaker-email body template. Same shape
-// as letterOverride but scoped to the plain-text mailto body, not the
-// rich letter on the landing page. Stored with `{{tokens}}` intact.
-export const speakerEmailOverrideSchema = z.object({
-  bodyMarkdown: z.string(),
-  updatedAt: z.any().optional(),
-});
-export type SpeakerEmailOverride = z.infer<typeof speakerEmailOverrideSchema>;
-
 // Tolerate legacy speaker docs that stored a status outside the current
 // enum (e.g. "draft", "sent") — fall back to "planned" rather than failing
 // the whole list parse.
@@ -140,7 +131,6 @@ export const speakerSchema = z.object({
   role: speakerRoleSchema.catch("Member"),
   order: z.number().int().min(0).optional(),
   letterOverride: speakerLetterOverrideSchema.optional(),
-  emailOverride: speakerEmailOverrideSchema.optional(),
   createdAt: z.any().optional(),
   updatedAt: z.any().optional(),
 });
