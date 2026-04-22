@@ -57,6 +57,15 @@ export interface PostMessageInput {
   attributes?: Record<string, unknown>;
 }
 
+/** Hard-deletes a Twilio Conversation by SID. Used to free up an
+ *  SMS binding (phone + proxy) before creating a new conversation for
+ *  the same speaker — Twilio enforces one binding per phone per
+ *  proxy and rejects `addSmsParticipant` otherwise. Safe to call on
+ *  an already-deleted SID: Twilio returns 404 which we let bubble. */
+export async function deleteConversation(conversationSid: string): Promise<void> {
+  await service().conversations(conversationSid).remove();
+}
+
 export async function postMessage(input: PostMessageInput): Promise<string> {
   const m = await service()
     .conversations(input.conversationSid)
