@@ -11,6 +11,7 @@ import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTem
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
 import { usePrepareInvitationActions } from "@/features/templates/usePrepareInvitationActions";
+import { isPlausiblePhone } from "@/features/templates/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -58,6 +59,7 @@ export function PrepareInvitationPage() {
     speakerId: speakerId ?? "",
     speakerName: speaker?.data.name ?? "",
     speakerEmail: speaker?.data.email ?? "",
+    speakerPhone: speaker?.data.phone ?? "",
     speakerTopic: speaker?.data.topic ?? "",
     inviterName,
     vars,
@@ -101,15 +103,20 @@ export function PrepareInvitationPage() {
   const emailValid = isValidEmail(email);
   const canSend = hasEmail && emailValid;
   const canSendReason = !hasEmail
-    ? "No email on file — print or mark invited instead."
+    ? "No email on file — print, text, or mark invited instead."
     : !emailValid
       ? "Invalid email format."
       : null;
+  const phone = (speaker.data.phone ?? "").trim();
+  const canSms = isPlausiblePhone(phone);
+  const canSmsReason = canSend || canSms ? null : !phone ? "No phone on file." : null;
 
   const toolbarProps = {
     busy: form.busy,
     canSend,
     canSendReason,
+    canSms,
+    canSmsReason,
     hasOverride: form.letterHasOverride,
     speakerName: speaker.data.name,
     onRevert: () => void form.clearLetterOverride(),
@@ -118,6 +125,7 @@ export function PrepareInvitationPage() {
     // the sheet at true 8.5×11 — WYSIWYG, no new route, no re-read.
     onPrint: () => window.print(),
     onSend: actions.send,
+    onSendSms: actions.sendSms,
   };
 
   return (
