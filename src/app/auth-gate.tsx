@@ -20,8 +20,8 @@ interface Props {
    * When true (default), the gate renders <AppShell /> which in turn
    * hosts the route outlet with the topbar + centered content column.
    * When false, it renders <Outlet /> directly so children can own the
-   * full page chrome — used for print views that need a standalone
-   * layout.
+   * full page chrome — used for print views + full-screen editors
+   * opened in their own tabs.
    */
   appShell?: boolean;
 }
