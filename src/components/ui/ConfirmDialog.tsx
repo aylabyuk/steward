@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 
 interface Props {
@@ -28,6 +29,19 @@ export function ConfirmDialog({
   onCancel,
 }: Props) {
   useLockBodyScroll(open);
+  // Esc cancels. Registered in the capture phase with stopImmediatePropagation
+  // so a parent modal listening on `document` (e.g. AssignDialog) doesn't
+  // also receive the event and close itself out from under us.
+  useEffect(() => {
+    if (!open) return;
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.stopImmediatePropagation();
+      onCancel();
+    }
+    document.addEventListener("keydown", handleEsc, true);
+    return () => document.removeEventListener("keydown", handleEsc, true);
+  }, [open, onCancel]);
   if (!open) return null;
   return (
     <div

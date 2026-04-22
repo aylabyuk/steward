@@ -5,12 +5,14 @@ interface Props {
   open: boolean;
   title: string;
   onClose: () => void;
-  onSave?: () => void;
-  saving?: boolean;
+  /** Pinned bottom band rendered as-is. When omitted, the dialog has
+   *  no footer — step bodies that own their own terminal actions can
+   *  render them inline. */
+  footerSlot?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-export function AssignDialog({ open, title, onClose, onSave, saving, children }: Props) {
+export function AssignDialog({ open, title, onClose, footerSlot, children }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export function AssignDialog({ open, title, onClose, onSave, saving, children }:
           "bg-chalk border border-border-strong shadow-elev-3 overflow-hidden flex flex-col w-full",
           isMobile
             ? "absolute bottom-0 left-0 right-0 rounded-t-[14px] max-h-[95vh] animate-[slideIn_200ms_ease-out]"
-            : "relative rounded-[14px] max-w-140 max-h-[90vh] animate-[fadePop_200ms_ease-out]",
+            : "relative rounded-[14px] w-[96vw] max-w-140 lg:max-w-4xl xl:max-w-350 2xl:max-w-450 max-h-[94vh] animate-[fadePop_200ms_ease-out]",
         )}
       >
         {/* Header */}
@@ -72,22 +74,12 @@ export function AssignDialog({ open, title, onClose, onSave, saving, children }:
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5.5 py-4.5 bg-chalk">{children}</div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5.5 py-3.5 border-t border-border bg-parchment">
-          <button
-            onClick={onClose}
-            className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving || !onSave}
-            className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
-        </div>
+        {/* Footer (slot — each step owns its own button row) */}
+        {footerSlot && (
+          <div className="flex items-center justify-end gap-2 px-5.5 py-3.5 border-t border-border bg-parchment">
+            {footerSlot}
+          </div>
+        )}
       </div>
     </div>
   );
