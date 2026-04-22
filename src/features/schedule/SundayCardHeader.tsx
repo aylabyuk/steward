@@ -15,11 +15,6 @@ interface Props {
   badge?: string;
   variant?: KindVariant;
   locked?: boolean;
-  /** When supplied, the "needs apply" bordeaux dot renders as a
-   *  tappable button that calls this handler (plus kills the link
-   *  navigation underneath). Typically opens the Assign Speakers
-   *  modal straight to step 2. */
-  onReviewResponse?: () => void;
 }
 
 const BADGE_CLS: Record<KindVariant, string> = {
@@ -38,7 +33,6 @@ export function SundayCardHeader({
   badge,
   variant = "regular",
   locked = false,
-  onReviewResponse,
 }: Props) {
   const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
   return (
@@ -57,25 +51,13 @@ export function SundayCardHeader({
             {formatCountdown(date)}
           </div>
         </Link>
-        {needsApply &&
-          (onReviewResponse ? (
-            <button
-              type="button"
-              onClick={onReviewResponse}
-              aria-label="Review speaker response"
-              title="Review speaker response"
-              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-bordeaux-deep bg-bordeaux text-parchment px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.12em] hover:bg-bordeaux-deep transition-colors"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-parchment" />
-              Review
-            </button>
-          ) : (
-            <span
-              aria-label="Speaker response awaiting your review"
-              title="Speaker response awaiting your review"
-              className="mt-2.5 inline-block w-2 h-2 rounded-full bg-bordeaux"
-            />
-          ))}
+        {needsApply && (
+          <span
+            aria-label="Speaker response awaiting your review"
+            title="Speaker response awaiting your review — tap a speaker's chat icon below to apply"
+            className="mt-2.5 inline-block w-2 h-2 rounded-full bg-bordeaux"
+          />
+        )}
       </div>
       <div className="flex items-start gap-2 shrink-0">
         {badge && (
