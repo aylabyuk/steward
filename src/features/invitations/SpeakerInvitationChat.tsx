@@ -2,8 +2,10 @@ import { useEffect, useMemo } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
+import { PhoneAuthDialog } from "./PhoneAuthDialog";
 import { QuickActionButtons } from "./QuickActionButtons";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useSpeakerAuthGate } from "./useSpeakerAuthGate";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
 
@@ -11,34 +13,28 @@ interface Props {
   wardId: string;
   token: string;
   conversationSid: string;
-  /** Snapshotted speaker name from the invitation — seeds the author
-   *  map so the speaker's own messages render with their real name
-   *  even when Twilio participant attributes aren't available. */
   speakerName: string;
-  /** Active bishopric + clerk snapshot from send time. Lets bishop
-   *  message bubbles show real names on the speaker's side — they
-   *  can't read ward members directly. */
+  /** Pre-fills the phone-auth dialog input + matched against the
+   *  invitation's speakerPhone server-side. */
+  speakerPhone?: string | undefined;
   bishopricParticipants: readonly {
     uid: string;
     displayName: string;
     role: "bishopric" | "clerk";
-    email?: string;
+    email?: string | undefined;
   }[];
-  /** True when the invitation already has a response recorded. Quick
-   *  actions are hidden, composer stays available for ongoing chat. */
   hasResponse: boolean;
 }
 
-/** Speaker-side chat pane: sign-in on first write (any verified
- *  Google account), then plain chat with optional Yes/No quick
- *  actions until a response is recorded. The invitation token in
- *  the URL is the auth factor — no email-match against the
- *  invitation is enforced. */
+/** Speaker-side chat pane. Phone-auth gates every write: taps on
+ *  Yes / No / Send pop <PhoneAuthDialog>; once the speaker verifies
+ *  their phone, the queued action resumes and Twilio connects with
+ *  a phone-scoped JWT. */
 export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const user = useAuthStore((s) => s.user);
-  const signIn = useAuthStore((s) => s.signIn);
   const twilio = useTwilioChat();
   const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
+  const gate = useSpeakerAuthGate({ requestAuth: () => gate.openDialog() });
 
   const resolvedAuthors: AuthorMap = useMemo(() => {
     const map = new Map<string, AuthorInfo>();
@@ -51,11 +47,11 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     if (user && twilio.identity) {
       const existing = map.get(twilio.identity);
       const info: AuthorInfo = {
-        displayName: existing?.displayName ?? user.displayName ?? "You",
+        displayName: existing?.displayName ?? user.displayName ?? props.speakerName,
       };
       if (existing?.role) info.role = existing.role;
       if (user.photoURL) info.photoURL = user.photoURL;
-      if (user.email) info.email = user.email;
+      if (user.phoneNumber) info.email = user.phoneNumber;
       map.set(twilio.identity, info);
     }
     for (const [id, info] of authors) {
@@ -72,14 +68,8 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     authors,
   ]);
 
-  // Publish the speaker's signed-in email as their own Twilio
-  // participant attribute so the bishop's client can label the
-  // bubbles with it + drive the identity banner without reading the
-  // invitation's response doc. Fires once Twilio is ready; ignored
-  // silently if the participant isn't found yet (next render will
-  // retry via the effect's auth deps).
   useEffect(() => {
-    if (twilio.status !== "ready" || !conversation || !user?.email) return;
+    if (twilio.status !== "ready" || !conversation || !user?.phoneNumber) return;
     const identity = `speaker:${props.token}`;
     (async () => {
       try {
@@ -90,19 +80,17 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
           ...existing,
           displayName: props.speakerName,
           role: "speaker",
-          email: user.email,
-          ...(user.photoURL ? { photoURL: user.photoURL } : {}),
+          email: user.phoneNumber,
         });
       } catch {
-        // Non-fatal — bishop's banner falls back to response.actorEmail.
+        /* Non-fatal — fallback chain covers this. */
       }
     })();
   }, [twilio.status, conversation, user, props.token, props.speakerName]);
 
   async function ensureReady(): Promise<boolean> {
-    if (!user) await signIn();
-    const current = useAuthStore.getState().user;
-    if (!current) return false;
+    const ok = await gate.ensureAuthed();
+    if (!ok) return false;
     if (twilio.status === "idle" || twilio.status === "error") {
       await twilio.connect({ wardId: props.wardId, invitationToken: props.token });
     }
@@ -111,14 +99,14 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
 
   async function submitResponse(answer: "yes" | "no", reason?: string): Promise<void> {
     const current = useAuthStore.getState().user;
-    if (!current || !current.email) throw new Error("Not signed in.");
+    if (!current?.phoneNumber) throw new Error("Phone not verified.");
     await writeSpeakerResponse({
       wardId: props.wardId,
       token: props.token,
       answer,
       ...(reason ? { reason } : {}),
       actorUid: current.uid,
-      actorEmail: current.email,
+      actorPhone: current.phoneNumber,
     });
   }
 
@@ -130,10 +118,11 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         </div>
         <p className="font-serif text-[12.5px] text-walnut-2 mt-0.5">
           This is a group conversation — the bishop, counselors, and clerks can all see and reply.
-          Each message shows the sender's name.
-          {user?.email && (
+          Verify your phone on first reply; the number you confirm must match the one this
+          invitation was sent to.
+          {user?.phoneNumber && (
             <span className="ml-2">
-              Signed in as <strong>{user.email}</strong>
+              Verified as <strong>{user.phoneNumber}</strong>
             </span>
           )}
         </p>
@@ -158,6 +147,13 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         conversation={conversation}
         ensureReady={ensureReady}
         placeholder="Reply to the bishopric…"
+      />
+
+      <PhoneAuthDialog
+        open={gate.dialogOpen}
+        defaultPhone={props.speakerPhone}
+        onClose={gate.closeDialog}
+        onVerified={gate.handleVerified}
       />
     </section>
   );

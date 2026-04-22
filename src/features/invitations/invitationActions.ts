@@ -13,12 +13,17 @@ export interface SpeakerResponseInput {
   answer: "yes" | "no";
   reason?: string;
   actorUid: string;
-  actorEmail: string;
+  /** One of these identifies the verified signer. Phone-authed
+   *  speakers pass `actorPhone`; legacy email/Google-authed callers
+   *  pass `actorEmail`. Both optional at the type level so callers
+   *  can choose; the Firestore rule enforces at least phone-match. */
+  actorEmail?: string;
+  actorPhone?: string;
 }
 
 /** Speaker-side: writes the `response` subtree on the invitation
- *  doc. Passes through the email-matched Firestore rule (see
- *  firestore.rules:131). */
+ *  doc. Passes through the phone-matched Firestore rule (see
+ *  firestore.rules). */
 export async function writeSpeakerResponse(input: SpeakerResponseInput): Promise<void> {
   const ref = doc(db, "wards", input.wardId, "speakerInvitations", input.token);
   await updateDoc(ref, {
@@ -27,7 +32,8 @@ export async function writeSpeakerResponse(input: SpeakerResponseInput): Promise
       ...(input.reason ? { reason: input.reason } : {}),
       respondedAt: serverTimestamp(),
       actorUid: input.actorUid,
-      actorEmail: input.actorEmail,
+      ...(input.actorEmail ? { actorEmail: input.actorEmail } : {}),
+      ...(input.actorPhone ? { actorPhone: input.actorPhone } : {}),
     },
   });
 }

@@ -48,9 +48,17 @@ export const speakerInvitationResponseSchema = z.object({
   answer: z.enum(["yes", "no"]),
   reason: z.string().optional(),
   respondedAt: z.any(),
-  /** Google uid + verified email of the signed-in speaker at submit. */
+  /** Firebase Auth uid of the signed-in speaker at submit. Works
+   *  regardless of auth method (phone OTP or email). */
   actorUid: z.string(),
-  actorEmail: z.string(),
+  /** Verified email, if the speaker signed in via email/Google auth.
+   *  Phone-authed speakers leave this blank in favor of actorPhone. */
+  actorEmail: z.string().optional(),
+  /** Verified E.164 phone number for phone-authed speakers. The
+   *  default auth path on the invite page now — since we already
+   *  reached the speaker by SMS, verifying the same phone proves
+   *  identity without asking them to switch Google accounts. */
+  actorPhone: z.string().optional(),
   /** Bishop pressed "Apply as confirmed/declined" and the mirror write
    *  to `speaker.status` landed. Until then the schedule badge still
    *  says "speaker replied — needs review". */

@@ -5,7 +5,7 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { deleteDoc, doc, serverTimestamp, setDoc, Timestamp, updateDoc } from "firebase/firestore";
-import { authedAs, createTestEnv, seedMember, seedWard } from "./_helpers";
+import { authedAs, authedAsPhone, createTestEnv, seedMember, seedWard } from "./_helpers";
 
 const WARD = "w1";
 const TOKEN = "ABC123abcDEF456";
@@ -96,20 +96,21 @@ describe("speaker invitation rules", () => {
     });
   });
 
-  describe("update — speaker self-response path", () => {
-    const SPEAKER_EMAIL = "speaker@example.com";
+  describe("update — speaker self-response path (phone auth)", () => {
+    const SPEAKER_PHONE = "+14165551234";
+    const OTHER_PHONE = "+19995559999";
     const FUTURE = Timestamp.fromDate(new Date("2099-12-31T00:00:00Z"));
     const PAST = Timestamp.fromDate(new Date("2000-01-01T00:00:00Z"));
 
     async function seedWithContext(opts: {
-      speakerEmail?: string;
+      speakerPhone?: string;
       expiresAt?: Timestamp;
       response?: Record<string, unknown>;
     }): Promise<void> {
       await env.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), PATH), {
           ...sample,
-          ...(opts.speakerEmail !== undefined ? { speakerEmail: opts.speakerEmail } : {}),
+          ...(opts.speakerPhone !== undefined ? { speakerPhone: opts.speakerPhone } : {}),
           ...(opts.expiresAt !== undefined ? { expiresAt: opts.expiresAt } : {}),
           ...(opts.response !== undefined ? { response: opts.response } : {}),
         });
@@ -120,42 +121,54 @@ describe("speaker invitation rules", () => {
       answer: "yes" as const,
       respondedAt: serverTimestamp(),
       actorUid: "speaker-uid",
-      actorEmail: SPEAKER_EMAIL,
+      actorPhone: SPEAKER_PHONE,
     };
 
-    it("lets any signed-in user write the response subtree (email-match no longer required)", async () => {
-      await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: FUTURE });
-      const db = authedAs(env, "any-uid", "anyone@example.com").firestore();
+    it("lets a phone-authed speaker whose number matches write the response", async () => {
+      await seedWithContext({ speakerPhone: SPEAKER_PHONE, expiresAt: FUTURE });
+      const db = authedAsPhone(env, "speaker-uid", SPEAKER_PHONE).firestore();
       await assertSucceeds(updateDoc(doc(db, PATH), { response: sampleResponse }));
     });
 
-    it("allows the response even without a speakerEmail on the invitation", async () => {
-      await seedWithContext({ expiresAt: FUTURE }); // no speakerEmail
-      const db = authedAs(env, "someone", "someone@example.com").firestore();
-      await assertSucceeds(updateDoc(doc(db, PATH), { response: sampleResponse }));
+    it("blocks a phone-authed user whose number doesn't match", async () => {
+      await seedWithContext({ speakerPhone: SPEAKER_PHONE, expiresAt: FUTURE });
+      const db = authedAsPhone(env, "someone", OTHER_PHONE).firestore();
+      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
+    });
+
+    it("blocks a non-phone-authed user (email only)", async () => {
+      await seedWithContext({ speakerPhone: SPEAKER_PHONE, expiresAt: FUTURE });
+      const db = authedAs(env, "speaker-uid", "anyone@example.com").firestore();
+      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
+    });
+
+    it("blocks when the invitation has no speakerPhone snapshot", async () => {
+      await seedWithContext({ expiresAt: FUTURE });
+      const db = authedAsPhone(env, "any", SPEAKER_PHONE).firestore();
+      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
     });
 
     it("blocks an unauthenticated caller", async () => {
-      await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: FUTURE });
+      await seedWithContext({ speakerPhone: SPEAKER_PHONE, expiresAt: FUTURE });
       const db = env.unauthenticatedContext().firestore();
       await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
     });
 
     it("blocks writes after expiresAt has passed", async () => {
-      await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: PAST });
-      const db = authedAs(env, "speaker-uid", SPEAKER_EMAIL).firestore();
+      await seedWithContext({ speakerPhone: SPEAKER_PHONE, expiresAt: PAST });
+      const db = authedAsPhone(env, "speaker-uid", SPEAKER_PHONE).firestore();
       await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
     });
 
     it("blocks speaker-side edits to any field outside `response`", async () => {
-      await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: FUTURE });
-      const db = authedAs(env, "speaker-uid", SPEAKER_EMAIL).firestore();
+      await seedWithContext({ speakerPhone: SPEAKER_PHONE, expiresAt: FUTURE });
+      const db = authedAsPhone(env, "speaker-uid", SPEAKER_PHONE).firestore();
       await assertFails(updateDoc(doc(db, PATH), { bodyMarkdown: "tampered letter body" }));
     });
 
     it("blocks speaker-side edits that touch response AND a forbidden field", async () => {
-      await seedWithContext({ speakerEmail: SPEAKER_EMAIL, expiresAt: FUTURE });
-      const db = authedAs(env, "speaker-uid", SPEAKER_EMAIL).firestore();
+      await seedWithContext({ speakerPhone: SPEAKER_PHONE, expiresAt: FUTURE });
+      const db = authedAsPhone(env, "speaker-uid", SPEAKER_PHONE).firestore();
       await assertFails(
         updateDoc(doc(db, PATH), {
           response: sampleResponse,
