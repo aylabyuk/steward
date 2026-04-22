@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { QuickActionButtons } from "./QuickActionButtons";
-import { useConversation } from "./useConversation";
+import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
 
@@ -11,6 +11,10 @@ interface Props {
   wardId: string;
   token: string;
   conversationSid: string;
+  /** Snapshotted speaker name from the invitation — seeds the author
+   *  map so the speaker's own messages render with their real name
+   *  even when Twilio participant attributes aren't available. */
+  speakerName: string;
   speakerEmail?: string | undefined;
   /** True when the invitation already has a response recorded. Quick
    *  actions are hidden, composer stays available for ongoing chat. */
@@ -27,6 +31,30 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const twilio = useTwilioChat();
   const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
   const [mismatch, setMismatch] = useState<string | null>(null);
+
+  // Merge author resolution. The speaker can't read ward members
+  // (Firestore rules block it), so the only fallback we can seed
+  // locally is the speaker's own identity from the invitation
+  // snapshot + the current user's Firebase Auth photoURL for their
+  // own messages. Bishopric authors rely on Twilio participant
+  // attributes carried in new conversations.
+  const resolvedAuthors: AuthorMap = useMemo(() => {
+    const map = new Map<string, AuthorInfo>();
+    map.set(`speaker:${props.token}`, { displayName: props.speakerName, role: "speaker" });
+    if (user?.photoURL && twilio.identity) {
+      const existing = map.get(twilio.identity);
+      map.set(twilio.identity, {
+        displayName: existing?.displayName ?? user.displayName ?? "You",
+        ...(existing?.role ? { role: existing.role } : {}),
+        photoURL: user.photoURL,
+      });
+    }
+    for (const [id, info] of authors) {
+      const existing = map.get(id);
+      map.set(id, { ...existing, ...info });
+    }
+    return map;
+  }, [props.token, props.speakerName, twilio.identity, user?.photoURL, user?.displayName, authors]);
 
   async function ensureReady(): Promise<boolean> {
     setMismatch(null);
@@ -96,7 +124,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
       <ConversationThread
         messages={messages}
         currentIdentity={twilio.identity}
-        authors={authors}
+        authors={resolvedAuthors}
         loading={loading && twilio.status === "ready"}
       />
 

@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
 import type { SpeakerInvitation } from "@/lib/types";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { applyResponseToSpeaker } from "./invitationActions";
-import { useConversation } from "./useConversation";
+import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
 import { useTwilioChat } from "./twilioClientProvider";
 
 interface Props {
@@ -20,12 +21,42 @@ interface Props {
  *  Apply button that writes speaker.status + stamps acknowledgement. */
 export function BishopInvitationChat({ wardId, token, invitation }: Props): React.ReactElement {
   const user = useAuthStore((s) => s.user);
+  const members = useWardMembers();
   const twilio = useTwilioChat();
   const { messages, conversation, authors, loading } = useConversation(
     invitation.conversationSid ?? null,
   );
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+
+  // Merge author resolution: ward-member displayNames + the speaker
+  // snapshot on the invitation + the current user's Firebase Auth
+  // photoURL form a fallback map, then Twilio participant attributes
+  // (when present) overlay it. That way old conversations without
+  // attributes still render real names, and new conversations get
+  // the richer Twilio-sourced data.
+  const resolvedAuthors: AuthorMap = useMemo(() => {
+    const map = new Map<string, AuthorInfo>();
+    for (const m of members.data ?? []) {
+      if (m.data.role !== "bishopric" && m.data.role !== "clerk") continue;
+      if (!m.data.active) continue;
+      map.set(`uid:${m.id}`, { displayName: m.data.displayName, role: m.data.role });
+    }
+    map.set(`speaker:${token}`, { displayName: invitation.speakerName, role: "speaker" });
+    if (user?.uid && user.photoURL) {
+      const existing = map.get(`uid:${user.uid}`);
+      map.set(`uid:${user.uid}`, {
+        displayName: existing?.displayName ?? user.displayName ?? "You",
+        ...(existing?.role ? { role: existing.role } : {}),
+        photoURL: user.photoURL,
+      });
+    }
+    for (const [id, info] of authors) {
+      const existing = map.get(id);
+      map.set(id, { ...existing, ...info });
+    }
+    return map;
+  }, [members.data, token, invitation.speakerName, user?.uid, user?.photoURL, user?.displayName, authors]);
 
   useEffect(() => {
     if (twilio.status === "idle") void twilio.connect({ wardId });
@@ -76,7 +107,7 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
       <ConversationThread
         messages={messages}
         currentIdentity={twilio.identity}
-        authors={authors}
+        authors={resolvedAuthors}
         loading={loading && twilio.status !== "ready"}
       />
 
