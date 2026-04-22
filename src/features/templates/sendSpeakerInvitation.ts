@@ -1,12 +1,18 @@
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { speakerLetterTemplateSchema, type SpeakerInvitation, wardSchema } from "@/lib/types";
+import {
+  speakerLetterTemplateSchema,
+  speakerSchema,
+  type SpeakerInvitation,
+  wardSchema,
+} from "@/lib/types";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
   DEFAULT_SPEAKER_LETTER_FOOTER,
 } from "./speakerLetterDefaults";
 import { interpolate } from "./interpolate";
+import { formatAssignedDate, formatToday } from "./letterDates";
 
 export interface SendSpeakerInvitationInput {
   wardId: string;
@@ -32,15 +38,24 @@ export async function sendSpeakerInvitation(
 ): Promise<{ token: string }> {
   reportSaving();
   try {
-    const [templateSnap, wardSnap] = await Promise.all([
+    const [templateSnap, wardSnap, speakerSnap] = await Promise.all([
       getDoc(doc(db, "wards", input.wardId, "templates", "speakerLetter")),
       getDoc(doc(db, "wards", input.wardId)),
+      getDoc(
+        doc(db, "wards", input.wardId, "meetings", input.meetingDate, "speakers", input.speakerId),
+      ),
     ]);
     const parsedTemplate = templateSnap.exists()
       ? speakerLetterTemplateSchema.safeParse(templateSnap.data())
       : null;
     const template = parsedTemplate?.success ? parsedTemplate.data : null;
     const wardName = wardSnap.exists() ? wardSchema.parse(wardSnap.data()).name : "";
+    const parsedSpeaker = speakerSnap.exists() ? speakerSchema.safeParse(speakerSnap.data()) : null;
+    // Per-speaker override wins over the ward default, if present.
+    const source =
+      parsedSpeaker?.success && parsedSpeaker.data.letterOverride
+        ? parsedSpeaker.data.letterOverride
+        : template;
 
     const vars = {
       speakerName: input.speakerName,
@@ -54,9 +69,9 @@ export async function sendSpeakerInvitation(
       inviterName: input.inviterName,
     };
 
-    const bodyMarkdown = interpolate(template?.bodyMarkdown ?? DEFAULT_SPEAKER_LETTER_BODY, vars);
+    const bodyMarkdown = interpolate(source?.bodyMarkdown ?? DEFAULT_SPEAKER_LETTER_BODY, vars);
     const footerMarkdown = interpolate(
-      template?.footerMarkdown ?? DEFAULT_SPEAKER_LETTER_FOOTER,
+      source?.footerMarkdown ?? DEFAULT_SPEAKER_LETTER_FOOTER,
       vars,
     );
 
@@ -82,23 +97,4 @@ export async function sendSpeakerInvitation(
     reportSaveError(e);
     throw e;
   }
-}
-
-function formatAssignedDate(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatToday(): string {
-  return new Date().toLocaleDateString(undefined, {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
 }
