@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import { createSpeaker, deleteSpeaker, updateSpeaker } from "@/features/speakers/speakerActions";
 import { useSpeakers } from "@/hooks/useMeeting";
 import type { NonMeetingSunday } from "@/lib/types";
+import { AddSpeakerCard } from "./AddSpeakerCard";
 import { SpeakerEditCard } from "./SpeakerEditCard";
 import { emptyDraft, fromSpeaker, isDirty, type Draft } from "./speakerDraft";
 
@@ -118,45 +119,22 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 lg:gap-3.5 items-start">
-        {drafts.map((d, i) => (
-          <SpeakerEditCard
-            key={d.tempId}
-            draft={d}
-            index={i}
-            date={date}
-            onChange={(partial) => updateDraft(d.tempId, partial)}
-            onRemove={() => removeDraft(d.tempId)}
-          />
-        ))}
-      </div>
-      <div className="flex items-center gap-3">
-        <button
-          onClick={addDraft}
-          disabled={drafts.length >= MAX_SPEAKERS}
-          className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 inline-flex items-center gap-1.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-chalk"
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Add speaker
-        </button>
-        {drafts.length >= MAX_SPEAKERS && (
-          <span className="font-serif italic text-[12px] text-walnut-3">
-            Maximum {MAX_SPEAKERS} speakers per meeting.
-          </span>
-        )}
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2.5 lg:gap-3.5 items-start">
+      {drafts.map((d, i) => (
+        <SpeakerEditCard
+          key={d.tempId}
+          draft={d}
+          index={i}
+          date={date}
+          onChange={(partial) => updateDraft(d.tempId, partial)}
+          onRemove={() => removeDraft(d.tempId)}
+        />
+      ))}
+      <AddSpeakerCard
+        onClick={addDraft}
+        disabled={drafts.length >= MAX_SPEAKERS}
+        max={MAX_SPEAKERS}
+      />
     </div>
   );
 });
