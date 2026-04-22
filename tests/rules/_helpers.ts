@@ -53,3 +53,14 @@ export async function seedWard(env: RulesTestEnvironment, wardId: string): Promi
 export function authedAs(env: RulesTestEnvironment, uid: string, email: string): RulesTestContext {
   return env.authenticatedContext(uid, { email, email_verified: true });
 }
+
+/** Signed-in context with a verified phone number (Firebase Phone
+ *  Auth). The rule engine reads `request.auth.token.phone_number`
+ *  from the provided claim. */
+export function authedAsPhone(
+  env: RulesTestEnvironment,
+  uid: string,
+  phoneNumber: string,
+): RulesTestContext {
+  return env.authenticatedContext(uid, { phone_number: phoneNumber });
+}

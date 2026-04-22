@@ -20,21 +20,21 @@ interface Response {
 /** Mints a Twilio Conversations JWT for the caller.
  *
  *  Two paths:
- *  - **Bishopric** — caller is an active ward member. Identity
+ *  - **Bishopric** — Google-authed active ward member. Identity
  *    `uid:{firebaseUid}`; service-wide grant so they can see every
  *    conversation they're a participant of.
- *  - **Speaker** — any signed-in caller with a verified Google
- *    account + a valid invitationToken. Identity `speaker:{token}`
- *    (ephemeral per-invitation, not their uid). The token itself
- *    is the authorization; no email-match against the invitation
- *    is required. Pre-expiry only.
+ *  - **Speaker** — phone-authed (Firebase Phone Auth) caller whose
+ *    verified phone number matches the invitation's snapshotted
+ *    `speakerPhone`. Identity `speaker:{token}` (ephemeral per-
+ *    invitation). Pre-expiry only.
  *
- *  Errors:
- *  - `unauthenticated` / `permission-denied` on unverified email
+ *  Errors the client uses to pick recovery UI:
+ *  - `unauthenticated` / `permission-denied` on missing phone
  *  - `invalid-argument` on missing wardId / invitationToken
  *  - `not-found` when the invitation doesn't exist
- *  - `deadline-exceeded` post-expiry
- *  The client uses the error code to pick the recovery UI. */
+ *  - `failed-precondition` on missing speakerPhone snapshot or
+ *    phone mismatch
+ *  - `deadline-exceeded` post-expiry */
 export const issueTwilioToken = onCall(
   { secrets: TWILIO_SECRETS },
   async (request: CallableRequest<Request>): Promise<Response> => {
@@ -50,19 +50,31 @@ export const issueTwilioToken = onCall(
       return { jwt, identity: `uid:${auth.uid}`, expiresInSeconds: 3600 };
     }
 
-    // Speaker path — verified Google account + a valid, unexpired
-    // invitation token is enough. The URL-bearer is treated as the
-    // speaker; actor identity is recorded on any write they make.
+    // Speaker path — phone auth + matching number on the invitation.
     if (!invitationToken) throw new HttpsError("invalid-argument", "invitationToken required.");
-    if (auth.token.email_verified !== true) {
-      throw new HttpsError("permission-denied", "Verified Google email required.");
+    const phone = auth.token.phone_number as string | undefined;
+    if (!phone) {
+      throw new HttpsError("permission-denied", "Phone verification required.");
     }
 
     const snap = await getFirestore()
       .doc(`wards/${wardId}/speakerInvitations/${invitationToken}`)
       .get();
     if (!snap.exists) throw new HttpsError("not-found", "Invitation not found.");
-    const invitation = snap.data() as { expiresAt?: FirebaseFirestore.Timestamp };
+    const invitation = snap.data() as {
+      speakerPhone?: string;
+      expiresAt?: FirebaseFirestore.Timestamp;
+    };
+
+    if (!invitation.speakerPhone) {
+      throw new HttpsError("failed-precondition", "This invitation has no phone on file.");
+    }
+    if (invitation.speakerPhone !== phone) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Verified phone doesn't match the invited number.",
+      );
+    }
     if (invitation.expiresAt && invitation.expiresAt.toMillis() <= Date.now()) {
       throw new HttpsError("deadline-exceeded", "This invitation has expired.");
     }
