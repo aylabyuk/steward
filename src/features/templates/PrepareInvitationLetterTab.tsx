@@ -36,7 +36,7 @@ export function PrepareInvitationLetterTab({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
-      <div className="flex flex-col gap-4 min-w-0">
+      <div className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:pr-2">
         <TabActionRow
           hasOverride={hasOverride}
           disabled={disabled}
@@ -47,7 +47,7 @@ export function PrepareInvitationLetterTab({
         <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
         <EditorSection label="Footer (scripture)" initialMarkdown={footer} onChange={setFooter} />
       </div>
-      <aside className="flex flex-col gap-2 min-w-0 lg:sticky lg:top-0 lg:self-start">
+      <aside className="flex flex-col gap-2 min-w-0">
         <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
           Preview — 8.5 × 11 in
         </div>
