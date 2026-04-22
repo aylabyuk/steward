@@ -86,8 +86,8 @@ export function PrepareInvitationPage() {
   if (done) {
     return (
       <PrepareInvitationPageMessage
-        title="Done"
-        body="You can close this tab — or return to Schedule to review the status."
+        title="Invitation sent"
+        body="The speaker has been notified. This tab will close on its own."
         close
       />
     );
