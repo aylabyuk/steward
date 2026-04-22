@@ -1,0 +1,153 @@
+import { useMemo, useState } from "react";
+import { useParams } from "react-router";
+import { useCurrentMember } from "@/hooks/useCurrentMember";
+import { useSpeakers } from "@/hooks/useMeeting";
+import { useWardSettings } from "@/hooks/useWardSettings";
+import { printInvitationLetter } from "@/features/schedule/printInvitationLetter";
+import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
+import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
+import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
+import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTemplate";
+import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
+import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
+import { usePrepareInvitationActions } from "@/features/templates/usePrepareInvitationActions";
+import { isValidEmail } from "@/lib/email";
+import { useAuthStore } from "@/stores/authStore";
+import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { PrepareInvitationPageMessage } from "./PrepareInvitationPageMessage";
+
+export function PrepareInvitationPage() {
+  const { date, speakerId } = useParams<{ date: string; speakerId: string }>();
+  const wardId = useCurrentWardStore((s) => s.wardId);
+  const me = useCurrentMember();
+  const authUser = useAuthStore((s) => s.user);
+  const ward = useWardSettings();
+  const speakers = useSpeakers(date ?? null);
+  const { data: letterTemplate } = useSpeakerLetterTemplate();
+  const { data: emailTemplate } = useSpeakerEmailTemplate();
+  const [saveAsOverride, setSaveAsOverride] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const speaker = speakers.data?.find((s) => s.id === speakerId) ?? null;
+  const form = usePrepareInvitation({
+    wardId: wardId ?? "",
+    date: date ?? "",
+    speakerId: speakerId ?? "",
+    open: Boolean(wardId && date && speakerId && speaker),
+    letterTemplate,
+  });
+
+  const inviterName =
+    me?.data.displayName ?? authUser?.displayName ?? authUser?.email ?? "The bishopric";
+  const wardName = ward.data?.name ?? "";
+
+  const vars = useMemo(
+    () => ({
+      speakerName: speaker?.data.name ?? "",
+      topic: speaker?.data.topic?.trim() || "a topic of your choosing",
+      date: date ? formatAssignedDate(date) : "",
+      today: formatToday(),
+      wardName,
+      inviterName,
+    }),
+    [speaker?.data.name, speaker?.data.topic, date, wardName, inviterName],
+  );
+
+  const actions = usePrepareInvitationActions({
+    wardId: wardId ?? "",
+    date: date ?? "",
+    speakerId: speakerId ?? "",
+    speakerName: speaker?.data.name ?? "",
+    speakerEmail: speaker?.data.email ?? "",
+    speakerTopic: speaker?.data.topic ?? "",
+    inviterName,
+    vars,
+    saveAsOverride,
+    form,
+    emailTemplate,
+    onDone: () => setDone(true),
+  });
+
+  if (!wardId || !date || !speakerId) {
+    return (
+      <PrepareInvitationPageMessage
+        title="Missing invitation context"
+        body="Return to the schedule."
+      />
+    );
+  }
+  if (speakers.loading) {
+    return <PrepareInvitationPageMessage title="Loading speaker…" body={null} />;
+  }
+  if (!speaker) {
+    return (
+      <PrepareInvitationPageMessage
+        title="Speaker not found"
+        body="This speaker may have been removed. Return to the schedule."
+      />
+    );
+  }
+
+  if (done) {
+    return (
+      <PrepareInvitationPageMessage
+        title="Done"
+        body="You can close this tab — or return to Schedule to review the status."
+        close
+      />
+    );
+  }
+
+  const email = (speaker.data.email ?? "").trim();
+  const hasEmail = email.length > 0;
+  const emailValid = isValidEmail(email);
+  const canSend = hasEmail && emailValid;
+  const canSendReason = !hasEmail
+    ? "No email on file — print or mark invited instead."
+    : !emailValid
+      ? "Invalid email format."
+      : null;
+
+  return (
+    <main className="min-h-dvh bg-parchment flex flex-col">
+      <header className="shrink-0 flex items-start justify-between gap-4 flex-wrap border-b border-border bg-chalk px-5 sm:px-8 pt-5 pb-4">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
+            Prepare invitation
+          </div>
+          <h1 className="font-display text-[24px] font-semibold text-walnut leading-tight truncate">
+            {speaker.data.name}
+          </h1>
+          <p className="font-serif italic text-[13px] text-walnut-3 truncate">
+            {hasEmail ? `Will be emailed to ${email}.` : "No email on file."}
+          </p>
+        </div>
+        <PrepareInvitationActionBar
+          saveAsOverride={saveAsOverride}
+          setSaveAsOverride={setSaveAsOverride}
+          busy={form.busy}
+          canSend={canSend}
+          canSendReason={canSendReason}
+          onCancel={() => window.close()}
+          onMarkInvited={actions.markInvited}
+          onPrint={() => void printInvitationLetter(speaker.data, date)}
+          onSend={actions.send}
+        />
+      </header>
+      <div className="flex-1 overflow-auto px-5 sm:px-8 pt-5 pb-8">
+        <PrepareInvitationLetterTab
+          body={form.letterBody}
+          footer={form.letterFooter}
+          setBody={form.setLetterBody}
+          setFooter={form.setLetterFooter}
+          hasOverride={form.letterHasOverride}
+          disabled={form.busy}
+          vars={vars}
+          onRevertToDefault={form.revertLetterToWardDefault}
+          onClearOverride={() => void form.clearLetterOverride()}
+        />
+        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
+      </div>
+    </main>
+  );
+}

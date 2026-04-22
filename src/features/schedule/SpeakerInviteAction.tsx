@@ -1,8 +1,4 @@
-import { useState } from "react";
-import { useCurrentMember } from "@/hooks/useCurrentMember";
-import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { PrepareInvitationDialog } from "@/features/templates/PrepareInvitationDialog";
 import type { Draft } from "./speakerDraft";
 import { InviteActionBtn } from "./SpeakerInviteActionBtn";
 import { MailIcon, SendIcon } from "./SpeakerInviteIcons";
@@ -10,27 +6,27 @@ import { MailIcon, SendIcon } from "./SpeakerInviteIcons";
 interface Props {
   draft: Draft;
   date: string;
-  onMarkInvited: () => void;
-  onPrint: () => void;
 }
 
 /**
- * The single "Prepare invitation" action on the Planned-status strip.
- * Clicking opens `PrepareInvitationDialog`, which owns the letter +
- * email editors and the three finalize actions (Mark invited / Print /
- * Send email). The dialog calls back here for status flips and
- * printing, so the parent card doesn't need to know about it.
+ * Single "Prepare invitation" action on the Planned-status strip.
+ * Clicking opens `/week/:date/speaker/:id/prepare` in a new tab so
+ * the bishop has the whole viewport for the letter editor + preview.
+ * The prepare page handles status flips and sends directly against
+ * Firestore — no parent callbacks needed.
  */
-export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
+export function InviteAction({ draft, date }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId);
-  const me = useCurrentMember();
-  const authUser = useAuthStore((s) => s.user);
-  const inviterName =
-    me?.data.displayName ?? authUser?.displayName ?? authUser?.email ?? "The bishopric";
   const email = draft.email.trim();
   const hasEmail = email.length > 0;
   const persisted = draft.id !== null;
-  const [open, setOpen] = useState(false);
+  const canOpen = persisted && Boolean(wardId);
+
+  function handleOpen() {
+    if (!canOpen || !wardId || !draft.id) return;
+    const url = `/week/${encodeURIComponent(date)}/speaker/${encodeURIComponent(draft.id)}/prepare`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <div className="bg-parchment-2 border border-border rounded-lg px-3 py-2.5 mb-3 flex flex-col gap-2">
@@ -43,16 +39,11 @@ export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
               <strong className="font-semibold not-italic text-bordeaux font-sans">{email}</strong>
             </span>
           ) : (
-            <span>No email on file — print a letter or mark invited directly.</span>
+            <span>No email on file — print a letter or mark invited in the editor.</span>
           )}
         </div>
         <div className="inline-flex gap-1.5 shrink-0 ml-auto">
-          <InviteActionBtn
-            onClick={() => setOpen(true)}
-            icon={<SendIcon />}
-            primary
-            disabled={!persisted || !wardId}
-          >
+          <InviteActionBtn onClick={handleOpen} icon={<SendIcon />} primary disabled={!canOpen}>
             Prepare invitation
           </InviteActionBtn>
         </div>
@@ -61,21 +52,6 @@ export function InviteAction({ draft, date, onMarkInvited, onPrint }: Props) {
         <p className="font-sans text-[11.5px] text-walnut-3">
           Save the speaker first — we generate a personal invitation link tied to this row.
         </p>
-      )}
-      {persisted && wardId && draft.id && (
-        <PrepareInvitationDialog
-          wardId={wardId}
-          date={date}
-          speakerId={draft.id}
-          speakerName={draft.name}
-          speakerEmail={draft.email}
-          speakerTopic={draft.topic}
-          inviterName={inviterName}
-          open={open}
-          onClose={() => setOpen(false)}
-          onMarkInvited={onMarkInvited}
-          onPrint={onPrint}
-        />
       )}
     </div>
   );

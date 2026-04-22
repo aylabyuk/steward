@@ -1,7 +1,6 @@
 import { SPEAKER_ROLES } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { isValidEmail } from "@/lib/email";
-import { printInvitationLetter } from "./printInvitationLetter";
 import { SpeakerCardHeader } from "./SpeakerCardHeader";
 import type { Draft } from "./speakerDraft";
 import { InviteAction } from "./SpeakerInviteAction";
@@ -27,25 +26,7 @@ export function SpeakerEditCard({ draft, index, date, onChange, onRemove }: Prop
 
       <SpeakerStatusPills status={draft.status} onChange={(status) => onChange({ status })} />
 
-      {draft.status === "planned" && (
-        <InviteAction
-          draft={draft}
-          date={date}
-          onMarkInvited={() => onChange({ status: "invited" })}
-          onPrint={() =>
-            printInvitationLetter(
-              {
-                name: draft.name,
-                email: draft.email,
-                topic: draft.topic,
-                status: draft.status,
-                role: draft.role,
-              },
-              date,
-            )
-          }
-        />
-      )}
+      {draft.status === "planned" && <InviteAction draft={draft} date={date} />}
 
       <div className="flex flex-col gap-2.5">
         <label className="flex flex-col gap-1">
