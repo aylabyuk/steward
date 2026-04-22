@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BishopInvitationDialog } from "@/features/invitations/BishopInvitationDialog";
+import { useConversationUnread } from "@/features/invitations/useConversationUnread";
 import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { Speaker, SpeakerStatus } from "@/lib/types";
@@ -31,6 +32,8 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
   const hasInvitation = Boolean(invitation);
   const response = invitation?.response;
   const needsApply = Boolean(response && !response.acknowledgedAt);
+  const unreadCount = useConversationUnread(invitation?.conversationSid);
+  const hasUnread = typeof unreadCount === "number" && unreadCount > 0;
 
   return (
     <li className="flex items-center gap-3 py-3 border-b border-border last:border-b-0">
@@ -53,7 +56,7 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
       </div>
       <ChatIconButton
         enabled={hasInvitation}
-        badge={needsApply}
+        badge={needsApply || hasUnread}
         onClick={() => setOpen(true)}
         speakerName={speaker.name}
       />
