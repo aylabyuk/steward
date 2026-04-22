@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { MobileLetterPreviewButton } from "@/features/templates/MobileLetterPreviewButton";
+import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
-import { SpeakerLetterGuide } from "@/features/templates/SpeakerLetterGuide";
-import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
+import { SpeakerLetterTemplateEditorColumn } from "./SpeakerLetterTemplateEditorColumn";
 import { SpeakerLetterTemplateHeader } from "./SpeakerLetterTemplateHeader";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
@@ -88,6 +87,13 @@ export function SpeakerLetterTemplatePage() {
 
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
+      <PrintOnlyLetter
+        wardName={wardName}
+        assignedDate={PREVIEW_VARS.date}
+        today={PREVIEW_VARS.today}
+        bodyMarkdown={renderedBody}
+        footerMarkdown={renderedFooter}
+      />
       <SpeakerLetterTemplateHeader
         canEdit={canEdit}
         busy={saving || !seeded}
@@ -99,39 +105,22 @@ export function SpeakerLetterTemplatePage() {
 
       <div className="flex-1 min-h-0 lg:overflow-hidden px-4 sm:px-8 pt-5 pb-4">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
-          <div
-            key={resetKey}
-            className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-10rem)] lg:overflow-y-auto lg:pr-2"
-          >
-            <MobileLetterPreviewButton
-              wardName={wardName}
-              assignedDate={PREVIEW_VARS.date}
-              today={PREVIEW_VARS.today}
-              bodyMarkdown={renderedBody}
-              footerMarkdown={renderedFooter}
-            />
-            <SpeakerLetterGuide />
-            {seeded ? (
-              <>
-                <EditorSection
-                  label="Letter body"
-                  initialMarkdown={body}
-                  onChange={setBody}
-                  disabled={!canEdit}
-                />
-                <EditorSection
-                  label="Footer (scripture)"
-                  initialMarkdown={footer}
-                  onChange={setFooter}
-                  disabled={!canEdit}
-                />
-              </>
-            ) : (
-              <p className="font-serif italic text-[14px] text-walnut-3">Loading template…</p>
-            )}
-            {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
-          </div>
-          <aside data-print-target-host className="hidden lg:flex flex-col gap-2 min-w-0">
+          <SpeakerLetterTemplateEditorColumn
+            resetKey={resetKey}
+            body={body}
+            footer={footer}
+            setBody={setBody}
+            setFooter={setFooter}
+            canEdit={canEdit}
+            seeded={seeded}
+            error={error}
+            wardName={wardName}
+            sampleDate={PREVIEW_VARS.date}
+            sampleToday={PREVIEW_VARS.today}
+            renderedBody={renderedBody}
+            renderedFooter={renderedFooter}
+          />
+          <aside className="hidden lg:flex flex-col gap-2 min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
               Preview — 8.5 × 11 in · sample data
             </div>

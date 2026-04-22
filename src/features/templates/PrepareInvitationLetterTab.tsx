@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { MobileLetterPreviewButton } from "./MobileLetterPreviewButton";
+import { PrintOnlyLetter } from "./PrintOnlyLetter";
 import { ScaledLetterPreview } from "./ScaledLetterPreview";
 import { SpeakerLetterGuide } from "./SpeakerLetterGuide";
 import { EditorSection } from "./SpeakerLetterEditor";
@@ -33,35 +34,44 @@ export function PrepareInvitationLetterTab({
   const renderedFooter = useMemo(() => interpolate(footer, vars), [footer, vars]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
-      <div className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:pr-2">
-        <MobileLetterPreviewButton
-          wardName={vars.wardName}
-          assignedDate={vars.date}
-          today={vars.today}
-          bodyMarkdown={renderedBody}
-          footerMarkdown={renderedFooter}
-        />
-        <SpeakerLetterGuide />
-        <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
-        <EditorSection label="Footer (scripture)" initialMarkdown={footer} onChange={setFooter} />
-      </div>
-      <aside data-print-target-host className="hidden lg:flex flex-col gap-2 min-w-0">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-          Preview — 8.5 × 11 in
-        </div>
-        <div className="relative">
-          <ScaledLetterPreview
+    <>
+      <PrintOnlyLetter
+        wardName={vars.wardName}
+        assignedDate={vars.date}
+        today={vars.today}
+        bodyMarkdown={renderedBody}
+        footerMarkdown={renderedFooter}
+      />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
+        <div className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:pr-2">
+          <MobileLetterPreviewButton
             wardName={vars.wardName}
             assignedDate={vars.date}
             today={vars.today}
             bodyMarkdown={renderedBody}
             footerMarkdown={renderedFooter}
-            height="calc(100dvh - 11rem)"
           />
-          {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
+          <SpeakerLetterGuide />
+          <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
+          <EditorSection label="Footer (scripture)" initialMarkdown={footer} onChange={setFooter} />
         </div>
-      </aside>
-    </div>
+        <aside className="hidden lg:flex flex-col gap-2 min-w-0">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
+            Preview — 8.5 × 11 in
+          </div>
+          <div className="relative">
+            <ScaledLetterPreview
+              wardName={vars.wardName}
+              assignedDate={vars.date}
+              today={vars.today}
+              bodyMarkdown={renderedBody}
+              footerMarkdown={renderedFooter}
+              height="calc(100dvh - 11rem)"
+            />
+            {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
+          </div>
+        </aside>
+      </div>
+    </>
   );
 }
