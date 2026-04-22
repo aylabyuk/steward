@@ -23,7 +23,19 @@ export function useConversationUnread(conversationSid: string | null | undefined
 
     async function refetch(convo: Conversation) {
       const count = await convo.getUnreadMessagesCount();
-      if (!cancelled) setUnread(count);
+      if (cancelled) return;
+      // Twilio returns null when the participant has never marked
+      // anything read (no read horizon set). In that case, every
+      // message in the conversation is effectively unread — derive
+      // the count from lastMessage.index. Without this, badge never
+      // lights up on a brand-new conversation the bishop hasn't
+      // opened yet.
+      if (count !== null) {
+        setUnread(count);
+        return;
+      }
+      const lastIdx = convo.lastMessage?.index;
+      setUnread(typeof lastIdx === "number" ? lastIdx + 1 : 0);
     }
 
     (async () => {
