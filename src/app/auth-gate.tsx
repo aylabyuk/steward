@@ -20,17 +20,13 @@ interface Props {
    * When true (default), the gate renders <AppShell /> which in turn
    * hosts the route outlet with the topbar + centered content column.
    * When false, it renders <Outlet /> directly so children can own the
-   * full page chrome — used for print views that need a standalone
-   * layout.
+   * full page chrome — used for print views + full-screen editors
+   * opened in their own tabs.
    */
   appShell?: boolean;
-  /** Pass-through to AppShell: when true, the content column uses the
-   *  full viewport width instead of `max-w-380`. Ignored when
-   *  `appShell={false}` since those routes are already full-width. */
-  fullWidth?: boolean;
 }
 
-export function AuthGate({ appShell = true, fullWidth }: Props) {
+export function AuthGate({ appShell = true }: Props) {
   const status = useAuthStore((s) => s.status);
   const access = useWardAccess();
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -50,5 +46,5 @@ export function AuthGate({ appShell = true, fullWidth }: Props) {
   if (access.kind === "none") return <AccessRequired />;
   if (access.kind === "multiple" && !wardId) return <WardPicker members={access.members} />;
 
-  return appShell ? <AppShell fullWidth={fullWidth} /> : <Outlet />;
+  return appShell ? <AppShell /> : <Outlet />;
 }
