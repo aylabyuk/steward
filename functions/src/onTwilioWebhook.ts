@@ -5,6 +5,7 @@ import twilio from "twilio";
 import {
   emailSpeaker,
   pushToBishopric,
+  smsSpeaker,
   type ResolvedInvitation,
 } from "./invitationReplyNotify.js";
 import {
@@ -70,7 +71,9 @@ export const onTwilioWebhook = onRequest(
     if (author.startsWith("speaker:")) {
       await pushToBishopric(invitation, body);
     } else if (author.startsWith("uid:")) {
-      await emailSpeaker(invitation, body);
+      // Run both in parallel — SMS is the primary channel, email is
+      // best-effort and no-ops silently when SendGrid isn't wired.
+      await Promise.all([smsSpeaker(invitation, body), emailSpeaker(invitation, body)]);
     }
     res.status(200).send("ok");
   },
