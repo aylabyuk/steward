@@ -1,9 +1,15 @@
-import { useSpeakers } from "@/hooks/useMeeting";
+import type { WithId } from "@/hooks/_sub";
+import type { Speaker } from "@/lib/types";
 import { SpeakerEditCard } from "./SpeakerEditCard";
 import { fromSpeaker } from "./speakerDraft";
 
 interface Props {
   date: string;
+  /** Speakers piped down from SundayCard's existing live subscription.
+   *  Passing them in (rather than re-subscribing here) avoids a
+   *  loading-state flicker on the Edit → Invite transition — the
+   *  parent already has fresh post-save data ready. */
+  speakers: readonly WithId<Speaker>[];
 }
 
 const noop = () => {};
@@ -14,13 +20,7 @@ const noop = () => {};
  *  "Prepare invitation" action (planned) or an "already handled"
  *  note (invited / confirmed). Declined speakers are hidden — they
  *  have a different re-invite flow. */
-export function SpeakerInvitationLauncher({ date }: Props) {
-  const { data: speakers, loading } = useSpeakers(date);
-
-  if (loading) {
-    return <p className="font-serif italic text-[14px] text-walnut-3">Loading speakers…</p>;
-  }
-
+export function SpeakerInvitationLauncher({ date, speakers }: Props) {
   const rows = speakers.filter((s) => s.data.status !== "declined");
 
   if (rows.length === 0) {

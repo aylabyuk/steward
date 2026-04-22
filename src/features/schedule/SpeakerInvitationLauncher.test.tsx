@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { WithId } from "@/hooks/_sub";
 import type { Speaker } from "@/lib/types";
 import { SpeakerInvitationLauncher } from "./SpeakerInvitationLauncher";
 
@@ -15,28 +16,22 @@ function makeSpeaker(partial: Partial<Speaker> & { name: string }): Speaker {
   };
 }
 
-// Reactively stubbed useSpeakers — each test pushes rows in before render.
-const speakersState: {
-  loading: boolean;
-  data: { id: string; data: Speaker }[];
-} = { loading: false, data: [] };
-
-vi.mock("@/hooks/useMeeting", () => ({
-  useSpeakers: () => speakersState,
-}));
+function row(id: string, speaker: Speaker): WithId<Speaker> {
+  return { id, data: speaker };
+}
 
 afterEach(() => {
   cleanup();
-  speakersState.loading = false;
-  speakersState.data = [];
 });
 
 describe("SpeakerInvitationLauncher", () => {
   it("renders planned speakers with a Prepare invitation button", () => {
-    speakersState.data = [
-      { id: "s1", data: makeSpeaker({ name: "Sister Reeves", email: "r@x.com" }) },
-    ];
-    render(<SpeakerInvitationLauncher date="2026-04-26" />);
+    render(
+      <SpeakerInvitationLauncher
+        date="2026-04-26"
+        speakers={[row("s1", makeSpeaker({ name: "Sister Reeves", email: "r@x.com" }))]}
+      />,
+    );
     expect(screen.getByDisplayValue("Sister Reeves")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Open prepare invitation for Sister Reeves/i }),
@@ -44,10 +39,12 @@ describe("SpeakerInvitationLauncher", () => {
   });
 
   it("renders invited speakers with an 'already invited' note and no button", () => {
-    speakersState.data = [
-      { id: "s1", data: makeSpeaker({ name: "Brother Lee", status: "invited" }) },
-    ];
-    render(<SpeakerInvitationLauncher date="2026-04-26" />);
+    render(
+      <SpeakerInvitationLauncher
+        date="2026-04-26"
+        speakers={[row("s1", makeSpeaker({ name: "Brother Lee", status: "invited" }))]}
+      />,
+    );
     expect(screen.getByDisplayValue("Brother Lee")).toBeInTheDocument();
     expect(screen.getByText(/Already invited — open edit mode to change/i)).toBeInTheDocument();
     expect(
@@ -56,17 +53,23 @@ describe("SpeakerInvitationLauncher", () => {
   });
 
   it("confirmed speakers render with an 'already confirmed' note", () => {
-    speakersState.data = [
-      { id: "s1", data: makeSpeaker({ name: "Sister Park", status: "confirmed" }) },
-    ];
-    render(<SpeakerInvitationLauncher date="2026-04-26" />);
+    render(
+      <SpeakerInvitationLauncher
+        date="2026-04-26"
+        speakers={[row("s1", makeSpeaker({ name: "Sister Park", status: "confirmed" }))]}
+      />,
+    );
     expect(screen.getByText(/Already confirmed — open edit mode to change/i)).toBeInTheDocument();
   });
 
   it("Prepare invitation button calls window.open with the expected URL", async () => {
-    speakersState.data = [{ id: "speaker-abc", data: makeSpeaker({ name: "Sister Reeves" }) }];
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
-    render(<SpeakerInvitationLauncher date="2026-04-26" />);
+    render(
+      <SpeakerInvitationLauncher
+        date="2026-04-26"
+        speakers={[row("speaker-abc", makeSpeaker({ name: "Sister Reeves" }))]}
+      />,
+    );
 
     await userEvent.click(
       screen.getByRole("button", { name: /Open prepare invitation for Sister Reeves/i }),
@@ -80,17 +83,20 @@ describe("SpeakerInvitationLauncher", () => {
   });
 
   it("renders an empty-state hint when there are no speakers at all", () => {
-    speakersState.data = [];
-    render(<SpeakerInvitationLauncher date="2026-04-26" />);
+    render(<SpeakerInvitationLauncher date="2026-04-26" speakers={[]} />);
     expect(screen.getByText(/No speakers yet/i)).toBeInTheDocument();
   });
 
   it("hides declined speakers from the grid", () => {
-    speakersState.data = [
-      { id: "s1", data: makeSpeaker({ name: "Planned Person" }) },
-      { id: "s2", data: makeSpeaker({ name: "Declined Person", status: "declined" }) },
-    ];
-    render(<SpeakerInvitationLauncher date="2026-04-26" />);
+    render(
+      <SpeakerInvitationLauncher
+        date="2026-04-26"
+        speakers={[
+          row("s1", makeSpeaker({ name: "Planned Person" })),
+          row("s2", makeSpeaker({ name: "Declined Person", status: "declined" })),
+        ]}
+      />,
+    );
     expect(screen.getByDisplayValue("Planned Person")).toBeInTheDocument();
     expect(screen.queryByDisplayValue("Declined Person")).not.toBeInTheDocument();
   });
