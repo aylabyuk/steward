@@ -28,10 +28,16 @@ export const router = createBrowserRouter([
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/members", element: <MembersPage /> },
       { path: "settings/notifications", element: <NotificationSettingsPage /> },
-      { path: "settings/templates/speakers", element: <SpeakerLetterTemplatePage /> },
       { path: "settings/templates/speaker-email", element: <SpeakerEmailTemplatePage /> },
       { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
     ],
+  },
+  // Routes that keep the topbar but drop the `max-w-380` content cap —
+  // they have editor + preview layouts where the 8.5×11 paper preview
+  // needs every horizontal pixel.
+  {
+    element: <AuthGate fullWidth />,
+    children: [{ path: "/settings/templates/speakers", element: <SpeakerLetterTemplatePage /> }],
   },
   // Print views + prepare-invitation share AuthGate's auth + ward
   // resolution (so currentWardStore.wardId gets populated for

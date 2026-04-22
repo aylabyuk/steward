@@ -24,9 +24,13 @@ interface Props {
    * layout.
    */
   appShell?: boolean;
+  /** Pass-through to AppShell: when true, the content column uses the
+   *  full viewport width instead of `max-w-380`. Ignored when
+   *  `appShell={false}` since those routes are already full-width. */
+  fullWidth?: boolean;
 }
 
-export function AuthGate({ appShell = true }: Props) {
+export function AuthGate({ appShell = true, fullWidth }: Props) {
   const status = useAuthStore((s) => s.status);
   const access = useWardAccess();
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -46,5 +50,5 @@ export function AuthGate({ appShell = true }: Props) {
   if (access.kind === "none") return <AccessRequired />;
   if (access.kind === "multiple" && !wardId) return <WardPicker members={access.members} />;
 
-  return appShell ? <AppShell /> : <Outlet />;
+  return appShell ? <AppShell fullWidth={fullWidth} /> : <Outlet />;
 }
