@@ -90,12 +90,12 @@ export function PrepareInvitationDialog(props: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={`Prepare invitation for ${speakerName}`}
     >
-      <div className="w-full max-w-230 max-h-[92vh] overflow-auto rounded-[14px] border border-border-strong bg-chalk p-6 shadow-elev-3">
+      <div className="w-full h-full max-w-350 max-h-[96vh] overflow-auto rounded-[14px] border border-border-strong bg-chalk p-5 sm:p-6 shadow-elev-3">
         <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
           Prepare invitation
         </div>
