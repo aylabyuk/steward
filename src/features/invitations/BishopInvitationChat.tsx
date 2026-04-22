@@ -5,7 +5,6 @@ import type { SpeakerInvitation } from "@/lib/types";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { ResponseStrip } from "./ResponseStrip";
-import { SpeakerIdentityBanner } from "./SpeakerIdentityBanner";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
 import { useTwilioChat } from "./twilioClientProvider";
@@ -76,13 +75,6 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
     authors,
   ]);
 
-  /** Speaker's actual signed-in email, for the identity banner.
-   *  Prefer the live Twilio attribute (resolvedAuthors wins merges
-   *  last for non-mine participants), fall back to the Firestore
-   *  response record (set when Yes/No is submitted). */
-  const speakerActualEmail =
-    resolvedAuthors.get(`speaker:${token}`)?.email ?? invitation.response?.actorEmail;
-
   useEffect(() => {
     if (twilio.status === "idle") void twilio.connect({ wardId });
   }, [twilio, wardId]);
@@ -118,11 +110,6 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
           Conversation with {invitation.speakerName}
         </div>
       </header>
-
-      <SpeakerIdentityBanner
-        expectedEmail={invitation.speakerEmail}
-        actualEmail={speakerActualEmail}
-      />
 
       {response && (
         <ResponseStrip
