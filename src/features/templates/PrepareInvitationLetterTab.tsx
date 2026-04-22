@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { LetterCanvas } from "./LetterCanvas";
+import { ScaledLetterPreview } from "./ScaledLetterPreview";
 import { SpeakerLetterGuide } from "./SpeakerLetterGuide";
 import { EditorSection } from "./SpeakerLetterEditor";
 import { interpolate } from "./interpolate";
@@ -51,17 +51,14 @@ export function PrepareInvitationLetterTab({
         <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
           Preview — 8.5 × 11 in
         </div>
-        <div className="overflow-auto rounded-md bg-parchment-2/40 p-4 sm:p-6 lg:max-h-[calc(100dvh-11rem)]">
-          <div className="mx-auto w-fit">
-            <LetterCanvas
-              wardName={vars.wardName}
-              assignedDate={vars.date}
-              today={vars.today}
-              bodyMarkdown={renderedBody}
-              footerMarkdown={renderedFooter}
-            />
-          </div>
-        </div>
+        <ScaledLetterPreview
+          wardName={vars.wardName}
+          assignedDate={vars.date}
+          today={vars.today}
+          bodyMarkdown={renderedBody}
+          footerMarkdown={renderedFooter}
+          maxH="calc(100dvh - 11rem)"
+        />
       </aside>
     </div>
   );
