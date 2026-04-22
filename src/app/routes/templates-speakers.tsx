@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
 import { MobileLetterPreviewButton } from "@/features/templates/MobileLetterPreviewButton";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { SpeakerLetterGuide } from "@/features/templates/SpeakerLetterGuide";
-import { TemplateSaveActions } from "@/features/templates/TemplateSaveActions";
 import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
+import { SpeakerLetterTemplateHeader } from "./SpeakerLetterTemplateHeader";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
   DEFAULT_SPEAKER_LETTER_FOOTER,
@@ -12,6 +11,7 @@ import {
 import { interpolate } from "@/features/templates/interpolate";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { writeSpeakerLetterTemplate } from "@/features/templates/writeSpeakerLetterTemplate";
+import { WardTemplateToolbar } from "@/features/templates/WardTemplateToolbar";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -78,34 +78,30 @@ export function SpeakerLetterTemplatePage() {
     setResetKey((k) => k + 1);
   }
 
+  const toolbarProps = {
+    canEdit,
+    busy: saving || !seeded,
+    saving,
+    onSave: () => void handleSave(),
+    onReset: resetToDefaults,
+  };
+
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
-      <header className="sticky top-0 z-20 shrink-0 flex flex-col gap-1 border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
-        <nav className="text-sm">
-          <Link
-            to="/settings"
-            className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3 hover:text-bordeaux"
-          >
-            ← Settings
-          </Link>
-        </nav>
-        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
-          Ward template
-        </div>
-        <h1 className="font-display text-[20px] sm:text-[22px] font-semibold text-walnut leading-tight">
-          Speaker invitation letter
-        </h1>
-        <p className="font-serif italic text-[12.5px] text-walnut-3">
-          The ward default — edit the body and footer; the letterhead, date, assigned-Sunday
-          callout, and signature are fixed.
-        </p>
-      </header>
+      <SpeakerLetterTemplateHeader
+        canEdit={canEdit}
+        busy={saving || !seeded}
+        saving={saving}
+        onSave={() => void handleSave()}
+        onReset={resetToDefaults}
+        onClose={() => window.close()}
+      />
 
       <div className="flex-1 min-h-0 lg:overflow-hidden px-4 sm:px-8 pt-5 pb-4">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
           <div
             key={resetKey}
-            className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-12rem)] lg:overflow-y-auto lg:pr-2"
+            className="flex flex-col gap-4 min-w-0 lg:h-[calc(100dvh-10rem)] lg:overflow-y-auto lg:pr-2"
           >
             <MobileLetterPreviewButton
               wardName={wardName}
@@ -134,26 +130,24 @@ export function SpeakerLetterTemplatePage() {
               <p className="font-serif italic text-[14px] text-walnut-3">Loading template…</p>
             )}
             {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
-            <TemplateSaveActions
-              canEdit={canEdit}
-              busy={saving || !seeded}
-              saving={saving}
-              onSave={() => void handleSave()}
-              onReset={resetToDefaults}
-            />
           </div>
           <aside className="hidden lg:flex flex-col gap-2 min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
               Preview — 8.5 × 11 in · sample data
             </div>
-            <ScaledLetterPreview
-              wardName={wardName}
-              assignedDate={PREVIEW_VARS.date}
-              today={PREVIEW_VARS.today}
-              bodyMarkdown={renderedBody}
-              footerMarkdown={renderedFooter}
-              height="calc(100dvh - 12rem)"
-            />
+            <div className="relative">
+              <ScaledLetterPreview
+                wardName={wardName}
+                assignedDate={PREVIEW_VARS.date}
+                today={PREVIEW_VARS.today}
+                bodyMarkdown={renderedBody}
+                footerMarkdown={renderedFooter}
+                height="calc(100dvh - 10rem)"
+              />
+              <div className="absolute top-3 right-3 z-10">
+                <WardTemplateToolbar {...toolbarProps} />
+              </div>
+            </div>
           </aside>
         </div>
       </div>
