@@ -17,6 +17,11 @@ export interface ChatMessage {
 export interface AuthorInfo {
   displayName: string;
   role?: "speaker" | "bishopric" | "clerk";
+  /** Optional avatar URL. When present the thread renders it in
+   *  place of initials. Sourced from Firebase Auth's photoURL for
+   *  the current user; other participants fall through to initials
+   *  unless we're fed a URL from somewhere else. */
+  photoURL?: string;
 }
 
 /** Map keyed by participant identity (e.g. `uid:abc123`,
