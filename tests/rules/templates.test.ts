@@ -74,4 +74,22 @@ describe("letter template rules", () => {
     const db = authedAs(env, "clerk", "c@x.com").firestore();
     await assertSucceeds(deleteDoc(doc(db, T_PATH)));
   });
+
+  // Same rule applies to every templateId under /templates/{templateId};
+  // spot-check the ward-invite template path to guard against a future
+  // split where someone narrows the wildcard.
+  it("covers the wardInvite template under the same rule", async () => {
+    const db = authedAs(env, "clerk", "c@x.com").firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `wards/${WARD}/templates/wardInvite`), {
+        bodyMarkdown: "Hi {{inviteeName}}, …",
+      }),
+    );
+    const stranger = authedAs(env, "stranger", "s@x.com").firestore();
+    await assertFails(
+      setDoc(doc(stranger, `wards/${WARD}/templates/wardInvite`), {
+        bodyMarkdown: "tampered",
+      }),
+    );
+  });
 });

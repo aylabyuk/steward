@@ -21,6 +21,11 @@ const links = [
     label: "Speaker invitation letter",
     desc: "Ward default template shown to speakers + printed letter",
   },
+  {
+    to: "/settings/templates/ward-invites",
+    label: "Ward invitation message",
+    desc: "Greeting shown when you invite a new bishopric or clerk member",
+  },
 ];
 
 export function SettingsIndex() {

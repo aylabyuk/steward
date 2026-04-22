@@ -55,6 +55,7 @@ export function AcceptInvitePage() {
             calling: invite.calling,
             invitedByName: invite.invitedByName,
           },
+          messageBody: invite.messageBody,
         });
         return;
       }
