@@ -1,3 +1,4 @@
+import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
 import type { WithId } from "@/hooks/_sub";
 import type { Speaker } from "@/lib/types";
 import { SpeakerEditCard } from "./SpeakerEditCard";
@@ -43,23 +44,25 @@ export function SpeakerInvitationLauncher({ date, speakers }: Props) {
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="font-serif text-[13.5px] text-walnut-2">
-        Open each speaker to send their invitation. Status updates here as you mark them invited in
-        the new tab.
-      </p>
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
-        {drafts.map((d, i) => (
-          <SpeakerEditCard
-            key={d.tempId}
-            draft={d}
-            index={i}
-            onChange={noop}
-            onRemove={noop}
-            locked={{ date }}
-          />
-        ))}
+    <TwilioChatProvider>
+      <div className="flex flex-col gap-3">
+        <p className="font-serif text-[13.5px] text-walnut-2">
+          Send each invitation, then come back here to check replies and apply responses. Opens a
+          conversation thread per speaker.
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
+          {drafts.map((d, i) => (
+            <SpeakerEditCard
+              key={d.tempId}
+              draft={d}
+              index={i}
+              onChange={noop}
+              onRemove={noop}
+              locked={{ date }}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </TwilioChatProvider>
   );
 }

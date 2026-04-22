@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import { useSundayInvitationsSummary } from "@/features/invitations/useSundayInvitationsSummary";
 import type { KindVariant } from "./kindLabel";
 import { formatShortDate, formatCountdown } from "./dateFormat";
 import { SundayTypeMenu } from "./SundayTypeMenu";
@@ -33,11 +34,19 @@ export function SundayCardHeader({
   variant = "regular",
   locked = false,
 }: Props) {
+  const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
   return (
     <div className="flex items-start justify-between gap-3 p-4 pb-2">
       <Link to={`/week/${date}`} className="flex-1 hover:opacity-80 transition-opacity">
-        <div className="text-2xl font-display font-semibold text-walnut leading-tight">
+        <div className="text-2xl font-display font-semibold text-walnut leading-tight flex items-center gap-2">
           {formatShortDate(date)}
+          {needsApply && (
+            <span
+              aria-label="Speaker response awaiting your review"
+              title="Speaker response awaiting your review"
+              className="inline-block w-2 h-2 rounded-full bg-bordeaux"
+            />
+          )}
         </div>
         <div
           className={cn(
