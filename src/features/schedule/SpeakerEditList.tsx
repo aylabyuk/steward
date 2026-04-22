@@ -11,6 +11,12 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
+/** Typical sacrament meeting has 2–3 speakers; 4 is the rare
+ *  all-slots-filled Sunday (e.g. a youth month with two youth + two
+ *  adults). Cap the Add button here rather than letting bishoprics
+ *  accidentally stack a long list that'll blow the time budget. */
+const MAX_SPEAKERS = 4;
+
 export interface SpeakerEditListHandle {
   save: () => Promise<void>;
 }
@@ -60,7 +66,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   }
 
   function addDraft() {
-    setDrafts((prev) => [...prev, emptyDraft()]);
+    setDrafts((prev) => (prev.length >= MAX_SPEAKERS ? prev : [...prev, emptyDraft()]));
   }
 
   useImperativeHandle(
@@ -125,24 +131,32 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
           />
         ))}
       </div>
-      <button
-        onClick={addDraft}
-        className="self-start font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 inline-flex items-center gap-1.5 transition-colors"
-      >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <div className="flex items-center gap-3">
+        <button
+          onClick={addDraft}
+          disabled={drafts.length >= MAX_SPEAKERS}
+          className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 inline-flex items-center gap-1.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-chalk"
         >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Add speaker
-      </button>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add speaker
+        </button>
+        {drafts.length >= MAX_SPEAKERS && (
+          <span className="font-serif italic text-[12px] text-walnut-3">
+            Maximum {MAX_SPEAKERS} speakers per meeting.
+          </span>
+        )}
+      </div>
     </div>
   );
 });
