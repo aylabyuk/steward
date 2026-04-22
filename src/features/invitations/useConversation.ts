@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Conversation, Message } from "@twilio/conversations";
+import type { Conversation, Message, Participant } from "@twilio/conversations";
 import { useTwilioChat } from "./twilioClientProvider";
 
 export interface ChatMessage {
@@ -14,10 +14,22 @@ export interface ChatMessage {
   attributes: Record<string, unknown> | null;
 }
 
+export interface AuthorInfo {
+  displayName: string;
+  role?: "speaker" | "bishopric" | "clerk";
+}
+
+/** Map keyed by participant identity (e.g. `uid:abc123`,
+ *  `speaker:{token}`). Used by the thread to render bubble labels +
+ *  avatar initials without knowing individual participants at the
+ *  call site. */
+export type AuthorMap = Map<string, AuthorInfo>;
+
 interface ConversationState {
   loading: boolean;
   messages: ChatMessage[];
   conversation: Conversation | null;
+  authors: AuthorMap;
   error: Error | null;
 }
 
@@ -35,16 +47,22 @@ function toChatMessage(m: Message): ChatMessage {
   };
 }
 
-/** Subscribes to a single conversation's message stream. Returns
- *  { loading, messages, conversation, error }. Client must already be
- *  connected via <TwilioChatProvider> — this hook no-ops while the
- *  connection state is anything other than `ready`. */
+function parseAuthorInfo(p: Participant): AuthorInfo | null {
+  const attrs = p.attributes as { displayName?: string; role?: AuthorInfo["role"] } | null;
+  if (!attrs?.displayName) return null;
+  return attrs.role ? { displayName: attrs.displayName, role: attrs.role } : { displayName: attrs.displayName };
+}
+
+/** Subscribes to a single conversation's message stream and loads
+ *  the participants' display-name map. Client must already be
+ *  connected via <TwilioChatProvider>. */
 export function useConversation(conversationSid: string | null): ConversationState {
   const { client, status } = useTwilioChat();
   const [state, setState] = useState<ConversationState>({
     loading: true,
     messages: [],
     conversation: null,
+    authors: new Map(),
     error: null,
   });
 
@@ -55,29 +73,61 @@ export function useConversation(conversationSid: string | null): ConversationSta
     const onMessageAdded = (m: Message) => {
       setState((s) => ({ ...s, messages: [...s.messages, toChatMessage(m)] }));
     };
+    const onParticipantUpdate = (p: Participant) => {
+      setState((s) => {
+        if (!p.identity) return s;
+        const info = parseAuthorInfo(p);
+        if (!info) return s;
+        const next = new Map(s.authors);
+        next.set(p.identity, info);
+        return { ...s, authors: next };
+      });
+    };
 
     (async () => {
       try {
         convo = await client.getConversationBySid(conversationSid);
         if (cancelled) return;
-        const page = await convo.getMessages(50);
+        const [page, participants] = await Promise.all([
+          convo.getMessages(50),
+          convo.getParticipants(),
+        ]);
         if (cancelled) return;
+        const authors: AuthorMap = new Map();
+        for (const p of participants) {
+          if (!p.identity) continue;
+          const info = parseAuthorInfo(p);
+          if (info) authors.set(p.identity, info);
+        }
         setState({
           loading: false,
           messages: page.items.map(toChatMessage),
           conversation: convo,
+          authors,
           error: null,
         });
         convo.on("messageAdded", onMessageAdded);
+        convo.on("participantJoined", onParticipantUpdate);
+        convo.on("participantUpdated", (args) => onParticipantUpdate(args.participant));
       } catch (err) {
         if (cancelled) return;
-        setState({ loading: false, messages: [], conversation: null, error: err as Error });
+        setState({
+          loading: false,
+          messages: [],
+          conversation: null,
+          authors: new Map(),
+          error: err as Error,
+        });
       }
     })();
 
     return () => {
       cancelled = true;
-      if (convo) convo.off("messageAdded", onMessageAdded);
+      if (convo) {
+        convo.removeAllListeners("messageAdded");
+        convo.removeAllListeners("participantJoined");
+        convo.removeAllListeners("participantUpdated");
+      }
     };
   }, [client, status, conversationSid]);
 

@@ -25,7 +25,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const signIn = useAuthStore((s) => s.signIn);
   const signOut = useAuthStore((s) => s.signOut);
   const twilio = useTwilioChat();
-  const { messages, conversation, loading } = useConversation(props.conversationSid);
+  const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
   const [mismatch, setMismatch] = useState<string | null>(null);
 
   async function ensureReady(): Promise<boolean> {
@@ -64,8 +64,9 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
           Conversation with the bishopric
         </div>
         <p className="font-serif text-[12.5px] text-walnut-2 mt-0.5">
-          Messages are private between you and the bishopric.
-          {user && user.email && (
+          This is a group conversation — the bishop, counselors, and clerks can all see and reply.
+          Each message shows the sender's name.
+          {user?.email && (
             <span className="ml-2">
               Signed in as <strong>{user.email}</strong>
             </span>
@@ -95,6 +96,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
       <ConversationThread
         messages={messages}
         currentIdentity={twilio.identity}
+        authors={authors}
         loading={loading && twilio.status === "ready"}
       />
 

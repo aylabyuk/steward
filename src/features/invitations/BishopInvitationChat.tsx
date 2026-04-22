@@ -21,7 +21,9 @@ interface Props {
 export function BishopInvitationChat({ wardId, token, invitation }: Props): React.ReactElement {
   const user = useAuthStore((s) => s.user);
   const twilio = useTwilioChat();
-  const { messages, conversation, loading } = useConversation(invitation.conversationSid ?? null);
+  const { messages, conversation, authors, loading } = useConversation(
+    invitation.conversationSid ?? null,
+  );
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
@@ -74,6 +76,7 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
       <ConversationThread
         messages={messages}
         currentIdentity={twilio.identity}
+        authors={authors}
         loading={loading && twilio.status !== "ready"}
       />
 

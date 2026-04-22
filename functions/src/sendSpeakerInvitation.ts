@@ -3,6 +3,7 @@ import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/
 import { STEWARD_ORIGIN, TWILIO_SECRETS } from "./secrets.js";
 import { addChatParticipant, createConversation } from "./twilio/conversations.js";
 import {
+  addBishopricParticipants,
   assertActiveMember,
   cleanupPriorConversations,
   tryEmail,
@@ -43,7 +44,10 @@ export const sendSpeakerInvitation = onCall(
       friendlyName: `${input.speakerName} — ${input.meetingDate}`,
       attributes: { wardId: input.wardId, speakerId: input.speakerId },
     });
-    await addChatParticipant(conversationSid, `uid:${auth.uid}`);
+    // Group-chat model: every active bishopric + clerk joins, each
+    // carrying their displayName via participant attributes so the
+    // speaker's UI can label message bubbles with real names.
+    await addBishopricParticipants(input.wardId, conversationSid);
 
     const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
       speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
@@ -63,11 +67,15 @@ export const sendSpeakerInvitation = onCall(
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    // Speaker's Twilio identity = `speaker:{invitationToken}`. The same
-    // identity is minted into their JWT by issueTwilioToken, so the
-    // token the URL carries is all they need to join this conversation
-    // as a chat participant and see/post messages live.
-    await addChatParticipant(conversationSid, `speaker:${docRef.id}`);
+    // Speaker's Twilio identity = `speaker:{invitationToken}`. Same
+    // identity the JWT minted by issueTwilioToken carries, so the URL
+    // token alone is enough for the speaker to join as a chat
+    // participant. displayName attribute drives the bubble label in
+    // the bishopric's chat UI.
+    await addChatParticipant(conversationSid, `speaker:${docRef.id}`, {
+      displayName: input.speakerName,
+      role: "speaker",
+    });
 
     const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
     const emailArgs = {
