@@ -69,6 +69,22 @@ export function SpeakerEditCard({ draft, index, date, onChange, onRemove }: Prop
         </label>
         <label className="flex flex-col gap-1">
           <span className={LABEL_CLS}>
+            Phone
+            <span className="text-walnut-3 font-normal normal-case tracking-normal">
+              {" "}
+              — optional, enables Send SMS
+            </span>
+          </span>
+          <input
+            type="tel"
+            value={draft.phone}
+            onChange={(e) => onChange({ phone: e.target.value })}
+            placeholder="555-123-4567"
+            className={INPUT_CLS}
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={LABEL_CLS}>
             Topic
             <span className="text-walnut-3 font-normal normal-case tracking-normal">
               {" "}
