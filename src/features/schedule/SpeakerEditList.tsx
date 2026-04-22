@@ -132,7 +132,6 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
           key={d.tempId}
           draft={d}
           index={i}
-          date={date}
           onChange={(partial) => updateDraft(d.tempId, partial)}
           onRemove={() => removeDraft(d.tempId)}
         />

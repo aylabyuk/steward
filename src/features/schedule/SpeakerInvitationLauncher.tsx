@@ -6,16 +6,23 @@ interface Props {
   date: string;
 }
 
-type Row = {
+interface Row {
   id: string;
   data: Speaker;
-};
+}
+type CardState = "planned" | "invited" | "confirmed";
 
-/** Step 2 of the Assign Speakers modal. Launches the full Prepare
- *  Invitation page (in a new tab) for each speaker still in `planned`
- *  status, and live-updates their status as the bishop works through
- *  them in parallel tabs. Already-handled speakers appear greyed out
- *  at the bottom so the bishop sees the full meeting state. */
+function cardStateFor(status: Speaker["status"]): CardState {
+  if (status === "invited") return "invited";
+  if (status === "confirmed") return "confirmed";
+  return "planned";
+}
+
+/** Step 2 of the Assign Speakers modal. Reuses the same grid + card
+ *  shell as <SpeakerEditList> so the modal dimensions stay stable
+ *  between steps — only the card contents swap. Planned rows get an
+ *  "Open prepare →" action; invited/confirmed rows render dimmed with
+ *  a status badge. Declined speakers are hidden (different flow). */
 export function SpeakerInvitationLauncher({ date }: Props) {
   const { data: speakers, loading } = useSpeakers(date);
 
@@ -23,12 +30,9 @@ export function SpeakerInvitationLauncher({ date }: Props) {
     return <p className="font-serif italic text-[14px] text-walnut-3">Loading speakers…</p>;
   }
 
-  const planned = speakers.filter((s) => s.data.status === "planned");
-  const handled = speakers.filter(
-    (s) => s.data.status === "invited" || s.data.status === "confirmed",
-  );
+  const rows = speakers.filter((s) => s.data.status !== "declined");
 
-  if (planned.length === 0 && handled.length === 0) {
+  if (rows.length === 0) {
     return (
       <p className="font-serif italic text-[14px] text-walnut-3">
         No speakers yet. Head back to step 1 to add some.
@@ -37,45 +41,36 @@ export function SpeakerInvitationLauncher({ date }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {planned.length > 0 && (
-        <div className="flex flex-col gap-2.5">
-          <p className="font-serif text-[13.5px] text-walnut-2">
-            Open each speaker to send their invitation. Status updates here as you mark them invited
-            in the new tab.
-          </p>
-          {planned.map((s) => (
-            <SpeakerRow key={s.id} row={s} date={date} state="planned" />
-          ))}
-        </div>
-      )}
-      {handled.length > 0 && (
-        <div className="flex flex-col gap-2 pt-2 border-t border-border">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            Already handled
-          </p>
-          {handled.map((s) => (
-            <SpeakerRow
-              key={s.id}
-              row={s}
-              date={date}
-              state={s.data.status === "confirmed" ? "confirmed" : "invited"}
-            />
-          ))}
-        </div>
-      )}
+    <div className="flex flex-col gap-3">
+      <p className="font-serif text-[13.5px] text-walnut-2">
+        Open each speaker to send their invitation. Status updates here as you mark them invited in
+        the new tab.
+      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
+        {rows.map((s, i) => (
+          <SpeakerLaunchCard
+            key={s.id}
+            row={s}
+            index={i}
+            date={date}
+            state={cardStateFor(s.data.status)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
-function SpeakerRow({
+function SpeakerLaunchCard({
   row,
+  index,
   date,
   state,
 }: {
   row: Row;
+  index: number;
   date: string;
-  state: "planned" | "invited" | "confirmed";
+  state: CardState;
 }) {
   const { data } = row;
   const dimmed = state !== "planned";
@@ -88,43 +83,52 @@ function SpeakerRow({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-chalk p-3 flex flex-wrap items-center gap-3",
+        "bg-chalk border border-border rounded-lg p-3 flex flex-col gap-2.5",
         dimmed && "opacity-70",
       )}
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-[15px] font-semibold text-walnut leading-tight">
-            {data.name}
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep font-medium">
+          Speaker · {String(index + 1).padStart(2, "0")}
+        </span>
+        {state === "invited" && (
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep">
+            Invited ✓
           </span>
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
-            {data.role}
+        )}
+        {state === "confirmed" && (
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-2">
+            Confirmed ✓
           </span>
-        </div>
-        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[12.5px] text-walnut-3 font-serif italic">
-          <span>✉ {data.email?.trim() ? data.email : "—"}</span>
-          <span>☎ {data.phone?.trim() ? data.phone : "—"}</span>
-        </div>
+        )}
       </div>
+
+      <div className="flex items-baseline flex-wrap gap-x-2 gap-y-0.5">
+        <span className="font-display text-[16px] font-semibold text-walnut leading-tight">
+          {data.name}
+        </span>
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
+          {data.role}
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-0.5 text-[12.5px] text-walnut-3 font-serif italic">
+        <span>✉ {data.email?.trim() ? data.email : "—"}</span>
+        <span>☎ {data.phone?.trim() ? data.phone : "—"}</span>
+        {data.topic?.trim() && (
+          <span className="not-italic font-sans text-walnut-2 mt-0.5">“{data.topic}”</span>
+        )}
+      </div>
+
       {state === "planned" && (
         <button
           type="button"
           onClick={openPrepare}
           aria-label={`Open prepare invitation for ${data.name}`}
-          className="font-sans text-[12.5px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux bg-bordeaux text-parchment hover:bg-bordeaux-deep inline-flex items-center gap-1.5 transition-colors"
+          className="mt-auto font-sans text-[12.5px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment hover:bg-bordeaux-deep shadow-[0_1px_0_rgba(35,24,21,0.18)] inline-flex items-center justify-center gap-1.5 transition-colors"
         >
           Open prepare →
         </button>
-      )}
-      {state === "invited" && (
-        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-brass-deep">
-          Invited ✓
-        </span>
-      )}
-      {state === "confirmed" && (
-        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-2">
-          Confirmed ✓
-        </span>
       )}
     </div>
   );
