@@ -25,6 +25,14 @@ interface Props {
     email?: string | undefined;
   }[];
   hasResponse: boolean;
+  /** When present, the chat's header renders a small close affordance
+   *  that invokes this callback. Used by the invite page's floating
+   *  drawer so the speaker can dismiss the chat back over the letter. */
+  onClose?: () => void;
+  /** When true, the chat fills its flex parent (used inside the
+   *  floating drawer on the invite page). Default layout stays inline
+   *  for other callsites. */
+  fillHeight?: boolean;
 }
 
 /** Speaker-side chat pane. By the time this renders the parent
@@ -104,14 +112,32 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   }
 
   return (
-    <section className="bg-chalk border border-border rounded-lg shadow-elev-1 flex flex-col overflow-hidden">
-      <header className="px-4 py-3 border-b border-border bg-parchment">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-          Conversation with the bishopric
+    <section
+      className={
+        props.fillHeight
+          ? "bg-chalk flex flex-col overflow-hidden h-full min-h-0"
+          : "bg-chalk border border-border rounded-lg shadow-elev-1 flex flex-col overflow-hidden"
+      }
+    >
+      <header className="flex items-start gap-3 px-4 py-3 border-b border-border bg-parchment">
+        <div className="flex-1 min-w-0">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
+            Conversation with the bishopric
+          </div>
+          <p className="font-serif text-[12.5px] text-walnut-2 mt-0.5">
+            This is a group conversation — the bishop, counselors, and clerks can all see and reply.
+          </p>
         </div>
-        <p className="font-serif text-[12.5px] text-walnut-2 mt-0.5">
-          This is a group conversation — the bishop, counselors, and clerks can all see and reply.
-        </p>
+        {props.onClose && (
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut px-2 py-1 transition-colors"
+            aria-label="Close conversation"
+          >
+            Close
+          </button>
+        )}
       </header>
 
       <ConversationThread
@@ -121,6 +147,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         loading={loading && twilio.status === "ready"}
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
+        {...(props.fillHeight ? { fillHeight: true } : {})}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
