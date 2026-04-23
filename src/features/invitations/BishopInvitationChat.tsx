@@ -8,6 +8,7 @@ import { ResponseStrip } from "./ResponseStrip";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { callIssueSpeakerSession } from "./invitationsCallable";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
 import { useTwilioChat } from "./twilioClientProvider";
 
 interface Props {
@@ -32,6 +33,7 @@ export function BishopInvitationChat({
   const { messages, conversation, authors, loading } = useConversation(
     invitation.conversationSid ?? null,
   );
+  const firstUnreadIndex = useFirstUnreadIndex(conversation);
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
@@ -142,6 +144,7 @@ export function BishopInvitationChat({
         currentIdentity={twilio.identity}
         authors={resolvedAuthors}
         loading={loading && twilio.status !== "ready"}
+        firstUnreadIndex={firstUnreadIndex}
       />
 
       <ConversationComposer

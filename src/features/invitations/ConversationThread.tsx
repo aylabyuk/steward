@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConversationGroup } from "./ConversationGroup";
+import { JumpToLatest } from "./JumpToLatest";
+import { DayDivider, UnreadDivider } from "./ThreadDividers";
 import { buildThreadItems } from "./threadItems";
 import type { AuthorMap, ChatMessage } from "./useConversation";
 
@@ -18,13 +20,10 @@ interface Props {
   readHorizonIndex?: number | null;
 }
 
-/** Bubble list styled after Messenger: consecutive messages by the
- *  same author collapse into one group, one avatar at the bottom
- *  (theirs) or no avatar (mine), bubbles stack tight with shaped
- *  border-radius so the group reads as a single connected shape on
- *  the avatar-facing side. Day dividers appear between messages
- *  from different local days; a "New messages" divider appears
- *  before the first unread incoming message. */
+/** Bubble list styled after Messenger. Consecutive messages by the
+ *  same author collapse into one group; day dividers separate local
+ *  days; a "New" divider marks the unread horizon; a floating pill
+ *  appears when the user has scrolled up and new messages land. */
 export function ConversationThread({
   messages,
   currentIdentity,
@@ -35,6 +34,8 @@ export function ConversationThread({
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  const [unseenCount, setUnseenCount] = useState(0);
+  const lastSeenIndexRef = useRef<number | null>(null);
 
   const items = useMemo(
     () =>
@@ -50,8 +51,21 @@ export function ConversationThread({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    if (atBottom) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [items, atBottom]);
+    if (atBottom) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      lastSeenIndexRef.current = messages.at(-1)?.index ?? null;
+      setUnseenCount(0);
+      return;
+    }
+    const seen = lastSeenIndexRef.current;
+    setUnseenCount(messages.filter((m) => (seen === null ? true : m.index > seen)).length);
+  }, [items, atBottom, messages]);
+
+  function jumpToBottom() {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }
 
   if (loading) {
     return <p className="font-serif italic text-[14px] text-walnut-3 p-4">Loading conversation…</p>;
@@ -66,37 +80,42 @@ export function ConversationThread({
 
   const lastMineIndex = findLastMineIndex(messages, currentIdentity);
   const readByOtherAt =
-    typeof readHorizonIndex === "number" && lastMineIndex !== null && readHorizonIndex >= lastMineIndex
+    typeof readHorizonIndex === "number" &&
+    lastMineIndex !== null &&
+    readHorizonIndex >= lastMineIndex
       ? lastMineIndex
       : null;
 
   return (
-    <div
-      ref={scrollRef}
-      className="flex flex-col gap-4 p-4 overflow-y-auto max-h-[60vh]"
-      role="log"
-      aria-live="polite"
-      aria-relevant="additions"
-      onScroll={(e) => {
-        const el = e.currentTarget;
-        setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 32);
-      }}
-    >
-      {items.map((item) => {
-        if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
-        if (item.kind === "unread") return <UnreadDivider key={item.key} />;
-        return (
-          <ConversationGroup
-            key={item.key}
-            group={item.group}
-            readByOther={
-              item.group.mine &&
-              readByOtherAt !== null &&
-              item.group.messages.some((m) => m.index === readByOtherAt)
-            }
-          />
-        );
-      })}
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="flex flex-col gap-4 p-4 overflow-y-auto max-h-[60vh]"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 32);
+        }}
+      >
+        {items.map((item) => {
+          if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
+          if (item.kind === "unread") return <UnreadDivider key={item.key} />;
+          return (
+            <ConversationGroup
+              key={item.key}
+              group={item.group}
+              readByOther={
+                item.group.mine &&
+                readByOtherAt !== null &&
+                item.group.messages.some((m) => m.index === readByOtherAt)
+              }
+            />
+          );
+        })}
+      </div>
+      {!atBottom && <JumpToLatest unseenCount={unseenCount} onJump={jumpToBottom} />}
     </div>
   );
 }
@@ -112,26 +131,3 @@ function findLastMineIndex(
   return null;
 }
 
-function DayDivider({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-2 -my-1" aria-label={label}>
-      <div className="flex-1 h-px bg-border" />
-      <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
-        {label}
-      </span>
-      <div className="flex-1 h-px bg-border" />
-    </div>
-  );
-}
-
-function UnreadDivider() {
-  return (
-    <div className="flex items-center gap-2 -my-1" aria-label="New messages">
-      <div className="flex-1 h-px bg-bordeaux/40" />
-      <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-bordeaux">
-        New
-      </span>
-      <div className="flex-1 h-px bg-bordeaux/40" />
-    </div>
-  );
-}

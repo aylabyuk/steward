@@ -5,6 +5,7 @@ import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { QuickActionButtons } from "./QuickActionButtons";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
 import { useSpeakerHeartbeat } from "./useSpeakerHeartbeat";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
@@ -31,6 +32,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const [user, setUser] = useState<User | null>(inviteAuth.currentUser);
   const twilio = useTwilioChat();
   const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
+  const firstUnreadIndex = useFirstUnreadIndex(conversation);
 
   useEffect(() => onAuthStateChanged(inviteAuth, setUser), []);
   useSpeakerHeartbeat({
@@ -112,6 +114,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         currentIdentity={twilio.identity}
         authors={resolvedAuthors}
         loading={loading && twilio.status === "ready"}
+        firstUnreadIndex={firstUnreadIndex}
       />
 
       {!props.hasResponse && (
