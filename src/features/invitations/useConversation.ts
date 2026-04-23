@@ -64,6 +64,8 @@ export function useConversation(conversationSid: string | null): ConversationHoo
         return { ...s, authors: next };
       });
     };
+    const onParticipantUpdatedEvent = (args: { participant: Participant }) =>
+      onParticipantUpdate(args.participant);
     (async () => {
       try {
         convo = await client.getConversationBySid(conversationSid);
@@ -88,7 +90,7 @@ export function useConversation(conversationSid: string | null): ConversationHoo
         });
         convo.on("messageAdded", onMessageAdded);
         convo.on("participantJoined", onParticipantUpdate);
-        convo.on("participantUpdated", (args) => onParticipantUpdate(args.participant));
+        convo.on("participantUpdated", onParticipantUpdatedEvent);
       } catch (err) {
         if (cancelled) return;
         setState({
@@ -100,12 +102,16 @@ export function useConversation(conversationSid: string | null): ConversationHoo
         });
       }
     })();
+    // Remove *only* the listeners we added. `removeAllListeners` on a
+    // shared conversation would blow away other subscribers'
+    // listeners (e.g., the page-level useConversationUnread hook) and
+    // silently break the unread banner on drawer close.
     return () => {
       cancelled = true;
       if (convo) {
-        convo.removeAllListeners("messageAdded");
-        convo.removeAllListeners("participantJoined");
-        convo.removeAllListeners("participantUpdated");
+        convo.off("messageAdded", onMessageAdded);
+        convo.off("participantJoined", onParticipantUpdate);
+        convo.off("participantUpdated", onParticipantUpdatedEvent);
       }
     };
   }, [client, status, conversationSid]);
