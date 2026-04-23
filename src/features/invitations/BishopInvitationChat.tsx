@@ -123,6 +123,7 @@ export function BishopInvitationChat({
         conversation={conversation}
         placeholder="Message the speaker…"
         disabled={twilio.status !== "ready"}
+        showSmsHint
       />
     </section>
   );
