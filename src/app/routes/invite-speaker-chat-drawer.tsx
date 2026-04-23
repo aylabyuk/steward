@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import type { CtaVariant } from "./invite-speaker-cta-banner";
 
 interface Props {
   /** Controlled open state so the parent can auto-open when chat
@@ -7,9 +8,9 @@ interface Props {
    *  drawer is collapsed). */
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Tiny badge in the FAB when there's something worth seeing —
-   *  unread replies, a pending Yes/No ask, etc. */
-  hint?: string | undefined;
+  /** When set, the FAB draws attention via a pulse ring, larger size,
+   *  and a variant-specific label. `null` renders the calm FAB. */
+  attention?: CtaVariant | null;
   children: ReactNode;
 }
 
@@ -21,7 +22,7 @@ interface Props {
 export function SpeakerChatFloatingDrawer({
   open,
   onOpenChange,
-  hint,
+  attention,
   children,
 }: Props): React.ReactElement {
   useLockBodyScroll(open);
@@ -38,20 +39,29 @@ export function SpeakerChatFloatingDrawer({
   }, [open, onOpenChange]);
 
   if (!open) {
+    const label =
+      attention === "reply"
+        ? "Reply to the bishopric"
+        : attention === "unread"
+          ? "New message"
+          : "Conversation";
+    const pulseStyle: React.CSSProperties | undefined = attention
+      ? { animation: "fabPulse 1.8s ease-out infinite" }
+      : undefined;
     return (
       <button
         type="button"
         onClick={() => onOpenChange(true)}
-        className="fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-bordeaux text-parchment font-sans text-[13.5px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-        aria-label="Open conversation with the bishopric"
+        style={pulseStyle}
+        className={
+          attention
+            ? "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-bordeaux text-parchment font-sans text-[14px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.875rem,env(safe-area-inset-bottom))]"
+            : "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-bordeaux text-parchment font-sans text-[13.5px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        }
+        aria-label={`${label} — open the conversation with the bishopric`}
       >
         <ChatIcon />
-        <span>Conversation</span>
-        {hint && (
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] bg-parchment/20 px-1.5 py-0.5 rounded-full">
-            {hint}
-          </span>
-        )}
+        <span>{label}</span>
       </button>
     );
   }

@@ -79,7 +79,14 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         twilioIdentity: twilio.identity,
         liveAuthors: authors,
       }),
-    [props.invitationId, props.speakerName, props.bishopricParticipants, twilio.identity, user, authors],
+    [
+      props.invitationId,
+      props.speakerName,
+      props.bishopricParticipants,
+      twilio.identity,
+      user,
+      authors,
+    ],
   );
 
   async function ensureReady(): Promise<boolean> {
