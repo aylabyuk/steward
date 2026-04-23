@@ -9,6 +9,7 @@ import { SpeakerInvitationLauncher } from "./SpeakerInvitationLauncher";
 import { AssignDialog } from "./AssignDialog";
 import { EditFooter, InviteFooter } from "./AssignDialogFooters";
 import { SundayCardBody } from "./SundayCardBody";
+import { SundayCardCancelled } from "./SundayCardCancelled";
 import { SundayCardHeader } from "./SundayCardHeader";
 import { SundayCardSpecial } from "./SundayCardSpecial";
 import { formatShortDate } from "./dateFormat";
@@ -55,20 +56,19 @@ export function SundayCard({
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
 
-  // Always start on step 1 whenever the dialog opens.
+  // Always start on step 1 whenever the dialog opens. Response review
+  // + apply now live on the per-speaker chat icon on the Sunday card,
+  // not inside step 2, so there's no reason to skip the editor.
   useEffect(() => {
     if (assignDialogOpen) setStep("edit");
   }, [assignDialogOpen]);
 
   if (cancelled) {
     return (
-      <article className="rounded-lg border border-border bg-chalk p-4 shadow-elev-1">
-        <p className="text-lg font-semibold text-walnut line-through">{formatShortDate(date)}</p>
-        <p className="text-xs font-mono tracking-wider text-walnut-3 mt-1">Cancelled</p>
-        {meeting?.cancellation?.reason && (
-          <p className="text-sm text-walnut-2 mt-2">{meeting.cancellation.reason}</p>
-        )}
-      </article>
+      <SundayCardCancelled
+        date={date}
+        {...(meeting?.cancellation?.reason ? { reason: meeting.cancellation.reason } : {})}
+      />
     );
   }
 
@@ -102,7 +102,7 @@ export function SundayCard({
         currentType={type}
         nonMeetingSundays={nonMeetingSundays}
         urgent={severity === "urgent"}
-        badge={kind.badge || undefined}
+        {...(kind.badge ? { badge: kind.badge } : {})}
         variant={kind.variant}
         locked={hasConfirmedSpeaker}
       />
@@ -121,7 +121,11 @@ export function SundayCard({
           description={kind.description}
         />
       ) : (
-        <SundayCardBody speakers={speakers} onAddSpeaker={() => setAssignDialogOpen(true)} />
+        <SundayCardBody
+          speakers={speakers}
+          date={date}
+          onAddSpeaker={() => setAssignDialogOpen(true)}
+        />
       )}
 
       <AssignDialog

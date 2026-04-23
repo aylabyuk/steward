@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import { useSundayInvitationsSummary } from "@/features/invitations/useSundayInvitationsSummary";
 import type { KindVariant } from "./kindLabel";
 import { formatShortDate, formatCountdown } from "./dateFormat";
 import { SundayTypeMenu } from "./SundayTypeMenu";
@@ -33,21 +34,31 @@ export function SundayCardHeader({
   variant = "regular",
   locked = false,
 }: Props) {
+  const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
   return (
     <div className="flex items-start justify-between gap-3 p-4 pb-2">
-      <Link to={`/week/${date}`} className="flex-1 hover:opacity-80 transition-opacity">
-        <div className="text-2xl font-display font-semibold text-walnut leading-tight">
-          {formatShortDate(date)}
-        </div>
-        <div
-          className={cn(
-            "text-[11px] font-mono tracking-[0.08em] uppercase mt-1",
-            urgent ? "text-bordeaux font-semibold" : "text-walnut-3",
-          )}
-        >
-          {formatCountdown(date)}
-        </div>
-      </Link>
+      <div className="flex items-start gap-2 flex-1 min-w-0">
+        <Link to={`/week/${date}`} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
+          <div className="text-2xl font-display font-semibold text-walnut leading-tight">
+            {formatShortDate(date)}
+          </div>
+          <div
+            className={cn(
+              "text-[11px] font-mono tracking-[0.08em] uppercase mt-1",
+              urgent ? "text-bordeaux font-semibold" : "text-walnut-3",
+            )}
+          >
+            {formatCountdown(date)}
+          </div>
+        </Link>
+        {needsApply && (
+          <span
+            aria-label="Speaker response awaiting your review"
+            title="Speaker response awaiting your review — tap a speaker's chat icon below to apply"
+            className="mt-2.5 inline-block w-2 h-2 rounded-full bg-bordeaux"
+          />
+        )}
+      </div>
       <div className="flex items-start gap-2 shrink-0">
         {badge && (
           <span

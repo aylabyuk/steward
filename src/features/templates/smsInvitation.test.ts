@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildSmsHref, isPlausiblePhone, normalizePhone, renderSmsBody } from "./smsInvitation";
+import {
+  buildSmsHref,
+  isE164,
+  isPlausiblePhone,
+  normalizePhone,
+  renderSmsBody,
+  toE164,
+} from "./smsInvitation";
 
 describe("normalizePhone", () => {
   it("strips non-digit separators", () => {
@@ -56,6 +63,64 @@ describe("buildSmsHref", () => {
     expect(href).toBe(
       "sms:5551234567?body=Link%3A%20https%3A%2F%2Fexample.com%2Fx%3Fy%3D1%26z%3D2",
     );
+  });
+});
+
+describe("toE164", () => {
+  it("prepends +1 to 10-digit NANP entries", () => {
+    expect(toE164("4165551234")).toBe("+14165551234");
+    expect(toE164("416-555-1234")).toBe("+14165551234");
+    expect(toE164("(416) 555-1234")).toBe("+14165551234");
+    expect(toE164("416 555 1234")).toBe("+14165551234");
+  });
+
+  it("adds the + for 11-digit NANP entries starting with 1", () => {
+    expect(toE164("14165551234")).toBe("+14165551234");
+    expect(toE164("1 416 555 1234")).toBe("+14165551234");
+    expect(toE164("1-416-555-1234")).toBe("+14165551234");
+  });
+
+  it("preserves an already-E.164 number while stripping noise inside", () => {
+    expect(toE164("+14165551234")).toBe("+14165551234");
+    expect(toE164("+1 (416) 555-1234")).toBe("+14165551234");
+    expect(toE164("+44 20 7123 4567")).toBe("+442071234567");
+  });
+
+  it("returns digits-only for anything it can't confidently coerce", () => {
+    // 9 digits — too short for NANP, caller decides what to do
+    expect(toE164("416555123")).toBe("416555123");
+  });
+
+  it("handles empty input", () => {
+    expect(toE164("")).toBe("");
+    expect(toE164("   ")).toBe("");
+  });
+});
+
+describe("isE164", () => {
+  it("accepts valid E.164", () => {
+    expect(isE164("+14165551234")).toBe(true);
+    expect(isE164("+442071234567")).toBe(true);
+    expect(isE164("+11234567")).toBe(true); // minimum length
+  });
+
+  it("rejects missing +", () => {
+    expect(isE164("14165551234")).toBe(false);
+    expect(isE164("4165551234")).toBe(false);
+  });
+
+  it("rejects non-digits or inner spaces", () => {
+    expect(isE164("+1 416 555 1234")).toBe(false);
+    expect(isE164("+1-416-555-1234")).toBe(false);
+  });
+
+  it("rejects too-short / too-long", () => {
+    expect(isE164("+1234")).toBe(false);
+    expect(isE164(`+1${"0".repeat(15)}`)).toBe(false);
+  });
+
+  it("rejects a leading zero after the +", () => {
+    expect(isE164("+04165551234")).toBe(false);
   });
 });
 

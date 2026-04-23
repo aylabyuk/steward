@@ -6,12 +6,12 @@ interface Props {
 }
 
 /** Replaces the SpeakerStatusPills row on a locked (step-2) card.
- *  Planned speakers get a primary "Prepare invitation" action that
- *  opens the full Prepare page in a new tab; invited/confirmed
- *  speakers get a muted note steering the user back to step 1 if
- *  they need to change anything. Height is matched to the pills bar
- *  (py-2 mono eyebrow) so locked and editable cards line up. */
-export function SpeakerLockedBand({ draft, date }: Props) {
+ *  Planned speakers get a primary "Prepare invitation →" action
+ *  that opens the full Prepare page in a new tab. Everything else
+ *  shows a muted "Already X — open edit mode to change" note;
+ *  reviewing / applying responses lives on the Sunday card's
+ *  per-speaker chat icon now, not here. */
+export function SpeakerLockedBand({ draft, date }: Props): React.ReactElement {
   const status = draft.status;
   const persisted = draft.id !== null;
 
@@ -38,7 +38,9 @@ export function SpeakerLockedBand({ draft, date }: Props) {
   const label =
     status === "confirmed"
       ? "Already confirmed — open edit mode to change."
-      : "Already invited — open edit mode to change.";
+      : status === "declined"
+        ? "Already declined — open edit mode to change."
+        : "Already invited — open edit mode to change.";
 
   return (
     <div className="w-full mb-2.5 border border-border-strong bg-parchment-2 text-walnut-2 rounded-md font-serif italic text-[11.5px] py-2 px-2.5 text-center">
