@@ -5,13 +5,14 @@ import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { QuickActionButtons } from "./QuickActionButtons";
 import { TypingIndicator } from "./TypingIndicator";
-import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useConversation } from "./useConversation";
 import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
 import { useReadHorizon } from "./useReadHorizon";
 import { useTypingParticipants } from "./useTypingParticipants";
 import { useSpeakerHeartbeat } from "./useSpeakerHeartbeat";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
+import { buildSpeakerAuthorMap } from "./speakerAuthorMap";
 
 interface Props {
   wardId: string;
@@ -54,39 +55,32 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     enabled: Boolean(user),
   });
 
-  const resolvedAuthors: AuthorMap = useMemo(() => {
-    const map = new Map<string, AuthorInfo>();
-    map.set(`speaker:${props.invitationId}`, {
-      displayName: props.speakerName,
-      role: "speaker",
+  // Kick off the Twilio client as soon as the chat mounts so prior
+  // messages load before the speaker taps Send. Without this, the
+  // conversation pane would stay empty until the first interaction
+  // and the first send attempt would race the connect and throw
+  // "Not connected."
+  useEffect(() => {
+    if (twilio.status !== "idle") return;
+    void twilio.connect({
+      wardId: props.wardId,
+      invitationId: props.invitationId,
+      useInviteApp: true,
     });
-    for (const m of props.bishopricParticipants) {
-      const info: AuthorInfo = { displayName: m.displayName, role: m.role };
-      if (m.email) info.email = m.email;
-      map.set(`uid:${m.uid}`, info);
-    }
-    if (user && twilio.identity) {
-      const existing = map.get(twilio.identity);
-      const info: AuthorInfo = {
-        displayName: existing?.displayName ?? user.displayName ?? props.speakerName,
-      };
-      if (existing?.role) info.role = existing.role;
-      if (user.photoURL) info.photoURL = user.photoURL;
-      map.set(twilio.identity, info);
-    }
-    for (const [id, info] of authors) {
-      const existing = map.get(id);
-      map.set(id, { ...existing, ...info });
-    }
-    return map;
-  }, [
-    props.invitationId,
-    props.speakerName,
-    props.bishopricParticipants,
-    twilio.identity,
-    user,
-    authors,
-  ]);
+  }, [twilio, props.wardId, props.invitationId]);
+
+  const resolvedAuthors = useMemo(
+    () =>
+      buildSpeakerAuthorMap({
+        invitationId: props.invitationId,
+        speakerName: props.speakerName,
+        bishopricParticipants: props.bishopricParticipants,
+        user,
+        twilioIdentity: twilio.identity,
+        liveAuthors: authors,
+      }),
+    [props.invitationId, props.speakerName, props.bishopricParticipants, twilio.identity, user, authors],
+  );
 
   async function ensureReady(): Promise<boolean> {
     if (twilio.status === "idle" || twilio.status === "error") {
