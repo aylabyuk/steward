@@ -29,11 +29,12 @@ export function ConversationGroup({
   });
   const fullTimestamp = last.dateCreated?.toLocaleString();
   const authorLabel = group.mine ? "You" : group.info.displayName;
+  const groupLabel = fullTimestamp ? `${authorLabel} at ${fullTimestamp}` : authorLabel;
   return (
     <div
       className={cn("flex flex-col gap-1", group.mine ? "items-end" : "items-start")}
       role="group"
-      aria-label={`${authorLabel} at ${fullTimestamp ?? "unknown time"}`}
+      aria-label={groupLabel}
     >
       <div
         className={cn(
@@ -61,10 +62,7 @@ export function ConversationGroup({
             />
           ))}
           {timestamp && (
-            <span
-              className="font-mono text-[9.5px] text-walnut-3 mt-0.5"
-              title={fullTimestamp}
-            >
+            <span className="font-mono text-[9.5px] text-walnut-3 mt-0.5" title={fullTimestamp}>
               {timestamp}
             </span>
           )}

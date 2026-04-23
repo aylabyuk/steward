@@ -115,6 +115,7 @@ function PendingBubble({ text }: { text: string }) {
           aria-hidden="true"
           className="inline-block w-2 h-2 rounded-full bg-parchment/70 animate-pulse"
         />
+        <span className="sr-only">Sending: </span>
         {text}
       </div>
     </div>
@@ -125,7 +126,8 @@ function SmsHint({ length }: { length: number }) {
   const segments = Math.ceil(length / SMS_SEGMENT);
   return (
     <p className="font-mono text-[10px] text-walnut-3">
-      {length} / {SMS_SEGMENT} — {segments > 1 ? `sends as ${segments} SMS segments` : "still one SMS segment"}
+      {length} / {SMS_SEGMENT} —{" "}
+      {segments > 1 ? `sends as ${segments} SMS segments` : "still one SMS segment"}
     </p>
   );
 }

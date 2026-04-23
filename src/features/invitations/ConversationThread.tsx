@@ -134,4 +134,3 @@ function findLastMineIndex(
   }
   return null;
 }
-
