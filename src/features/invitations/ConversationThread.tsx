@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/cn";
 import { ConversationGroup } from "./ConversationGroup";
 import { JumpToLatest } from "./JumpToLatest";
 import { DayDivider, UnreadDivider } from "./ThreadDividers";
@@ -19,6 +20,11 @@ interface Props {
    *  a "Read" receipt rendered under it. */
   readHorizonIndex?: number | null;
   onReact: (sid: string, emoji: string) => void;
+  /** When true, the thread expands to fill a flex parent (the full-
+   *  screen bishop dialog does this). When false (default) the thread
+   *  is capped at 60vh — right for the speaker landing page where the
+   *  thread sits inside a naturally-stacking scroll column. */
+  fillHeight?: boolean;
 }
 
 /** Bubble list styled after Messenger. Consecutive messages by the
@@ -33,6 +39,7 @@ export function ConversationThread({
   firstUnreadIndex,
   readHorizonIndex,
   onReact,
+  fillHeight,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -89,10 +96,13 @@ export function ConversationThread({
       : null;
 
   return (
-    <div className="relative">
+    <div className={cn("relative", fillHeight && "flex-1 flex flex-col min-h-0")}>
       <div
         ref={scrollRef}
-        className="flex flex-col gap-4 p-4 overflow-y-auto max-h-[60vh]"
+        className={cn(
+          "flex flex-col gap-4 p-4 overflow-y-auto",
+          fillHeight ? "flex-1 min-h-0" : "max-h-[60vh]",
+        )}
         role="log"
         aria-live="polite"
         aria-relevant="additions"

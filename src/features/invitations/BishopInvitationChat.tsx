@@ -91,7 +91,7 @@ export function BishopInvitationChat({
   const needsApply = Boolean(response && !response.acknowledgedAt);
 
   return (
-    <section className="bg-chalk flex flex-col overflow-hidden">
+    <section className="bg-chalk flex-1 flex flex-col min-h-0 overflow-hidden">
       {response && (
         <ResponseStrip
           response={response}
@@ -112,6 +112,7 @@ export function BishopInvitationChat({
         onReact={(sid, emoji) => {
           if (twilio.identity) void toggleReaction(sid, emoji, twilio.identity);
         }}
+        fillHeight
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
