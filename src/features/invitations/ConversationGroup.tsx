@@ -32,7 +32,7 @@ export function ConversationGroup({
   const groupLabel = fullTimestamp ? `${authorLabel} at ${fullTimestamp}` : authorLabel;
   return (
     <div
-      className={cn("flex flex-col gap-1", group.mine ? "items-end" : "items-start")}
+      className={cn("flex flex-col gap-0.5", group.mine ? "items-end" : "items-start")}
       role="group"
       aria-label={groupLabel}
     >
@@ -61,18 +61,23 @@ export function ConversationGroup({
               onReact={onReact}
             />
           ))}
-          {timestamp && (
-            <span className="font-mono text-[9.5px] text-walnut-3 mt-0.5" title={fullTimestamp}>
-              {timestamp}
-            </span>
-          )}
-          {group.mine && readByOther && (
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep">
-              Read
-            </span>
-          )}
         </div>
       </div>
+      {/* Timestamp + read receipt sit on their own row so the avatar
+          above aligns with the last bubble, not with this metadata. */}
+      {timestamp && (
+        <span
+          className={cn("font-mono text-[9.5px] text-walnut-3 mt-0.5", !group.mine && "ml-10")}
+          title={fullTimestamp}
+        >
+          {timestamp}
+        </span>
+      )}
+      {group.mine && readByOther && (
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep">
+          Read
+        </span>
+      )}
     </div>
   );
 }
