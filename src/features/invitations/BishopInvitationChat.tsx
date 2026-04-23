@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
 import type { SpeakerInvitation } from "@/lib/types";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { ResponseStrip } from "./ResponseStrip";
+import { TypingIndicator } from "./TypingIndicator";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { callIssueSpeakerSession } from "./invitationsCallable";
-import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useBishopAuthors } from "./useBishopAuthors";
+import { useConversation } from "./useConversation";
+import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
+import { useReadHorizon } from "./useReadHorizon";
+import { useTypingParticipants } from "./useTypingParticipants";
 import { useTwilioChat } from "./twilioClientProvider";
 
 interface Props {
@@ -29,56 +34,22 @@ export function BishopInvitationChat({
   const user = useAuthStore((s) => s.user);
   const members = useWardMembers();
   const twilio = useTwilioChat();
-  const { messages, conversation, authors, loading } = useConversation(
+  const { messages, conversation, authors, loading, toggleReaction } = useConversation(
     invitation.conversationSid ?? null,
   );
+  const firstUnreadIndex = useFirstUnreadIndex(conversation);
+  const readHorizon = useReadHorizon(conversation, twilio.identity);
+  const typing = useTypingParticipants(conversation, twilio.identity);
   const [applying, setApplying] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
-  // Merge author resolution: ward-member displayNames + the speaker
-  // snapshot on the invitation + the current user's Firebase Auth
-  // photoURL form a fallback map, then Twilio participant attributes
-  // (when present) overlay it. That way old conversations without
-  // attributes still render real names, and new conversations get
-  // the richer Twilio-sourced data.
-  const resolvedAuthors: AuthorMap = useMemo(() => {
-    const map = new Map<string, AuthorInfo>();
-    for (const m of members.data ?? []) {
-      if (m.data.role !== "bishopric" && m.data.role !== "clerk") continue;
-      if (!m.data.active) continue;
-      const info: AuthorInfo = { displayName: m.data.displayName, role: m.data.role };
-      if (m.data.email) info.email = m.data.email;
-      map.set(`uid:${m.id}`, info);
-    }
-    const speakerInfo: AuthorInfo = { displayName: invitation.speakerName, role: "speaker" };
-    if (invitation.speakerEmail) speakerInfo.email = invitation.speakerEmail;
-    if (invitation.response?.actorEmail) speakerInfo.email = invitation.response.actorEmail;
-    map.set(`speaker:${invitationId}`, speakerInfo);
-    if (user?.uid) {
-      const existing = map.get(`uid:${user.uid}`);
-      const info: AuthorInfo = {
-        displayName: existing?.displayName ?? user.displayName ?? "You",
-      };
-      if (existing?.role) info.role = existing.role;
-      if (user.photoURL) info.photoURL = user.photoURL;
-      const email = existing?.email ?? user.email;
-      if (email) info.email = email;
-      map.set(`uid:${user.uid}`, info);
-    }
-    for (const [id, info] of authors) {
-      const existing = map.get(id);
-      map.set(id, { ...existing, ...info });
-    }
-    return map;
-  }, [
-    members.data,
+  const resolvedAuthors = useBishopAuthors({
+    members: members.data,
+    invitation,
     invitationId,
-    invitation.speakerName,
-    invitation.speakerEmail,
-    invitation.response?.actorEmail,
     user,
     authors,
-  ]);
+  });
 
   useEffect(() => {
     if (twilio.status === "idle") void twilio.connect({ wardId });
@@ -120,13 +91,7 @@ export function BishopInvitationChat({
   const needsApply = Boolean(response && !response.acknowledgedAt);
 
   return (
-    <section className="bg-chalk border border-border rounded-lg shadow-elev-1 flex flex-col overflow-hidden">
-      <header className="px-4 py-3 border-b border-border bg-parchment">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-          Conversation with {invitation.speakerName}
-        </div>
-      </header>
-
+    <section className="bg-chalk flex-1 flex flex-col min-h-0 overflow-hidden">
       {response && (
         <ResponseStrip
           response={response}
@@ -142,12 +107,21 @@ export function BishopInvitationChat({
         currentIdentity={twilio.identity}
         authors={resolvedAuthors}
         loading={loading && twilio.status !== "ready"}
+        firstUnreadIndex={firstUnreadIndex}
+        readHorizonIndex={readHorizon}
+        onReact={(sid, emoji) => {
+          if (twilio.identity) void toggleReaction(sid, emoji, twilio.identity);
+        }}
+        fillHeight
       />
+
+      <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
 
       <ConversationComposer
         conversation={conversation}
         placeholder="Message the speaker…"
         disabled={twilio.status !== "ready"}
+        showSmsHint
       />
     </section>
   );
