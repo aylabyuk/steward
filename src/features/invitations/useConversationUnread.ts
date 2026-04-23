@@ -49,8 +49,14 @@ export function useConversationUnread(conversationSid: string | null | undefined
           void refetch(convo);
         };
         handlerRef = handler;
+        // participantUpdated fires reliably when the LOCAL participant
+        // advances their own last-read index (setAllMessagesRead).
+        // updatedLastReadMessageIndex is inconsistent about self-fire
+        // across SDK versions, so we depend on participantUpdated for
+        // the read-horizon signal and keep messageAdded for fresh
+        // incoming messages.
         convo.on("messageAdded", handler);
-        convo.on("updatedLastReadMessageIndex", handler);
+        convo.on("participantUpdated", handler);
       } catch {
         if (!cancelled) setUnread(null);
       }
@@ -64,7 +70,7 @@ export function useConversationUnread(conversationSid: string | null | undefined
       cancelled = true;
       if (convoRef && handlerRef) {
         convoRef.off("messageAdded", handlerRef);
-        convoRef.off("updatedLastReadMessageIndex", handlerRef);
+        convoRef.off("participantUpdated", handlerRef);
       }
     };
   }, [client, status, conversationSid]);
