@@ -18,7 +18,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         backgroundImage: CARET,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "right 10px center",
-        ...(rest.style ?? {}),
+        ...rest.style,
       }}
       className={cn(
         "appearance-none cursor-pointer font-sans text-[14px] pl-2.5 pr-8 py-1.5 bg-parchment border border-border rounded-md text-walnut transition-colors",
