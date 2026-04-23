@@ -54,13 +54,13 @@ export function authedAs(env: RulesTestEnvironment, uid: string, email: string):
   return env.authenticatedContext(uid, { email, email_verified: true });
 }
 
-/** Signed-in context with a verified phone number (Firebase Phone
- *  Auth). The rule engine reads `request.auth.token.phone_number`
- *  from the provided claim. */
-export function authedAsPhone(
+/** Signed-in context with the speaker custom claims minted by the
+ *  issueSpeakerSession callable. The rule engine reads
+ *  `request.auth.token.invitationId` + `wardId` from the claims. */
+export function authedAsSpeaker(
   env: RulesTestEnvironment,
   uid: string,
-  phoneNumber: string,
+  claims: { invitationId: string; wardId: string },
 ): RulesTestContext {
-  return env.authenticatedContext(uid, { phone_number: phoneNumber });
+  return env.authenticatedContext(uid, { ...claims, role: "speaker" });
 }

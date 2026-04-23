@@ -54,8 +54,15 @@ export const router = createBrowserRouter([
   // signed-in check.
   { path: "/accept-invite/:wardId", element: <AcceptInvitePage /> },
   // Speaker invitation landing: fully public (no auth at all). The
-  // unguessable token in the URL authorizes the read per Firestore
-  // rules.
-  { path: "/invite/speaker/:wardId/:token", element: <SpeakerInvitationLandingPage /> },
+  // `invitationId` path segment is the Firestore doc ID (unguessable,
+  // authorizes the public letter read). The trailing `token` is a
+  // one-time capability exchanged via issueSpeakerSession for a
+  // Firebase custom token + Twilio JWT. Isolated on a named Firebase
+  // app so the speaker session can't clobber a bishopric session on
+  // the same device.
+  {
+    path: "/invite/speaker/:wardId/:invitationId/:token",
+    element: <SpeakerInvitationLandingPage />,
+  },
   { path: "/login", element: <Login /> },
 ]);

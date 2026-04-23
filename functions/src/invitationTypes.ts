@@ -15,6 +15,13 @@ export interface SpeakerInvitationShape {
   speakerPhone?: string;
   conversationSid?: string;
   expiresAt?: FirebaseFirestore.Timestamp;
+  /** Capability-token columns (see src/lib/types/speakerInvitation.ts
+   *  for the full doc). The hash is kept after consumption so a
+   *  holder of a dead link can still trigger a fresh-SMS rotation. */
+  tokenHash?: string;
+  tokenStatus?: "active" | "consumed";
+  tokenExpiresAt?: FirebaseFirestore.Timestamp;
+  tokenRotationsByDay?: Record<string, number>;
   response?: {
     answer: "yes" | "no";
     reason?: string;

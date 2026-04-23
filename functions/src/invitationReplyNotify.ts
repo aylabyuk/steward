@@ -1,9 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { sendAndPrune } from "./fcm.js";
-import { buildEmailHtml, buildEmailText } from "./invitationEmailBody.js";
 import { filterRecipients, type RecipientCandidate } from "./recipients.js";
-import { STEWARD_ORIGIN } from "./secrets.js";
 import { sendEmail } from "./sendgrid/client.js";
 import { sendSmsDirect } from "./twilio/messaging.js";
 import type { FcmToken, MemberDoc, WardDoc } from "./types.js";
@@ -58,26 +56,38 @@ export async function smsSpeaker(inv: ResolvedInvitation, body: string): Promise
 /** Bishop posted → SendGrid email to the speaker with a preview.
  *  No-ops if the invitation has no email on file or if SendGrid
  *  isn't configured — the surrounding try/catch keeps the webhook
- *  alive so the SMS fan-out still fires. */
+ *  alive so the SMS fan-out still fires.
+ *
+ *  We intentionally omit an invite URL here: the speaker's original
+ *  SMS carries the capability token and opens the chat directly.
+ *  Linking back from the reply email would either 404 (no token) or
+ *  spend a daily rotation (consumed token → fresh SMS), so we point
+ *  them at their SMS instead. */
 export async function emailSpeaker(inv: ResolvedInvitation, body: string): Promise<void> {
   if (!inv.speakerEmail) return;
-  const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
-  const inviteUrl = `${origin}/invite/speaker/${inv.wardId}/${inv.token}`;
-  const args = {
-    speakerName: inv.speakerName,
-    inviterName: inv.inviterName,
-    assignedDate: inv.assignedDate,
-    wardName: inv.wardName,
-    inviteUrl,
-  };
   const preview = truncate(body, 180);
+  const text = [
+    `${inv.inviterName} replied to your invitation for ${inv.assignedDate}:`,
+    "",
+    preview,
+    "",
+    "To reply back, open the invitation link in the text message we sent you.",
+    "",
+    `— ${inv.wardName}`,
+  ].join("\n");
+  const html = `<p>${escapeHtml(inv.inviterName)} replied to your invitation for <strong>${escapeHtml(
+    inv.assignedDate,
+  )}</strong>:</p>
+<blockquote style="margin:0 0 12px 0;padding-left:10px;border-left:3px solid #bca788;color:#4a3a30;"><em>${escapeHtml(preview)}</em></blockquote>
+<p style="color:#666;font-size:13px;">To reply back, open the invitation link in the text message we sent you.</p>
+<p style="color:#666;font-size:12px;">— ${escapeHtml(inv.wardName)}</p>`;
   try {
     await sendEmail({
       to: inv.speakerEmail,
       fromDisplayName: `${inv.inviterName} (via Steward)`,
       subject: `New message from ${inv.inviterName} · ${inv.wardName}`,
-      text: `${preview}\n\n---\n\n${buildEmailText(args)}`,
-      html: `<p><em>${escapeHtml(preview)}</em></p><hr/>${buildEmailHtml(args)}`,
+      text,
+      html,
     });
   } catch (err) {
     logger.error("reply email failed", { err: (err as Error).message, token: inv.token });

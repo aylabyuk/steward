@@ -64,7 +64,12 @@ export function SundayCard({
   }, [assignDialogOpen]);
 
   if (cancelled) {
-    return <SundayCardCancelled date={date} {...(meeting?.cancellation?.reason ? { reason: meeting.cancellation.reason } : {})} />;
+    return (
+      <SundayCardCancelled
+        date={date}
+        {...(meeting?.cancellation?.reason ? { reason: meeting.cancellation.reason } : {})}
+      />
+    );
   }
 
   async function handleSave() {

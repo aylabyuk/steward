@@ -2,11 +2,11 @@ import { z } from "zod";
 
 /**
  * A frozen snapshot of a speaker invitation letter, stored under
- * `wards/{wardId}/speakerInvitations/{token}`. The doc's auto-
- * generated ID doubles as the shareable link token: anyone with the
- * URL can read the doc (rule: `allow read: if true`), which is safe
- * because the token is unguessable (~120 bits of entropy from
- * Firestore's auto-ID).
+ * `wards/{wardId}/speakerInvitations/{invitationId}`. Anyone with the
+ * URL can read the doc (rule: `allow read: if true`); the doc ID is
+ * unguessable, and a separate capability token in the URL authorizes
+ * speaker sign-in (validated by the issueSpeakerSession callable
+ * against the `tokenHash` on this doc).
  *
  * Snapshotting means the speaker keeps the exact letter they were
  * sent, even if the ward edits the template later.
@@ -48,17 +48,14 @@ export const speakerInvitationResponseSchema = z.object({
   answer: z.enum(["yes", "no"]),
   reason: z.string().optional(),
   respondedAt: z.any(),
-  /** Firebase Auth uid of the signed-in speaker at submit. Works
-   *  regardless of auth method (phone OTP or email). */
+  /** Firebase Auth uid of the signed-in speaker at submit. The
+   *  speaker uid is deterministic per invitation
+   *  (`speaker:{wardId}:{invitationId}`) — minted by
+   *  issueSpeakerSession from a custom token. */
   actorUid: z.string(),
   /** Verified email, if the speaker signed in via email/Google auth.
-   *  Phone-authed speakers leave this blank in favor of actorPhone. */
+   *  Capability-token speakers leave this blank. */
   actorEmail: z.string().optional(),
-  /** Verified E.164 phone number for phone-authed speakers. The
-   *  default auth path on the invite page now — since we already
-   *  reached the speaker by SMS, verifying the same phone proves
-   *  identity without asking them to switch Google accounts. */
-  actorPhone: z.string().optional(),
   /** Bishop pressed "Apply as confirmed/declined" and the mirror write
    *  to `speaker.status` landed. Until then the schedule badge still
    *  says "speaker replied — needs review". */
@@ -99,6 +96,25 @@ export const speakerInvitationSchema = z.object({
    *  Rules reject speaker-side writes past this; reads stay open so the
    *  bishopric can still review archived threads. */
   expiresAt: z.any().optional(),
+
+  /** SHA-256 (hex) of the capability token that authorizes speaker
+   *  sign-in. Plaintext token never lands in Firestore — only in the
+   *  invitation URL delivered to the speaker's phone/email. On
+   *  consumption the hash stays (so presenting the dead link can
+   *  trigger rotation); rotation overwrites this with a fresh hash. */
+  tokenHash: z.string().optional(),
+  /** "active" after issue or rotation; "consumed" after a successful
+   *  issueSpeakerSession exchange. A consumed token can't mint a
+   *  session, but presenting it still triggers rotation (subject to
+   *  the daily cap). */
+  tokenStatus: z.enum(["active", "consumed"]).optional(),
+  /** Hard wall for session exchange. Mirrors `expiresAt` on
+   *  freshly-issued invitations; rotation doesn't extend it (once the
+   *  meeting is past, the invitation is dead). */
+  tokenExpiresAt: z.any().optional(),
+  /** Visitor-triggered rotations per `yyyy-mm-dd`. Capped at 3/day
+   *  per invitation to bound Twilio cost exposure if a link leaks. */
+  tokenRotationsByDay: z.record(z.string(), z.number()).optional(),
 
   /** Twilio Conversation SID. Primary key the chat clients bootstrap
    *  against. Missing on pre-#16 invitations — those render read-only

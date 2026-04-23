@@ -123,25 +123,24 @@ service cloud.firestore {
       }
 
       // Speaker invitations: frozen snapshots of a letter at send time.
-      // Public read — the doc ID is the shareable token, and Firestore
-      // auto-IDs are cryptographically random (~120 bits) so the URL
-      // itself authorizes access. Creates + deletes stay member-only.
-      // Updates have two paths:
+      // Public read — the doc ID + the capability token in the URL
+      // together authorize access (the token itself is hashed on the
+      // doc; issueSpeakerSession verifies it). Creates + deletes stay
+      // member-only. Updates have two paths:
       //   - active ward members: full update
       //   - signed-in speaker: ONLY the `response` subtree, pre-expiry,
-      //     with a phone-match gate — the caller's verified phone
-      //     number must equal the invitation's speakerPhone snapshot.
-      //     Phone auth is a strong identity signal here because the
-      //     invitation was delivered over SMS to that exact number.
-      match /speakerInvitations/{token} {
+      //     gated on a custom-claim match — the caller's ID token must
+      //     carry `invitationId == <docId>` and `wardId == <wardId>`
+      //     (minted by the issueSpeakerSession callable after a
+      //     successful capability-token exchange).
+      match /speakerInvitations/{invitationId} {
         allow read: if true;
         allow create, delete: if isActiveMember(wardId);
         allow update: if isActiveMember(wardId)
           || (isSignedIn()
-              && request.auth.token.phone_number != null
+              && request.auth.token.invitationId == invitationId
+              && request.auth.token.wardId == wardId
               && request.time < resource.data.expiresAt
-              && resource.data.speakerPhone != null
-              && request.auth.token.phone_number == resource.data.speakerPhone
               && request.resource.data.diff(resource.data).affectedKeys()
                   .hasOnly(['response']));
       }

@@ -1,31 +1,23 @@
-import {
-  doc,
-  getDoc,
-  serverTimestamp,
-  updateDoc,
-  writeBatch,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, getDoc, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
+import { db, inviteDb } from "@/lib/firebase";
 
 export interface SpeakerResponseInput {
   wardId: string;
-  token: string;
+  invitationId: string;
   answer: "yes" | "no";
   reason?: string;
   actorUid: string;
-  /** One of these identifies the verified signer. Phone-authed
-   *  speakers pass `actorPhone`; legacy email/Google-authed callers
-   *  pass `actorEmail`. Both optional at the type level so callers
-   *  can choose; the Firestore rule enforces at least phone-match. */
+  /** Verified Google email, if the speaker happens to also have a
+   *  Google session on the same device. Optional — capability-token
+   *  speakers rely on their custom-claim identity, not email. */
   actorEmail?: string;
-  actorPhone?: string;
 }
 
 /** Speaker-side: writes the `response` subtree on the invitation
- *  doc. Passes through the phone-matched Firestore rule (see
- *  firestore.rules). */
+ *  doc. Routes through `inviteDb` so the write carries the isolated
+ *  `inviteAuth` session's ID token (with invitationId claim). */
 export async function writeSpeakerResponse(input: SpeakerResponseInput): Promise<void> {
-  const ref = doc(db, "wards", input.wardId, "speakerInvitations", input.token);
+  const ref = doc(inviteDb, "wards", input.wardId, "speakerInvitations", input.invitationId);
   await updateDoc(ref, {
     response: {
       answer: input.answer,
@@ -33,28 +25,22 @@ export async function writeSpeakerResponse(input: SpeakerResponseInput): Promise
       respondedAt: serverTimestamp(),
       actorUid: input.actorUid,
       ...(input.actorEmail ? { actorEmail: input.actorEmail } : {}),
-      ...(input.actorPhone ? { actorPhone: input.actorPhone } : {}),
     },
   });
 }
 
 export interface ApplyResponseInput {
   wardId: string;
-  token: string;
+  invitationId: string;
   bishopUid: string;
 }
 
 /** Bishop-side: applies the speaker's response to `speaker.status`
  *  (confirmed for yes, declined for no) and stamps the invitation's
- *  acknowledgement. Batched so either both writes land or neither. */
+ *  acknowledgement. Batched so either both writes land or neither.
+ *  Routes through the main `db` (bishopric Google session). */
 export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise<void> {
-  const invitationRef = doc(
-    db,
-    "wards",
-    input.wardId,
-    "speakerInvitations",
-    input.token,
-  );
+  const invitationRef = doc(db, "wards", input.wardId, "speakerInvitations", input.invitationId);
   const snap = await getDoc(invitationRef);
   if (!snap.exists()) throw new Error("Invitation not found.");
   const data = snap.data() as {

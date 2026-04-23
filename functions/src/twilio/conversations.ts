@@ -57,12 +57,10 @@ export async function addSmsParticipant(
   speakerPhoneE164: string,
   twilioFromNumber: string,
 ): Promise<string> {
-  const p = await service()
-    .conversations(conversationSid)
-    .participants.create({
-      "messagingBinding.address": speakerPhoneE164,
-      "messagingBinding.proxyAddress": twilioFromNumber,
-    });
+  const p = await service().conversations(conversationSid).participants.create({
+    "messagingBinding.address": speakerPhoneE164,
+    "messagingBinding.proxyAddress": twilioFromNumber,
+  });
   return p.sid;
 }
 

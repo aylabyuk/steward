@@ -6,7 +6,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   wardId: string;
-  token: string;
+  invitationId: string;
   invitation: SpeakerInvitation;
 }
 
@@ -18,7 +18,7 @@ export function BishopInvitationDialog({
   open,
   onClose,
   wardId,
-  token,
+  invitationId,
   invitation,
 }: Props): React.ReactElement | null {
   useEffect(() => {
@@ -62,7 +62,11 @@ export function BishopInvitationDialog({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <BishopInvitationChat wardId={wardId} token={token} invitation={invitation} />
+          <BishopInvitationChat
+            wardId={wardId}
+            invitationId={invitationId}
+            invitation={invitation}
+          />
         </div>
       </div>
     </div>

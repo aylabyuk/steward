@@ -14,7 +14,7 @@ PWA for a ward bishopric to plan weekly sacrament meeting programs. Desktop + mo
 - **SMS + in-app chat**: Twilio Conversations (bridges the speaker's phone SMS and their web invite page into a single thread — speakers can reply from either side)
 - **Lint**: oxlint &nbsp;·&nbsp; **Format**: Biome (formatter mode; linter disabled)
 - **Test**: Vitest + Playwright + `@firebase/rules-unit-testing`, against Firebase Local Emulator Suite
-- **Backend**: six Firebase Cloud Functions — `onMeetingWrite` (change notifications), `scheduledNudges` (finalization cron), `onCommentCreate` (@mention notifications), `sendSpeakerInvitation` (callable: creates invitation + delivers email/SMS), `issueTwilioToken` (callable: mints chat JWT with email-match gate for speakers), `onTwilioWebhook` (HTTPS: receives Conversations events, fans out FCM to bishopric + email to speaker). No API server beyond these.
+- **Backend**: six Firebase Cloud Functions — `onMeetingWrite` (change notifications), `scheduledNudges` (finalization cron), `onCommentCreate` (@mention notifications), `sendSpeakerInvitation` (callable: creates invitation + delivers email/SMS + a hashed capability token), `issueSpeakerSession` (callable: exchanges an invitation capability token for a Firebase custom token + Twilio Conversations JWT; self-heals consumed/expired tokens by rotating + resending the SMS), `onTwilioWebhook` (HTTPS: receives Conversations events, fans out FCM to bishopric + email to speaker). No API server beyond these.
 
 ## Hard rules
 
@@ -56,9 +56,10 @@ functions/          # Firebase Cloud Functions
     onMeetingWrite.ts           # change notifications
     scheduledNudges.ts          # finalization nudges (hourly cron)
     onCommentCreate.ts          # @mention notifications
-    sendSpeakerInvitation.ts    # callable: create invitation + deliver via SendGrid + Twilio
-    issueTwilioToken.ts         # callable: mint Twilio Conversations JWT (email-match gate for speakers)
+    sendSpeakerInvitation.ts    # callable: create invitation + deliver via SendGrid + Twilio; issues a hashed capability token
+    issueSpeakerSession.ts      # callable: exchange capability token for Firebase custom token + Twilio JWT; self-heals via rotation
     onTwilioWebhook.ts          # HTTPS: Twilio Conversations events → FCM / SendGrid fan-out
+    invitationToken.ts          # shared capability-token helpers (generate / hash / timing-safe compare / rotation bucket)
     twilio/, sendgrid/          # thin transport wrappers
 ```
 

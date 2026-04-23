@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, onSnapshot, type Firestore } from "firebase/firestore";
+import { db, inviteDb } from "@/lib/firebase";
 import { speakerInvitationSchema, type SpeakerInvitation } from "@/lib/types";
 
 export type SpeakerInvitationState =
@@ -10,24 +10,31 @@ export type SpeakerInvitationState =
   | { kind: "ready"; invitation: SpeakerInvitation };
 
 /**
- * Live public read of a speaker invitation by its token doc ID.
- * Letter content is frozen, but the `response` subtree updates as
- * the speaker taps Yes/No and the bishop acknowledges — the live
+ * Live public read of a speaker invitation by its doc ID. Letter
+ * content is frozen, but the `response` subtree updates as the
+ * speaker taps Yes/No and the bishop acknowledges — the live
  * subscription keeps both sides of the chat pane reactive.
+ *
+ * Callers on the invite landing page must pass `useInviteApp: true`
+ * so the read goes through the isolated `inviteDb` (bound to
+ * `inviteAuth`). Main-app readers (Prepare page, etc.) omit the
+ * option and go through the default `db`.
  */
 export function useSpeakerInvitation(
   wardId: string | undefined,
-  token: string | undefined,
+  invitationId: string | undefined,
+  options: { useInviteApp?: boolean } = {},
 ): SpeakerInvitationState {
   const [state, setState] = useState<SpeakerInvitationState>({ kind: "loading" });
+  const target: Firestore = options.useInviteApp ? inviteDb : db;
 
   useEffect(() => {
-    if (!wardId || !token) {
+    if (!wardId || !invitationId) {
       setState({ kind: "not-found" });
       return;
     }
     const unsub = onSnapshot(
-      doc(db, "wards", wardId, "speakerInvitations", token),
+      doc(target, "wards", wardId, "speakerInvitations", invitationId),
       (snap) => {
         if (!snap.exists()) {
           setState({ kind: "not-found" });
@@ -43,7 +50,7 @@ export function useSpeakerInvitation(
       (err) => setState({ kind: "error", message: err.message }),
     );
     return () => unsub();
-  }, [wardId, token]);
+  }, [wardId, invitationId, target]);
 
   return state;
 }

@@ -1,6 +1,8 @@
 import type { SpeakerInvitation } from "@/lib/types";
 import type { SpeakerInvitationState } from "@/features/templates/useSpeakerInvitation";
 
+export { SessionGate } from "./invite-speaker-session-gate";
+
 /** Non-"ready" sub-states for the invite landing page. Split out so
  *  the main route stays under the 150-LOC ceiling while keeping
  *  these warm, bishop-friendly fallback screens close at hand. */
@@ -38,7 +40,11 @@ export function NonReadyState({ state }: { state: SpeakerInvitationState }): Rea
   return <StateFrame />;
 }
 
-export function ExpiredState({ invitation }: { invitation: SpeakerInvitation }): React.ReactElement {
+export function ExpiredState({
+  invitation,
+}: {
+  invitation: SpeakerInvitation;
+}): React.ReactElement {
   return (
     <StateFrame>
       <div className="max-w-md w-full rounded-lg border border-border bg-chalk p-6 text-center">

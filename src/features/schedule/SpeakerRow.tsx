@@ -65,7 +65,7 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
           open={open}
           onClose={() => setOpen(false)}
           wardId={wardId}
-          token={invitation.token}
+          invitationId={invitation.invitationId}
           invitation={invitation}
         />
       )}

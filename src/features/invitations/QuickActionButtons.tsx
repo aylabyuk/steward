@@ -60,9 +60,7 @@ export function QuickActionButtons({
   if (mode === "noReason") {
     return (
       <div className="flex flex-col gap-2 p-3 border-t border-border bg-chalk">
-        <label className="font-sans text-[11.5px] text-walnut-2">
-          Tell them why (optional)
-        </label>
+        <label className="font-sans text-[11.5px] text-walnut-2">Tell them why (optional)</label>
         <div className="flex gap-2 items-end">
           <input
             value={reason}
