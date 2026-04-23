@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router";
+import { Avatar } from "@/components/ui/Avatar";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation";
 import { useWardMembers } from "@/hooks/useWardMembers";
@@ -27,9 +28,10 @@ export function InvitationViewPage(): React.ReactElement {
 
   const inv = letter.invitation;
   const response = inv.response;
-  const acknowledgedByName = response?.acknowledgedBy
-    ? (members.data.find((m) => m.id === response.acknowledgedBy)?.data.displayName ?? null)
+  const acknowledger = response?.acknowledgedBy
+    ? members.data.find((m) => m.id === response.acknowledgedBy)
     : null;
+  const acknowledgedByName = acknowledger?.data.displayName ?? null;
   const prepareHref = `/week/${inv.speakerRef.meetingDate}/speaker/${inv.speakerRef.speakerId}/prepare`;
 
   return (
@@ -70,9 +72,22 @@ export function InvitationViewPage(): React.ReactElement {
             {formatTimestamp(response.acknowledgedAt) && (
               <>
                 <dt>Applied</dt>
-                <dd>
-                  {formatTimestamp(response.acknowledgedAt)}
-                  {acknowledgedByName ? ` · ${acknowledgedByName}` : ""}
+                <dd className="flex items-center gap-2 flex-wrap">
+                  <span>{formatTimestamp(response.acknowledgedAt)}</span>
+                  {acknowledger && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <Avatar
+                        user={{
+                          uid: acknowledger.id,
+                          displayName: acknowledgedByName,
+                          photoURL: acknowledger.data.photoURL ?? null,
+                        }}
+                        size="sm"
+                      />
+                      <span className="normal-case tracking-normal">{acknowledgedByName}</span>
+                    </>
+                  )}
                 </dd>
               </>
             )}
