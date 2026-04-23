@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Conversation, Message, Participant } from "@twilio/conversations";
 import { parseAuthorInfo, toChatMessage } from "./conversationHelpers";
-import { readReactions, toggleReaction as toggleReactionMap } from "./reactions";
 import { useTwilioChat } from "./twilioClientProvider";
 
 export interface ChatMessage {
@@ -12,8 +11,7 @@ export interface ChatMessage {
   dateCreated: Date | null;
   /** Parsed attributes — `{ responseType: 'yes' | 'no', reason? }`
    *  for the structured quick-action messages, `{ kind: 'invitation' }`
-   *  for the initial letter, `{ reactions: { emoji: [id...] } }` when
-   *  anyone has reacted, else null. */
+   *  for the initial letter, else null. */
   attributes: Record<string, unknown> | null;
 }
 
@@ -34,16 +32,11 @@ interface ConversationState {
   error: Error | null;
 }
 
-export interface ConversationHookResult extends ConversationState {
-  /** Toggles the caller's identity on a reaction emoji for a given
-   *  message. Writes the new attributes to Twilio; the messageUpdated
-   *  event then refreshes local state for everyone. */
-  toggleReaction: (sid: string, emoji: string, identity: string) => Promise<void>;
-}
+export type ConversationHookResult = ConversationState;
 
-/** Subscribes to a single conversation's message stream, participant
- *  list, and message-attribute updates (so reactions stay live).
- *  Client must already be connected via <TwilioChatProvider>. */
+/** Subscribes to a single conversation's message stream and
+ *  participant list. Client must already be connected via
+ *  <TwilioChatProvider>. */
 export function useConversation(conversationSid: string | null): ConversationHookResult {
   const { client, status } = useTwilioChat();
   const [state, setState] = useState<ConversationState>({
@@ -53,25 +46,13 @@ export function useConversation(conversationSid: string | null): ConversationHoo
     authors: new Map(),
     error: null,
   });
-  const msgRefs = useRef<Map<string, Message>>(new Map());
 
   useEffect(() => {
     if (!client || status !== "ready" || !conversationSid) return;
     let cancelled = false;
     let convo: Conversation | null = null;
-    msgRefs.current = new Map();
-    const replaceMessage = (m: Message) =>
-      setState((s) => ({
-        ...s,
-        messages: s.messages.map((x) => (x.sid === m.sid ? toChatMessage(m) : x)),
-      }));
     const onMessageAdded = (m: Message) => {
-      msgRefs.current.set(m.sid, m);
       setState((s) => ({ ...s, messages: [...s.messages, toChatMessage(m)] }));
-    };
-    const onMessageUpdated = (args: { message: Message }) => {
-      msgRefs.current.set(args.message.sid, args.message);
-      replaceMessage(args.message);
     };
     const onParticipantUpdate = (p: Participant) => {
       setState((s) => {
@@ -92,7 +73,6 @@ export function useConversation(conversationSid: string | null): ConversationHoo
           convo.getParticipants(),
         ]);
         if (cancelled) return;
-        for (const m of page.items) msgRefs.current.set(m.sid, m);
         const authors: AuthorMap = new Map();
         for (const p of participants) {
           if (!p.identity) continue;
@@ -107,7 +87,6 @@ export function useConversation(conversationSid: string | null): ConversationHoo
           error: null,
         });
         convo.on("messageAdded", onMessageAdded);
-        convo.on("messageUpdated", onMessageUpdated);
         convo.on("participantJoined", onParticipantUpdate);
         convo.on("participantUpdated", (args) => onParticipantUpdate(args.participant));
       } catch (err) {
@@ -125,31 +104,11 @@ export function useConversation(conversationSid: string | null): ConversationHoo
       cancelled = true;
       if (convo) {
         convo.removeAllListeners("messageAdded");
-        convo.removeAllListeners("messageUpdated");
         convo.removeAllListeners("participantJoined");
         convo.removeAllListeners("participantUpdated");
       }
     };
   }, [client, status, conversationSid]);
 
-  const toggleReaction = useCallback(
-    async (sid: string, emoji: string, identity: string): Promise<void> => {
-      const msg = msgRefs.current.get(sid);
-      if (!msg) return;
-      const current = readReactions(
-        msg.attributes && typeof msg.attributes === "object"
-          ? (msg.attributes as Record<string, unknown>)
-          : null,
-      );
-      const nextReactions = toggleReactionMap(current, emoji, identity);
-      const rawAttrs =
-        msg.attributes && typeof msg.attributes === "object"
-          ? (msg.attributes as Record<string, unknown>)
-          : {};
-      await msg.updateAttributes({ ...rawAttrs, reactions: nextReactions });
-    },
-    [],
-  );
-
-  return { ...state, toggleReaction };
+  return state;
 }

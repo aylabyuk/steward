@@ -19,7 +19,6 @@ interface Props {
    *  provided, the last mine=true bubble at or below this index gets
    *  a "Read" receipt rendered under it. */
   readHorizonIndex?: number | null;
-  onReact: (sid: string, emoji: string) => void;
   /** When true, the thread expands to fill a flex parent (the full-
    *  screen bishop dialog does this). When false (default) the thread
    *  is capped at 60vh — right for the speaker landing page where the
@@ -38,7 +37,6 @@ export function ConversationThread({
   loading,
   firstUnreadIndex,
   readHorizonIndex,
-  onReact,
   fillHeight,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -123,8 +121,6 @@ export function ConversationThread({
                 readByOtherAt !== null &&
                 item.group.messages.some((m) => m.index === readByOtherAt)
               }
-              selfIdentity={currentIdentity}
-              onReact={onReact}
             />
           );
         })}

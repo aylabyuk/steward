@@ -34,9 +34,7 @@ interface Props {
 export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const [user, setUser] = useState<User | null>(inviteAuth.currentUser);
   const twilio = useTwilioChat();
-  const { messages, conversation, authors, loading, toggleReaction } = useConversation(
-    props.conversationSid,
-  );
+  const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
   const firstUnreadIndex = useFirstUnreadIndex(conversation);
   const readHorizon = useReadHorizon(conversation, twilio.identity);
   const typing = useTypingParticipants(conversation, twilio.identity);
@@ -123,9 +121,6 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         loading={loading && twilio.status === "ready"}
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
-        onReact={(sid, emoji) => {
-          if (twilio.identity) void toggleReaction(sid, emoji, twilio.identity);
-        }}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
