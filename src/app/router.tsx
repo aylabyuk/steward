@@ -7,12 +7,9 @@ import { AcceptInvitePage } from "./routes/accept-invite";
 import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
-import { MembersPage } from "./routes/members";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { ProfilePage } from "./routes/profile";
-import { SettingsIndex } from "./routes/settings";
-import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
-import { SpeakerEmailTemplatePage } from "./routes/templates-speaker-email";
+import { SpeakerInvitationTemplatePage } from "./routes/templates-speaker-invitation";
 import { WardInviteTemplatePage } from "./routes/templates-ward-invites";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
@@ -25,11 +22,8 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/schedule" replace /> },
       { path: "schedule", element: <ScheduleView /> },
       { path: "week/:date", element: <Week /> },
-      { path: "settings", element: <SettingsIndex /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
-      { path: "settings/members", element: <MembersPage /> },
       { path: "settings/profile", element: <ProfilePage /> },
-      { path: "settings/templates/speaker-email", element: <SpeakerEmailTemplatePage /> },
       { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
       {
         path: "ward/:wardId/invitations/:invitationId/view",
@@ -47,7 +41,10 @@ export const router = createBrowserRouter([
     children: [
       { path: "/print/:date/congregation", element: <CongregationProgram /> },
       { path: "/print/:date/conducting", element: <ConductingProgram /> },
-      { path: "/settings/templates/speakers", element: <SpeakerLetterTemplatePage /> },
+      {
+        path: "/settings/templates/speaker-invitation",
+        element: <SpeakerInvitationTemplatePage />,
+      },
       {
         path: "/week/:date/speaker/:speakerId/prepare",
         element: <PrepareInvitationPage />,

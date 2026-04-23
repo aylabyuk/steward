@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
-import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
 import { renderSpeakerEmailBody } from "@/features/templates/renderSpeakerEmailBody";
 import { DEFAULT_SPEAKER_EMAIL_BODY } from "@/features/templates/speakerEmailDefaults";
+import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
 import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTemplate";
 import { writeSpeakerEmailTemplate } from "@/features/templates/writeSpeakerEmailTemplate";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
@@ -12,7 +11,10 @@ import { friendlyWriteError } from "@/stores/saveStatusStore";
 
 const SAMPLE_URL = "https://example.com/invite/speaker/your-ward/sample-token";
 
-export function SpeakerEmailTemplatePage() {
+/** Email tab of the Speaker-invitation template page. Plain-text
+ *  message for the `mailto:` flow — distinct from the letter that
+ *  lands inside the speaker's invite page. */
+export function SpeakerEmailTab(): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const ward = useWardSettings();
   const me = useCurrentMember();
@@ -62,25 +64,14 @@ export function SpeakerEmailTemplatePage() {
   }
 
   return (
-    <main className="pb-16">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/settings" className="hover:text-walnut">
-          ← Settings
-        </Link>
-      </nav>
-      <header className="mb-6 flex flex-col gap-1">
-        <h1 className="font-display text-[24px] font-semibold text-walnut">
-          Speaker invitation email
-        </h1>
-        <p className="font-serif text-[14px] text-walnut-2">
-          The plain-text message your email client sends when you click "Send email" on a planned
-          speaker — distinct from the letter on the landing page. Name the Sunday and purpose here
-          so the email doesn't read like a phishing link. Variables:{" "}
-          <code>{"{{speakerName}}"}</code>, <code>{"{{date}}"}</code>, <code>{"{{wardName}}"}</code>
-          , <code>{"{{inviterName}}"}</code>, <code>{"{{topic}}"}</code>,{" "}
-          <code>{"{{inviteUrl}}"}</code>.
-        </p>
-      </header>
+    <div className="px-4 sm:px-8 py-6 max-w-6xl mx-auto w-full">
+      <p className="font-serif text-[14px] text-walnut-2 mb-6">
+        The plain-text message your email client sends when you click "Send email" on a planned
+        speaker — distinct from the letter on the landing page. Name the Sunday and purpose here so
+        the email doesn't read like a phishing link. Variables: <code>{"{{speakerName}}"}</code>,{" "}
+        <code>{"{{date}}"}</code>, <code>{"{{wardName}}"}</code>, <code>{"{{inviterName}}"}</code>,{" "}
+        <code>{"{{topic}}"}</code>, <code>{"{{inviteUrl}}"}</code>.
+      </p>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
@@ -119,6 +110,6 @@ export function SpeakerEmailTemplatePage() {
           </pre>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }

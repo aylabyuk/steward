@@ -52,14 +52,16 @@ Rotation is automatic: a consumed or expired token that hashes to the stored val
 
 The invite landing page runs on a second named Firebase app (`inviteApp` / `inviteAuth`) so speaker sign-in never touches the bishopric Google session on the same device — the two persist independently under separate IndexedDB keys.
 
+## Audience
+
+Steward is built for the **bishopric** (bishop + counselors) and **secretaries** (executive secretary, assistants) who plan sacrament meetings. **Clerks** can use it but it's peripheral to their calling — they don't plan the meeting themselves. Schema-wise, bishopric is its own `role`; secretaries and clerks share `role: "clerk"` but show as distinct `calling` values on the roster.
+
 ## Email CC policy
 
-Every `mailto:` link auto-populates the CC field with the ward's team.
+Speaker-invitation emails (sent server-side by the `sendSpeakerInvitation` / `onInvitationWrite` Cloud Functions via SendGrid) CC active bishopric + `role: "clerk"` members with `ccOnEmails: true`:
 
-- **Always CC** (non-negotiable): bishopric (bishop + 2 counselors) with `active: true`. Bishopric visibility on speaker invitations is the whole point.
-- **CC by default** (per-member toggle `ccOnEmails`): clerks + secretaries.
-- **How**: build the mailto URL with `cc=` from the computed list. Users can still edit CC in their mail client — we don't try to prevent that.
-- **Ward settings screen** toggles `ccOnEmails` for clerks/secretaries (bishopric is always on; not togglable).
-- **Sanity cap**: mailto URLs have a ~2000-char limit in most clients. Ward team sizes never approach that, but code should handle truncation gracefully.
+- **Bishopric**: always CC'd (non-negotiable). Bishopric visibility on speaker invitations is the whole point.
+- **Secretaries + clerks** (`role: "clerk"`): CC'd when their per-member `ccOnEmails` toggle is true (default). Turn off on the Ward settings roster for members who don't need to be in the thread.
+- Any future client-side `mailto:` flow should reuse the same rule via `src/features/speakers/computeCc.ts`.
 
-Applies to all `mailto:` flows: speaker invitations + any future email feature.
+Applies to all email fan-outs: speaker invitation, speaker-response receipts, and any future ward email feature.
