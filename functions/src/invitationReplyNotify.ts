@@ -1,6 +1,6 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
-import { sendAndPrune } from "./fcm.js";
+import { sendDisplayPush } from "./fcm.js";
 import { rotateTokenForBishopNotification } from "./issueSpeakerSession.helpers.js";
 import { interpolate, readMessageTemplate } from "./messageTemplates.js";
 import { filterRecipients, type RecipientCandidate } from "./recipients.js";
@@ -38,14 +38,12 @@ export async function pushToBishopric(inv: ResolvedInvitation, body: string): Pr
     .filter((c): c is RecipientCandidate => c !== null);
   const recipients = filterRecipients(candidates, { now: new Date(), timezone });
   if (recipients.length === 0) return;
-  const origin = (process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value()).replace(/\/+$/, "");
-  const link = `${origin}/schedule?chat=${encodeURIComponent(inv.token)}`;
   const tokensByUid = new Map<string, readonly FcmToken[]>();
   for (const r of recipients) tokensByUid.set(r.uid, r.member.fcmTokens ?? []);
-  await sendAndPrune(inv.wardId, tokensByUid, {
-    notification: { title: `${inv.speakerName} replied`, body: truncate(body, 120) },
+  await sendDisplayPush(inv.wardId, tokensByUid, {
+    title: `${inv.speakerName} replied`,
+    body: truncate(body, 120),
     data: { wardId: inv.wardId, invitationId: inv.token, kind: "invitation-reply" },
-    webpush: { fcmOptions: { link } },
   });
 }
 
