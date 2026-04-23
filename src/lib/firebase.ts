@@ -41,8 +41,19 @@ export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
 export const functions: Functions = getFunctions(app);
 
+// Second named Firebase app for the public speaker-invitation page.
+// Firebase persists auth state per app name, so speaker sign-in here
+// never touches the bishopric Google session on the main app (and
+// vice versa). Keeps the two surfaces — main bishopric PWA and
+// speaker invite landing — from stepping on each other's currentUser.
+export const inviteApp: FirebaseApp = initializeApp(readConfig(), "invite");
+export const inviteAuth: Auth = getAuth(inviteApp);
+export const inviteDb: Firestore = getFirestore(inviteApp);
+export const inviteFunctions: Functions = getFunctions(inviteApp);
+
 if (import.meta.env.VITE_USE_EMULATORS === "true") {
   connectEmulators(auth, db, functions);
+  connectEmulators(inviteAuth, inviteDb, inviteFunctions);
 }
 
 let messagingPromise: Promise<Messaging | null> | null = null;

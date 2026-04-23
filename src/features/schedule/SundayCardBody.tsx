@@ -15,13 +15,7 @@ export function SundayCardBody({ speakers, date, onAddSpeaker }: Props) {
       {hasSpeakers ? (
         <ul className="list-none m-0 p-0 mb-2">
           {speakers.map((s, idx) => (
-            <SpeakerRow
-              key={s.id}
-              number={idx + 1}
-              speaker={s.data}
-              speakerId={s.id}
-              date={date}
-            />
+            <SpeakerRow key={s.id} number={idx + 1} speaker={s.data} speakerId={s.id} date={date} />
           ))}
         </ul>
       ) : (

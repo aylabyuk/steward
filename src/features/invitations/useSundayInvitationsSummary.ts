@@ -39,9 +39,7 @@ export function useSundayInvitationsSummary(
         let needsApply = false;
         for (const d of snap.docs) {
           const data = d.data() as DocumentData;
-          const response = data.response as
-            | { acknowledgedAt?: unknown }
-            | undefined;
+          const response = data.response as { acknowledgedAt?: unknown } | undefined;
           if (response && !response.acknowledgedAt) {
             needsApply = true;
             break;

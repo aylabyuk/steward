@@ -11,7 +11,7 @@ import { useTwilioChat } from "./twilioClientProvider";
 
 interface Props {
   wardId: string;
-  token: string;
+  invitationId: string;
   invitation: SpeakerInvitation;
 }
 
@@ -20,7 +20,11 @@ interface Props {
  *  client on mount. Above the thread, a Response strip surfaces the
  *  speaker's Yes/No reply (when they've submitted one) with an
  *  Apply button that writes speaker.status + stamps acknowledgement. */
-export function BishopInvitationChat({ wardId, token, invitation }: Props): React.ReactElement {
+export function BishopInvitationChat({
+  wardId,
+  invitationId,
+  invitation,
+}: Props): React.ReactElement {
   const user = useAuthStore((s) => s.user);
   const members = useWardMembers();
   const twilio = useTwilioChat();
@@ -48,7 +52,7 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
     const speakerInfo: AuthorInfo = { displayName: invitation.speakerName, role: "speaker" };
     if (invitation.speakerEmail) speakerInfo.email = invitation.speakerEmail;
     if (invitation.response?.actorEmail) speakerInfo.email = invitation.response.actorEmail;
-    map.set(`speaker:${token}`, speakerInfo);
+    map.set(`speaker:${invitationId}`, speakerInfo);
     if (user?.uid) {
       const existing = map.get(`uid:${user.uid}`);
       const info: AuthorInfo = {
@@ -67,7 +71,7 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
     return map;
   }, [
     members.data,
-    token,
+    invitationId,
     invitation.speakerName,
     invitation.speakerEmail,
     invitation.response?.actorEmail,
@@ -92,7 +96,7 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
     setApplying(true);
     setApplyError(null);
     try {
-      await applyResponseToSpeaker({ wardId, token, bishopUid: user.uid });
+      await applyResponseToSpeaker({ wardId, invitationId, bishopUid: user.uid });
     } catch (err) {
       setApplyError((err as Error).message);
     } finally {
@@ -136,4 +140,3 @@ export function BishopInvitationChat({ wardId, token, invitation }: Props): Reac
     </section>
   );
 }
-

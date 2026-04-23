@@ -5,10 +5,12 @@ import { addChatParticipant, createConversation } from "./twilio/conversations.j
 import {
   addBishopricParticipants,
   assertActiveMember,
+  buildInviteUrl,
   cleanupPriorConversations,
   tryEmail,
   trySms,
 } from "./sendSpeakerInvitation.helpers.js";
+import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
 import type {
   DeliveryEntry,
   SendSpeakerInvitationRequest,
@@ -49,6 +51,15 @@ export const sendSpeakerInvitation = onCall(
     // speaker's UI can label message bubbles with real names.
     const bishopricParticipants = await addBishopricParticipants(input.wardId, conversationSid);
 
+    // Fresh capability token: plaintext goes in the URL exactly once,
+    // Firestore keeps only the SHA-256. issueSpeakerSession verifies
+    // presented tokens against this hash + rotates it on rate-limited
+    // self-healing. `tokenExpiresAt` mirrors `expiresAt` on issue;
+    // rotation doesn't extend it (a past-date invitation is dead).
+    const plaintextToken = generateInvitationToken();
+    const tokenHash = hashInvitationToken(plaintextToken);
+    const expiresAt = new Date(input.expiresAtMillis);
+
     const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
       speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
       assignedDate: input.assignedDate,
@@ -61,18 +72,22 @@ export const sendSpeakerInvitation = onCall(
       footerMarkdown: input.footerMarkdown,
       speakerEmail: input.speakerEmail,
       speakerPhone: input.speakerPhone,
-      expiresAt: new Date(input.expiresAtMillis),
+      expiresAt,
+      tokenHash,
+      tokenStatus: "active" as const,
+      tokenExpiresAt: expiresAt,
+      tokenRotationsByDay: {},
       conversationSid,
       deliveryRecord: [],
       bishopricParticipants,
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    // Speaker's Twilio identity = `speaker:{invitationToken}`. Same
-    // identity the JWT minted by issueTwilioToken carries, so the URL
-    // token alone is enough for the speaker to join as a chat
-    // participant. displayName attribute drives the bubble label in
-    // the bishopric's chat UI.
+    // Speaker's Twilio identity = `speaker:{invitationId}` (the
+    // Firestore doc ID, not the capability token). Stays stable
+    // across token rotations so the conversation history follows the
+    // same identity. issueSpeakerSession mints a Firebase custom
+    // token + Twilio JWT carrying this same identity.
     await addChatParticipant(conversationSid, `speaker:${docRef.id}`, {
       displayName: input.speakerName,
       role: "speaker",
@@ -84,7 +99,7 @@ export const sendSpeakerInvitation = onCall(
       inviterName: input.inviterName,
       assignedDate: input.assignedDate,
       wardName: input.wardName,
-      inviteUrl: `${origin}/invite/speaker/${input.wardId}/${docRef.id}`,
+      inviteUrl: buildInviteUrl(origin, input.wardId, docRef.id, plaintextToken),
     };
 
     const deliveryRecord: DeliveryEntry[] = [];

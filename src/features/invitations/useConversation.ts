@@ -29,9 +29,9 @@ export interface AuthorInfo {
 }
 
 /** Map keyed by participant identity (e.g. `uid:abc123`,
- *  `speaker:{token}`). Used by the thread to render bubble labels +
- *  avatar initials without knowing individual participants at the
- *  call site. */
+ *  `speaker:{invitationId}`). Used by the thread to render bubble
+ *  labels + avatar initials without knowing individual participants
+ *  at the call site. */
 export type AuthorMap = Map<string, AuthorInfo>;
 
 interface ConversationState {

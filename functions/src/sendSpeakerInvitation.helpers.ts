@@ -115,10 +115,7 @@ export async function tryEmail(
   }
 }
 
-export async function trySms(
-  speakerPhone: string,
-  emailArgs: EmailArgs,
-): Promise<DeliveryEntry> {
+export async function trySms(speakerPhone: string, emailArgs: EmailArgs): Promise<DeliveryEntry> {
   try {
     const sid = await sendSmsDirect({ to: speakerPhone, body: buildSmsBody(emailArgs) });
     return { channel: "sms", status: "sent", providerId: sid, at: new Date() };
@@ -126,4 +123,42 @@ export async function trySms(
     logger.error("initial SMS send failed", { err: (err as Error).message });
     return { channel: "sms", status: "failed", error: (err as Error).message, at: new Date() };
   }
+}
+
+/** Build a speaker invite URL from its three parts. The `:invitationId`
+ *  path segment is the stable Firestore doc ID; `:token` is the
+ *  rotating capability value. Keeping them separate lets the landing
+ *  page do a direct public read of the letter by doc ID before
+ *  presenting the token to issueSpeakerSession. */
+export function buildInviteUrl(
+  origin: string,
+  wardId: string,
+  invitationId: string,
+  token: string,
+): string {
+  return `${origin}/invite/speaker/${wardId}/${invitationId}/${token}`;
+}
+
+/** Send the invitation letter via SMS (Twilio). Used both by the
+ *  initial sendSpeakerInvitation flow and by issueSpeakerSession's
+ *  rotation path when a consumed/expired token is presented. */
+export async function sendInvitationSms(args: {
+  speakerPhone: string;
+  inviterName: string;
+  wardName: string;
+  assignedDate: string;
+  speakerName: string;
+  inviteUrl: string;
+}): Promise<{ providerId: string }> {
+  const sid = await sendSmsDirect({
+    to: args.speakerPhone,
+    body: buildSmsBody({
+      speakerName: args.speakerName,
+      inviterName: args.inviterName,
+      assignedDate: args.assignedDate,
+      wardName: args.wardName,
+      inviteUrl: args.inviteUrl,
+    }),
+  });
+  return { providerId: sid };
 }

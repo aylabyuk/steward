@@ -1,22 +1,18 @@
-import { useEffect, useMemo } from "react";
-import { useAuthStore } from "@/stores/authStore";
+import { useEffect, useMemo, useState } from "react";
+import { onAuthStateChanged, type User } from "firebase/auth";
+import { inviteAuth } from "@/lib/firebase";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
-import { PhoneAuthDialog } from "./PhoneAuthDialog";
 import { QuickActionButtons } from "./QuickActionButtons";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
-import { useSpeakerAuthGate } from "./useSpeakerAuthGate";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
 
 interface Props {
   wardId: string;
-  token: string;
+  invitationId: string;
   conversationSid: string;
   speakerName: string;
-  /** Pre-fills the phone-auth dialog input + matched against the
-   *  invitation's speakerPhone server-side. */
-  speakerPhone?: string | undefined;
   bishopricParticipants: readonly {
     uid: string;
     displayName: string;
@@ -26,19 +22,23 @@ interface Props {
   hasResponse: boolean;
 }
 
-/** Speaker-side chat pane. Phone-auth gates every write: taps on
- *  Yes / No / Send pop <PhoneAuthDialog>; once the speaker verifies
- *  their phone, the queued action resumes and Twilio connects with
- *  a phone-scoped JWT. */
+/** Speaker-side chat pane. By the time this renders the parent
+ *  SessionGate has already exchanged the capability token for a
+ *  Firebase custom-token session on the isolated `inviteAuth`, so
+ *  every write here is authorized; no modal gate needed. */
 export function SpeakerInvitationChat(props: Props): React.ReactElement {
-  const user = useAuthStore((s) => s.user);
+  const [user, setUser] = useState<User | null>(inviteAuth.currentUser);
   const twilio = useTwilioChat();
   const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
-  const gate = useSpeakerAuthGate({ requestAuth: () => gate.openDialog() });
+
+  useEffect(() => onAuthStateChanged(inviteAuth, setUser), []);
 
   const resolvedAuthors: AuthorMap = useMemo(() => {
     const map = new Map<string, AuthorInfo>();
-    map.set(`speaker:${props.token}`, { displayName: props.speakerName, role: "speaker" });
+    map.set(`speaker:${props.invitationId}`, {
+      displayName: props.speakerName,
+      role: "speaker",
+    });
     for (const m of props.bishopricParticipants) {
       const info: AuthorInfo = { displayName: m.displayName, role: m.role };
       if (m.email) info.email = m.email;
@@ -51,7 +51,6 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
       };
       if (existing?.role) info.role = existing.role;
       if (user.photoURL) info.photoURL = user.photoURL;
-      if (user.phoneNumber) info.email = user.phoneNumber;
       map.set(twilio.identity, info);
     }
     for (const [id, info] of authors) {
@@ -60,7 +59,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     }
     return map;
   }, [
-    props.token,
+    props.invitationId,
     props.speakerName,
     props.bishopricParticipants,
     twilio.identity,
@@ -68,45 +67,26 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     authors,
   ]);
 
-  useEffect(() => {
-    if (twilio.status !== "ready" || !conversation || !user?.phoneNumber) return;
-    const identity = `speaker:${props.token}`;
-    (async () => {
-      try {
-        const p = await conversation.getParticipantByIdentity(identity);
-        if (!p) return;
-        const existing = (p.attributes as Record<string, unknown> | null) ?? {};
-        await p.updateAttributes({
-          ...existing,
-          displayName: props.speakerName,
-          role: "speaker",
-          email: user.phoneNumber,
-        });
-      } catch {
-        /* Non-fatal — fallback chain covers this. */
-      }
-    })();
-  }, [twilio.status, conversation, user, props.token, props.speakerName]);
-
   async function ensureReady(): Promise<boolean> {
-    const ok = await gate.ensureAuthed();
-    if (!ok) return false;
     if (twilio.status === "idle" || twilio.status === "error") {
-      await twilio.connect({ wardId: props.wardId, invitationToken: props.token });
+      await twilio.connect({
+        wardId: props.wardId,
+        invitationId: props.invitationId,
+        useInviteApp: true,
+      });
     }
     return true;
   }
 
   async function submitResponse(answer: "yes" | "no", reason?: string): Promise<void> {
-    const current = useAuthStore.getState().user;
-    if (!current?.phoneNumber) throw new Error("Phone not verified.");
+    const current = inviteAuth.currentUser;
+    if (!current) throw new Error("Session lost. Reload the page.");
     await writeSpeakerResponse({
       wardId: props.wardId,
-      token: props.token,
+      invitationId: props.invitationId,
       answer,
       ...(reason ? { reason } : {}),
       actorUid: current.uid,
-      actorPhone: current.phoneNumber,
     });
   }
 
@@ -118,13 +98,6 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         </div>
         <p className="font-serif text-[12.5px] text-walnut-2 mt-0.5">
           This is a group conversation — the bishop, counselors, and clerks can all see and reply.
-          Verify your phone on first reply; the number you confirm must match the one this
-          invitation was sent to.
-          {user?.phoneNumber && (
-            <span className="ml-2">
-              Verified as <strong>{user.phoneNumber}</strong>
-            </span>
-          )}
         </p>
       </header>
 
@@ -147,13 +120,6 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         conversation={conversation}
         ensureReady={ensureReady}
         placeholder="Reply to the bishopric…"
-      />
-
-      <PhoneAuthDialog
-        open={gate.dialogOpen}
-        defaultPhone={props.speakerPhone}
-        onClose={gate.closeDialog}
-        onVerified={gate.handleVerified}
       />
     </section>
   );

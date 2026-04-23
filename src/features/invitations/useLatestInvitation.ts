@@ -7,7 +7,7 @@ export interface LatestInvitationState {
   loading: boolean;
   /** Most-recently-sent invitation for this speaker on this date, or
    *  null when none has been sent yet. */
-  invitation: (SpeakerInvitation & { token: string }) | null;
+  invitation: (SpeakerInvitation & { invitationId: string }) | null;
 }
 
 /** Live query for the most recent `speakerInvitations` doc pointing
@@ -42,7 +42,10 @@ export function useLatestInvitation(
       (snap) => {
         const candidates = snap.docs
           .map((d) => ({ id: d.id, data: d.data() as DocumentData }))
-          .filter((d) => (d.data.speakerRef as { speakerId: string } | undefined)?.speakerId === speakerId);
+          .filter(
+            (d) =>
+              (d.data.speakerRef as { speakerId: string } | undefined)?.speakerId === speakerId,
+          );
         if (candidates.length === 0) {
           setState({ loading: false, invitation: null });
           return;
@@ -54,7 +57,7 @@ export function useLatestInvitation(
           setState({ loading: false, invitation: null });
           return;
         }
-        setState({ loading: false, invitation: { ...parsed.data, token: chosen.id } });
+        setState({ loading: false, invitation: { ...parsed.data, invitationId: chosen.id } });
       },
       (err) => {
         console.error("useLatestInvitation snapshot error", err);
