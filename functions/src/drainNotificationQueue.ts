@@ -1,7 +1,7 @@
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { sendAndPrune } from "./fcm.js";
+import { sendDisplayPush } from "./fcm.js";
 import { filterRecipients, type RecipientCandidate } from "./recipients.js";
 import { timezoneFor } from "./meetingChange.js";
 import type { FcmToken, MemberDoc, WardDoc } from "./types.js";
@@ -61,11 +61,9 @@ async function dispatchOne(db: FirebaseFirestore.Firestore, entry: QueueEntry): 
     tokensByUid.set(r.uid, r.member.fcmTokens ?? []);
   }
 
-  const outcome = await sendAndPrune(entry.wardId, tokensByUid, {
-    notification: {
-      title: `Sacrament program — ${entry.date}`,
-      body: entry.description,
-    },
+  const outcome = await sendDisplayPush(entry.wardId, tokensByUid, {
+    title: `Sacrament program — ${entry.date}`,
+    body: entry.description,
     data: { wardId: entry.wardId, date: entry.date, kind: "meeting-change" },
   });
   logger.info("dispatched meeting-change notification", {

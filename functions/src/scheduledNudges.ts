@@ -1,7 +1,7 @@
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { sendAndPrune } from "./fcm.js";
+import { sendDisplayPush } from "./fcm.js";
 import type { MeetingDocLite } from "./meetingChange.js";
 import { currentSlot, type NudgeSchedule, slotKey, upcomingSundayIso } from "./nudgeSlot.js";
 import { computeNudgeTarget, type NudgeMember, type NudgeTarget } from "./nudgeTarget.js";
@@ -110,8 +110,9 @@ async function deliverNudge(
   if (recipients.length === 0) return;
   const tokensByUid = new Map<string, readonly FcmToken[]>();
   for (const r of recipients) tokensByUid.set(r.uid, r.member.fcmTokens ?? []);
-  const outcome = await sendAndPrune(wardId, tokensByUid, {
-    notification: { title: target.title, body: target.body },
+  const outcome = await sendDisplayPush(wardId, tokensByUid, {
+    title: target.title,
+    body: target.body,
     data: { wardId, kind: "nudge", severity: target.severity },
   });
   logger.info("nudge dispatched", {

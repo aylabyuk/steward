@@ -2,6 +2,36 @@ import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging, type MulticastMessage } from "firebase-admin/messaging";
 import type { FcmToken } from "./types.js";
 
+/** Display payload for a user-visible push. Title/body ride inside
+ *  `data` (not the top-level `notification` field) so the SW's
+ *  `onBackgroundMessage` handler is always invoked and can call
+ *  `showNotification()` itself. iOS Safari PWAs (16.4+) silently drop
+ *  pushes that aren't displayed inside the SW push event, and the
+ *  Firebase JS SDK's auto-display path (triggered by a `notification`
+ *  field) doesn't reliably satisfy that contract on iOS. Going
+ *  data-only routes every platform through the same explicit
+ *  `showNotification()` call.
+ *
+ *  `Urgency: high` keeps APNs/FCM from coalescing the push as
+ *  background priority — required when the payload has no
+ *  `notification` field. */
+export interface DisplayPush {
+  title: string;
+  body: string;
+  data: Record<string, string>;
+}
+
+export async function sendDisplayPush(
+  wardId: string,
+  tokensByUid: ReadonlyMap<string, readonly FcmToken[]>,
+  push: DisplayPush,
+): Promise<SendOutcome> {
+  return sendAndPrune(wardId, tokensByUid, {
+    data: { ...push.data, title: push.title, body: push.body },
+    webpush: { headers: { Urgency: "high" } },
+  });
+}
+
 // Token errors that indicate the device unsubscribed or the token is invalid.
 // Anything else (server error, throttling) is transient — keep the token.
 const DEAD_TOKEN_CODES = new Set<string>([
