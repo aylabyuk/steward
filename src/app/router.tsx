@@ -22,6 +22,10 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/schedule" replace /> },
       { path: "schedule", element: <ScheduleView /> },
       { path: "week/:date", element: <Week /> },
+      // Legacy /settings index is retired — anyone landing here from
+      // a bookmark or old link gets bounced back to Schedule. Specific
+      // destinations (ward/profile/templates) are reached via UserMenu.
+      { path: "settings", element: <Navigate to="/schedule" replace /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/profile", element: <ProfilePage /> },
       { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },

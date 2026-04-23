@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { WardSettings } from "@/lib/types";
-import { NonMeetingSundaysEditor } from "./NonMeetingSundaysEditor";
 import { NudgeChipRow } from "./NudgeChipRow";
 import { NumberStepper } from "./NumberStepper";
 import { timezoneSuggestions } from "./timezone";
@@ -78,6 +77,7 @@ export function WardPrefsSection({ value, onChange, canEdit }: Props): React.Rea
       <StackedRow
         label="Finalization nudges"
         sub="Email reminders sent to the bishopric until the program is approved."
+        lastRow
       >
         <NudgeChipRow
           value={value.nudgeSchedule}
@@ -87,18 +87,6 @@ export function WardPrefsSection({ value, onChange, canEdit }: Props): React.Rea
         <p className="font-serif italic text-[12.5px] text-walnut-3 mt-2">
           Pick the days and times when incomplete programs should prompt a reminder.
         </p>
-      </StackedRow>
-
-      <StackedRow
-        label="Non-meeting Sundays"
-        sub="Stake / general conference dates to skip when planning."
-        lastRow
-      >
-        <NonMeetingSundaysEditor
-          value={value.nonMeetingSundays}
-          onChange={(next) => patch("nonMeetingSundays", next)}
-          disabled={!canEdit}
-        />
       </StackedRow>
     </section>
   );

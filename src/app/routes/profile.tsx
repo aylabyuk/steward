@@ -94,8 +94,8 @@ export function ProfilePage(): React.ReactElement {
   return (
     <main className="pb-24">
       <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/settings" className="hover:text-walnut">
-          ← Settings
+        <Link to="/schedule" className="hover:text-walnut">
+          ← Schedule
         </Link>
       </nav>
       <header className="mb-6">
