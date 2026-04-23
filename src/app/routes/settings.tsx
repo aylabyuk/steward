@@ -21,9 +21,9 @@ const links: SettingsLink[] = [
     desc: "Callings, active roster, email CC defaults",
   },
   {
-    to: "/settings/notifications",
-    label: "Notifications",
-    desc: "Your push preferences and quiet hours",
+    to: "/settings/profile",
+    label: "Profile",
+    desc: "Your name, avatar, push notifications, and quiet hours",
   },
   {
     to: "/settings/templates/speakers",

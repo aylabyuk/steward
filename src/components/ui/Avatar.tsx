@@ -2,7 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { avatarPaletteFor, initialsOf } from "@/lib/initials";
 
-export type AvatarSize = "sm" | "md" | "lg";
+export type AvatarSize = "sm" | "md" | "lg" | "xl";
 
 interface User {
   uid?: string | null;
@@ -19,11 +19,12 @@ interface Props {
   className?: string;
 }
 
-const SIZE_PX: Record<AvatarSize, number> = { sm: 24, md: 32, lg: 40 };
+const SIZE_PX: Record<AvatarSize, number> = { sm: 24, md: 32, lg: 40, xl: 96 };
 const SIZE_CLS: Record<AvatarSize, string> = {
   sm: "w-6 h-6 text-[9.5px]",
   md: "w-8 h-8 text-[11px]",
   lg: "w-10 h-10 text-[13px]",
+  xl: "w-24 h-24 text-[32px]",
 };
 
 /** Round avatar for a user. Renders, in priority order:

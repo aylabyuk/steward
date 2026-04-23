@@ -89,8 +89,16 @@ export function UserMenu() {
             </div>
           </div>
 
-          {/* Items — Settings index hosts links to ward / members /
-              notifications, so we only surface one entry here. */}
+          {/* Items — Profile is the personal-settings surface (name,
+              avatar, notifications); Settings is the ward-level
+              surface (roster, templates, etc.). */}
+          <Link
+            to="/settings/profile"
+            onClick={() => setOpen(false)}
+            className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
+          >
+            Profile
+          </Link>
           <Link
             to="/settings"
             onClick={() => setOpen(false)}
