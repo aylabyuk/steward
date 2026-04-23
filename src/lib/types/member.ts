@@ -26,6 +26,10 @@ export function callingToRole(calling: Calling): Role {
 export const fcmTokenSchema = z.object({
   token: z.string().min(1),
   platform: z.enum(["web", "ios", "android"]).default("web"),
+  /** Friendly browser+OS label derived at subscribe time (e.g.
+   *  "Chrome · macOS"). Optional so legacy entries without a name
+   *  still validate; UI renders the platform label as a fallback. */
+  name: z.string().optional(),
   updatedAt: z.any(),
 });
 export type FcmToken = z.infer<typeof fcmTokenSchema>;
