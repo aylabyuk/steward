@@ -98,11 +98,11 @@ export function UserMenu() {
 
           <div className="border-t border-border" />
 
-          <MenuLink to="/settings/templates/speaker-invitation" onClick={close} newTab>
-            Speaker invitation template
+          <MenuLink to="/settings/templates" onClick={close}>
+            Templates
           </MenuLink>
-          <MenuLink to="/settings/templates/ward-invites" onClick={close}>
-            Ward invitation message
+          <MenuLink to="/settings/templates/speaker-letter" onClick={close} newTab>
+            Speaker invitation letter
           </MenuLink>
 
           <div className="border-t border-border" />

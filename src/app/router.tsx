@@ -9,8 +9,8 @@ import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { ProfilePage } from "./routes/profile";
-import { SpeakerInvitationTemplatePage } from "./routes/templates-speaker-invitation";
-import { WardInviteTemplatePage } from "./routes/templates-ward-invites";
+import { TemplatesPage } from "./routes/templates";
+import { SpeakerLetterTemplatePage } from "./routes/templates-speaker-letter";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
 
@@ -28,7 +28,7 @@ export const router = createBrowserRouter([
       { path: "settings", element: <Navigate to="/schedule" replace /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/profile", element: <ProfilePage /> },
-      { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
+      { path: "settings/templates", element: <TemplatesPage /> },
       {
         path: "ward/:wardId/invitations/:invitationId/view",
         element: <InvitationViewPage />,
@@ -46,8 +46,8 @@ export const router = createBrowserRouter([
       { path: "/print/:date/congregation", element: <CongregationProgram /> },
       { path: "/print/:date/conducting", element: <ConductingProgram /> },
       {
-        path: "/settings/templates/speaker-invitation",
-        element: <SpeakerInvitationTemplatePage />,
+        path: "/settings/templates/speaker-letter",
+        element: <SpeakerLetterTemplatePage />,
       },
       {
         path: "/week/:date/speaker/:speakerId/prepare",
