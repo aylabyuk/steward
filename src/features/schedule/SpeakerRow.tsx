@@ -50,7 +50,7 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
           <div className="font-serif italic text-sm text-walnut-2 truncate">{speaker.topic}</div>
         )}
         {provenance && (
-          <div className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-walnut-3 truncate mt-0.5">
+          <div className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-walnut-3 mt-0.5">
             {provenance}
           </div>
         )}
