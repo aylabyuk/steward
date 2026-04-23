@@ -123,7 +123,6 @@ export function SpeakerEmailSection(): React.ReactElement {
         eyebrow="Email"
         title="Speaker invitation email"
         description={DESCRIPTION}
-        variables={VARIABLES}
         preview={previewNode}
         canEdit={canEdit}
         onRequestEdit={openEditor}
@@ -133,6 +132,8 @@ export function SpeakerEmailSection(): React.ReactElement {
         open={editorOpen}
         eyebrow="Email"
         title="Speaker invitation email"
+        description={DESCRIPTION}
+        variables={VARIABLES}
         editorLabel="Email body"
         canEdit={canEdit}
         saving={saving}

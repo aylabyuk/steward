@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { ChevronDown, PencilIcon } from "./accordionIcons";
-import { TemplateVariableList, type TemplateVariableDoc } from "./TemplateVariableList";
 
 interface Props {
   sectionId: string;
   eyebrow: string;
   title: string;
   description: React.ReactNode;
-  variables: readonly TemplateVariableDoc[];
   preview: React.ReactElement;
   canEdit: boolean;
   onRequestEdit: () => void;
@@ -15,15 +13,15 @@ interface Props {
 }
 
 /** Mobile-only row for a template section: collapsed header with a
- *  pencil button; expanding reveals the description, variable list,
- *  and preview pane. Editing happens in a separate modal (the parent
- *  owns that state — the pencil just notifies via `onRequestEdit`). */
+ *  pencil button; expanding reveals a one-line description and the
+ *  preview pane. Variables + editor live in the modal behind the
+ *  pencil (the parent owns that state — the pencil just notifies via
+ *  `onRequestEdit`). */
 export function MobileTemplateAccordion({
   sectionId,
   eyebrow,
   title,
   description,
-  variables,
   preview,
   canEdit,
   onRequestEdit,
@@ -70,8 +68,7 @@ export function MobileTemplateAccordion({
       {open && (
         <div className="px-4 pb-4 pt-1 border-t border-border">
           <div className="font-serif italic text-[13px] text-walnut-2 my-3">{description}</div>
-          <TemplateVariableList variables={variables} />
-          <div className="mt-3">{preview}</div>
+          {preview}
         </div>
       )}
     </section>
