@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
-import { SpeakerLetterTemplateEditorColumn } from "./SpeakerLetterTemplateEditorColumn";
-import { SpeakerLetterTemplateHeader } from "./SpeakerLetterTemplateHeader";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
   DEFAULT_SPEAKER_LETTER_FOOTER,
@@ -15,6 +13,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
+import { SpeakerLetterTemplateEditorColumn } from "./SpeakerLetterTemplateEditorColumn";
 
 const PREVIEW_VARS = {
   speakerName: "Sebastian Tan",
@@ -24,7 +23,11 @@ const PREVIEW_VARS = {
   inviterName: "Bishop Paul",
 };
 
-export function SpeakerLetterTemplatePage() {
+/** Letter tab of the Speaker-invitation template page. Full-viewport
+ *  editor + live 8.5×11 preview. Hosted inside the combined template
+ *  route under appShell=false so the preview has the viewport it
+ *  needs. */
+export function SpeakerLetterTab(): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const ward = useWardSettings();
   const me = useCurrentMember();
@@ -86,7 +89,7 @@ export function SpeakerLetterTemplatePage() {
   };
 
   return (
-    <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
+    <>
       <PrintOnlyLetter
         wardName={wardName}
         assignedDate={PREVIEW_VARS.date}
@@ -94,15 +97,6 @@ export function SpeakerLetterTemplatePage() {
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
       />
-      <SpeakerLetterTemplateHeader
-        canEdit={canEdit}
-        busy={saving || !seeded}
-        saving={saving}
-        onSave={() => void handleSave()}
-        onReset={resetToDefaults}
-        onClose={() => window.close()}
-      />
-
       <div className="flex-1 min-h-0 lg:overflow-hidden px-4 sm:px-8 pt-5 pb-4">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
           <SpeakerLetterTemplateEditorColumn
@@ -131,7 +125,7 @@ export function SpeakerLetterTemplatePage() {
                 today={PREVIEW_VARS.today}
                 bodyMarkdown={renderedBody}
                 footerMarkdown={renderedFooter}
-                height="calc(100dvh - 10rem)"
+                height="calc(100dvh - 14rem)"
               />
               <div className="absolute top-3 right-3 z-10">
                 <WardTemplateToolbar {...toolbarProps} />
@@ -139,7 +133,10 @@ export function SpeakerLetterTemplatePage() {
             </div>
           </aside>
         </div>
+        <div className="lg:hidden mt-4 flex justify-center">
+          <WardTemplateToolbar {...toolbarProps} />
+        </div>
       </div>
-    </main>
+    </>
   );
 }

@@ -5,19 +5,25 @@ import { cn } from "@/lib/cn";
 interface RailItem {
   id: string;
   label: string;
+  /** Optional numeric badge rendered at the end of the row — used on
+   *  the Ward settings rail for the member count. */
+  count?: number;
 }
 
 interface Props {
   items: readonly RailItem[];
   /** "Elsewhere" links below the on-page jump list. */
   elsewhere?: readonly { to: string; label: string }[];
+  /** aria-label for the nav element — defaults to a generic value. */
+  label?: string;
 }
 
 /** Sticky right-rail with scroll-spy. Hidden below sm:. Active item
  *  is whichever section has its top above the scroll threshold —
  *  matches the prototype's 140px cutoff so the rail flips as a
- *  section's title crosses the sticky topbar. */
-export function ProfileRail({ items, elsewhere }: Props): React.ReactElement {
+ *  section's title crosses the sticky topbar. Shared between the
+ *  Profile and Ward-settings pages. */
+export function PageRail({ items, elsewhere, label = "Page sections" }: Props): React.ReactElement {
   const [active, setActive] = useState<string>(items[0]?.id ?? "");
 
   useEffect(() => {
@@ -38,7 +44,7 @@ export function ProfileRail({ items, elsewhere }: Props): React.ReactElement {
 
   return (
     <nav
-      aria-label="Profile sections"
+      aria-label={label}
       className="hidden sm:flex sticky top-[5.5rem] flex-col gap-0.5 self-start"
     >
       <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep px-2.5 pt-1 pb-2">
@@ -55,7 +61,10 @@ export function ProfileRail({ items, elsewhere }: Props): React.ReactElement {
               : "border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut",
           )}
         >
-          {s.label}
+          <span className="flex-1">{s.label}</span>
+          {typeof s.count === "number" && (
+            <span className="font-mono text-[10px] tracking-[0.08em] text-walnut-3">{s.count}</span>
+          )}
         </a>
       ))}
       {elsewhere && elsewhere.length > 0 && (
