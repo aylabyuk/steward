@@ -36,9 +36,19 @@ export function ConversationGroup({
       role="group"
       aria-label={groupLabel}
     >
+      {/* Name eyebrow sits above the avatar row, indented past the
+          avatar slot so it lines up with the bubbles. Kept outside
+          the flex row so items-center below can center the avatar
+          against the bubble stack without the eyebrow skewing the
+          computation. */}
+      {!group.mine && (
+        <span className="ml-10 font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
+          {group.info.displayName}
+        </span>
+      )}
       <div
         className={cn(
-          "flex items-end gap-2 max-w-[85%]",
+          "flex items-center gap-2 max-w-[85%]",
           group.mine ? "flex-row-reverse" : "flex-row",
         )}
       >
@@ -46,11 +56,6 @@ export function ConversationGroup({
         <div
           className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}
         >
-          {!group.mine && (
-            <span className="font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
-              {group.info.displayName}
-            </span>
-          )}
           {group.messages.map((m, i) => (
             <ConversationBubble
               key={m.sid}
@@ -63,8 +68,6 @@ export function ConversationGroup({
           ))}
         </div>
       </div>
-      {/* Timestamp + read receipt sit on their own row so the avatar
-          above aligns with the last bubble, not with this metadata. */}
       {timestamp && (
         <span
           className={cn("font-mono text-[9.5px] text-walnut-3 mt-0.5", !group.mine && "ml-10")}

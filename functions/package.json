@@ -12,7 +12,8 @@
     "build:watch": "tsc --watch --preserveWatchOutput",
     "lint": "oxlint",
     "test": "vitest run",
-    "deploy": "firebase deploy --only functions"
+    "deploy": "firebase deploy --only functions",
+    "configure-conversation-roles": "tsx scripts/configure-conversation-roles.ts"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
@@ -21,6 +22,7 @@
     "twilio": "^6.0.0"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vitest": "^4.1.4"
   }
