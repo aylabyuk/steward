@@ -11,18 +11,18 @@ interface Props {
 
 type Status =
   | { kind: "idle" }
-  | { kind: "working"; verb: "copy" | "resend" }
-  | { kind: "copied" }
+  | { kind: "working" }
   | { kind: "sent"; channels: readonly ("email" | "sms")[] }
   | { kind: "error"; message: string };
 
 const FLASH_MS = 2500;
 
-/** Overflow menu for the bishop viewing an already-sent invitation:
- *  rotate + copy the URL, or rotate + re-deliver via the channels
- *  the invitation originally used. Both actions invalidate any prior
- *  URL the speaker has — the server-side self-heal path handles any
- *  concurrent visit to an older link. */
+/** Overflow menu for the bishop viewing an already-sent invitation.
+ *  Rotates + redelivers the URL via the invitation's original
+ *  channels. The plaintext URL never returns to the bishop's client —
+ *  it only ever reaches the speaker's phone/email. Any prior URL the
+ *  speaker has is invalidated (the server-side self-heal path handles
+ *  concurrent visits to an older link). */
 export function InvitationLinkActions({
   wardId,
   invitationId,
@@ -32,30 +32,14 @@ export function InvitationLinkActions({
   const deliverable = availableChannels(invitation);
 
   useEffect(() => {
-    if (status.kind !== "copied" && status.kind !== "sent") return;
+    if (status.kind !== "sent") return;
     const t = setTimeout(() => setStatus({ kind: "idle" }), FLASH_MS);
     return () => clearTimeout(t);
   }, [status]);
 
-  async function copy() {
-    setStatus({ kind: "working", verb: "copy" });
-    try {
-      const res = await callRotateInvitationLink({
-        mode: "rotate",
-        wardId,
-        invitationId,
-        channels: [],
-      });
-      await navigator.clipboard.writeText(res.inviteUrl);
-      setStatus({ kind: "copied" });
-    } catch (err) {
-      setStatus({ kind: "error", message: (err as Error).message });
-    }
-  }
-
   async function resend() {
     if (deliverable.length === 0) return;
-    setStatus({ kind: "working", verb: "resend" });
+    setStatus({ kind: "working" });
     try {
       const res = await callRotateInvitationLink({
         mode: "rotate",
@@ -74,7 +58,7 @@ export function InvitationLinkActions({
     }
   }
 
-  const items: OverflowMenuItem[] = [{ label: "Copy link", onSelect: () => void copy() }];
+  const items: OverflowMenuItem[] = [];
   if (deliverable.length > 0) {
     items.push({
       label: `Resend via ${formatChannels(deliverable)}`,
@@ -110,8 +94,7 @@ function availableChannels(invitation: SpeakerInvitation): readonly ("email" | "
 }
 
 function statusLabel(status: Status): string {
-  if (status.kind === "working") return status.verb === "copy" ? "Copying…" : "Sending…";
-  if (status.kind === "copied") return "Link copied";
+  if (status.kind === "working") return "Sending…";
   if (status.kind === "sent") return `Sent via ${formatChannels(status.channels)}`;
   return status.message;
 }

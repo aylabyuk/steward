@@ -120,6 +120,16 @@ export const speakerLetterOverrideSchema = z.object({
 });
 export type SpeakerLetterOverride = z.infer<typeof speakerLetterOverrideSchema>;
 
+// Provenance for the last `status` change on a speaker row. "speaker-response"
+// means it was mirrored from a speaker's Yes/No reply on the invite page (via
+// `applyResponseToSpeaker`); "manual" means a bishopric member set it directly
+// in the schedule or speaker form. Surfaced next to the status badge so the
+// team audits itself — the invite flow isn't a security boundary, just a
+// workflow, and the bishopric has ultimate authority on status either way.
+export const STATUS_SOURCES = ["speaker-response", "manual"] as const;
+export const statusSourceSchema = z.enum(STATUS_SOURCES);
+export type StatusSource = z.infer<typeof statusSourceSchema>;
+
 // Tolerate legacy speaker docs that stored a status outside the current
 // enum (e.g. "draft", "sent") — fall back to "planned" rather than failing
 // the whole list parse.
@@ -135,6 +145,9 @@ export const speakerSchema = z.object({
   role: speakerRoleSchema.catch("Member"),
   order: z.number().int().min(0).optional(),
   letterOverride: speakerLetterOverrideSchema.optional(),
+  statusSource: statusSourceSchema.optional(),
+  statusSetBy: z.string().optional(),
+  statusSetAt: z.any().optional(),
   createdAt: z.any().optional(),
   updatedAt: z.any().optional(),
 });

@@ -30,8 +30,9 @@ export interface FreshInvitationRequest {
 
 /** Rotate-link path: generates a fresh capability token on an
  *  existing invitation, preserving the conversationSid + chat
- *  history. `channels` may be empty — the bishop may want to copy
- *  the URL to their clipboard without triggering another SMS/email. */
+ *  history. `channels` lists the delivery channels to re-deliver on;
+ *  the plaintext URL is never returned to the caller — it only ever
+ *  reaches the speaker via SMS/email. */
 export interface RotateInvitationRequest {
   mode: "rotate";
   wardId: string;
@@ -52,10 +53,6 @@ export interface FreshInvitationResponse {
 
 export interface RotateInvitationResponse {
   mode: "rotate";
-  /** Freshly-rotated URL carrying a new capability token. Plaintext
-   *  leaves the server here exactly once; Firestore stores only the
-   *  new hash. */
-  inviteUrl: string;
   deliveryRecord: DeliveryEntry[];
 }
 
