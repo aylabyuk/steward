@@ -7,6 +7,95 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-04-23
+
+Two-way speaker conversations (#16) and a reworked speaker scheduling flow
+(#33). The invitation feature now bridges SMS and a web chat: bishops send
+from the Prepare page, speakers tap the SMS link to a tokened landing page,
+can reply with Yes/No or free-form chat. Replies flow back to the bishopric
+as FCM push; bishop replies flow to the speaker as SMS with a fresh
+resume-link that reopens the same thread with history preserved.
+
+### Added
+
+- **Two-way speaker chat** end-to-end — Twilio Conversations-backed group
+  thread that includes every active bishopric + clerk member, bubble
+  styling with initials / avatars, read-receipts, and an unread badge on
+  the Schedule's per-speaker chat icon. (#16)
+- **Speaker self-response** (Yes/No + optional reason) from the invite
+  landing page, with a bishop-side Apply action that flips speaker status
+  to confirmed / declined. (#16)
+- **Fresh resume-link in bishop-reply SMS** when the speaker's tab has
+  been closed > 2 minutes — same `conversationSid` preserves full message
+  history when the link is tapped. (#16)
+- **Heartbeat gate** (`speakerLastSeenAt` on the invitation doc, written
+  every 60s from the visible speaker tab) so redundant SMS notifications
+  are skipped while the speaker is actively viewing the chat. (#16)
+- **Two-step Assign Speakers modal** — Edit first, then Send invitations.
+  4-speaker cap per meeting, Add-speaker tile inside the grid, responsive
+  1–4 column layout on 2xl screens. (#33)
+- **Confirm dialog** before flipping a speaker's status to a non-planned
+  value (prevents accidental cancels / decline flips).
+
+### Changed
+
+- **Speaker auth rewritten** from phone-OTP to capability-token. The
+  invitation URL now carries a one-time SHA-256 hash; `issueSpeakerSession`
+  exchanges it for a Firebase custom token + Twilio JWT. Self-heals on a
+  consumed or expired link by rotating the hash and sending a fresh SMS
+  (daily cap bounds the cost exposure). (#16)
+- **Bishop-reply SMS** now identifies the bishopric as a group ("new
+  message from the bishopric about your speaking assignment") rather than
+  a single name, and includes the resume link. (#16)
+- **Chat bubble eyebrows** label senders by registered name instead of
+  email. (#16)
+- **Speaker response surface** moved from a separate page into the Assign
+  modal (#16).
+
+### Fixed
+
+- **Second bishopric member** added or activated after an invitation was
+  sent could not see the chat thread —
+  `issueSpeakerSession` now idempotently backfills the Twilio participant
+  on every chat open. (#16)
+- **Invite URLs with a trailing-slash `STEWARD_ORIGIN`** no longer
+  collapse to a 404; `buildInviteUrl` strips trailing slashes
+  defensively.
+- **Save flicker** on the Schedule's speaker grid when edits apply —
+  speakers now live on the Sunday card rather than re-mounting. (#33)
+- **Speaker + add-speaker cards** match heights per row on the Assign
+  modal. (#33)
+- **Assign modal step** locked at open time (no step-hopping mid-edit).
+  (#16)
+- **Invitation list queries** no longer require a composite Firestore
+  index. (#16)
+- **Phone-authed users** resolve to `none` in the auth gate instead of
+  sticking on "checking". (#16)
+- **Unread badge** handles the null read-horizon case without crashing.
+  (#16)
+
+### Infrastructure
+
+- **Three new Cloud Functions**: `sendSpeakerInvitation` (callable — creates
+  the invitation + Twilio Conversation + delivers email/SMS with a hashed
+  capability token), `issueSpeakerSession` (callable — exchanges the
+  capability token for a Firebase custom token + Twilio JWT; self-heals
+  consumed / expired tokens via rotation + resend), `onTwilioWebhook`
+  (HTTPS — receives Conversations events, fans out FCM to bishopric + SMS
+  to speaker). (#16)
+- **Firestore rule extension**: speakers can write `response` +
+  `speakerLastSeenAt` on their own invitation doc (claim-gated,
+  expiry-gated). (#16)
+- **Local emulator loop** for the invitation flow — `pnpm emulators` now
+  starts functions + pubsub alongside auth + firestore; `pnpm dev:functions`
+  watches TS on the functions package; `STEWARD_DEV_STUB_SMS=true` in
+  `functions/.env.local` bypasses real Twilio SMS (still uses real
+  Conversations for chat) and logs the invite URL to the emulator
+  terminal. (#16)
+- **Test coverage**: 53 functions unit tests (+14 from v0.5.0 — token
+  helpers, session helpers, SMS stub) and 21 speaker-invitation rules
+  tests (+3 for the heartbeat field).
+
 ## [0.5.0] — 2026-04-22
 
 Speaker invitations over SMS (#15). Adds a one-tap **Send SMS**
@@ -430,7 +519,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/aylabyuk/steward/releases/tag/v0.6.0
 [0.5.0]: https://github.com/aylabyuk/steward/releases/tag/v0.5.0
 [0.4.0]: https://github.com/aylabyuk/steward/releases/tag/v0.4.0
 [0.3.0]: https://github.com/aylabyuk/steward/releases/tag/v0.3.0
