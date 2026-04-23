@@ -10,8 +10,11 @@ import {
   revokeSpeakerSession,
   speakerUid,
 } from "./issueSpeakerSession.helpers.js";
-import { getFirestore } from "firebase-admin/firestore";
-import type { MemberDoc } from "./types.js";
+import {
+  loadActiveMember,
+  mintBishopricSession,
+  type BishopricSessionResponse,
+} from "./bishopricSession.js";
 
 interface Request {
   wardId: string;
@@ -31,14 +34,7 @@ type SpeakerResponse =
   | { status: "rate-limited" }
   | { status: "invalid" };
 
-interface BishopricResponse {
-  status: "ready";
-  twilioToken: string;
-  identity: string;
-  expiresInSeconds: number;
-}
-
-type Response = SpeakerResponse | BishopricResponse;
+type Response = SpeakerResponse | BishopricSessionResponse;
 
 const TOKEN_TTL_SECONDS = 3600;
 
@@ -55,8 +51,9 @@ export const issueSpeakerSession = onCall(
     const auth = request.auth;
 
     if (auth) {
-      if (await isActiveMember(wardId, auth.uid)) {
-        return mintBishopricSession(auth.uid);
+      const member = await loadActiveMember(wardId, auth.uid);
+      if (member) {
+        return mintBishopricSession(wardId, auth.uid, member, invitationId, TOKEN_TTL_SECONDS);
       }
       if (isSpeakerOfInvitation(auth, invitationId)) {
         return mintSpeakerRefresh(invitationId!);
@@ -82,12 +79,6 @@ function isSpeakerOfInvitation(
   return typeof claim === "string" && claim === invitationId;
 }
 
-function mintBishopricSession(uid: string): BishopricResponse {
-  const identity = `uid:${uid}`;
-  const twilioToken = issueChatToken({ identity, ttlSeconds: TOKEN_TTL_SECONDS });
-  return { status: "ready", twilioToken, identity, expiresInSeconds: TOKEN_TTL_SECONDS };
-}
-
 function mintSpeakerRefresh(invitationId: string): SpeakerResponse {
   const identity = `speaker:${invitationId}`;
   const twilioToken = issueChatToken({ identity, ttlSeconds: TOKEN_TTL_SECONDS });
@@ -98,12 +89,6 @@ function mintSpeakerRefresh(invitationId: string): SpeakerResponse {
     identity,
     expiresInSeconds: TOKEN_TTL_SECONDS,
   };
-}
-
-async function isActiveMember(wardId: string, uid: string): Promise<boolean> {
-  const snap = await getFirestore().doc(`wards/${wardId}/members/${uid}`).get();
-  if (!snap.exists) return false;
-  return (snap.data() as MemberDoc).active === true;
 }
 
 async function handleSpeakerTokenExchange(

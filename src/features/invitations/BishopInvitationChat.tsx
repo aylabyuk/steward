@@ -6,6 +6,7 @@ import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { ResponseStrip } from "./ResponseStrip";
 import { applyResponseToSpeaker } from "./invitationActions";
+import { callIssueSpeakerSession } from "./invitationsCallable";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
 import { useTwilioChat } from "./twilioClientProvider";
 
@@ -82,6 +83,17 @@ export function BishopInvitationChat({
   useEffect(() => {
     if (twilio.status === "idle") void twilio.connect({ wardId });
   }, [twilio, wardId]);
+
+  // Backfill bishopric participant on the Twilio conversation for
+  // this invitation. sendSpeakerInvitation snapshots the bishopric
+  // roster at send time, so a member added/activated afterward isn't
+  // a participant and can't fetch the conversation. issueSpeakerSession
+  // adds them idempotently when we pass invitationId.
+  useEffect(() => {
+    void callIssueSpeakerSession({ wardId, invitationId }).catch(() => {
+      // backfill is best-effort; failures are logged server-side
+    });
+  }, [wardId, invitationId]);
 
   // Mark-read horizon bumps whenever the bishop is actively viewing
   // the thread and new messages land. Clears the unread badge on the

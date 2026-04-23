@@ -48,6 +48,25 @@ export async function addChatParticipant(
   return p.sid;
 }
 
+/** Idempotent wrapper around addChatParticipant — swallows Twilio's
+ *  "Participant already exists" (code 50433 / HTTP 409). Used on the
+ *  backfill path when a bishopric member opens a chat for an
+ *  invitation created before they joined the ward: we unconditionally
+ *  attempt to add them and ignore the already-a-member case. */
+export async function ensureChatParticipant(
+  conversationSid: string,
+  identity: string,
+  attributes?: Parameters<typeof addChatParticipant>[2],
+): Promise<void> {
+  try {
+    await addChatParticipant(conversationSid, identity, attributes);
+  } catch (err) {
+    const e = err as { code?: number; status?: number };
+    if (e?.code === 50433 || e?.status === 409) return;
+    throw err;
+  }
+}
+
 /** Speaker-side SMS participant. Twilio bridges messages in this
  *  conversation to/from the speaker's phone automatically. Returns
  *  the participant SID; throws if Twilio rejects (bad phone format,
