@@ -54,7 +54,10 @@ export function ConversationComposer({
       <div className="flex gap-2 items-end">
         <textarea
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (conversation && e.target.value.trim()) void conversation.typing();
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -64,6 +67,7 @@ export function ConversationComposer({
           placeholder={placeholder}
           disabled={disabled || sending}
           rows={1}
+          aria-label={placeholder}
           className="flex-1 font-sans text-[13.5px] px-3 py-2 bg-chalk border border-border-strong rounded-md text-walnut placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15 resize-none disabled:bg-parchment-2"
         />
         <button
