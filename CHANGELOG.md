@@ -7,6 +7,31 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-04-23
+
+Hotfix for a regression v0.9.0 inherited from #46: eagerly rotating
+the capability token when a speaker submitted Yes/No broke the
+speaker's original SMS link. Reopening it showed "link has expired"
+because the stored hash had been overwritten by the receipt-email's
+fresh token. Real bishops testing prod hit this on the first
+end-to-end run.
+
+### Fixed
+
+- **Speaker receipt no longer rotates the capability token** (#73).
+  `onInvitationWrite` stops calling `rotateInviteUrl` in the
+  `fireSpeaker` branch; the receipt email goes out without an invite
+  URL. The speaker's SMS stays the canonical entry point — if they
+  consume it and come back, `decideTokenAction`'s pre-existing
+  rotate branch self-heals with a fresh SMS, which was the v0.8.0
+  behavior and the one that actually works.
+
+### Removed
+
+- `rotateInviteUrl` helper in `onInvitationWrite.helpers.ts` and the
+  `inviteUrl` arg on `buildSpeakerReceipt`. Dead after the revert —
+  the #46 "receipt has a working link" feature went with them.
+
 ## [0.9.0] — 2026-04-23
 
 Push-notification depth: bishopric members now get a push the moment a
@@ -820,7 +845,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/aylabyuk/steward/releases/tag/v0.9.1
 [0.9.0]: https://github.com/aylabyuk/steward/releases/tag/v0.9.0
 [0.8.0]: https://github.com/aylabyuk/steward/releases/tag/v0.8.0
 [0.7.0]: https://github.com/aylabyuk/steward/releases/tag/v0.7.0
