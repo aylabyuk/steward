@@ -6,7 +6,7 @@ import { addChatParticipant, deleteConversation } from "./twilio/conversations.j
 import { sendSmsDirect } from "./twilio/messaging.js";
 import { buildEmailHtml, buildEmailText, buildSmsBody } from "./invitationEmailBody.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
-import type { DeliveryEntry, SendSpeakerInvitationRequest } from "./sendSpeakerInvitation.types.js";
+import type { DeliveryEntry } from "./sendSpeakerInvitation.types.js";
 import type { MemberDoc } from "./types.js";
 
 export async function assertActiveMember(wardId: string, uid: string): Promise<void> {
@@ -93,16 +93,26 @@ export async function cleanupPriorConversations(
 
 type EmailArgs = Parameters<typeof buildEmailText>[0];
 
+export interface EmailDeliveryParams {
+  speakerEmail: string;
+  inviterName: string;
+  assignedDate: string;
+  /** Reply-To used so a speaker replying to the email lands in the
+   *  bishop's inbox naturally. On rotate-mode we don't have it on the
+   *  invitation doc, so callers fall back to the speaker's own email. */
+  replyToEmail: string;
+}
+
 export async function tryEmail(
-  input: SendSpeakerInvitationRequest,
+  params: EmailDeliveryParams,
   args: EmailArgs,
 ): Promise<DeliveryEntry> {
   try {
     const messageId = await sendEmail({
-      to: input.speakerEmail!,
-      fromDisplayName: `${input.inviterName} (via Steward)`,
-      replyTo: input.bishopReplyToEmail,
-      subject: `Speaking invitation — ${input.assignedDate}`,
+      to: params.speakerEmail,
+      fromDisplayName: `${params.inviterName} (via Steward)`,
+      replyTo: params.replyToEmail,
+      subject: `Speaking invitation — ${params.assignedDate}`,
       text: buildEmailText(args),
       html: buildEmailHtml(args),
     });
@@ -110,7 +120,7 @@ export async function tryEmail(
     if (messageId) entry.providerId = messageId;
     return entry;
   } catch (err) {
-    logger.error("initial email send failed", { err: (err as Error).message });
+    logger.error("email send failed", { err: (err as Error).message });
     return { channel: "email", status: "failed", error: (err as Error).message, at: new Date() };
   }
 }
