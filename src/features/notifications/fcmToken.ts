@@ -8,12 +8,14 @@ import {
 } from "firebase/firestore";
 import { deleteToken, getToken } from "firebase/messaging";
 import { db, getMessagingIfSupported } from "@/lib/firebase";
+import { deriveDeviceName } from "./deriveDeviceName";
 
 const SW_PATH = "/firebase-messaging-sw.js";
 
 export interface SubscribeResult {
   token: string;
   platform: "web" | "ios" | "android";
+  name: string;
 }
 
 function detectPlatform(): "web" | "ios" | "android" {
@@ -59,14 +61,36 @@ export async function subscribeDevice(input: {
   if (!token) return null;
 
   const platform = detectPlatform();
+  const name = deriveDeviceName(navigator as unknown as Parameters<typeof deriveDeviceName>[0]);
   // serverTimestamp() can't ride inside arrayUnion (Firestore rejects sentinel
   // values nested in arrays), so we stamp client-side. The doc-level
   // updatedAt below is still server-authoritative.
   await updateDoc(doc(db, "wards", input.wardId, "members", input.uid), {
-    fcmTokens: arrayUnion({ token, platform, updatedAt: Timestamp.now() }),
+    fcmTokens: arrayUnion({ token, platform, name, updatedAt: Timestamp.now() }),
     updatedAt: serverTimestamp(),
   });
-  return { token, platform };
+  return { token, platform, name };
+}
+
+/** Returns the FCM token registered on this device *right now*, if
+ *  any. Used by the Profile page to flag the matching `fcmTokens[]`
+ *  row with a "This device" chip. Silent-returns null when messaging
+ *  isn't supported, permission hasn't been granted, or no SW exists. */
+export async function readCurrentDeviceToken(): Promise<string | null> {
+  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  if (!vapidKey) return null;
+  const messaging = await getMessagingIfSupported();
+  if (!messaging) return null;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return null;
+  if (!("serviceWorker" in navigator)) return null;
+  const swReg = await navigator.serviceWorker.getRegistration(SW_PATH);
+  if (!swReg) return null;
+  try {
+    const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
+    return token || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function unsubscribeDevice(input: {

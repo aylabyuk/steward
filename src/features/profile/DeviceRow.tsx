@@ -3,6 +3,7 @@ import type { FcmToken } from "@/lib/types";
 
 interface Props {
   token: FcmToken;
+  isCurrentDevice: boolean;
   busy: boolean;
   onRemove: () => void;
 }
@@ -20,19 +21,25 @@ function formatAddedAt(at: unknown): string {
   return "—";
 }
 
-/** Single row in the Subscribed devices list: icon + platform name +
- *  added-date, with a Remove button. Per-device naming + "This
- *  device" chip are deferred — see the follow-up issue filed with
- *  this PR. */
-export function DeviceRow({ token, busy, onRemove }: Props): React.ReactElement {
+/** Single row in the Subscribed devices list: icon + friendly name +
+ *  added-date, with a Remove button. The row the user is reading on
+ *  right now gets a "This device" chip. Legacy tokens without a
+ *  `name` fall back to the bare platform label. */
+export function DeviceRow({ token, isCurrentDevice, busy, onRemove }: Props): React.ReactElement {
+  const label = token.name ?? PLATFORM_LABELS[token.platform];
   return (
     <li className="grid grid-cols-[38px_1fr_auto] items-center gap-3.5 px-3.5 py-2.5 bg-parchment border border-border rounded-lg">
       <span className="inline-flex items-center justify-center w-8 h-8 bg-chalk border border-border rounded-md text-walnut-2">
         <DeviceIcon platform={token.platform} />
       </span>
       <div className="min-w-0">
-        <div className="font-sans text-[14px] font-semibold text-walnut">
-          {PLATFORM_LABELS[token.platform]}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-sans text-[14px] font-semibold text-walnut truncate">{label}</span>
+          {isCurrentDevice && (
+            <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-brass-deep bg-chalk border border-border-strong px-1.5 py-0.5 rounded">
+              This device
+            </span>
+          )}
         </div>
         <div className="font-mono text-[11px] text-walnut-3 mt-0.5">
           Added {formatAddedAt(token.updatedAt)}
