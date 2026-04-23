@@ -7,6 +7,154 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-04-23
+
+A large release that lands the Claude-Design **Profile** and **Ward
+Settings** handoffs, a reusable avatar primitive, a full-viewport
+invite page with a floating chat drawer, invitation response
+receipts with status provenance, and a complete pass over the
+message-template surface — every email and SMS the Cloud Functions
+send is now editable from a unified `/settings/templates` page, and
+the page is usable on phones (accordion rows + fullscreen edit modal).
+
+### Added
+
+- **`/settings/profile` page** (Claude-Design handoff, #49) — one
+  surface for identity (96px avatar, editable display name,
+  read-only verified email pill), notifications (FCM device list
+  with per-row Remove, push toggle, hour-granular quiet hours),
+  and sign-out. Sticky right rail + explicit Save/Discard savebar.
+  Absorbs the standalone `/settings/notifications` page.
+- **Consolidated `/settings/ward` page** (Claude-Design handoff,
+  #54) — Schedule preferences + Members & callings under one route
+  with a sticky rail and a bottom savebar. Preferences flow through
+  the savebar; per-row member edits (calling / CC / Deactivate)
+  persist imperatively. New `NumberStepper` and `NudgeChipRow`
+  primitives replace the prior bespoke controls.
+- **Flat UserMenu**: no more `/settings` index. Avatar header drops
+  straight into Profile / Ward settings / Templates / Sign out. (#54)
+- **Avatar primitive** with Google `photoURL` + deterministic
+  two-letter initials fallback (FNV-1a hash → six-slot palette).
+  Sizes `sm` / `md` / `lg` / `xl`. `aria-label` carries the display
+  name; initials span is `aria-hidden`. Replaces every ad-hoc
+  initials renderer across the app (UserMenu, schedule, chat
+  bubbles, profile header). (#18, #48)
+- **Full-viewport public invite page** (#45) — `ScaledLetterPreview`
+  now fills `100dvh` inside `fixed inset-0`. Letter is the primary
+  surface; zoom + pan still work. Floating print toolbar docks
+  top-right with safe-area padding.
+- **Floating chat drawer** on the invite page — pill FAB collapsed;
+  full-screen sheet on mobile (with body-scroll lock so the letter
+  behind doesn't rubber-band on iOS); ~420px side panel on sm+.
+  Esc or backdrop tap closes. Session-gate states (idle / loading /
+  rotated / rate-limited / invalid / error) fill the drawer and
+  center their content; the old card-in-card chrome is gone. (#45)
+- **Multi-row chat composer** with `resize-y` so speakers can drag
+  the composer taller. Pinned to the drawer bottom via
+  `mt-auto shrink-0` + safe-area inset; `interactive-widget=resizes-content`
+  on the viewport meta so the mobile keyboard shrinks the layout
+  viewport instead of overlapping the composer. (#45)
+- **Speaker nudge toward the chat** — gentle prompt when a reply
+  from the bishopric is sitting unread. (#45)
+- **Invitation response receipts** (#20, #44) — new
+  `onInvitationWrite` Firestore trigger fires two emails on the
+  authoritative transitions: (1) `response.answer` newly present →
+  email the speaker (cc'd to active bishopric + clerks) with the
+  original letter rendered inline; (2) `response.acknowledgedAt`
+  newly present → individual email to each bishopric / clerk with
+  the letter + a link to a new read-only bishopric view. Other
+  writes (heartbeat, delivery record, token rotation) are classified
+  as no-ops by a pure `classifyInvitationChange` helper.
+- **Status provenance** on speaker docs: `statusSource`
+  (`"speaker-response" | "manual"`), `statusSetBy` (uid),
+  `statusSetAt`. Schedule row shows a compact eyebrow on
+  confirmed/declined rows: _"from reply · applied by John · Apr 22"_
+  or _"set manually by John · Apr 23"_. (#44)
+- **Read-only bishopric view** at
+  `/ward/:wardId/invitations/:invitationId/view` — letter + response
+  block (answer, respondedAt, applied-by). The Apply-receipt email
+  links here. (#44)
+- **Unified `/settings/templates` page** — all editable templates
+  under one route with a grouped PageRail (Speaker invitation /
+  Response receipts / Conversation / Ward members). Nine sections
+  total: the original three (speaker letter, speaker email for
+  `mailto:`, ward invitation) plus six new server-side messages
+  (see below). (#54, #55)
+- **Six new editable server-side message templates** (#55) —
+  initial invitation SMS (Twilio), speaker response receipts
+  (accepted + declined, SendGrid email), bishopric response notice
+  (SendGrid email cc'd to the ward), and the bishop-reply pair that
+  goes to the speaker when the bishopric posts in chat (SMS + email).
+  Each template writes to `wards/{wardId}/templates/{key}` with
+  defaults that match the prior hardcoded copy, so wards without an
+  override see identical behavior.
+- **Mobile accordion layout** for `/settings/templates` below 640px.
+  Each section collapses to a compact row (eyebrow + title + pencil
+  + chevron); tapping the row expands to show the description and
+  preview, and the pencil icon opens a fullscreen edit modal with
+  the editor, variable list, and Save / Cancel / Reset controls.
+
+### Changed
+
+- **`MessageTemplateCard` + `TemplateVariableList`** — shared
+  primitives so every template section on `/settings/templates` uses
+  the same variable-hint layout and preview chrome. The older
+  Speaker-email and Ward-invite cards now match the new ones.
+- **Receipt email builders** (`buildSpeakerReceipt`,
+  `buildBishopricReceipt`) take a `headerTemplate` arg. The structural
+  pieces — inline letter reproduction, meta lines (responded-at,
+  applied-by), divider rules, and the safety warning — stay
+  hardcoded so bishoprics don't have to reason about HTML. Only the
+  narrative header string is user-authored.
+- **Rotate / resend reads live contact info** — when a bishop
+  corrects a typo'd phone or email on the speaker form and hits
+  Resend, the rotate path now refreshes `speakerEmail` and
+  `speakerPhone` from the live speaker doc before building the
+  delivery payload. Absent channels are cleared with
+  `FieldValue.delete()`. Previously the rotate used the stale
+  snapshot on the invitation doc. (#44)
+
+### Removed
+
+- **Copy-invite-link overflow action** from the bishopric chat
+  dialog. Rotate no longer returns `inviteUrl` — the freshly-minted
+  plaintext URL stays server-side and reaches the speaker only via
+  SMS or email. (#44)
+- **Emoji reactions on chat messages** (#43). The feature added in
+  v0.7.0 couldn't round-trip to the speaker's SMS side of the
+  Twilio bridge, so it only worked when both parties happened to be
+  on the web chat. Rather than split behavior by surface, the
+  feature is fully removed — `ReactionPicker`, `ReactionBar`,
+  `reactions.ts`, and the `messageUpdated` listener on
+  `useConversation` (it only fired for reactions) are all gone.
+
+### Infrastructure
+
+- **New Cloud Function**: `onInvitationWrite` (Firestore trigger on
+  `wards/{wardId}/speakerInvitations/{invitationId}`) — fans out the
+  speaker + bishopric receipts on authoritative response
+  transitions. Seventh Cloud Function on the surface; the project's
+  "six Cloud Functions" rule is deliberately relaxed to seven for
+  the receipt trigger. (#44)
+- **Shared template helpers**: `functions/src/messageTemplates.ts`
+  exposes `interpolate` + `readMessageTemplate` (falls back to the
+  default when the Firestore doc is absent or malformed). Defaults
+  live in `functions/src/messageTemplateDefaults.ts` and
+  `src/features/templates/serverTemplateDefaults.ts` — a drift-check
+  test asserts the two stay identical. (#55)
+- **Client plumbing**: generic `useMessageTemplate(key)` hook +
+  shared `writeMessageTemplate(wardId, key, { bodyMarkdown })`
+  writer. `invitationDelivery.ts` extracted from
+  `sendSpeakerInvitation.helpers.ts` to house SMS/email delivery
+  (was over the 150-LOC cap). (#55)
+- **Test coverage**: 264 root unit tests (+15 over v0.7.0) and 76
+  functions tests (+23 — new template helpers, receipt classifier,
+  `buildSpeakerReceipt` + `buildBishopricReceipt` variants, and the
+  client/server defaults drift-check).
+- **Firestore rules unchanged** — the existing
+  `match /templates/{templateId}` allow-list already covers the six
+  new keys.
+
 ## [0.7.0] — 2026-04-23
 
 Chat polish and invitation resend / copy-link, plus two mobile-fit
@@ -586,7 +734,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/aylabyuk/steward/releases/tag/v0.8.0
 [0.7.0]: https://github.com/aylabyuk/steward/releases/tag/v0.7.0
 [0.6.0]: https://github.com/aylabyuk/steward/releases/tag/v0.6.0
 [0.5.0]: https://github.com/aylabyuk/steward/releases/tag/v0.5.0

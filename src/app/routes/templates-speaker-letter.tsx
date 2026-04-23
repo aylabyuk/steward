@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
-import { SpeakerLetterTemplateEditorColumn } from "./SpeakerLetterTemplateEditorColumn";
-import { SpeakerLetterTemplateHeader } from "./SpeakerLetterTemplateHeader";
+import { interpolate } from "@/features/templates/interpolate";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
   DEFAULT_SPEAKER_LETTER_FOOTER,
 } from "@/features/templates/speakerLetterDefaults";
-import { interpolate } from "@/features/templates/interpolate";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { writeSpeakerLetterTemplate } from "@/features/templates/writeSpeakerLetterTemplate";
 import { WardTemplateToolbar } from "@/features/templates/WardTemplateToolbar";
@@ -15,6 +13,8 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
+import { SpeakerLetterTemplateEditorColumn } from "./SpeakerLetterTemplateEditorColumn";
+import { SpeakerLetterTemplateHeader } from "./SpeakerLetterTemplateHeader";
 
 const PREVIEW_VARS = {
   speakerName: "Sebastian Tan",
@@ -24,7 +24,10 @@ const PREVIEW_VARS = {
   inviterName: "Bishop Paul",
 };
 
-export function SpeakerLetterTemplatePage() {
+/** Standalone speaker-letter template editor. Opened in its own tab
+ *  from the Templates page because the 8.5×11 preview needs the full
+ *  viewport. */
+export function SpeakerLetterTemplatePage(): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const ward = useWardSettings();
   const me = useCurrentMember();
@@ -94,14 +97,7 @@ export function SpeakerLetterTemplatePage() {
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
       />
-      <SpeakerLetterTemplateHeader
-        canEdit={canEdit}
-        busy={saving || !seeded}
-        saving={saving}
-        onSave={() => void handleSave()}
-        onReset={resetToDefaults}
-        onClose={() => window.close()}
-      />
+      <SpeakerLetterTemplateHeader {...toolbarProps} onClose={() => window.close()} />
 
       <div className="flex-1 min-h-0 lg:overflow-hidden px-4 sm:px-8 pt-5 pb-4">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
@@ -131,7 +127,7 @@ export function SpeakerLetterTemplatePage() {
                 today={PREVIEW_VARS.today}
                 bodyMarkdown={renderedBody}
                 footerMarkdown={renderedFooter}
-                height="calc(100dvh - 10rem)"
+                height="calc(100dvh - 14rem)"
               />
               <div className="absolute top-3 right-3 z-10">
                 <WardTemplateToolbar {...toolbarProps} />

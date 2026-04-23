@@ -66,6 +66,11 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
     "response.acknowledgedAt": serverTimestamp(),
     "response.acknowledgedBy": input.bishopUid,
   });
-  batch.update(speakerRef, { status: newStatus });
+  batch.update(speakerRef, {
+    status: newStatus,
+    statusSource: "speaker-response",
+    statusSetBy: input.bishopUid,
+    statusSetAt: serverTimestamp(),
+  });
   await batch.commit();
 }

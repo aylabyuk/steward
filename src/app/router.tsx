@@ -4,15 +4,13 @@ import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
 import { AcceptInvitePage } from "./routes/accept-invite";
+import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
-import { MembersPage } from "./routes/members";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
-import { NotificationSettingsPage } from "./routes/notification-settings";
-import { SettingsIndex } from "./routes/settings";
-import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
-import { SpeakerEmailTemplatePage } from "./routes/templates-speaker-email";
-import { WardInviteTemplatePage } from "./routes/templates-ward-invites";
+import { ProfilePage } from "./routes/profile";
+import { TemplatesPage } from "./routes/templates";
+import { SpeakerLetterTemplatePage } from "./routes/templates-speaker-letter";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
 
@@ -24,12 +22,17 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/schedule" replace /> },
       { path: "schedule", element: <ScheduleView /> },
       { path: "week/:date", element: <Week /> },
-      { path: "settings", element: <SettingsIndex /> },
+      // Legacy /settings index is retired — anyone landing here from
+      // a bookmark or old link gets bounced back to Schedule. Specific
+      // destinations (ward/profile/templates) are reached via UserMenu.
+      { path: "settings", element: <Navigate to="/schedule" replace /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
-      { path: "settings/members", element: <MembersPage /> },
-      { path: "settings/notifications", element: <NotificationSettingsPage /> },
-      { path: "settings/templates/speaker-email", element: <SpeakerEmailTemplatePage /> },
-      { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
+      { path: "settings/profile", element: <ProfilePage /> },
+      { path: "settings/templates", element: <TemplatesPage /> },
+      {
+        path: "ward/:wardId/invitations/:invitationId/view",
+        element: <InvitationViewPage />,
+      },
     ],
   },
   // Print views + full-screen editors share AuthGate's auth + ward
@@ -42,7 +45,10 @@ export const router = createBrowserRouter([
     children: [
       { path: "/print/:date/congregation", element: <CongregationProgram /> },
       { path: "/print/:date/conducting", element: <ConductingProgram /> },
-      { path: "/settings/templates/speakers", element: <SpeakerLetterTemplatePage /> },
+      {
+        path: "/settings/templates/speaker-letter",
+        element: <SpeakerLetterTemplatePage />,
+      },
       {
         path: "/week/:date/speaker/:speakerId/prepare",
         element: <PrepareInvitationPage />,
