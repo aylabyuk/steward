@@ -190,6 +190,38 @@ describe("speaker invitation rules", () => {
         }),
       );
     });
+
+    it("lets a speaker write the speakerLastSeenAt heartbeat", async () => {
+      await seedWithContext({ expiresAt: FUTURE });
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertSucceeds(updateDoc(doc(db, PATH), { speakerLastSeenAt: serverTimestamp() }));
+    });
+
+    it("lets a speaker write response + speakerLastSeenAt together", async () => {
+      await seedWithContext({ expiresAt: FUTURE });
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertSucceeds(
+        updateDoc(doc(db, PATH), {
+          response: sampleResponse,
+          speakerLastSeenAt: serverTimestamp(),
+        }),
+      );
+    });
+
+    it("blocks speaker heartbeat past expiry", async () => {
+      await seedWithContext({ expiresAt: PAST });
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertFails(updateDoc(doc(db, PATH), { speakerLastSeenAt: serverTimestamp() }));
+    });
   });
 
   describe("update — bishopric acknowledgement path", () => {

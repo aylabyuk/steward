@@ -31,4 +31,8 @@ export interface SpeakerInvitationShape {
     acknowledgedAt?: FirebaseFirestore.Timestamp;
     acknowledgedBy?: string;
   };
+  /** Heartbeat written by the speaker's invite page while the tab is
+   *  visible. Used by the bishop-reply webhook to skip SMS when the
+   *  speaker is presumed online. */
+  speakerLastSeenAt?: FirebaseFirestore.Timestamp;
 }

@@ -142,7 +142,7 @@ service cloud.firestore {
               && request.auth.token.wardId == wardId
               && request.time < resource.data.expiresAt
               && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['response']));
+                  .hasOnly(['response', 'speakerLastSeenAt']));
       }
 
       // Invites: bishopric creates/lists/revokes pending invites keyed by

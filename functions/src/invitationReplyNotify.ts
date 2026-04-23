@@ -1,7 +1,10 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { sendAndPrune } from "./fcm.js";
+import { rotateTokenForBishopNotification } from "./issueSpeakerSession.helpers.js";
 import { filterRecipients, type RecipientCandidate } from "./recipients.js";
+import { STEWARD_ORIGIN } from "./secrets.js";
+import { buildInviteUrl } from "./sendSpeakerInvitation.helpers.js";
 import { sendEmail } from "./sendgrid/client.js";
 import { sendSmsDirect } from "./twilio/messaging.js";
 import type { FcmToken, MemberDoc, WardDoc } from "./types.js";
@@ -37,20 +40,50 @@ export async function pushToBishopric(inv: ResolvedInvitation, body: string): Pr
   });
 }
 
-/** Bishop posted → one-off SMS to the speaker via Twilio Messaging
- *  REST. We used to rely on the conversation's SMS participant
- *  binding to auto-deliver; after switching the speaker to a chat
- *  participant, that path is gone, so the webhook fires this
- *  directly. Silently no-op if the invitation has no phone on file. */
+/** Max age of the speaker's `speakerLastSeenAt` heartbeat before we
+ *  treat the chat as "closed". The invite page pings every 60s while
+ *  the tab is visible; 2× that cadence gives one missed ping of slack
+ *  before we fall back to SMS. */
+const HEARTBEAT_FRESH_MS = 120_000;
+
+/** Bishop posted → SMS the speaker with a fresh resume link (unless
+ *  the speaker's heartbeat shows they're actively viewing the chat).
+ *  Rotates the invitation's capability token (bishop-initiated, so it
+ *  does NOT count against `tokenRotationsByDay`) and appends the fresh
+ *  URL — the speaker can tap it to re-enter the chat with prior
+ *  messages preserved (same conversationSid). No-op when the invitation
+ *  has no phone on file. */
 export async function smsSpeaker(inv: ResolvedInvitation, body: string): Promise<void> {
   if (!inv.speakerPhone) return;
-  const preview = truncate(body, 300);
-  const text = `${inv.inviterName} (Steward): ${preview}`;
+  if (isSpeakerOnline(inv)) return;
+  let inviteUrl: string | null = null;
+  try {
+    const rotated = await rotateTokenForBishopNotification(inv.wardId, inv.token);
+    if (rotated) {
+      const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
+      inviteUrl = buildInviteUrl(origin, inv.wardId, inv.token, rotated.newToken);
+    }
+  } catch (err) {
+    logger.warn("reply SMS token rotation failed — falling back to preview-only", {
+      token: inv.token,
+      err: (err as Error).message,
+    });
+  }
+  const preview = truncate(body, 240);
+  const text = inviteUrl
+    ? `${inv.wardName}: new message from the bishopric about your speaking assignment — "${preview}". Open: ${inviteUrl}`
+    : `${inv.inviterName} (Steward): ${preview}`;
   try {
     await sendSmsDirect({ to: inv.speakerPhone, body: text });
   } catch (err) {
     logger.error("reply SMS failed", { err: (err as Error).message, token: inv.token });
   }
+}
+
+function isSpeakerOnline(inv: ResolvedInvitation): boolean {
+  const ts = inv.speakerLastSeenAt;
+  if (!ts) return false;
+  return Date.now() - ts.toMillis() < HEARTBEAT_FRESH_MS;
 }
 
 /** Bishop posted → SendGrid email to the speaker with a preview.
