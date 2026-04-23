@@ -136,7 +136,8 @@ export function buildInviteUrl(
   invitationId: string,
   token: string,
 ): string {
-  return `${origin}/invite/speaker/${wardId}/${invitationId}/${token}`;
+  const trimmed = origin.replace(/\/+$/, "");
+  return `${trimmed}/invite/speaker/${wardId}/${invitationId}/${token}`;
 }
 
 /** Send the invitation letter via SMS (Twilio). Used both by the
