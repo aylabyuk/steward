@@ -5,13 +5,14 @@ import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { QuickActionButtons } from "./QuickActionButtons";
 import { TypingIndicator } from "./TypingIndicator";
-import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useConversation } from "./useConversation";
 import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
 import { useReadHorizon } from "./useReadHorizon";
 import { useTypingParticipants } from "./useTypingParticipants";
 import { useSpeakerHeartbeat } from "./useSpeakerHeartbeat";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
+import { buildSpeakerAuthorMap } from "./speakerAuthorMap";
 
 interface Props {
   wardId: string;
@@ -25,6 +26,14 @@ interface Props {
     email?: string | undefined;
   }[];
   hasResponse: boolean;
+  /** When present, the chat's header renders a small close affordance
+   *  that invokes this callback. Used by the invite page's floating
+   *  drawer so the speaker can dismiss the chat back over the letter. */
+  onClose?: () => void;
+  /** When true, the chat fills its flex parent (used inside the
+   *  floating drawer on the invite page). Default layout stays inline
+   *  for other callsites. */
+  fillHeight?: boolean;
 }
 
 /** Speaker-side chat pane. By the time this renders the parent
@@ -46,39 +55,49 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     enabled: Boolean(user),
   });
 
-  const resolvedAuthors: AuthorMap = useMemo(() => {
-    const map = new Map<string, AuthorInfo>();
-    map.set(`speaker:${props.invitationId}`, {
-      displayName: props.speakerName,
-      role: "speaker",
+  // Kick off the Twilio client as soon as the chat mounts so prior
+  // messages load before the speaker taps Send. Without this, the
+  // conversation pane would stay empty until the first interaction
+  // and the first send attempt would race the connect and throw
+  // "Not connected."
+  useEffect(() => {
+    if (twilio.status !== "idle") return;
+    void twilio.connect({
+      wardId: props.wardId,
+      invitationId: props.invitationId,
+      useInviteApp: true,
     });
-    for (const m of props.bishopricParticipants) {
-      const info: AuthorInfo = { displayName: m.displayName, role: m.role };
-      if (m.email) info.email = m.email;
-      map.set(`uid:${m.uid}`, info);
-    }
-    if (user && twilio.identity) {
-      const existing = map.get(twilio.identity);
-      const info: AuthorInfo = {
-        displayName: existing?.displayName ?? user.displayName ?? props.speakerName,
-      };
-      if (existing?.role) info.role = existing.role;
-      if (user.photoURL) info.photoURL = user.photoURL;
-      map.set(twilio.identity, info);
-    }
-    for (const [id, info] of authors) {
-      const existing = map.get(id);
-      map.set(id, { ...existing, ...info });
-    }
-    return map;
-  }, [
-    props.invitationId,
-    props.speakerName,
-    props.bishopricParticipants,
-    twilio.identity,
-    user,
-    authors,
-  ]);
+  }, [twilio, props.wardId, props.invitationId]);
+
+  // Clear the speaker's unread horizon whenever they're viewing the
+  // chat and new messages land. Drives the page-level "New message"
+  // banner down to quiet once the speaker has actually seen the
+  // bishopric's reply — without this, the banner stays lit even
+  // after the drawer has been opened.
+  useEffect(() => {
+    if (!conversation || messages.length === 0) return;
+    void conversation.setAllMessagesRead();
+  }, [conversation, messages.length]);
+
+  const resolvedAuthors = useMemo(
+    () =>
+      buildSpeakerAuthorMap({
+        invitationId: props.invitationId,
+        speakerName: props.speakerName,
+        bishopricParticipants: props.bishopricParticipants,
+        user,
+        twilioIdentity: twilio.identity,
+        liveAuthors: authors,
+      }),
+    [
+      props.invitationId,
+      props.speakerName,
+      props.bishopricParticipants,
+      twilio.identity,
+      user,
+      authors,
+    ],
+  );
 
   async function ensureReady(): Promise<boolean> {
     if (twilio.status === "idle" || twilio.status === "error") {
@@ -104,14 +123,32 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   }
 
   return (
-    <section className="bg-chalk border border-border rounded-lg shadow-elev-1 flex flex-col overflow-hidden">
-      <header className="px-4 py-3 border-b border-border bg-parchment">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-          Conversation with the bishopric
+    <section
+      className={
+        props.fillHeight
+          ? "bg-chalk flex flex-col overflow-hidden flex-1 min-h-0"
+          : "bg-chalk border border-border rounded-lg shadow-elev-1 flex flex-col overflow-hidden"
+      }
+    >
+      <header className="flex items-start gap-3 px-4 py-3 border-b border-border bg-parchment">
+        <div className="flex-1 min-w-0">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
+            Conversation with the bishopric
+          </div>
+          <p className="font-serif text-[12.5px] text-walnut-2 mt-0.5">
+            This is a group conversation — the bishop, counselors, and clerks can all see and reply.
+          </p>
         </div>
-        <p className="font-serif text-[12.5px] text-walnut-2 mt-0.5">
-          This is a group conversation — the bishop, counselors, and clerks can all see and reply.
-        </p>
+        {props.onClose && (
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut px-2 py-1 transition-colors"
+            aria-label="Close conversation"
+          >
+            Close
+          </button>
+        )}
       </header>
 
       <ConversationThread
@@ -121,6 +158,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         loading={loading && twilio.status === "ready"}
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
+        {...(props.fillHeight ? { fillHeight: true } : {})}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
