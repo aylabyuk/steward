@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { subscribeDevice, unsubscribeDevice } from "@/features/notifications/fcmToken";
+import { useCurrentDeviceToken } from "@/features/notifications/useCurrentDeviceToken";
 import type { FcmToken, NotificationPrefs } from "@/lib/types";
 import { CategoryRowsComingSoon, DigestSelectComingSoon } from "./ComingSoonRows";
 import { DeviceRow } from "./DeviceRow";
@@ -26,8 +27,12 @@ export function NotificationsSection({
 }: Props): React.ReactElement {
   const [busy, setBusy] = useState<string | "subscribe" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const currentToken = useCurrentDeviceToken(tokens);
 
-  const deviceSubscribed = tokens.length > 0;
+  // Scope the push toggle to *this* device so flipping off on Safari
+  // can't nuke a token registered on a different browser/OS.
+  const thisDeviceEntry = currentToken ? tokens.find((t) => t.token === currentToken) : undefined;
+  const deviceSubscribed = thisDeviceEntry !== undefined;
 
   async function togglePush(next: boolean) {
     setBusy("subscribe");
@@ -38,10 +43,8 @@ export function NotificationsSection({
         if (!result) {
           setError("Enable notifications in your browser or OS, then try again.");
         }
-      } else {
-        for (const t of tokens) {
-          await unsubscribeDevice({ wardId, uid, token: t });
-        }
+      } else if (thisDeviceEntry) {
+        await unsubscribeDevice({ wardId, uid, token: thisDeviceEntry });
       }
     } catch (e) {
       setError((e as Error).message);
@@ -109,6 +112,7 @@ export function NotificationsSection({
               <DeviceRow
                 key={t.token}
                 token={t}
+                isCurrentDevice={t.token === currentToken}
                 busy={busy === t.token}
                 onRemove={() => void removeOne(t)}
               />

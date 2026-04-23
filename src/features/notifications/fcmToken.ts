@@ -8,12 +8,45 @@ import {
 } from "firebase/firestore";
 import { deleteToken, getToken } from "firebase/messaging";
 import { db, getMessagingIfSupported } from "@/lib/firebase";
+import { deriveDeviceName } from "./deriveDeviceName";
 
 const SW_PATH = "/firebase-messaging-sw.js";
+
+/** localStorage key for "the FCM token subscribed on THIS browser/PWA".
+ *  Read on mount by the Profile page to flag the matching fcmTokens[]
+ *  row with a "This device" chip. localStorage is per-origin
+ *  per-browser, so the match is exactly "this device" — no async FCM
+ *  lookups or SW timing guesswork. */
+const CURRENT_TOKEN_KEY = "steward:fcmToken:current";
+
+function rememberCurrentToken(token: string): void {
+  try {
+    localStorage.setItem(CURRENT_TOKEN_KEY, token);
+  } catch {
+    /* private-mode or disabled storage — chip won't light up, not fatal */
+  }
+}
+
+function forgetCurrentToken(): void {
+  try {
+    localStorage.removeItem(CURRENT_TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readCurrentDeviceToken(): string | null {
+  try {
+    return localStorage.getItem(CURRENT_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export interface SubscribeResult {
   token: string;
   platform: "web" | "ios" | "android";
+  name: string;
 }
 
 function detectPlatform(): "web" | "ios" | "android" {
@@ -59,14 +92,16 @@ export async function subscribeDevice(input: {
   if (!token) return null;
 
   const platform = detectPlatform();
+  const name = deriveDeviceName(navigator as unknown as Parameters<typeof deriveDeviceName>[0]);
   // serverTimestamp() can't ride inside arrayUnion (Firestore rejects sentinel
   // values nested in arrays), so we stamp client-side. The doc-level
   // updatedAt below is still server-authoritative.
   await updateDoc(doc(db, "wards", input.wardId, "members", input.uid), {
-    fcmTokens: arrayUnion({ token, platform, updatedAt: Timestamp.now() }),
+    fcmTokens: arrayUnion({ token, platform, name, updatedAt: Timestamp.now() }),
     updatedAt: serverTimestamp(),
   });
-  return { token, platform };
+  rememberCurrentToken(token);
+  return { token, platform, name };
 }
 
 export async function unsubscribeDevice(input: {
@@ -86,4 +121,5 @@ export async function unsubscribeDevice(input: {
     fcmTokens: arrayRemove(input.token),
     updatedAt: serverTimestamp(),
   });
+  if (readCurrentDeviceToken() === input.token.token) forgetCurrentToken();
 }

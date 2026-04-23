@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { BishopInvitationDialog } from "@/features/invitations/BishopInvitationDialog";
 import { useConversationUnread } from "@/features/invitations/useConversationUnread";
 import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
@@ -38,6 +39,21 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
   const hasUnread = typeof unreadCount === "number" && unreadCount > 0;
   const members = useWardMembers();
   const provenance = statusProvenanceLabel(speaker, members);
+
+  // Auto-open the dialog when a push notification deep-links us here
+  // via `?chat=<invitationId>`. Each row checks independently — only
+  // the matching one opens + clears the query. Invitation loads async,
+  // so we can't check until it arrives.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (!invitation) return;
+    const target = searchParams.get("chat");
+    if (!target || target !== invitation.invitationId) return;
+    setOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("chat");
+    setSearchParams(next, { replace: true });
+  }, [invitation, searchParams, setSearchParams]);
 
   return (
     <li className="flex items-center gap-3 py-3 border-b border-border last:border-b-0">

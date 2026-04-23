@@ -18,7 +18,12 @@ export interface ResolvedInvitation extends SpeakerInvitationShape {
 
 /** Speaker posted in the conversation → FCM push to active
  *  bishopric members of the ward. Reuses the quiet-hours + token
- *  pruning helpers that the mention notifications already use. */
+ *  pruning helpers that the mention notifications already use.
+ *
+ *  The payload carries `webpush.fcmOptions.link` so a tap deep-links
+ *  to the speaker's chat dialog on the Schedule page; the SW
+ *  `notificationclick` handler reads the same shape for browsers that
+ *  don't honor `fcmOptions.link` natively. */
 export async function pushToBishopric(inv: ResolvedInvitation, body: string): Promise<void> {
   const db = getFirestore();
   const wardSnap = await db.doc(`wards/${inv.wardId}`).get();
@@ -33,11 +38,14 @@ export async function pushToBishopric(inv: ResolvedInvitation, body: string): Pr
     .filter((c): c is RecipientCandidate => c !== null);
   const recipients = filterRecipients(candidates, { now: new Date(), timezone });
   if (recipients.length === 0) return;
+  const origin = (process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value()).replace(/\/+$/, "");
+  const link = `${origin}/schedule?chat=${encodeURIComponent(inv.token)}`;
   const tokensByUid = new Map<string, readonly FcmToken[]>();
   for (const r of recipients) tokensByUid.set(r.uid, r.member.fcmTokens ?? []);
   await sendAndPrune(inv.wardId, tokensByUid, {
     notification: { title: `${inv.speakerName} replied`, body: truncate(body, 120) },
-    data: { wardId: inv.wardId, token: inv.token, kind: "invitation-reply" },
+    data: { wardId: inv.wardId, invitationId: inv.token, kind: "invitation-reply" },
+    webpush: { fcmOptions: { link } },
   });
 }
 
