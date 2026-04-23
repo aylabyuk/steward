@@ -108,7 +108,7 @@ function Group({ group }: { group: MessageGroup }) {
         >
           {!group.mine && (
             <span className="font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
-              {group.info.email ?? group.info.displayName}
+              {group.info.displayName}
             </span>
           )}
           {group.messages.map((m, i) => (
