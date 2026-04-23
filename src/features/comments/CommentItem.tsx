@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Avatar } from "@/components/ui/Avatar";
 import type { WithId } from "@/hooks/_sub";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import type { Comment } from "@/lib/types";
@@ -29,6 +30,12 @@ export function CommentItem({ wardId, date, comment }: Props) {
   const isAuthor = user?.uid === comment.data.authorUid;
   const deleted = Boolean(comment.data.deletedAt);
   const edited = Boolean(comment.data.editedAt);
+  const authorMember = members.find((m) => m.id === comment.data.authorUid);
+  const authorAvatar = {
+    uid: comment.data.authorUid,
+    displayName: authorMember?.data.displayName ?? comment.data.authorDisplayName,
+    photoURL: authorMember?.data.photoURL ?? null,
+  };
 
   async function save() {
     const trimmed = draft.trim();
@@ -53,8 +60,9 @@ export function CommentItem({ wardId, date, comment }: Props) {
 
   return (
     <li className="rounded-md border border-border bg-parchment px-3.5 py-2.5">
-      <header className="flex items-baseline justify-between gap-3 mb-1.5">
-        <span className="font-sans text-[13px] font-semibold text-walnut truncate">
+      <header className="flex items-center gap-2.5 mb-1.5">
+        <Avatar user={authorAvatar} size="sm" />
+        <span className="font-sans text-[13px] font-semibold text-walnut truncate flex-1 min-w-0">
           {comment.data.authorDisplayName}
           {isAuthor && <span className="text-walnut-3 font-normal"> (You)</span>}
         </span>

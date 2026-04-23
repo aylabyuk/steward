@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
 import { AppShell } from "@/app/components/AppShell";
 import { WardPicker } from "@/app/components/ward-picker";
+import { useMemberProfileSync } from "@/hooks/useMemberProfileSync";
 import { useWardAccess } from "@/hooks/useWardAccess";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -31,6 +32,11 @@ export function AuthGate({ appShell = true }: Props) {
   const access = useWardAccess();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const setWardId = useCurrentWardStore((s) => s.setWardId);
+  // Silently back-fill the signed-in user's Google profile fields
+  // (displayName + photoURL) onto their ward membership docs once
+  // access resolves, so avatar bubbles on other screens can render
+  // the real picture instead of initials.
+  useMemberProfileSync();
 
   useEffect(() => {
     if (access.kind === "single") {
