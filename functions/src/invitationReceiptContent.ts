@@ -12,6 +12,10 @@ export interface ReceiptBuildArgs {
    *  `buildBishopricReceipt`. Caller loads the template via
    *  `readMessageTemplate` so builders stay pure. */
   headerTemplate: string;
+  /** Freshly-rotated invite URL for `buildSpeakerReceipt`. Optional —
+   *  rotation can fail, in which case the receipt falls back to the
+   *  no-link shape (the speaker still has the original SMS/email). */
+  inviteUrl?: string;
 }
 
 export interface ReceiptContent {
@@ -51,13 +55,14 @@ function letterText(invitation: SpeakerInvitationShape): string {
   ].join("\n");
 }
 
-/** Email sent to the speaker when their Yes/No first lands on the
- *  invitation doc. Confirms exactly what was recorded; the original
- *  letter is rendered inline for reference. No link is included —
- *  the speaker already has the invite URL in their inbox/SMS, and
- *  rotating a fresh token per receipt would be gratuitous. */
+/** Email sent to the speaker when their Yes/No lands on the invitation
+ *  doc (or flips). Confirms what was recorded and carries a freshly
+ *  rotated invite link so the speaker can reopen the chat even if
+ *  they've deleted the original SMS. `inviteUrl` is optional — if
+ *  rotation failed upstream, the receipt falls back to the no-link
+ *  shape (the original SMS is still a valid entry point). */
 export function buildSpeakerReceipt(args: ReceiptBuildArgs): ReceiptContent {
-  const { invitation, headerTemplate } = args;
+  const { invitation, headerTemplate, inviteUrl } = args;
   const answer = invitation.response?.answer;
   if (!answer) throw new Error("speaker receipt requires a recorded response");
   const verb = answer === "yes" ? "accepted" : "declined";
@@ -73,6 +78,8 @@ export function buildSpeakerReceipt(args: ReceiptBuildArgs): ReceiptContent {
     "",
     invitation.response?.reason ? `Your note: ${invitation.response.reason}` : null,
     invitation.response?.reason ? "" : null,
+    inviteUrl ? `Open your invitation page: ${inviteUrl}` : null,
+    inviteUrl ? "" : null,
     "For reference, the original letter you received:",
     "",
     letterText(invitation),
@@ -88,6 +95,7 @@ ${
     ? `<blockquote style="margin:0 0 16px 0;padding-left:10px;border-left:3px solid #bca788;color:#4a3a30;"><em>${escapeHtml(invitation.response.reason)}</em></blockquote>`
     : ""
 }
+${inviteUrl ? `<p><a href="${inviteUrl}">Open your invitation page</a></p>` : ""}
 <hr style="border:none;border-top:1px solid #ddd;margin:18px 0;">
 <p style="color:#666;font-size:12px;margin:0 0 6px 0;">For reference, the original letter you received:</p>
 ${letterHtml(invitation)}

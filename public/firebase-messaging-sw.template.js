@@ -31,3 +31,47 @@ messaging.onBackgroundMessage((payload) => {
     data: payload.data ?? {},
   });
 });
+
+/** Deep-link a notification tap into the matching in-app surface.
+ *  Keep the `data.kind` map here in sync with the FCM payloads in
+ *  functions/src/ (invitationResponseNotify, invitationReplyNotify,
+ *  onCommentCreate). If an existing tab is already on our origin we
+ *  focus + navigate that one; otherwise we open a new window. */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = routeForPushData(event.notification.data);
+  if (!url) return;
+  event.waitUntil(focusOrOpen(url));
+});
+
+function routeForPushData(data) {
+  if (!data || typeof data !== "object") return "/";
+  switch (data.kind) {
+    case "invitation-response":
+    case "invitation-reply":
+      return data.invitationId
+        ? `/schedule?chat=${encodeURIComponent(data.invitationId)}`
+        : "/schedule";
+    case "mention":
+      return data.date ? `/week/${encodeURIComponent(data.date)}` : "/schedule";
+    default:
+      return "/";
+  }
+}
+
+async function focusOrOpen(url) {
+  const target = new URL(url, self.location.origin).href;
+  const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  for (const client of clients) {
+    if (!client.url.startsWith(self.location.origin)) continue;
+    if ("navigate" in client) {
+      try {
+        await client.navigate(target);
+      } catch {
+        // Some browsers reject cross-origin navigate; fall through to focus-only.
+      }
+    }
+    return client.focus();
+  }
+  return self.clients.openWindow(target);
+}
