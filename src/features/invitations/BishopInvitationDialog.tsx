@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import type { SpeakerInvitation } from "@/lib/types";
 import { BishopInvitationChat } from "./BishopInvitationChat";
+import { InvitationLinkActions } from "./InvitationLinkActions";
 
 interface Props {
   open: boolean;
@@ -13,7 +15,10 @@ interface Props {
 /** Nested modal that hosts the bishop-side chat pane from inside the
  *  Assign Speakers modal. Renders at `z-[60]` (above the Assign
  *  modal's `z-50`), and closes on Escape or backdrop click. Uses the
- *  TwilioChatProvider established higher up the tree. */
+ *  TwilioChatProvider established higher up the tree. Full-screen on
+ *  mobile (100dvh, no padding), centered modal on sm+. Background
+ *  scroll is locked while open so mobile rubber-banding doesn't drag
+ *  the page behind it. */
 export function BishopInvitationDialog({
   open,
   onClose,
@@ -21,6 +26,8 @@ export function BishopInvitationDialog({
   invitationId,
   invitation,
 }: Props): React.ReactElement | null {
+  useLockBodyScroll(open);
+
   useEffect(() => {
     if (!open) return;
     function handleEsc(e: KeyboardEvent) {
@@ -43,7 +50,7 @@ export function BishopInvitationDialog({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-chalk border border-border-strong shadow-elev-3 overflow-hidden flex flex-col w-full max-w-xl sm:rounded-[14px] max-h-[94vh]">
+      <div className="bg-chalk flex flex-col w-full max-w-xl h-[100dvh] sm:h-auto sm:max-h-[94vh] sm:rounded-[14px] sm:border sm:border-border-strong sm:shadow-elev-3 overflow-hidden">
         <div className="flex items-start gap-3 px-5 py-3.5 border-b border-border bg-parchment">
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
@@ -53,6 +60,11 @@ export function BishopInvitationDialog({
               {invitation.speakerName}
             </div>
           </div>
+          <InvitationLinkActions
+            wardId={wardId}
+            invitationId={invitationId}
+            invitation={invitation}
+          />
           <button
             onClick={onClose}
             className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut px-2 py-1 transition-colors"
@@ -61,13 +73,7 @@ export function BishopInvitationDialog({
             Close
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto">
-          <BishopInvitationChat
-            wardId={wardId}
-            invitationId={invitationId}
-            invitation={invitation}
-          />
-        </div>
+        <BishopInvitationChat wardId={wardId} invitationId={invitationId} invitation={invitation} />
       </div>
     </div>
   );

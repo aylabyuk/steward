@@ -18,7 +18,7 @@ export function ConversationAvatar({ author }: { author: AuthorInfo }) {
         src={author.photoURL}
         alt=""
         aria-hidden="true"
-        className="shrink-0 w-8 h-8 rounded-full object-cover border border-border"
+        className="shrink-0 w-9 h-9 rounded-full object-cover border border-border"
       />
     );
   }
@@ -26,7 +26,7 @@ export function ConversationAvatar({ author }: { author: AuthorInfo }) {
     <div
       aria-hidden="true"
       className={cn(
-        "shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-display text-[11px] font-semibold border",
+        "shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-display text-[11px] font-semibold border",
         colorClass,
       )}
     >

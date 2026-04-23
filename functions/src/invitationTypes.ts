@@ -14,6 +14,13 @@ export interface SpeakerInvitationShape {
   speakerEmail?: string;
   speakerPhone?: string;
   conversationSid?: string;
+  deliveryRecord?: {
+    channel: "email" | "sms";
+    status: "sent" | "failed";
+    providerId?: string;
+    error?: string;
+    at: Date | FirebaseFirestore.Timestamp;
+  }[];
   expiresAt?: FirebaseFirestore.Timestamp;
   /** Capability-token columns (see src/lib/types/speakerInvitation.ts
    *  for the full doc). The hash is kept after consumption so a

@@ -32,10 +32,19 @@ export function ConversationGroup({
   const groupLabel = fullTimestamp ? `${authorLabel} at ${fullTimestamp}` : authorLabel;
   return (
     <div
-      className={cn("flex flex-col gap-1", group.mine ? "items-end" : "items-start")}
+      className={cn("flex flex-col gap-0.5", group.mine ? "items-end" : "items-start")}
       role="group"
       aria-label={groupLabel}
     >
+      {/* Name eyebrow sits above the avatar row, indented past the
+          avatar slot so it lines up with the bubbles. Kept outside
+          the flex row so the avatar below can align against the
+          bubble stack without the eyebrow skewing the computation. */}
+      {!group.mine && (
+        <span className="ml-11 font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
+          {group.info.displayName}
+        </span>
+      )}
       <div
         className={cn(
           "flex items-end gap-2 max-w-[85%]",
@@ -46,11 +55,6 @@ export function ConversationGroup({
         <div
           className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}
         >
-          {!group.mine && (
-            <span className="font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
-              {group.info.displayName}
-            </span>
-          )}
           {group.messages.map((m, i) => (
             <ConversationBubble
               key={m.sid}
@@ -61,18 +65,21 @@ export function ConversationGroup({
               onReact={onReact}
             />
           ))}
-          {timestamp && (
-            <span className="font-mono text-[9.5px] text-walnut-3 mt-0.5" title={fullTimestamp}>
-              {timestamp}
-            </span>
-          )}
-          {group.mine && readByOther && (
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep">
-              Read
-            </span>
-          )}
         </div>
       </div>
+      {timestamp && (
+        <span
+          className={cn("font-mono text-[9.5px] text-walnut-3 mt-0.5", !group.mine && "ml-11")}
+          title={fullTimestamp}
+        >
+          {timestamp}
+        </span>
+      )}
+      {group.mine && readByOther && (
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep">
+          Read
+        </span>
+      )}
     </div>
   );
 }
