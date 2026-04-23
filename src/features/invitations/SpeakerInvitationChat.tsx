@@ -4,7 +4,11 @@ import { inviteAuth } from "@/lib/firebase";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { QuickActionButtons } from "./QuickActionButtons";
+import { TypingIndicator } from "./TypingIndicator";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
+import { useReadHorizon } from "./useReadHorizon";
+import { useTypingParticipants } from "./useTypingParticipants";
 import { useSpeakerHeartbeat } from "./useSpeakerHeartbeat";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
@@ -30,7 +34,12 @@ interface Props {
 export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const [user, setUser] = useState<User | null>(inviteAuth.currentUser);
   const twilio = useTwilioChat();
-  const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
+  const { messages, conversation, authors, loading, toggleReaction } = useConversation(
+    props.conversationSid,
+  );
+  const firstUnreadIndex = useFirstUnreadIndex(conversation);
+  const readHorizon = useReadHorizon(conversation, twilio.identity);
+  const typing = useTypingParticipants(conversation, twilio.identity);
 
   useEffect(() => onAuthStateChanged(inviteAuth, setUser), []);
   useSpeakerHeartbeat({
@@ -112,7 +121,14 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         currentIdentity={twilio.identity}
         authors={resolvedAuthors}
         loading={loading && twilio.status === "ready"}
+        firstUnreadIndex={firstUnreadIndex}
+        readHorizonIndex={readHorizon}
+        onReact={(sid, emoji) => {
+          if (twilio.identity) void toggleReaction(sid, emoji, twilio.identity);
+        }}
       />
+
+      <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
 
       {!props.hasResponse && (
         <QuickActionButtons
