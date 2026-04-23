@@ -83,7 +83,7 @@ export function IdentitySection({
         <label className="font-sans text-[13.5px] font-semibold text-walnut pt-1.5">
           Email
           <span className="block font-serif italic text-[13px] text-walnut-3 font-normal mt-0.5">
-            From your sign-in. Contact your clerk to change it.
+            From your sign-in. Contact a member of the bishopric to change it.
           </span>
         </label>
         <div className="flex items-center gap-2.5 px-3 py-2 bg-parchment border border-border rounded-lg max-w-md">

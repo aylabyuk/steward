@@ -2,9 +2,12 @@ import type { WithId } from "@/hooks/_sub";
 import type { Member } from "@/lib/types";
 
 /**
- * Computes the CC list for a speaker-invitation mailto per docs/access.md:
- * - Bishopric members are ALWAYS CCed (non-togglable).
- * - Clerks/secretaries are CCed when their ccOnEmails flag is true.
+ * Computes the CC list for a speaker-invitation `mailto:` flow per
+ * docs/access.md:
+ * - Bishopric (bishop + counselors) is ALWAYS CC'd, non-togglable.
+ *   Bishopric visibility on invitation traffic is load-bearing.
+ * - Clerks and secretaries (`role: "clerk"`) are CC'd when their
+ *   `ccOnEmails` flag is true (default).
  * - Inactive members are excluded regardless of role/flag.
  */
 export function computeCc(members: readonly WithId<Member>[]): string[] {

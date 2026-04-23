@@ -10,10 +10,10 @@ interface Props {
   onClose: () => void;
 }
 
-/** Sticky header for the ward speaker-letter template page: eyebrow
- *  / title / subtitle on the left, X close top-right, mobile-only
- *  toolbar row below. Desktop toolbar lives inside the preview
- *  container on the right column. */
+/** Sticky header for the standalone speaker-letter template page:
+ *  eyebrow / title / subtitle on the left, X close top-right,
+ *  mobile-only toolbar row below. Desktop toolbar lives inside the
+ *  preview container on the right column. */
 export function SpeakerLetterTemplateHeader({
   canEdit,
   busy,
@@ -33,8 +33,8 @@ export function SpeakerLetterTemplateHeader({
             Speaker invitation letter
           </h1>
           <p className="font-serif italic text-[12.5px] text-walnut-3">
-            The ward default — edit the body and footer; the letterhead, date, assigned-Sunday
-            callout, and signature are fixed.
+            Edit the body, footer, and signature of the printed invitation. The letterhead, date,
+            assigned-Sunday callout, and signature are fixed.
           </p>
         </div>
         <button

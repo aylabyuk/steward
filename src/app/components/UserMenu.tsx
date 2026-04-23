@@ -57,6 +57,7 @@ export function UserMenu() {
     await signOut();
     setOpen(false);
   };
+  const close = () => setOpen(false);
 
   return (
     <div ref={ref} className="relative">
@@ -78,7 +79,6 @@ export function UserMenu() {
           className="absolute right-0 top-full mt-2 w-60 rounded-lg border border-border bg-chalk shadow-elev-3 z-50 animate-[menuIn_120ms_var(--ease-out)]"
           role="menu"
         >
-          {/* Header */}
           <div className="flex items-center gap-3 border-b border-border px-2.5 py-2.5">
             <Avatar user={avatarUser} size="lg" />
             <div className="min-w-0">
@@ -89,28 +89,24 @@ export function UserMenu() {
             </div>
           </div>
 
-          {/* Items — Profile is the personal-settings surface (name,
-              avatar, notifications); Settings is the ward-level
-              surface (roster, templates, etc.). */}
-          <Link
-            to="/settings/profile"
-            onClick={() => setOpen(false)}
-            className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
-          >
+          <MenuLink to="/settings/profile" onClick={close}>
             Profile
-          </Link>
-          <Link
-            to="/settings"
-            onClick={() => setOpen(false)}
-            className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
-          >
-            Settings
-          </Link>
+          </MenuLink>
+          <MenuLink to="/settings/ward" onClick={close}>
+            Ward settings
+          </MenuLink>
 
-          {/* Divider */}
           <div className="border-t border-border" />
 
-          {/* Sign out */}
+          <MenuLink to="/settings/templates" onClick={close}>
+            Templates
+          </MenuLink>
+          <MenuLink to="/settings/templates/speaker-letter" onClick={close} newTab>
+            Speaker invitation letter
+          </MenuLink>
+
+          <div className="border-t border-border" />
+
           <button
             onClick={handleSignOut}
             role="menuitem"
@@ -121,5 +117,35 @@ export function UserMenu() {
         </div>
       )}
     </div>
+  );
+}
+
+interface MenuLinkProps {
+  to: string;
+  onClick: () => void;
+  newTab?: boolean;
+  children: React.ReactNode;
+}
+
+function MenuLink({ to, onClick, newTab, children }: MenuLinkProps) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      target={newTab ? "_blank" : undefined}
+      rel={newTab ? "noopener noreferrer" : undefined}
+      role="menuitem"
+      className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
+    >
+      {children}
+      {newTab && (
+        <span
+          aria-label="Opens in a new tab"
+          className="ml-2 font-mono text-[9px] uppercase tracking-[0.14em] text-walnut-3"
+        >
+          ↗
+        </span>
+      )}
+    </Link>
   );
 }
