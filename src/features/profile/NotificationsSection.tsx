@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { subscribeDevice, unsubscribeDevice } from "@/features/notifications/fcmToken";
+import { useCurrentDeviceToken } from "@/features/notifications/useCurrentDeviceToken";
 import type { FcmToken, NotificationPrefs } from "@/lib/types";
 import { CategoryRowsComingSoon, DigestSelectComingSoon } from "./ComingSoonRows";
 import { DeviceRow } from "./DeviceRow";
@@ -26,6 +27,7 @@ export function NotificationsSection({
 }: Props): React.ReactElement {
   const [busy, setBusy] = useState<string | "subscribe" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const currentToken = useCurrentDeviceToken(tokens);
 
   const deviceSubscribed = tokens.length > 0;
 
@@ -109,6 +111,7 @@ export function NotificationsSection({
               <DeviceRow
                 key={t.token}
                 token={t}
+                isCurrentDevice={t.token === currentToken}
                 busy={busy === t.token}
                 onRemove={() => void removeOne(t)}
               />
