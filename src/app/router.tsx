@@ -9,7 +9,7 @@ import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
-import { NotificationSettingsPage } from "./routes/notification-settings";
+import { ProfilePage } from "./routes/profile";
 import { SettingsIndex } from "./routes/settings";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speakers";
 import { SpeakerEmailTemplatePage } from "./routes/templates-speaker-email";
@@ -28,7 +28,7 @@ export const router = createBrowserRouter([
       { path: "settings", element: <SettingsIndex /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/members", element: <MembersPage /> },
-      { path: "settings/notifications", element: <NotificationSettingsPage /> },
+      { path: "settings/profile", element: <ProfilePage /> },
       { path: "settings/templates/speaker-email", element: <SpeakerEmailTemplatePage /> },
       { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
       {
