@@ -21,14 +21,23 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Display payload rides inside `payload.data` (not the top-level
+// `notification` field) so this handler always fires on iOS PWAs. iOS
+// Safari 16.4+ silently drops pushes that aren't displayed inside the
+// SW push event, and the Firebase JS SDK's auto-display path
+// (triggered when a `notification` field is present) doesn't reliably
+// satisfy that contract on iOS. Backend pairs this with
+// `webpush.headers.Urgency: high` so APNs treats data-only messages
+// as user-visible. See functions/src/fcm.ts → sendDisplayPush.
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title ?? "Steward";
-  const body = payload.notification?.body ?? "";
+  const data = payload.data ?? {};
+  const title = data.title ?? "Steward";
+  const body = data.body ?? "";
   self.registration.showNotification(title, {
     body,
     icon: "/icon.svg",
     badge: "/icon.svg",
-    data: payload.data ?? {},
+    data,
   });
 });
 
