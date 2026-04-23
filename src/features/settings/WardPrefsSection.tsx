@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Select } from "@/components/ui/Select";
 import type { WardSettings } from "@/lib/types";
 import { NudgeChipRow } from "./NudgeChipRow";
 import { NumberStepper } from "./NumberStepper";
@@ -36,18 +37,18 @@ export function WardPrefsSection({ value, onChange, canEdit }: Props): React.Rea
       </p>
 
       <FieldRow label="Timezone" sub="Used for all reminders and prints.">
-        <select
+        <Select
           value={value.timezone}
           disabled={!canEdit}
           onChange={(e) => patch("timezone", e.target.value)}
-          className="font-sans text-[14px] w-full max-w-md px-2.5 py-1.5 bg-parchment border border-border rounded-md text-walnut hover:border-border-strong hover:bg-chalk focus:outline-none focus:border-bordeaux focus:bg-chalk focus:ring-2 focus:ring-bordeaux/15 disabled:opacity-60"
+          className="w-full max-w-md"
         >
           {tzOptions.map((tz) => (
             <option key={tz} value={tz}>
               {tz.replace(/_/g, " ")}
             </option>
           ))}
-        </select>
+        </Select>
       </FieldRow>
 
       <FieldRow label="Speaker lead time" sub="How far in advance speakers are asked.">

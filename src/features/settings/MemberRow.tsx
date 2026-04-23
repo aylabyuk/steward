@@ -1,4 +1,5 @@
 import { Avatar } from "@/components/ui/Avatar";
+import { Select } from "@/components/ui/Select";
 import type { WithId } from "@/hooks/_sub";
 import type { Calling, Member } from "@/lib/types";
 import { CALLING_OPTIONS } from "./callingLabels";
@@ -77,7 +78,7 @@ export function MemberRow({
           </div>
         )}
       </div>
-      <select
+      <Select
         value={m.calling}
         disabled={!canEdit}
         onChange={(e) =>
@@ -86,14 +87,14 @@ export function MemberRow({
             onError,
           )
         }
-        className="font-sans text-[14px] w-full px-2.5 py-1.5 bg-parchment border border-border rounded-md text-walnut hover:border-border-strong hover:bg-chalk focus:outline-none focus:border-bordeaux focus:bg-chalk focus:ring-2 focus:ring-bordeaux/15 disabled:opacity-60"
+        className="w-full"
       >
         {CALLING_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
         ))}
-      </select>
+      </Select>
       <button
         type="button"
         disabled={!canEdit}
