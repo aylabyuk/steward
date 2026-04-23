@@ -40,6 +40,35 @@ export function isPlausiblePhone(raw: string): boolean {
   return digits.length >= 7;
 }
 
+/** Coerce common North American phone entries into strict E.164
+ *  (`+14165551234`). Twilio's Conversations API rejects anything
+ *  else with "Invalid messaging binding address", so we normalize
+ *  on blur before the value lands in Firestore.
+ *
+ *  Rules (NANP-biased because the app is ward-scoped and Canadian):
+ *  - already `+...` → strip non-digits inside, keep the +
+ *  - 10 digits → assume NANP, prepend `+1`
+ *  - 11 digits starting with 1 → prepend `+`
+ *  - anything else → return digits-only; the caller flags it as
+ *    non-E.164 and the UI shows a hint. */
+export function toE164(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const hasPlus = trimmed.startsWith("+");
+  const digits = trimmed.replace(/\D/g, "");
+  if (hasPlus) return `+${digits}`;
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return digits;
+}
+
+/** Strict E.164: `+` then 7–15 digits, no leading zero. Matches
+ *  the ITU spec. Used for client-side validation — Twilio applies
+ *  its own check server-side. */
+export function isE164(value: string): boolean {
+  return /^\+[1-9]\d{6,14}$/.test(value);
+}
+
 /** Default SMS body. Short enough to fit one standard SMS segment
  *  (160 chars) when the `{{inviteUrl}}` is a typical Firestore token
  *  URL (~65 chars). Variables are interpolated by the caller. */

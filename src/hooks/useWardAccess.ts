@@ -46,10 +46,19 @@ function toMemberAccess(snap: QueryDocumentSnapshot): MemberAccess {
 }
 
 export function useWardAccess(): AccessState {
-  const email = useAuthStore((s) => s.user?.email ?? null);
+  const user = useAuthStore((s) => s.user);
+  const email = user?.email ?? null;
   const [state, setState] = useState<AccessState>({ kind: "checking" });
 
   useEffect(() => {
+    // Signed-in but no email (e.g. Firebase Phone Auth) — the ward
+    // allowlist is keyed on email, so they're definitionally not a
+    // member. Resolve to "none" instead of staying "checking"
+    // forever, which would keep the AuthGate stuck on Loading…
+    if (user && !email) {
+      setState({ kind: "none" });
+      return;
+    }
     if (!email) {
       setState({ kind: "checking" });
       return;
@@ -73,7 +82,7 @@ export function useWardAccess(): AccessState {
       },
     );
     return unsub;
-  }, [email]);
+  }, [user, email]);
 
   return state;
 }

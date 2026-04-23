@@ -21,6 +21,9 @@ blob-report/
 .env
 .env.*
 !.env.example
+# Firebase defineSecret overrides for the local functions emulator
+.secret.local
+**/.secret.local
 
 # Generated from public/firebase-messaging-sw.template.js by scripts/generate-sw.mjs
 public/firebase-messaging-sw.js

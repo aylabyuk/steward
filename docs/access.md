@@ -44,6 +44,14 @@ Steps (admin in Firebase Console):
 
 **v1.1**: self-serve via a claim-token flow.
 
+## Speaker identity (capability-token auth)
+
+Speakers don't sign in with Google or a phone OTP. Instead, `sendSpeakerInvitation` embeds a one-time capability token in the invitation URL (SMS/email), and Firestore stores only its SHA-256 hash. The `issueSpeakerSession` callable verifies the presented token against that hash and mints a Firebase custom token with `{invitationId, wardId, role: "speaker"}` claims. Firestore rules key the speaker-response write path on those claims.
+
+Rotation is automatic: a consumed or expired token that hashes to the stored value triggers a fresh SMS with a new token (capped at 3 rotations/invitation/UTC day, and prior sessions are revoked via `revokeRefreshTokens` so a leaked link has a ~1 hour max lifetime after rotation).
+
+The invite landing page runs on a second named Firebase app (`inviteApp` / `inviteAuth`) so speaker sign-in never touches the bishopric Google session on the same device — the two persist independently under separate IndexedDB keys.
+
 ## Email CC policy
 
 Every `mailto:` link auto-populates the CC field with the ward's team.

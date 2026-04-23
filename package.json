@@ -22,13 +22,15 @@
     "test:e2e": "playwright test",
     "test:e2e:emulators": "firebase emulators:exec --only auth,firestore --project=demo-steward \"playwright test --config playwright.emulators.config.ts\"",
     "test:rules": "firebase emulators:exec --only firestore --project=demo-steward \"vitest run --config vitest.rules.config.ts\"",
-    "emulators": "firebase emulators:start --only auth,firestore --import=./emulator-data --export-on-exit ./emulator-data",
+    "emulators": "firebase emulators:start --only auth,firestore,functions,pubsub --import=./emulator-data --export-on-exit ./emulator-data",
+    "dev:functions": "pnpm --filter @steward/functions build:watch",
     "bootstrap-ward": "tsx scripts/bootstrap-ward.ts",
     "add-member": "tsx scripts/add-member.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@mdxeditor/editor": "^3.55.0",
+    "@twilio/conversations": "^3.0.0",
     "clsx": "^2.1.1",
     "firebase": "^12.12.0",
     "react": "^19.1.0",

@@ -123,14 +123,26 @@ service cloud.firestore {
       }
 
       // Speaker invitations: frozen snapshots of a letter at send time.
-      // Public read — the doc ID is the shareable token, and Firestore
-      // auto-IDs are cryptographically random (~120 bits) so the URL
-      // itself authorizes access. The recipient has no other way into
-      // the ward. Writes still require an active member so only the
-      // bishopric or clerks can send.
-      match /speakerInvitations/{token} {
+      // Public read — the doc ID + the capability token in the URL
+      // together authorize access (the token itself is hashed on the
+      // doc; issueSpeakerSession verifies it). Creates + deletes stay
+      // member-only. Updates have two paths:
+      //   - active ward members: full update
+      //   - signed-in speaker: ONLY the `response` subtree, pre-expiry,
+      //     gated on a custom-claim match — the caller's ID token must
+      //     carry `invitationId == <docId>` and `wardId == <wardId>`
+      //     (minted by the issueSpeakerSession callable after a
+      //     successful capability-token exchange).
+      match /speakerInvitations/{invitationId} {
         allow read: if true;
-        allow create, update, delete: if isActiveMember(wardId);
+        allow create, delete: if isActiveMember(wardId);
+        allow update: if isActiveMember(wardId)
+          || (isSignedIn()
+              && request.auth.token.invitationId == invitationId
+              && request.auth.token.wardId == wardId
+              && request.time < resource.data.expiresAt
+              && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['response', 'speakerLastSeenAt']));
       }
 
       // Invites: bishopric creates/lists/revokes pending invites keyed by
