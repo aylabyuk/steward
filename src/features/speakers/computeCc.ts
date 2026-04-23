@@ -4,15 +4,15 @@ import type { Member } from "@/lib/types";
 /**
  * Computes the CC list for a speaker-invitation `mailto:` flow per
  * docs/access.md:
- * - Any active member with `ccOnEmails: true` is CC'd, regardless of
- *   role (bishopric or clerk/secretary).
- * - Inactive members or members with `ccOnEmails: false` are
- *   excluded — bishopric can opt themselves out via Ward Settings →
- *   Members.
+ * - Bishopric (bishop + counselors) is ALWAYS CC'd, non-togglable.
+ *   Bishopric visibility on invitation traffic is load-bearing.
+ * - Clerks and secretaries (`role: "clerk"`) are CC'd when their
+ *   `ccOnEmails` flag is true (default).
+ * - Inactive members are excluded regardless of role/flag.
  */
 export function computeCc(members: readonly WithId<Member>[]): string[] {
   return members
     .filter(({ data }) => data.active)
-    .filter(({ data }) => data.ccOnEmails)
+    .filter(({ data }) => data.role === "bishopric" || data.ccOnEmails)
     .map(({ data }) => data.email);
 }

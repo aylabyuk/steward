@@ -20,23 +20,21 @@ function mk(
 }
 
 describe("computeCc", () => {
-  it("includes every active member with ccOnEmails=true regardless of role", () => {
+  it("always includes active bishopric members (even with ccOnEmails=false)", () => {
     const cc = computeCc([
       mk("bishop", { role: "bishopric", calling: "bishop", email: "b@x.com" }),
-      mk("cl1", { role: "bishopric", calling: "first_counselor", email: "c1@x.com" }),
-      mk("clerk", { role: "clerk", calling: "ward_clerk", email: "clerk@x.com" }),
-    ]);
-    expect(cc).toEqual(["b@x.com", "c1@x.com", "clerk@x.com"]);
-  });
-
-  it("drops any member — bishopric or clerk — when ccOnEmails is false", () => {
-    const cc = computeCc([
-      mk("b", {
+      mk("cl1", {
         role: "bishopric",
-        calling: "bishop",
-        email: "b@x.com",
+        calling: "first_counselor",
+        email: "c1@x.com",
         ccOnEmails: false,
       }),
+    ]);
+    expect(cc).toEqual(["b@x.com", "c1@x.com"]);
+  });
+
+  it("includes clerks/secretaries only when ccOnEmails is true", () => {
+    const cc = computeCc([
       mk("c1", {
         role: "clerk",
         calling: "ward_clerk",

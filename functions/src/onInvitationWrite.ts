@@ -63,10 +63,10 @@ async function fetchActiveBishopricEmails(
     if (!m.active) continue;
     if (m.role !== "bishopric" && m.role !== "clerk") continue;
     if (!m.email) continue;
-    // Per-member opt-out — any active bishopric/clerk/secretary can
-    // toggle themselves off via Ward Settings → Members. Default is
-    // true for back-compat with pre-toggle member docs.
-    if (m.ccOnEmails === false) continue;
+    // Bishopric is always CC'd (non-negotiable — bishopric visibility
+    // on invitation activity is load-bearing). Clerks and secretaries
+    // opt in via `ccOnEmails` (default true for back-compat).
+    if (m.role === "clerk" && m.ccOnEmails === false) continue;
     out.push({ uid: d.id, email: m.email, displayName: m.displayName });
   }
   return out;
