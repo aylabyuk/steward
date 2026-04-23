@@ -7,6 +7,38 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.2] — 2026-04-23
+
+Hotfix for silently-dropped push notifications on iOS PWAs installed to
+the home screen. Every v0.9.x push payload included a top-level `notification`
+field, which triggers the Firebase JS SDK's auto-display path and
+bypasses the SW's `onBackgroundMessage` handler. On iOS Safari 16.4+
+that auto-display doesn't reliably call `showNotification()` inside
+the service-worker push event, so iOS drops the push (and eventually
+revokes the subscription entirely).
+
+### Fixed
+
+- **Data-only FCM payloads** across all five push call sites
+  (`invitationReplyNotify`, `invitationResponseNotify`, `onCommentCreate`,
+  `drainNotificationQueue`, `scheduledNudges`). Title/body move into
+  `data.title` / `data.body`; the SW's `onBackgroundMessage` now reads
+  them from there and always calls `showNotification()`. Works the
+  same on iOS, Android, and desktop.
+- **`webpush.headers.Urgency: high`** on every payload so APNs treats
+  the data-only message as user-visible. Without the urgency hint iOS
+  can delay or coalesce the push.
+
+### Changed
+
+- **`sendDisplayPush()` helper** in `functions/src/fcm.ts` centralizes
+  the iOS-safe payload shape. All five push call sites delegate to it
+  rather than constructing the FCM message inline.
+- **`webpush.fcmOptions.link` removed** from the payload — only the
+  auto-display path honors it, and auto-display is no longer in play.
+  The SW's `notificationclick` handler routes by `data.kind` (unchanged
+  since v0.9.0), so taps still deep-link to the right surface.
+
 ## [0.9.1] — 2026-04-23
 
 Hotfix for a regression v0.9.0 inherited from #46: eagerly rotating
@@ -845,7 +877,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/aylabyuk/steward/releases/tag/v0.9.2
 [0.9.1]: https://github.com/aylabyuk/steward/releases/tag/v0.9.1
 [0.9.0]: https://github.com/aylabyuk/steward/releases/tag/v0.9.0
 [0.8.0]: https://github.com/aylabyuk/steward/releases/tag/v0.8.0
