@@ -3,8 +3,8 @@ import { Link } from "react-router";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { IdentitySection } from "@/features/profile/IdentitySection";
 import { NotificationsSection } from "@/features/profile/NotificationsSection";
-import { ProfileRail } from "@/features/profile/ProfileRail";
-import { SaveBar } from "@/features/profile/SaveBar";
+import { PageRail } from "@/components/ui/PageRail";
+import { SaveBar } from "@/components/ui/SaveBar";
 import { SessionSection } from "@/features/profile/SessionSection";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { db } from "@/lib/firebase";
@@ -94,8 +94,8 @@ export function ProfilePage(): React.ReactElement {
   return (
     <main className="pb-24">
       <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/settings" className="hover:text-walnut">
-          ← Settings
+        <Link to="/schedule" className="hover:text-walnut">
+          ← Schedule
         </Link>
       </nav>
       <header className="mb-6">
@@ -129,7 +129,7 @@ export function ProfilePage(): React.ReactElement {
           <SessionSection />
         </div>
 
-        <ProfileRail items={RAIL_ITEMS} elsewhere={RAIL_ELSEWHERE} />
+        <PageRail items={RAIL_ITEMS} elsewhere={RAIL_ELSEWHERE} />
       </div>
 
       <SaveBar

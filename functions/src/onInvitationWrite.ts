@@ -63,6 +63,10 @@ async function fetchActiveBishopricEmails(
     if (!m.active) continue;
     if (m.role !== "bishopric" && m.role !== "clerk") continue;
     if (!m.email) continue;
+    // Bishopric is always CC'd (non-negotiable — bishopric visibility
+    // on invitation activity is load-bearing). Clerks and secretaries
+    // opt in via `ccOnEmails` (default true for back-compat).
+    if (m.role === "clerk" && m.ccOnEmails === false) continue;
     out.push({ uid: d.id, email: m.email, displayName: m.displayName });
   }
   return out;

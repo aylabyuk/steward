@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
-import { EditorSection } from "@/features/templates/SpeakerLetterEditor";
-import { renderSpeakerEmailBody } from "@/features/templates/renderSpeakerEmailBody";
-import { DEFAULT_SPEAKER_EMAIL_BODY } from "@/features/templates/speakerEmailDefaults";
-import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTemplate";
-import { writeSpeakerEmailTemplate } from "@/features/templates/writeSpeakerEmailTemplate";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
+import { renderSpeakerEmailBody } from "./renderSpeakerEmailBody";
+import { DEFAULT_SPEAKER_EMAIL_BODY } from "./speakerEmailDefaults";
+import { EditorSection } from "./SpeakerLetterEditor";
+import { useSpeakerEmailTemplate } from "./useSpeakerEmailTemplate";
+import { writeSpeakerEmailTemplate } from "./writeSpeakerEmailTemplate";
 
 const SAMPLE_URL = "https://example.com/invite/speaker/your-ward/sample-token";
 
-export function SpeakerEmailTemplatePage() {
+/** Templates → Speaker invitation email section. Plain-text message
+ *  your mail client sends from the speaker's row. Distinct from the
+ *  letter embedded on the landing page (separate editor, new tab). */
+export function SpeakerEmailSection(): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const ward = useWardSettings();
   const me = useCurrentMember();
@@ -62,27 +64,24 @@ export function SpeakerEmailTemplatePage() {
   }
 
   return (
-    <main className="pb-16">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/settings" className="hover:text-walnut">
-          ← Settings
-        </Link>
-      </nav>
-      <header className="mb-6 flex flex-col gap-1">
-        <h1 className="font-display text-[24px] font-semibold text-walnut">
-          Speaker invitation email
-        </h1>
-        <p className="font-serif text-[14px] text-walnut-2">
-          The plain-text message your email client sends when you click "Send email" on a planned
-          speaker — distinct from the letter on the landing page. Name the Sunday and purpose here
-          so the email doesn't read like a phishing link. Variables:{" "}
-          <code>{"{{speakerName}}"}</code>, <code>{"{{date}}"}</code>, <code>{"{{wardName}}"}</code>
-          , <code>{"{{inviterName}}"}</code>, <code>{"{{topic}}"}</code>,{" "}
-          <code>{"{{inviteUrl}}"}</code>.
-        </p>
-      </header>
+    <section
+      id="sec-speaker-email"
+      className="bg-chalk border border-border rounded-lg p-6 mb-4 scroll-mt-24"
+    >
+      <div className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium mb-1">
+        Template
+      </div>
+      <h2 className="font-display text-[22px] font-semibold text-walnut mb-1">
+        Speaker invitation email
+      </h2>
+      <p className="font-serif italic text-[14px] text-walnut-2 mb-5">
+        The plain-text message your email client sends when you click "Send email" on a planned
+        speaker. Variables: <code>{"{{speakerName}}"}</code>, <code>{"{{date}}"}</code>,{" "}
+        <code>{"{{wardName}}"}</code>, <code>{"{{inviterName}}"}</code>, <code>{"{{topic}}"}</code>,{" "}
+        <code>{"{{inviteUrl}}"}</code>.
+      </p>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
           <EditorSection
             label="Email body"
@@ -96,7 +95,7 @@ export function SpeakerEmailTemplatePage() {
               type="button"
               onClick={() => void handleSave()}
               disabled={!canEdit || saving}
-              className="rounded-md border border-bordeaux bg-bordeaux px-3.5 py-2 font-sans text-[13px] font-semibold text-chalk hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed"
+              className="font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? "Saving…" : "Save template"}
             </button>
@@ -104,21 +103,21 @@ export function SpeakerEmailTemplatePage() {
               type="button"
               onClick={() => setBody(DEFAULT_SPEAKER_EMAIL_BODY)}
               disabled={!canEdit || saving}
-              className="rounded-md border border-border-strong bg-chalk px-3.5 py-2 font-sans text-[13px] font-semibold text-walnut hover:bg-parchment-2 disabled:opacity-60"
+              className="font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 disabled:opacity-60"
             >
               Reset to default
             </button>
           </div>
         </div>
-        <aside className="flex flex-col gap-2">
+        <aside className="flex flex-col gap-2 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
             Preview — sample data
           </div>
-          <pre className="rounded-[14px] border border-border-strong bg-chalk p-6 shadow-elev-1 font-serif text-[14px] text-walnut-2 leading-relaxed whitespace-pre-wrap break-words">
+          <pre className="rounded-md border border-border bg-parchment-2/60 p-4 font-serif text-[13px] text-walnut-2 leading-relaxed whitespace-pre-wrap break-words">
             {preview}
           </pre>
         </aside>
       </div>
-    </main>
+    </section>
   );
 }
