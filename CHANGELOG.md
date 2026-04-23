@@ -7,6 +7,92 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-04-23
+
+Push-notification depth: bishopric members now get a push the moment a
+speaker responds (not just an email), tapping a push deep-links into
+the matching chat or week page (no more being dumped at `/`), and the
+receipt email doubles as a durable re-entry point into the speaker's
+invite page. Plus per-device labels and "This device" chips on the
+Profile page so the subscribed-devices list actually reads like it's
+about specific devices.
+
+### Added
+
+- **Push notify bishopric on speaker response** (#17). `onInvitationWrite`
+  already fires on Yes/No transitions for the receipt email — it now
+  fans out an FCM push alongside, with copy that reads "Brother Smith
+  accepted — Sun, May 10" (or "declined: '…' — Sun, May 10" when the
+  speaker included a reason, or "changed response to Yes/No — …" on a
+  flip). Clerks and the speaker themselves are excluded; quiet hours
+  honored via the shared `filterRecipients` helper.
+- **Tap-through deep-links for every push** (#68). Notifications now
+  route:
+  - `invitation-response` / `invitation-reply` → `/schedule?chat=<invitationId>`
+    (auto-opens the speaker's `BishopInvitationDialog`)
+  - `mention` → `/week/<date>`
+
+  Two layers: a `notificationclick` handler in `firebase-messaging-sw.js`
+  that focuses an existing tab and navigates it (falling back to
+  `clients.openWindow`), plus `webpush.fcmOptions.link` on the server
+  payload for Chrome/Edge native handling. Safari/Firefox use the SW
+  handler. `SpeakerRow` reads `?chat=` via `useSearchParams` and
+  auto-opens the matching dialog, stripping the query with
+  `replace: true` so a refresh doesn't re-trigger.
+- **Re-fire the speaker receipt on a yes↔no flip** (#47). Previously
+  `classifyInvitationChange` fired only on first-appearance; a speaker
+  who flipped their answer left an inbox receipt contradicting their
+  current status. Now re-fires whenever `response.answer` actually
+  changes.
+- **Link the speaker receipt email back to the invite page** (#46).
+  `buildSpeakerReceipt` renders a freshly-rotated invite URL (via the
+  existing `rotateTokenForBishopNotification` path — doesn't count
+  against the daily cap). If rotation fails, falls back to the
+  no-link receipt so the send itself never errors out.
+- **Per-device names + "This device" chip** on `/settings/profile`
+  (#53). Subscribed-devices list now labels entries with derived
+  browser+OS strings like "Chrome · macOS" / "Safari · iOS" instead
+  of the generic platform bucket. The row matching the current
+  browser/PWA gets a brass-deep "This device" chip. New
+  `deriveDeviceName` parser prefers `navigator.userAgentData`
+  (Chromium) and falls back to UA-string regex for Safari/Firefox.
+
+### Changed
+
+- **Push toggle on Profile is now scoped to the current device.**
+  Previously the switch read "any device subscribed" and flipping off
+  deleted every token in the array — so flipping off on Safari would
+  nuke a Chrome subscription too. Now tracks only the token matching
+  the current browser's FCM registration (persisted in localStorage
+  at subscribe time, cleared at unsubscribe).
+- **FCM current-token detection moved to localStorage.** Deriving
+  "which token is mine?" via a fresh `getToken()` call on every hook
+  re-run hit SW/permission timing edge cases on Chrome (chip
+  disappeared after subscribe). localStorage is per-origin
+  per-browser — exactly the "this device" identity we want — and
+  reads synchronously with no race conditions.
+
+### Fixed
+
+- `data.token` → `data.invitationId` rename on the
+  `invitation-reply` push payload for consistency with the rest of the
+  payload shape. The field has always been the invitation's Firestore
+  doc ID; the legacy name was misleading.
+
+### Infrastructure
+
+- **New Cloud Function module**: `invitationResponseNotify.ts` houses
+  `composeResponseNotification` (pure, 8 unit tests covering fresh
+  yes/no/reason + flips) and `notifyBishopricOfResponse` (the FCM
+  fan-out). `onInvitationWrite` now runs the push alongside the
+  speaker receipt in a `Promise.all`.
+- **SW template** (`public/firebase-messaging-sw.template.js`) grew a
+  `notificationclick` handler with a `data.kind` switch table. Regen
+  script (`scripts/generate-sw.mjs`) picks it up on every build.
+- **Test coverage**: 273 root unit tests (+9 for `deriveDeviceName`)
+  and 88 functions tests (+8 for the response-notification composer
+  + 2 for the response-flip classifier).
+
 ## [0.8.0] — 2026-04-23
 
 A large release that lands the Claude-Design **Profile** and **Ward
@@ -734,7 +820,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/aylabyuk/steward/releases/tag/v0.9.0
 [0.8.0]: https://github.com/aylabyuk/steward/releases/tag/v0.8.0
 [0.7.0]: https://github.com/aylabyuk/steward/releases/tag/v0.7.0
 [0.6.0]: https://github.com/aylabyuk/steward/releases/tag/v0.6.0
