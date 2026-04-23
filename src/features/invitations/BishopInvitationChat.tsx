@@ -120,13 +120,7 @@ export function BishopInvitationChat({
   const needsApply = Boolean(response && !response.acknowledgedAt);
 
   return (
-    <section className="bg-chalk border border-border rounded-lg shadow-elev-1 flex flex-col overflow-hidden">
-      <header className="px-4 py-3 border-b border-border bg-parchment">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-          Conversation with {invitation.speakerName}
-        </div>
-      </header>
-
+    <section className="bg-chalk flex flex-col overflow-hidden">
       {response && (
         <ResponseStrip
           response={response}
