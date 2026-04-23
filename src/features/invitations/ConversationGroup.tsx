@@ -38,9 +38,8 @@ export function ConversationGroup({
     >
       {/* Name eyebrow sits above the avatar row, indented past the
           avatar slot so it lines up with the bubbles. Kept outside
-          the flex row so items-center below can center the avatar
-          against the bubble stack without the eyebrow skewing the
-          computation. */}
+          the flex row so the avatar below can align against the
+          bubble stack without the eyebrow skewing the computation. */}
       {!group.mine && (
         <span className="ml-10 font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
           {group.info.displayName}
@@ -48,7 +47,7 @@ export function ConversationGroup({
       )}
       <div
         className={cn(
-          "flex items-center gap-2 max-w-[85%]",
+          "flex items-end gap-2 max-w-[85%]",
           group.mine ? "flex-row-reverse" : "flex-row",
         )}
       >
