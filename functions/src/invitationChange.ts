@@ -1,7 +1,7 @@
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 export interface InvitationChange {
-  /** Response just went from absent → present. */
+  /** Response newly set OR flipped to a different answer (yes↔no). */
   fireSpeaker: boolean;
   /** `response.acknowledgedAt` just appeared (Apply was tapped). */
   fireBishopric: boolean;
@@ -11,13 +11,16 @@ export interface InvitationChange {
  *  for a given before/after snapshot of the invitation doc.
  *
  *  - Deletions: no receipts.
- *  - Response newly set (was absent before): speaker receipt.
+ *  - Response newly set OR the answer flipped (yes↔no): speaker receipt.
+ *    We re-fire on a flip so the speaker's inbox reflects their current
+ *    status (an old yes-accepted email would otherwise linger after a
+ *    change of mind) and the bishopric CC keeps a paper trail.
  *  - Acknowledgement newly set: bishopric receipt.
  *  - Other writes (token rotation, heartbeat, delivery record): none.
  *
- *  The "appeared" guard deduplicates retried trigger invocations:
- *  a doc write that already had `response.answer` set will produce
- *  `fireSpeaker=false` on re-fire. */
+ *  Firestore writes settle once per user action, so a legitimate flip
+ *  fires exactly one receipt; re-fires of the same trigger invocation
+ *  still dedupe because `answerBefore === answerAfter` on the re-run. */
 export function classifyInvitationChange(
   before: SpeakerInvitationShape | undefined,
   after: SpeakerInvitationShape | undefined,
@@ -28,7 +31,7 @@ export function classifyInvitationChange(
   const ackBefore = before?.response?.acknowledgedAt;
   const ackAfter = after.response?.acknowledgedAt;
   return {
-    fireSpeaker: !answerBefore && Boolean(answerAfter),
+    fireSpeaker: Boolean(answerAfter) && answerBefore !== answerAfter,
     fireBishopric: !ackBefore && Boolean(ackAfter),
   };
 }
