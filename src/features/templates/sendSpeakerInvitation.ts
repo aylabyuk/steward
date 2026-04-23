@@ -4,7 +4,7 @@ import { wardSchema } from "@/lib/types";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import {
   callSendSpeakerInvitation,
-  type SendSpeakerInvitationResponse,
+  type FreshInvitationResponse,
 } from "@/features/invitations/invitationsCallable";
 import { interpolate } from "./interpolate";
 import { formatAssignedDate, formatToday } from "./letterDates";
@@ -43,7 +43,7 @@ export interface SendSpeakerInvitationInput {
  */
 export async function sendSpeakerInvitation(
   input: SendSpeakerInvitationInput,
-): Promise<SendSpeakerInvitationResponse> {
+): Promise<FreshInvitationResponse> {
   reportSaving();
   try {
     const wardSnap = await getDoc(doc(db, "wards", input.wardId));
