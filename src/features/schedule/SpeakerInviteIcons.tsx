@@ -10,15 +10,6 @@ const baseProps = {
   strokeLinejoin: "round" as const,
 };
 
-export function MailIcon() {
-  return (
-    <svg width="14" height="14" {...baseProps} className="text-brass-deep shrink-0">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M3 7l9 6 9-6" />
-    </svg>
-  );
-}
-
 export function CheckIcon() {
   return (
     <svg width="12" height="12" {...baseProps}>

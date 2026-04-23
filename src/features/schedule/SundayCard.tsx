@@ -1,12 +1,15 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel, type KindVariant } from "./kindLabel";
 import { SpeakerEditList, type SpeakerEditListHandle } from "./SpeakerEditList";
+import { SpeakerInvitationLauncher } from "./SpeakerInvitationLauncher";
 import { AssignDialog } from "./AssignDialog";
+import { EditFooter, InviteFooter } from "./AssignDialogFooters";
 import { SundayCardBody } from "./SundayCardBody";
+import { SundayCardCancelled } from "./SundayCardCancelled";
 import { SundayCardHeader } from "./SundayCardHeader";
 import { SundayCardSpecial } from "./SundayCardSpecial";
 import { formatShortDate } from "./dateFormat";
@@ -23,6 +26,8 @@ const CARD_BG: Record<KindVariant, string> = {
   stake: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
   general: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
 };
+
+type Step = "edit" | "invite";
 
 interface Props {
   date: string;
@@ -45,20 +50,25 @@ export function SundayCard({
   const cancelled = Boolean(meeting?.cancellation?.cancelled);
   const { data: speakers } = useSpeakers(date);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [step, setStep] = useState<Step>("edit");
   const [saving, setSaving] = useState(false);
   const editListRef = useRef<SpeakerEditListHandle>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
 
+  // Always start on step 1 whenever the dialog opens. Response review
+  // + apply now live on the per-speaker chat icon on the Sunday card,
+  // not inside step 2, so there's no reason to skip the editor.
+  useEffect(() => {
+    if (assignDialogOpen) setStep("edit");
+  }, [assignDialogOpen]);
+
   if (cancelled) {
     return (
-      <article className="rounded-lg border border-border bg-chalk p-4 shadow-elev-1">
-        <p className="text-lg font-semibold text-walnut line-through">{formatShortDate(date)}</p>
-        <p className="text-xs font-mono tracking-wider text-walnut-3 mt-1">Cancelled</p>
-        {meeting?.cancellation?.reason && (
-          <p className="text-sm text-walnut-2 mt-2">{meeting.cancellation.reason}</p>
-        )}
-      </article>
+      <SundayCardCancelled
+        date={date}
+        {...(meeting?.cancellation?.reason ? { reason: meeting.cancellation.reason } : {})}
+      />
     );
   }
 
@@ -66,12 +76,18 @@ export function SundayCard({
     if (!editListRef.current) return;
     setSaving(true);
     try {
-      await editListRef.current.save();
-      setAssignDialogOpen(false);
+      const plannedCount = await editListRef.current.save();
+      // If nobody's left in "planned", there's nothing to invite —
+      // close the modal entirely. Otherwise advance to step 2.
+      if (plannedCount === 0) setAssignDialogOpen(false);
+      else setStep("invite");
     } finally {
       setSaving(false);
     }
   }
+
+  const title =
+    step === "invite" ? `Send invitations — ${formatShortDate(date)}` : formatShortDate(date);
 
   return (
     <article
@@ -86,7 +102,7 @@ export function SundayCard({
         currentType={type}
         nonMeetingSundays={nonMeetingSundays}
         urgent={severity === "urgent"}
-        badge={kind.badge || undefined}
+        {...(kind.badge ? { badge: kind.badge } : {})}
         variant={kind.variant}
         locked={hasConfirmedSpeaker}
       />
@@ -105,22 +121,42 @@ export function SundayCard({
           description={kind.description}
         />
       ) : (
-        <SundayCardBody speakers={speakers} onAddSpeaker={() => setAssignDialogOpen(true)} />
+        <SundayCardBody
+          speakers={speakers}
+          date={date}
+          onAddSpeaker={() => setAssignDialogOpen(true)}
+        />
       )}
 
       <AssignDialog
         open={assignDialogOpen}
-        title={formatShortDate(date)}
-        saving={saving}
+        title={title}
         onClose={() => setAssignDialogOpen(false)}
-        onSave={handleSave}
+        footerSlot={
+          step === "edit" ? (
+            <EditFooter
+              saving={saving}
+              onCancel={() => setAssignDialogOpen(false)}
+              onSave={handleSave}
+            />
+          ) : (
+            <InviteFooter
+              onBack={() => setStep("edit")}
+              onDone={() => setAssignDialogOpen(false)}
+            />
+          )
+        }
       >
-        <SpeakerEditList
-          ref={editListRef}
-          date={date}
-          wardId={wardId}
-          nonMeetingSundays={nonMeetingSundays}
-        />
+        {step === "edit" ? (
+          <SpeakerEditList
+            ref={editListRef}
+            date={date}
+            wardId={wardId}
+            nonMeetingSundays={nonMeetingSundays}
+          />
+        ) : (
+          <SpeakerInvitationLauncher date={date} speakers={speakers} />
+        )}
       </AssignDialog>
     </article>
   );

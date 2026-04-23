@@ -7,15 +7,13 @@ import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitati
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
-import { useSpeakerEmailTemplate } from "@/features/templates/useSpeakerEmailTemplate";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
 import { usePrepareInvitationActions } from "@/features/templates/usePrepareInvitationActions";
-import { isPlausiblePhone } from "@/features/templates/smsInvitation";
-import { isValidEmail } from "@/lib/email";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { PrepareInvitationPageMessage } from "./PrepareInvitationPageMessage";
+import { computeSendValidation } from "./prepare-invitation-validation";
 
 export function PrepareInvitationPage() {
   const { date, speakerId } = useParams<{ date: string; speakerId: string }>();
@@ -25,7 +23,6 @@ export function PrepareInvitationPage() {
   const ward = useWardSettings();
   const speakers = useSpeakers(date ?? null);
   const { data: letterTemplate } = useSpeakerLetterTemplate();
-  const { data: emailTemplate } = useSpeakerEmailTemplate();
   const [done, setDone] = useState(false);
 
   const speaker = speakers.data?.find((s) => s.id === speakerId) ?? null;
@@ -62,9 +59,7 @@ export function PrepareInvitationPage() {
     speakerPhone: speaker?.data.phone ?? "",
     speakerTopic: speaker?.data.topic ?? "",
     inviterName,
-    vars,
     form,
-    emailTemplate,
     onDone: () => setDone(true),
   });
 
@@ -91,25 +86,16 @@ export function PrepareInvitationPage() {
   if (done) {
     return (
       <PrepareInvitationPageMessage
-        title="Done"
-        body="You can close this tab — or return to Schedule to review the status."
+        title="Invitation sent"
+        body="The speaker has been notified. This tab will close on its own."
         close
       />
     );
   }
 
-  const email = (speaker.data.email ?? "").trim();
-  const hasEmail = email.length > 0;
-  const emailValid = isValidEmail(email);
-  const canSend = hasEmail && emailValid;
-  const canSendReason = !hasEmail
-    ? "No email on file — print, text, or mark invited instead."
-    : !emailValid
-      ? "Invalid email format."
-      : null;
-  const phone = (speaker.data.phone ?? "").trim();
-  const canSms = isPlausiblePhone(phone);
-  const canSmsReason = canSend || canSms ? null : !phone ? "No phone on file." : null;
+  const { email, hasEmail, canSend, canSendReason, canSms, canSmsReason } = computeSendValidation(
+    speaker.data,
+  );
 
   const toolbarProps = {
     busy: form.busy,

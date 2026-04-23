@@ -1,0 +1,71 @@
+import { doc, getDoc, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
+import { db, inviteDb } from "@/lib/firebase";
+
+export interface SpeakerResponseInput {
+  wardId: string;
+  invitationId: string;
+  answer: "yes" | "no";
+  reason?: string;
+  actorUid: string;
+  /** Verified Google email, if the speaker happens to also have a
+   *  Google session on the same device. Optional — capability-token
+   *  speakers rely on their custom-claim identity, not email. */
+  actorEmail?: string;
+}
+
+/** Speaker-side: writes the `response` subtree on the invitation
+ *  doc. Routes through `inviteDb` so the write carries the isolated
+ *  `inviteAuth` session's ID token (with invitationId claim). */
+export async function writeSpeakerResponse(input: SpeakerResponseInput): Promise<void> {
+  const ref = doc(inviteDb, "wards", input.wardId, "speakerInvitations", input.invitationId);
+  await updateDoc(ref, {
+    response: {
+      answer: input.answer,
+      ...(input.reason ? { reason: input.reason } : {}),
+      respondedAt: serverTimestamp(),
+      actorUid: input.actorUid,
+      ...(input.actorEmail ? { actorEmail: input.actorEmail } : {}),
+    },
+  });
+}
+
+export interface ApplyResponseInput {
+  wardId: string;
+  invitationId: string;
+  bishopUid: string;
+}
+
+/** Bishop-side: applies the speaker's response to `speaker.status`
+ *  (confirmed for yes, declined for no) and stamps the invitation's
+ *  acknowledgement. Batched so either both writes land or neither.
+ *  Routes through the main `db` (bishopric Google session). */
+export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise<void> {
+  const invitationRef = doc(db, "wards", input.wardId, "speakerInvitations", input.invitationId);
+  const snap = await getDoc(invitationRef);
+  if (!snap.exists()) throw new Error("Invitation not found.");
+  const data = snap.data() as {
+    response?: { answer: "yes" | "no" };
+    speakerRef: { meetingDate: string; speakerId: string };
+  };
+  const answer = data.response?.answer;
+  if (!answer) throw new Error("No response to apply.");
+
+  const newStatus: "confirmed" | "declined" = answer === "yes" ? "confirmed" : "declined";
+  const speakerRef = doc(
+    db,
+    "wards",
+    input.wardId,
+    "meetings",
+    data.speakerRef.meetingDate,
+    "speakers",
+    data.speakerRef.speakerId,
+  );
+
+  const batch = writeBatch(db);
+  batch.update(invitationRef, {
+    "response.acknowledgedAt": serverTimestamp(),
+    "response.acknowledgedBy": input.bishopUid,
+  });
+  batch.update(speakerRef, { status: newStatus });
+  await batch.commit();
+}

@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import { createSpeaker, deleteSpeaker, updateSpeaker } from "@/features/speakers/speakerActions";
 import { useSpeakers } from "@/hooks/useMeeting";
 import type { NonMeetingSunday } from "@/lib/types";
+import { AddSpeakerCard } from "./AddSpeakerCard";
 import { SpeakerEditCard } from "./SpeakerEditCard";
 import { emptyDraft, fromSpeaker, isDirty, type Draft } from "./speakerDraft";
 
@@ -11,8 +12,18 @@ interface Props {
   nonMeetingSundays: readonly NonMeetingSunday[];
 }
 
+/** Typical sacrament meeting has 2–3 speakers; 4 is the rare
+ *  all-slots-filled Sunday (e.g. a youth month with two youth + two
+ *  adults). Cap the Add button here rather than letting bishoprics
+ *  accidentally stack a long list that'll blow the time budget. */
+const MAX_SPEAKERS = 4;
+
 export interface SpeakerEditListHandle {
-  save: () => Promise<void>;
+  /** Persist all changes. Resolves with the count of speakers still
+   *  in "planned" status after save — the caller uses that to decide
+   *  whether to advance to the Invite Launcher (step 2) or close the
+   *  modal when there's no one left to invite. */
+  save: () => Promise<number>;
 }
 
 export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function SpeakerEditList(
@@ -60,7 +71,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   }
 
   function addDraft() {
-    setDrafts((prev) => [...prev, emptyDraft()]);
+    setDrafts((prev) => (prev.length >= MAX_SPEAKERS ? prev : [...prev, emptyDraft()]));
   }
 
   useImperativeHandle(
@@ -74,9 +85,11 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
         for (const id of deletedIds) {
           await deleteSpeaker(wardId, date, id);
         }
+        let plannedCount = 0;
         for (const d of drafts) {
           const name = d.name.trim();
           if (!name) continue;
+          if (d.status === "planned") plannedCount += 1;
           if (d.id === null) {
             await createSpeaker({
               wardId,
@@ -102,6 +115,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
           }
         }
         setDeletedIds([]);
+        return plannedCount;
       },
     }),
     [drafts, deletedIds, wardId, date, nonMeetingSundays],
@@ -112,35 +126,27 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   }
 
   return (
-    <div className="flex flex-col gap-2.5">
-      {drafts.map((d, i) => (
-        <SpeakerEditCard
-          key={d.tempId}
-          draft={d}
-          index={i}
-          date={date}
-          onChange={(partial) => updateDraft(d.tempId, partial)}
-          onRemove={() => removeDraft(d.tempId)}
+    <div className="flex flex-col gap-3">
+      <p className="font-serif text-[13.5px] text-walnut-2">
+        Add or edit speakers for this Sunday. Save when you're ready, then we'll walk through
+        sending each invitation in the next step.
+      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
+        {drafts.map((d, i) => (
+          <SpeakerEditCard
+            key={d.tempId}
+            draft={d}
+            index={i}
+            onChange={(partial) => updateDraft(d.tempId, partial)}
+            onRemove={() => removeDraft(d.tempId)}
+          />
+        ))}
+        <AddSpeakerCard
+          onClick={addDraft}
+          disabled={drafts.length >= MAX_SPEAKERS}
+          max={MAX_SPEAKERS}
         />
-      ))}
-      <button
-        onClick={addDraft}
-        className="self-start font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 inline-flex items-center gap-1.5 transition-colors mt-1"
-      >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        Add speaker
-      </button>
+      </div>
     </div>
   );
 });

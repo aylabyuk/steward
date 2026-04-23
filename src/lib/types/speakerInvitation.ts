@@ -2,15 +2,68 @@ import { z } from "zod";
 
 /**
  * A frozen snapshot of a speaker invitation letter, stored under
- * `wards/{wardId}/speakerInvitations/{token}`. The doc's auto-
- * generated ID doubles as the shareable link token: anyone with the
- * URL can read the doc (rule: `allow read: if true`), which is safe
- * because the token is unguessable (~120 bits of entropy from
- * Firestore's auto-ID).
+ * `wards/{wardId}/speakerInvitations/{invitationId}`. Anyone with the
+ * URL can read the doc (rule: `allow read: if true`); the doc ID is
+ * unguessable, and a separate capability token in the URL authorizes
+ * speaker sign-in (validated by the issueSpeakerSession callable
+ * against the `tokenHash` on this doc).
  *
  * Snapshotting means the speaker keeps the exact letter they were
  * sent, even if the ward edits the template later.
  */
+/** One entry per channel the bishop asked us to deliver on at send time.
+ *  Lets the UI render a per-channel status ("email ✓ · SMS failed") and
+ *  gives ops a readable audit of exactly what went out. */
+export const speakerInvitationDeliverySchema = z.object({
+  channel: z.enum(["email", "sms"]),
+  status: z.enum(["sent", "failed", "fallback-sms"]),
+  /** SendGrid message id or Twilio message/conversation SID. */
+  providerId: z.string().optional(),
+  error: z.string().optional(),
+  at: z.any(),
+});
+export type SpeakerInvitationDelivery = z.infer<typeof speakerInvitationDeliverySchema>;
+
+/** Snapshot of the active bishopric + clerk members at send time.
+ *  Lets the speaker's public invite page show real names on bishop
+ *  message bubbles — the speaker has no access to the ward members
+ *  collection via Firestore rules, so we bake the minimum needed
+ *  (uid + displayName + role) into the invitation itself. Grows
+ *  stale as the ward changes; fine for one-invitation scope. */
+export const speakerInvitationStaffSchema = z.object({
+  uid: z.string(),
+  displayName: z.string(),
+  role: z.enum(["bishopric", "clerk"]),
+  /** Email address — lets the bishop-side identity banner + the
+   *  speaker-side bubble eyebrows show each staff member's email.
+   *  Optional for backward compat with pre-refinement docs. */
+  email: z.string().optional(),
+});
+export type SpeakerInvitationStaff = z.infer<typeof speakerInvitationStaffSchema>;
+
+/** Captured the first time the speaker taps Yes or No on the web side.
+ *  SMS-only speakers who just text their answer back won't populate this
+ *  — the bishop reads the thread and decides manually. */
+export const speakerInvitationResponseSchema = z.object({
+  answer: z.enum(["yes", "no"]),
+  reason: z.string().optional(),
+  respondedAt: z.any(),
+  /** Firebase Auth uid of the signed-in speaker at submit. The
+   *  speaker uid is deterministic per invitation
+   *  (`speaker:{wardId}:{invitationId}`) — minted by
+   *  issueSpeakerSession from a custom token. */
+  actorUid: z.string(),
+  /** Verified email, if the speaker signed in via email/Google auth.
+   *  Capability-token speakers leave this blank. */
+  actorEmail: z.string().optional(),
+  /** Bishop pressed "Apply as confirmed/declined" and the mirror write
+   *  to `speaker.status` landed. Until then the schedule badge still
+   *  says "speaker replied — needs review". */
+  acknowledgedAt: z.any().optional(),
+  acknowledgedBy: z.string().optional(),
+});
+export type SpeakerInvitationResponse = z.infer<typeof speakerInvitationResponseSchema>;
+
 export const speakerInvitationSchema = z.object({
   /** Denormalized speaker reference back to the originating doc. */
   speakerRef: z.object({
@@ -30,5 +83,63 @@ export const speakerInvitationSchema = z.object({
   /** Scripture footer post-interpolation. */
   footerMarkdown: z.string(),
   createdAt: z.any().optional(),
+
+  /** Snapshotted at send time so Firestore rules + Cloud Functions can
+   *  gate writes without reading the live speaker doc. A signed-in
+   *  Google account can only write the response subtree when its
+   *  verified email matches (case-insensitive). Absent = speaker has no
+   *  email on file, web-side response is disabled for this invitation. */
+  speakerEmail: z.string().optional(),
+  speakerPhone: z.string().optional(),
+
+  /** Monday 00:00 local to the sender, written once at send time.
+   *  Rules reject speaker-side writes past this; reads stay open so the
+   *  bishopric can still review archived threads. */
+  expiresAt: z.any().optional(),
+
+  /** SHA-256 (hex) of the capability token that authorizes speaker
+   *  sign-in. Plaintext token never lands in Firestore — only in the
+   *  invitation URL delivered to the speaker's phone/email. On
+   *  consumption the hash stays (so presenting the dead link can
+   *  trigger rotation); rotation overwrites this with a fresh hash. */
+  tokenHash: z.string().optional(),
+  /** "active" after issue or rotation; "consumed" after a successful
+   *  issueSpeakerSession exchange. A consumed token can't mint a
+   *  session, but presenting it still triggers rotation (subject to
+   *  the daily cap). */
+  tokenStatus: z.enum(["active", "consumed"]).optional(),
+  /** Hard wall for session exchange. Mirrors `expiresAt` on
+   *  freshly-issued invitations; rotation doesn't extend it (once the
+   *  meeting is past, the invitation is dead). */
+  tokenExpiresAt: z.any().optional(),
+  /** Visitor-triggered rotations per `yyyy-mm-dd`. Capped at 3/day
+   *  per invitation to bound Twilio cost exposure if a link leaks. */
+  tokenRotationsByDay: z.record(z.string(), z.number()).optional(),
+
+  /** Twilio Conversation SID. Primary key the chat clients bootstrap
+   *  against. Missing on pre-#16 invitations — those render read-only
+   *  letters with no chat pane. */
+  conversationSid: z.string().optional(),
+
+  /** Delivery outcome(s) captured at send time. Populated by the
+   *  sendSpeakerInvitation callable; displayed on the Prepare page as
+   *  a small per-channel status strip. */
+  deliveryRecord: z.array(speakerInvitationDeliverySchema).default([]),
+
+  /** Active bishopric/clerk snapshot at send time. Used by the
+   *  speaker's public invite page to label message bubbles by real
+   *  name without needing to read the ward members collection. */
+  bishopricParticipants: z.array(speakerInvitationStaffSchema).default([]),
+
+  /** Populated by the speaker's Yes/No tap; acknowledged by the bishop
+   *  via the Apply-response action. */
+  response: speakerInvitationResponseSchema.optional(),
+
+  /** Heartbeat written by the speaker's invite page (every 60s while
+   *  the tab is visible + authenticated). The bishop-reply webhook
+   *  reads this to decide whether to send an SMS-with-resume-link: if
+   *  the heartbeat is fresh the speaker is presumed to be looking at
+   *  the chat live and we stay quiet. */
+  speakerLastSeenAt: z.any().optional(),
 });
 export type SpeakerInvitation = z.infer<typeof speakerInvitationSchema>;

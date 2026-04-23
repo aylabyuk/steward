@@ -53,3 +53,14 @@ export async function seedWard(env: RulesTestEnvironment, wardId: string): Promi
 export function authedAs(env: RulesTestEnvironment, uid: string, email: string): RulesTestContext {
   return env.authenticatedContext(uid, { email, email_verified: true });
 }
+
+/** Signed-in context with the speaker custom claims minted by the
+ *  issueSpeakerSession callable. The rule engine reads
+ *  `request.auth.token.invitationId` + `wardId` from the claims. */
+export function authedAsSpeaker(
+  env: RulesTestEnvironment,
+  uid: string,
+  claims: { invitationId: string; wardId: string },
+): RulesTestContext {
+  return env.authenticatedContext(uid, { ...claims, role: "speaker" });
+}
