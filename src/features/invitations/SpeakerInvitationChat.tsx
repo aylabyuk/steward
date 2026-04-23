@@ -5,6 +5,7 @@ import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { QuickActionButtons } from "./QuickActionButtons";
 import { useConversation, type AuthorInfo, type AuthorMap } from "./useConversation";
+import { useSpeakerHeartbeat } from "./useSpeakerHeartbeat";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
 
@@ -32,6 +33,11 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
   const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
 
   useEffect(() => onAuthStateChanged(inviteAuth, setUser), []);
+  useSpeakerHeartbeat({
+    wardId: props.wardId,
+    invitationId: props.invitationId,
+    enabled: Boolean(user),
+  });
 
   const resolvedAuthors: AuthorMap = useMemo(() => {
     const map = new Map<string, AuthorInfo>();

@@ -134,5 +134,12 @@ export const speakerInvitationSchema = z.object({
   /** Populated by the speaker's Yes/No tap; acknowledged by the bishop
    *  via the Apply-response action. */
   response: speakerInvitationResponseSchema.optional(),
+
+  /** Heartbeat written by the speaker's invite page (every 60s while
+   *  the tab is visible + authenticated). The bishop-reply webhook
+   *  reads this to decide whether to send an SMS-with-resume-link: if
+   *  the heartbeat is fresh the speaker is presumed to be looking at
+   *  the chat live and we stay quiet. */
+  speakerLastSeenAt: z.any().optional(),
 });
 export type SpeakerInvitation = z.infer<typeof speakerInvitationSchema>;

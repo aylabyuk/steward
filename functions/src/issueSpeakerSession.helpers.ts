@@ -78,6 +78,38 @@ export async function decideTokenAction(
   });
 }
 
+/** Mint a fresh capability token for the bishop-reply notification
+ *  SMS. Unlike `decideTokenAction`'s rotate branch, this path is
+ *  bishop-initiated (not visitor-triggered): it does NOT count against
+ *  `tokenRotationsByDay`, does NOT revoke the speaker's Firebase
+ *  session (they may be actively in chat), and keeps the invitation's
+ *  original `tokenExpiresAt`. If the invitation is missing or past
+ *  expiry, returns null so the caller can skip the SMS.
+ *
+ *  Side effect: overwrites `tokenHash` on the invitation doc. The
+ *  speaker's original SMS URL (if still unused) becomes invalid —
+ *  that's acceptable because the fresh notification SMS carries a
+ *  working URL to the same conversation. */
+export async function rotateTokenForBishopNotification(
+  wardId: string,
+  invitationId: string,
+): Promise<{ newToken: string; speakerPhone: string | undefined } | null> {
+  const ref = getFirestore().doc(`wards/${wardId}/speakerInvitations/${invitationId}`);
+  return getFirestore().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return null;
+    const data = snap.data() as SpeakerInvitationShape;
+    const now = Date.now();
+    if (data.tokenExpiresAt instanceof Timestamp && data.tokenExpiresAt.toMillis() <= now) {
+      return null;
+    }
+    const newToken = generateInvitationToken();
+    const newHash = hashInvitationToken(newToken);
+    tx.update(ref, { tokenHash: newHash, tokenStatus: "active" as const });
+    return { newToken, speakerPhone: data.speakerPhone };
+  });
+}
+
 /** Tears down any Firebase Auth session previously minted for this
  *  invitation. Used on rotation so a leaked link that got signed in
  *  can't keep its session alive past the next ID-token refresh. */
