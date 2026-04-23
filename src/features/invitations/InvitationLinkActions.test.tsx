@@ -29,6 +29,10 @@ function mkInvitation(overrides: Partial<SpeakerInvitation> = {}): SpeakerInvita
   };
 }
 
+function openMenu() {
+  fireEvent.click(screen.getByRole("button", { name: "Invitation link actions" }));
+}
+
 beforeEach(() => {
   mockFn.mockReset();
   Object.assign(navigator, {
@@ -41,15 +45,22 @@ afterEach(() => {
 });
 
 describe("InvitationLinkActions", () => {
-  it("calls rotate with empty channels for Copy link, writes URL to clipboard", async () => {
+  it("renders an overflow menu trigger, not visible action buttons", () => {
+    render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
+    expect(screen.queryByText("Copy link")).toBeNull();
+    expect(screen.getByRole("button", { name: "Invitation link actions" })).toBeTruthy();
+  });
+
+  it("Copy link menu item rotates with empty channels and writes URL to clipboard", async () => {
     mockFn.mockResolvedValue({
       mode: "rotate",
       inviteUrl: "https://app.example/invite/speaker/w1/i1/tok",
       deliveryRecord: [],
     });
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
-    fireEvent.click(screen.getByText("Copy link"));
-    await waitFor(() => expect(screen.getByText("Copied ✓")).toBeTruthy());
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Copy link" }));
+    await waitFor(() => expect(screen.getByText("Link copied")).toBeTruthy());
     expect(mockFn).toHaveBeenCalledWith({
       mode: "rotate",
       wardId: "w1",
@@ -61,19 +72,21 @@ describe("InvitationLinkActions", () => {
     );
   });
 
-  it("resend button includes both channels when invitation has email + phone", () => {
+  it("Resend menu item shows both channels when invitation has email + phone", () => {
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
-    expect(screen.getByText("Resend EMAIL + SMS")).toBeTruthy();
+    openMenu();
+    expect(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" })).toBeTruthy();
   });
 
-  it("resend button is disabled when invitation has no email or phone", () => {
+  it("omits the Resend item entirely when no channel is available", () => {
     const inv = mkInvitation({ speakerEmail: undefined, speakerPhone: undefined });
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={inv} />);
-    const btn = screen.getByTitle("No email or phone on file") as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
+    openMenu();
+    expect(screen.getByRole("menuitem", { name: "Copy link" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: /Resend/ })).toBeNull();
   });
 
-  it("surfaces a partial-failure message when every delivery failed", async () => {
+  it("surfaces a delivery-failed message when every delivery failed", async () => {
     mockFn.mockResolvedValue({
       mode: "rotate",
       inviteUrl: "https://app.example/invite/speaker/w1/i1/tok",
@@ -81,8 +94,9 @@ describe("InvitationLinkActions", () => {
     });
     const inv = mkInvitation({ speakerEmail: undefined });
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={inv} />);
-    fireEvent.click(screen.getByText("Resend SMS"));
-    await waitFor(() => expect(screen.getByText("All delivery attempts failed.")).toBeTruthy());
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via SMS" }));
+    await waitFor(() => expect(screen.getByText("Delivery failed.")).toBeTruthy());
   });
 
   it("reports the channels that actually sent on success", async () => {
@@ -95,7 +109,8 @@ describe("InvitationLinkActions", () => {
       ],
     });
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
-    fireEvent.click(screen.getByText("Resend EMAIL + SMS"));
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" }));
     await waitFor(() => expect(screen.getByText("Sent via SMS")).toBeTruthy());
   });
 });

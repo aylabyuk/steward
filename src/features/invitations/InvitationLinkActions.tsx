@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { OverflowMenu, type OverflowMenuItem } from "@/components/ui/OverflowMenu";
 import type { SpeakerInvitation } from "@/lib/types";
 import { callRotateInvitationLink } from "./invitationsCallable";
 
@@ -15,8 +16,10 @@ type Status =
   | { kind: "sent"; channels: readonly ("email" | "sms")[] }
   | { kind: "error"; message: string };
 
-/** Two-button panel for the bishop viewing an already-sent invitation:
- *  rotate + copy the URL, or rotate + re-deliver via the same channels
+const FLASH_MS = 2500;
+
+/** Overflow menu for the bishop viewing an already-sent invitation:
+ *  rotate + copy the URL, or rotate + re-deliver via the channels
  *  the invitation originally used. Both actions invalidate any prior
  *  URL the speaker has — the server-side self-heal path handles any
  *  concurrent visit to an older link. */
@@ -26,8 +29,13 @@ export function InvitationLinkActions({
   invitation,
 }: Props): React.ReactElement {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-
   const deliverable = availableChannels(invitation);
+
+  useEffect(() => {
+    if (status.kind !== "copied" && status.kind !== "sent") return;
+    const t = setTimeout(() => setStatus({ kind: "idle" }), FLASH_MS);
+    return () => clearTimeout(t);
+  }, [status]);
 
   async function copy() {
     setStatus({ kind: "working", verb: "copy" });
@@ -57,7 +65,7 @@ export function InvitationLinkActions({
       });
       const sent = res.deliveryRecord.filter((d) => d.status === "sent").map((d) => d.channel);
       if (sent.length === 0) {
-        setStatus({ kind: "error", message: "All delivery attempts failed." });
+        setStatus({ kind: "error", message: "Delivery failed." });
         return;
       }
       setStatus({ kind: "sent", channels: sent });
@@ -66,41 +74,30 @@ export function InvitationLinkActions({
     }
   }
 
-  const working = status.kind === "working";
+  const items: OverflowMenuItem[] = [{ label: "Copy link", onSelect: () => void copy() }];
+  if (deliverable.length > 0) {
+    items.push({
+      label: `Resend via ${formatChannels(deliverable)}`,
+      onSelect: () => void resend(),
+    });
+  }
 
   return (
-    <div className="flex flex-col gap-1 items-end">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={copy}
-          disabled={working}
-          className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-2 hover:text-walnut px-2 py-1 border border-border rounded-md hover:bg-parchment-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+    <div className="flex items-center gap-2">
+      {status.kind !== "idle" && (
+        <span
+          role="status"
+          aria-live="polite"
+          className={
+            status.kind === "error"
+              ? "font-mono text-[10px] uppercase tracking-[0.14em] text-bordeaux"
+              : "font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3"
+          }
         >
-          {copyLabel(status)}
-        </button>
-        <button
-          type="button"
-          onClick={resend}
-          disabled={working || deliverable.length === 0}
-          title={deliverable.length === 0 ? "No email or phone on file" : undefined}
-          className="font-mono text-[10px] uppercase tracking-[0.14em] text-parchment px-2 py-1 border border-bordeaux-deep bg-bordeaux hover:bg-bordeaux-deep rounded-md disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-        >
-          {status.kind === "working" && status.verb === "resend"
-            ? "Sending…"
-            : `Resend ${formatChannels(deliverable)}`}
-        </button>
-      </div>
-      {status.kind === "sent" && (
-        <p className="font-mono text-[10px] text-walnut-3" aria-live="polite">
-          Sent via {formatChannels(status.channels)}
-        </p>
+          {statusLabel(status)}
+        </span>
       )}
-      {status.kind === "error" && (
-        <p className="font-mono text-[10px] text-bordeaux" aria-live="polite">
-          {status.message}
-        </p>
-      )}
+      <OverflowMenu items={items} ariaLabel="Invitation link actions" />
     </div>
   );
 }
@@ -112,10 +109,11 @@ function availableChannels(invitation: SpeakerInvitation): readonly ("email" | "
   return out;
 }
 
-function copyLabel(status: Status): string {
-  if (status.kind === "copied") return "Copied ✓";
-  if (status.kind === "working" && status.verb === "copy") return "Copying…";
-  return "Copy link";
+function statusLabel(status: Status): string {
+  if (status.kind === "working") return status.verb === "copy" ? "Copying…" : "Sending…";
+  if (status.kind === "copied") return "Link copied";
+  if (status.kind === "sent") return `Sent via ${formatChannels(status.channels)}`;
+  return status.message;
 }
 
 function formatChannels(channels: readonly ("email" | "sms")[]): string {
