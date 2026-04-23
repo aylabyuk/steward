@@ -1,14 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import Markdown from "react-markdown";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { renderWardInviteMessage } from "./renderWardInviteMessage";
 import { EditorSection } from "./SpeakerLetterEditor";
+import { TemplateVariableList } from "./TemplateVariableList";
 import { useWardInviteTemplate } from "./useWardInviteTemplate";
 import { DEFAULT_WARD_INVITE_BODY } from "./wardInviteDefaults";
 import { writeWardInviteTemplate } from "./writeWardInviteTemplate";
+
+const VARIABLES = [
+  { name: "inviteeName", hint: "Member being invited" },
+  { name: "wardName", hint: "Your ward name" },
+  { name: "inviterName", hint: "Bishop or counselor sending the invite" },
+  { name: "calling", hint: "Their calling (e.g. 'executive secretary')" },
+  { name: "role", hint: "App role — 'bishopric' or 'clerk'" },
+] as const;
 
 /** Templates → Ward invitation message section. Greeting shown at
  *  the top of the accept-invite page and used as the mailto body. */
@@ -66,20 +74,20 @@ export function WardInviteSection(): React.ReactElement {
       className="bg-chalk border border-border rounded-lg p-6 mb-4 scroll-mt-24"
     >
       <div className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium mb-1">
-        Template
+        Ward
       </div>
       <h2 className="font-display text-[22px] font-semibold text-walnut mb-1">
         Ward invitation message
       </h2>
-      <p className="font-serif italic text-[14px] text-walnut-2 mb-5">
-        The greeting shown at the top of the accept-invite page and used as the <code>mailto:</code>{" "}
-        body when you invite a new bishopric or clerk member. The sign-in link and footer are
-        appended automatically. Variables: <code>{"{{inviteeName}}"}</code>,{" "}
-        <code>{"{{wardName}}"}</code>, <code>{"{{inviterName}}"}</code>,{" "}
-        <code>{"{{calling}}"}</code>, <code>{"{{role}}"}</code>.
-      </p>
+      <div className="font-serif italic text-[14px] text-walnut-2 mb-4">
+        The greeting shown at the top of the accept-invite page and used as the mailto body when you
+        invite a new bishopric or clerk member. The sign-in link and footer are appended
+        automatically below.
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <TemplateVariableList variables={VARIABLES} />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] mt-4">
         <div className="flex flex-col gap-4">
           <EditorSection
             label="Invitation greeting"
@@ -111,17 +119,9 @@ export function WardInviteSection(): React.ReactElement {
           <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
             Preview — sample data
           </div>
-          <div className="rounded-md border border-border bg-parchment-2/60 p-4">
-            <div className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-brass-deep mb-2">
-              Ward invitation
-            </div>
-            <div className="prose prose-sm max-w-none font-serif text-[13.5px] text-walnut-2 leading-relaxed mb-3">
-              <Markdown>{preview}</Markdown>
-            </div>
-            <div className="rounded-md border border-border bg-chalk p-2.5 text-center font-sans text-[12px] italic text-walnut-3">
-              [ Accept invite button appears here ]
-            </div>
-          </div>
+          <pre className="rounded-md border border-border bg-parchment-2/60 p-4 font-serif text-[13px] text-walnut-2 leading-relaxed whitespace-pre-wrap break-words min-h-24">
+            {preview}
+          </pre>
         </aside>
       </div>
     </section>

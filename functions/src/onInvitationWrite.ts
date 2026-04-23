@@ -3,6 +3,7 @@ import { logger } from "firebase-functions/v2";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { buildBishopricReceipt, buildSpeakerReceipt } from "./invitationReceiptContent.js";
 import { classifyInvitationChange } from "./invitationChange.js";
+import { readMessageTemplate } from "./messageTemplates.js";
 import { STEWARD_ORIGIN } from "./secrets.js";
 import { sendEmail } from "./sendgrid/client.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
@@ -30,11 +31,20 @@ export const onInvitationWrite = onDocumentWritten(
     try {
       const bishopric = await fetchActiveBishopricEmails(db, wardId);
       if (change.fireSpeaker) {
-        await sendSpeakerReceipt(after, bishopric);
+        const answer = after.response?.answer;
+        const key = answer === "yes" ? "speakerResponseAccepted" : "speakerResponseDeclined";
+        const headerTemplate = await readMessageTemplate(db, wardId, key);
+        await sendSpeakerReceipt(after, bishopric, headerTemplate);
       }
       if (change.fireBishopric) {
         const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
-        await sendBishopricReceipt(after, bishopric, { wardId, invitationId, origin });
+        const headerTemplate = await readMessageTemplate(db, wardId, "bishopricResponseReceipt");
+        await sendBishopricReceipt(after, bishopric, {
+          wardId,
+          invitationId,
+          origin,
+          headerTemplate,
+        });
       }
     } catch (err) {
       logger.error("invitation receipt dispatch failed", {
@@ -75,6 +85,7 @@ async function fetchActiveBishopricEmails(
 async function sendSpeakerReceipt(
   invitation: SpeakerInvitationShape,
   bishopric: BishopricContact[],
+  headerTemplate: string,
 ): Promise<void> {
   if (!invitation.speakerEmail) {
     logger.info("speaker receipt skipped — no speakerEmail on invitation", {
@@ -82,7 +93,7 @@ async function sendSpeakerReceipt(
     });
     return;
   }
-  const content = buildSpeakerReceipt({ invitation });
+  const content = buildSpeakerReceipt({ invitation, headerTemplate });
   await sendEmail({
     to: invitation.speakerEmail,
     fromDisplayName: `${invitation.wardName} (via Steward)`,
@@ -96,7 +107,7 @@ async function sendSpeakerReceipt(
 async function sendBishopricReceipt(
   invitation: SpeakerInvitationShape,
   bishopric: BishopricContact[],
-  ctx: { wardId: string; invitationId: string; origin: string },
+  ctx: { wardId: string; invitationId: string; origin: string; headerTemplate: string },
 ): Promise<void> {
   if (bishopric.length === 0) {
     logger.warn("bishopric receipt skipped — no bishopric emails found", { wardId: ctx.wardId });
@@ -113,6 +124,7 @@ async function sendBishopricReceipt(
     bishopricViewUrl,
     acknowledgedByName,
     respondedAt,
+    headerTemplate: ctx.headerTemplate,
   });
   // Send individually rather than via CC: the bishopric list can be 3-7
   // people and individual sends give SendGrid cleaner bounce handling
