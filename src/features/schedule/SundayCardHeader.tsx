@@ -38,10 +38,13 @@ export function SundayCardHeader({
   return (
     <div className="flex items-start justify-between gap-3 p-4 pb-2">
       <div className="flex items-start gap-2 flex-1 min-w-0">
-        <Link to={`/week/${date}`} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
-          <div className="text-2xl font-display font-semibold text-walnut leading-tight">
+        <div className="flex-1 min-w-0">
+          <Link
+            to={`/week/${date}`}
+            className="text-2xl font-display font-semibold text-walnut leading-tight hover:text-bordeaux-deep hover:underline underline-offset-4 decoration-from-font transition-colors"
+          >
             {formatShortDate(date)}
-          </div>
+          </Link>
           <div
             className={cn(
               "text-[11px] font-mono tracking-[0.08em] uppercase mt-1",
@@ -50,7 +53,7 @@ export function SundayCardHeader({
           >
             {formatCountdown(date)}
           </div>
-        </Link>
+        </div>
         {needsApply && (
           <span
             aria-label="Speaker response awaiting your review"
