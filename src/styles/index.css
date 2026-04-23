@@ -93,6 +93,24 @@
   body {
     @apply bg-parchment text-walnut font-sans text-base leading-relaxed antialiased;
     text-rendering: optimizeLegibility;
+    /* Native-app feel in the installed PWA: no rubber-band bounce on
+       the page, and no double-tap zoom (manipulation still allows
+       pan + pinch on inner scroll containers). Pinch-zoom on the
+       page itself is blocked by the viewport meta. */
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+
+  /* iOS Safari auto-zooms any focused input whose computed font-size
+     is under 16px, and doesn't fully zoom back out. Force a 16px
+     floor on touch devices only — desktop keeps the intended small
+     visual size from Tailwind utilities. */
+  @media (hover: none) and (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
   }
 
   /* Semantic typography */
