@@ -1,7 +1,5 @@
 import { logger } from "firebase-functions/v2";
 import { buildBishopricReceipt, buildSpeakerReceipt } from "./invitationReceiptContent.js";
-import { rotateTokenForBishopNotification } from "./issueSpeakerSession.helpers.js";
-import { buildInviteUrl } from "./sendSpeakerInvitation.helpers.js";
 import { sendEmail } from "./sendgrid/client.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 import type { MemberDoc } from "./types.js";
@@ -36,7 +34,6 @@ export async function sendSpeakerReceipt(
   invitation: SpeakerInvitationShape,
   bishopric: BishopricContact[],
   headerTemplate: string,
-  inviteUrl: string | undefined,
 ): Promise<void> {
   if (!invitation.speakerEmail) {
     logger.info("speaker receipt skipped — no speakerEmail on invitation", {
@@ -44,11 +41,7 @@ export async function sendSpeakerReceipt(
     });
     return;
   }
-  const content = buildSpeakerReceipt({
-    invitation,
-    headerTemplate,
-    ...(inviteUrl ? { inviteUrl } : {}),
-  });
+  const content = buildSpeakerReceipt({ invitation, headerTemplate });
   await sendEmail({
     to: invitation.speakerEmail,
     fromDisplayName: `${invitation.wardName} (via Steward)`,
@@ -57,29 +50,6 @@ export async function sendSpeakerReceipt(
     html: content.html,
     ...(bishopric.length > 0 ? { cc: bishopric.map((b) => b.email) } : {}),
   });
-}
-
-/** Rotate a fresh capability token for the receipt email's invite
- *  link. Bishop-origin rotations don't count against the daily cap
- *  (same rationale as the reply-notify path). Returns `undefined` on
- *  any failure — the receipt still goes out, just without a link. */
-export async function rotateInviteUrl(
-  wardId: string,
-  invitationId: string,
-  origin: string,
-): Promise<string | undefined> {
-  try {
-    const rotated = await rotateTokenForBishopNotification(wardId, invitationId);
-    if (!rotated) return undefined;
-    return buildInviteUrl(origin, wardId, invitationId, rotated.newToken);
-  } catch (err) {
-    logger.warn("speaker-receipt token rotation failed — sending no-link receipt", {
-      wardId,
-      invitationId,
-      err: (err as Error).message,
-    });
-    return undefined;
-  }
 }
 
 export async function sendBishopricReceipt(
