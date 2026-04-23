@@ -94,7 +94,7 @@ export async function createFreshInvitation(
       ),
     );
   }
-  if (wantsSms) deliveryRecord.push(await trySms(input.speakerPhone!, emailArgs));
+  if (wantsSms) deliveryRecord.push(await trySms(input.wardId, input.speakerPhone!, emailArgs));
   await docRef.update({ deliveryRecord });
 
   return { mode: "fresh", token: docRef.id, conversationSid, deliveryRecord };

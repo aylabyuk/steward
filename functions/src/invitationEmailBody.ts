@@ -26,14 +26,6 @@ export function buildEmailHtml(a: BuildEmailArgs): string {
 <p style="color:#666;font-size:12px;">— ${escapeHtml(a.wardName)}</p>`;
 }
 
-export function buildSmsBody(a: BuildEmailArgs): string {
-  return (
-    `${a.inviterName} (${a.wardName}) has invited you to speak on ${a.assignedDate}. ` +
-    `Read the full invitation: ${a.inviteUrl}. ` +
-    `Reply STOP to unsubscribe.`
-  );
-}
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
