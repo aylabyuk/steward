@@ -60,7 +60,7 @@ export function ConversationComposer({
   }
 
   return (
-    <div className="flex flex-col bg-chalk border-t border-border">
+    <div className="mt-auto shrink-0 flex flex-col bg-chalk border-t border-border pb-[env(safe-area-inset-bottom)]">
       {pendingText && <PendingBubble text={pendingText} />}
       <div className="flex flex-col gap-1.5 p-3">
         {error && <p className="font-sans text-[11.5px] text-bordeaux">{error}</p>}
