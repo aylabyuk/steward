@@ -39,18 +39,22 @@ export async function createFreshInvitation(
   const tokenHash = hashInvitationToken(plaintextToken);
   const expiresAt = new Date(input.expiresAtMillis);
 
+  // Admin SDK rejects `undefined` field values by default, so only
+  // include the optional contact/topic fields when the caller actually
+  // provided them. Missing fields read as `undefined` downstream,
+  // which is what the rest of the code already expects.
   const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
     speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
     assignedDate: input.assignedDate,
     sentOn: input.sentOn,
     wardName: input.wardName,
     speakerName: input.speakerName,
-    speakerTopic: input.speakerTopic,
+    ...(input.speakerTopic ? { speakerTopic: input.speakerTopic } : {}),
     inviterName: input.inviterName,
     bodyMarkdown: input.bodyMarkdown,
     footerMarkdown: input.footerMarkdown,
-    speakerEmail: input.speakerEmail,
-    speakerPhone: input.speakerPhone,
+    ...(input.speakerEmail ? { speakerEmail: input.speakerEmail } : {}),
+    ...(input.speakerPhone ? { speakerPhone: input.speakerPhone } : {}),
     expiresAt,
     tokenHash,
     tokenStatus: "active" as const,
