@@ -69,6 +69,16 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     });
   }, [twilio, props.wardId, props.invitationId]);
 
+  // Clear the speaker's unread horizon whenever they're viewing the
+  // chat and new messages land. Drives the page-level "New message"
+  // banner down to quiet once the speaker has actually seen the
+  // bishopric's reply — without this, the banner stays lit even
+  // after the drawer has been opened.
+  useEffect(() => {
+    if (!conversation || messages.length === 0) return;
+    void conversation.setAllMessagesRead();
+  }, [conversation, messages.length]);
+
   const resolvedAuthors = useMemo(
     () =>
       buildSpeakerAuthorMap({
