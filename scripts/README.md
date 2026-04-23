@@ -79,3 +79,24 @@ pnpm tsx scripts/_reset-ward.ts stv1
 
 Positional arg is the ward id; defaults to `stv1`. **Never run this against
 a real production project.**
+
+## configure-conversation-roles (functions workspace)
+
+One-off Twilio admin: grants the default "channel user" conversation
+role the `editAnyMessage` permission so any participant can update the
+attributes of any message in a conversation. The chat UI persists emoji
+reactions as message attributes; without this permission, reacting to
+someone else's message silently fails with a Twilio 403.
+
+Lives inside the functions workspace because it uses the `twilio` SDK
+which is only declared as a functions dependency:
+
+```sh
+TWILIO_ACCOUNT_SID=AC... \
+TWILIO_AUTH_TOKEN=... \
+TWILIO_CONVERSATIONS_SERVICE_SID=IS... \
+pnpm --filter @steward/functions configure-conversation-roles
+```
+
+Idempotent. Run once per Twilio service (dev + prod each have their own
+Conversations service SID).

@@ -7,6 +7,73 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-04-23
+
+Chat polish and invitation resend / copy-link, plus two mobile-fit
+fixes. The bishopric chat now feels like a real messenger — day
+separators, unread horizon with jump-to-latest, typing indicator,
+read receipts, composer auto-grow, optimistic send, per-message
+emoji reactions, and a full-screen mobile layout. Bishops can also
+resend an invitation SMS or copy the invite link directly from the
+chat dialog without leaving the thread, and the PWA on iOS/Android
+stops behaving like a browser tab.
+
+### Added
+
+- **Day separators + per-message timestamps** in the chat thread.
+- **Unread horizon + jump-to-latest pill** — the thread remembers
+  where the reader left off and offers a one-tap return to the
+  newest message.
+- **Typing indicator + read receipts** sourced from Twilio
+  Conversations, so both sides of the thread see presence state.
+- **Composer auto-grow, optimistic send, and SMS hint banner** —
+  messages render instantly while the API call is in flight, and
+  the composer explains that a reply will SMS the speaker.
+- **Emoji reactions on individual messages** — tap-and-hold to
+  react, same set visible to every participant.
+- **Bishop can copy or resend the invite link** from the chat
+  dialog's overflow menu. Resend triggers a fresh SMS with a
+  rotated capability token while preserving the Twilio
+  `conversationSid` (full message history stays intact).
+- **Full-screen bishop chat on mobile** with page-scroll lock so
+  the composer never hides behind iOS Safari chrome.
+
+### Changed
+
+- **`sendSpeakerInvitation` gains rotate-link mode** — the callable
+  now accepts a `rotate: true` flag that generates a new hashed
+  capability token, writes it to the invitation doc, and re-sends
+  the SMS without creating a second Twilio conversation.
+- **Chat UI polish** — redundant inner header removed, link
+  actions collapsed into the overflow menu, 36px avatars aligned
+  against the last bubble in a stack instead of the stack midpoint.
+- **a11y (chat)**: semantic separators for day breaks, an sr-only
+  label for optimistic pending messages, and a pass over
+  announcement markup.
+
+### Fixed
+
+- **Sunday card click target was too broad** — the whole top
+  region of the card navigated to `/week/:date`. Only the date
+  text now navigates, with a bordeaux-deep underline on hover;
+  the card-wide shadow lift was dropped so the card no longer
+  reads as a click target. (#38)
+- **PWA on mobile behaves like a browser tab** — overscroll
+  bounce, pinch-zoom, double-tap zoom, and iOS input-focus
+  auto-zoom are now disabled in the installed PWA via
+  `maximum-scale=1 + user-scalable=no` on the viewport meta,
+  `overscroll-behavior: none` + `touch-action: manipulation`
+  on `html, body`, and a 16px font-size floor on inputs gated
+  to touch devices. Desktop layouts and Ctrl+/- zoom are
+  unaffected. (#40)
+
+### Infrastructure
+
+- 249 unit tests passing — new coverage for the chat thread's
+  unread horizon, day separators, typing indicator, reaction
+  picker, rotate-link mode on `sendSpeakerInvitation`, and the
+  overflow-menu copy-link / resend flows.
+
 ## [0.6.0] — 2026-04-23
 
 Two-way speaker conversations (#16) and a reworked speaker scheduling flow
@@ -519,7 +586,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/aylabyuk/steward/releases/tag/v0.7.0
 [0.6.0]: https://github.com/aylabyuk/steward/releases/tag/v0.6.0
 [0.5.0]: https://github.com/aylabyuk/steward/releases/tag/v0.5.0
 [0.4.0]: https://github.com/aylabyuk/steward/releases/tag/v0.4.0

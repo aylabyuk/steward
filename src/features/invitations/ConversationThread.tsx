@@ -1,39 +1,80 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { ConversationAvatar } from "./ConversationAvatar";
-import { ConversationBubble, bubblePositionOf } from "./ConversationBubble";
-import type { AuthorInfo, AuthorMap, ChatMessage } from "./useConversation";
+import { ConversationGroup } from "./ConversationGroup";
+import { JumpToLatest } from "./JumpToLatest";
+import { DayDivider, UnreadDivider } from "./ThreadDividers";
+import { buildThreadItems } from "./threadItems";
+import type { AuthorMap, ChatMessage } from "./useConversation";
 
 interface Props {
   messages: readonly ChatMessage[];
   currentIdentity: string | null;
   authors: AuthorMap;
   loading?: boolean;
+  /** First unread Twilio message index as seen by the current
+   *  participant. When set, the thread inserts a "New messages"
+   *  divider just before that index. */
+  firstUnreadIndex?: number | null;
+  /** Highest message index the other side has marked as read. When
+   *  provided, the last mine=true bubble at or below this index gets
+   *  a "Read" receipt rendered under it. */
+  readHorizonIndex?: number | null;
+  onReact: (sid: string, emoji: string) => void;
+  /** When true, the thread expands to fill a flex parent (the full-
+   *  screen bishop dialog does this). When false (default) the thread
+   *  is capped at 60vh — right for the speaker landing page where the
+   *  thread sits inside a naturally-stacking scroll column. */
+  fillHeight?: boolean;
 }
 
-interface MessageGroup {
-  key: string;
-  author: string;
-  mine: boolean;
-  info: AuthorInfo;
-  messages: readonly ChatMessage[];
-}
-
-/** Bubble list styled after Messenger: consecutive messages by the
- *  same author collapse into one group, one avatar at the bottom
- *  (theirs) or no avatar (mine), bubbles stack tight with shaped
- *  border-radius so the group reads as a single connected shape on
- *  the avatar-facing side. */
+/** Bubble list styled after Messenger. Consecutive messages by the
+ *  same author collapse into one group; day dividers separate local
+ *  days; a "New" divider marks the unread horizon; a floating pill
+ *  appears when the user has scrolled up and new messages land. */
 export function ConversationThread({
   messages,
   currentIdentity,
   authors,
   loading,
+  firstUnreadIndex,
+  readHorizonIndex,
+  onReact,
+  fillHeight,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(true);
+  const [unseenCount, setUnseenCount] = useState(0);
+  const lastSeenIndexRef = useRef<number | null>(null);
+
+  const items = useMemo(
+    () =>
+      buildThreadItems({
+        messages,
+        currentIdentity,
+        authors,
+        firstUnreadIndex: firstUnreadIndex ?? null,
+      }),
+    [messages, currentIdentity, authors, firstUnreadIndex],
+  );
+
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length]);
+    const el = scrollRef.current;
+    if (!el) return;
+    if (atBottom) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      lastSeenIndexRef.current = messages.at(-1)?.index ?? null;
+      setUnseenCount(0);
+      return;
+    }
+    const seen = lastSeenIndexRef.current;
+    setUnseenCount(messages.filter((m) => (seen === null ? true : m.index > seen)).length);
+  }, [items, atBottom, messages]);
+
+  function jumpToBottom() {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }
 
   if (loading) {
     return <p className="font-serif italic text-[14px] text-walnut-3 p-4">Loading conversation…</p>;
@@ -46,84 +87,60 @@ export function ConversationThread({
     );
   }
 
-  const groups = groupMessages(messages, currentIdentity, authors);
+  const lastMineIndex = findLastMineIndex(messages, currentIdentity);
+  const readByOtherAt =
+    typeof readHorizonIndex === "number" &&
+    lastMineIndex !== null &&
+    readHorizonIndex >= lastMineIndex
+      ? lastMineIndex
+      : null;
 
   return (
-    <div ref={scrollRef} className="flex flex-col gap-4 p-4 overflow-y-auto max-h-[60vh]">
-      {groups.map((g) => (
-        <Group key={g.key} group={g} />
-      ))}
+    <div className={cn("relative", fillHeight && "flex-1 flex flex-col min-h-0")}>
+      <div
+        ref={scrollRef}
+        className={cn(
+          "flex flex-col gap-4 p-4 overflow-y-auto",
+          fillHeight ? "flex-1 min-h-0" : "max-h-[60vh]",
+        )}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 32);
+        }}
+      >
+        {items.map((item) => {
+          if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
+          if (item.kind === "unread") return <UnreadDivider key={item.key} />;
+          return (
+            <ConversationGroup
+              key={item.key}
+              group={item.group}
+              readByOther={
+                item.group.mine &&
+                readByOtherAt !== null &&
+                item.group.messages.some((m) => m.index === readByOtherAt)
+              }
+              selfIdentity={currentIdentity}
+              onReact={onReact}
+            />
+          );
+        })}
+      </div>
+      {!atBottom && <JumpToLatest unseenCount={unseenCount} onJump={jumpToBottom} />}
     </div>
   );
 }
 
-function groupMessages(
+function findLastMineIndex(
   messages: readonly ChatMessage[],
   currentIdentity: string | null,
-  authors: AuthorMap,
-): MessageGroup[] {
-  const groups: MessageGroup[] = [];
-  for (const m of messages) {
-    const last = groups.at(-1);
-    if (last && last.author === m.author) {
-      last.messages = [...last.messages, m];
-      continue;
-    }
-    groups.push({
-      key: m.sid,
-      author: m.author,
-      mine: m.author === currentIdentity,
-      info: authors.get(m.author) ?? fallbackAuthor(m.author),
-      messages: [m],
-    });
+): number | null {
+  if (!currentIdentity) return null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]!.author === currentIdentity) return messages[i]!.index;
   }
-  return groups;
-}
-
-function fallbackAuthor(identity: string): AuthorInfo {
-  if (identity.startsWith("speaker:")) return { displayName: "Speaker", role: "speaker" };
-  if (identity.startsWith("uid:")) return { displayName: "Bishopric" };
-  return { displayName: "Unknown" };
-}
-
-function Group({ group }: { group: MessageGroup }) {
-  const lastMessage = group.messages.at(-1)!;
-  const timestamp = lastMessage.dateCreated?.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return (
-    <div className={cn("flex flex-col gap-1", group.mine ? "items-end" : "items-start")}>
-      <div
-        className={cn(
-          "flex items-end gap-2 max-w-[85%]",
-          group.mine ? "flex-row-reverse" : "flex-row",
-        )}
-      >
-        {!group.mine && <ConversationAvatar author={group.info} />}
-        <div
-          className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}
-        >
-          {!group.mine && (
-            <span className="font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
-              {group.info.displayName}
-            </span>
-          )}
-          {group.messages.map((m, i) => (
-            <ConversationBubble
-              key={m.sid}
-              message={m}
-              mine={group.mine}
-              position={bubblePositionOf(i, group.messages.length)}
-            />
-          ))}
-          {timestamp && (
-            <span className="font-mono text-[9.5px] text-walnut-3 mt-0.5">{timestamp}</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }

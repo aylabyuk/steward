@@ -1,7 +1,8 @@
 import { httpsCallable, type Functions } from "firebase/functions";
 import { functions, inviteFunctions } from "@/lib/firebase";
 
-export interface SendSpeakerInvitationRequest {
+export interface FreshInvitationRequest {
+  mode?: "fresh";
   wardId: string;
   speakerId: string;
   meetingDate: string;
@@ -20,6 +21,15 @@ export interface SendSpeakerInvitationRequest {
   expiresAtMillis: number;
 }
 
+export interface RotateInvitationRequest {
+  mode: "rotate";
+  wardId: string;
+  invitationId: string;
+  channels: ("email" | "sms")[];
+}
+
+export type SendSpeakerInvitationRequest = FreshInvitationRequest | RotateInvitationRequest;
+
 export interface DeliveryEntry {
   channel: "email" | "sms";
   status: "sent" | "failed";
@@ -28,16 +38,40 @@ export interface DeliveryEntry {
   at: string;
 }
 
-export interface SendSpeakerInvitationResponse {
+export interface FreshInvitationResponse {
+  mode: "fresh";
   token: string;
   conversationSid: string;
   deliveryRecord: DeliveryEntry[];
 }
 
+export interface RotateInvitationResponse {
+  mode: "rotate";
+  inviteUrl: string;
+  deliveryRecord: DeliveryEntry[];
+}
+
+export type SendSpeakerInvitationResponse = FreshInvitationResponse | RotateInvitationResponse;
+
 export async function callSendSpeakerInvitation(
-  input: SendSpeakerInvitationRequest,
-): Promise<SendSpeakerInvitationResponse> {
-  const fn = httpsCallable<SendSpeakerInvitationRequest, SendSpeakerInvitationResponse>(
+  input: FreshInvitationRequest,
+): Promise<FreshInvitationResponse> {
+  const fn = httpsCallable<FreshInvitationRequest, FreshInvitationResponse>(
+    functions,
+    "sendSpeakerInvitation",
+  );
+  const { data } = await fn(input);
+  return data;
+}
+
+/** Bishop-driven: rotate the capability token on an existing
+ *  invitation and optionally redeliver via email/SMS. Pass
+ *  `channels: []` for a copy-link-only flow that returns the new
+ *  URL without triggering a redelivery. */
+export async function callRotateInvitationLink(
+  input: RotateInvitationRequest,
+): Promise<RotateInvitationResponse> {
+  const fn = httpsCallable<RotateInvitationRequest, RotateInvitationResponse>(
     functions,
     "sendSpeakerInvitation",
   );
