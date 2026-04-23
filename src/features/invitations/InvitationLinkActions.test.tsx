@@ -35,9 +35,6 @@ function openMenu() {
 
 beforeEach(() => {
   mockFn.mockReset();
-  Object.assign(navigator, {
-    clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
-  });
 });
 
 afterEach(() => {
@@ -51,25 +48,10 @@ describe("InvitationLinkActions", () => {
     expect(screen.getByRole("button", { name: "Invitation link actions" })).toBeTruthy();
   });
 
-  it("Copy link menu item rotates with empty channels and writes URL to clipboard", async () => {
-    mockFn.mockResolvedValue({
-      mode: "rotate",
-      inviteUrl: "https://app.example/invite/speaker/w1/i1/tok",
-      deliveryRecord: [],
-    });
+  it("never exposes a Copy link action — the plaintext URL stays server-side", () => {
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
     openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Copy link" }));
-    await waitFor(() => expect(screen.getByText("Link copied")).toBeTruthy());
-    expect(mockFn).toHaveBeenCalledWith({
-      mode: "rotate",
-      wardId: "w1",
-      invitationId: "i1",
-      channels: [],
-    });
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "https://app.example/invite/speaker/w1/i1/tok",
-    );
+    expect(screen.queryByRole("menuitem", { name: "Copy link" })).toBeNull();
   });
 
   it("Resend menu item shows both channels when invitation has email + phone", () => {
@@ -78,18 +60,16 @@ describe("InvitationLinkActions", () => {
     expect(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" })).toBeTruthy();
   });
 
-  it("omits the Resend item entirely when no channel is available", () => {
+  it("renders no overflow items when no delivery channel is available", () => {
     const inv = mkInvitation({ speakerEmail: undefined, speakerPhone: undefined });
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={inv} />);
     openMenu();
-    expect(screen.getByRole("menuitem", { name: "Copy link" })).toBeTruthy();
     expect(screen.queryByRole("menuitem", { name: /Resend/ })).toBeNull();
   });
 
   it("surfaces a delivery-failed message when every delivery failed", async () => {
     mockFn.mockResolvedValue({
       mode: "rotate",
-      inviteUrl: "https://app.example/invite/speaker/w1/i1/tok",
       deliveryRecord: [{ channel: "sms", status: "failed", error: "twilio: 21610", at: "now" }],
     });
     const inv = mkInvitation({ speakerEmail: undefined });
@@ -102,7 +82,6 @@ describe("InvitationLinkActions", () => {
   it("reports the channels that actually sent on success", async () => {
     mockFn.mockResolvedValue({
       mode: "rotate",
-      inviteUrl: "https://app.example/invite/speaker/w1/i1/tok",
       deliveryRecord: [
         { channel: "sms", status: "sent", providerId: "SM1", at: "now" },
         { channel: "email", status: "failed", error: "bounced", at: "now" },
