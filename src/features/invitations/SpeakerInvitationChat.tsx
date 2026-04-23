@@ -115,7 +115,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     <section
       className={
         props.fillHeight
-          ? "bg-chalk flex flex-col overflow-hidden h-full min-h-0"
+          ? "bg-chalk flex flex-col overflow-hidden flex-1 min-h-0"
           : "bg-chalk border border-border rounded-lg shadow-elev-1 flex flex-col overflow-hidden"
       }
     >
