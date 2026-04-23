@@ -90,12 +90,7 @@ export function SundayCard({
     step === "invite" ? `Send invitations — ${formatShortDate(date)}` : formatShortDate(date);
 
   return (
-    <article
-      className={cn(
-        "rounded-lg border border-border shadow-elev-1 hover:shadow-elev-2 hover:border-border-strong transition-all duration-200",
-        CARD_BG[kind.variant],
-      )}
-    >
+    <article className={cn("rounded-lg border border-border shadow-elev-1", CARD_BG[kind.variant])}>
       <SundayCardHeader
         date={date}
         wardId={wardId}
