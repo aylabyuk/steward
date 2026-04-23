@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:watch": "tsc --watch --preserveWatchOutput",
     "lint": "oxlint",
     "test": "vitest run",
     "deploy": "firebase deploy --only functions"
