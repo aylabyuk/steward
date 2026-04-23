@@ -113,7 +113,6 @@ export function MessageTemplateCard({
         eyebrow={eyebrow}
         title={title}
         description={description}
-        variables={variables}
         preview={previewNode}
         canEdit={canEdit}
         onRequestEdit={openEditor}
@@ -123,6 +122,8 @@ export function MessageTemplateCard({
         open={editorOpen}
         eyebrow={eyebrow}
         title={title}
+        description={description}
+        variables={variables}
         editorLabel={resolvedEditorLabel}
         canEdit={canEdit}
         saving={saving}

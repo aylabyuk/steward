@@ -120,7 +120,6 @@ export function WardInviteSection(): React.ReactElement {
         eyebrow="Ward"
         title="Ward invitation message"
         description={DESCRIPTION}
-        variables={VARIABLES}
         preview={previewNode}
         canEdit={canEdit}
         onRequestEdit={openEditor}
@@ -130,6 +129,8 @@ export function WardInviteSection(): React.ReactElement {
         open={editorOpen}
         eyebrow="Ward"
         title="Ward invitation message"
+        description={DESCRIPTION}
+        variables={VARIABLES}
         editorLabel="Invitation greeting"
         canEdit={canEdit}
         saving={saving}
