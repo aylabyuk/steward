@@ -2,6 +2,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { classifyInvitationChange } from "./invitationChange.js";
+import { notifyBishopricOfResponse } from "./invitationResponseNotify.js";
 import { readMessageTemplate } from "./messageTemplates.js";
 import {
   fetchActiveBishopricEmails,
@@ -43,7 +44,10 @@ export const onInvitationWrite = onDocumentWritten(
           readMessageTemplate(db, wardId, key),
           rotateInviteUrl(wardId, invitationId, origin),
         ]);
-        await sendSpeakerReceipt(after, bishopric, headerTemplate, inviteUrl);
+        await Promise.all([
+          sendSpeakerReceipt(after, bishopric, headerTemplate, inviteUrl),
+          notifyBishopricOfResponse(db, wardId, invitationId, before, after),
+        ]);
       }
       if (change.fireBishopric) {
         const headerTemplate = await readMessageTemplate(db, wardId, "bishopricResponseReceipt");
