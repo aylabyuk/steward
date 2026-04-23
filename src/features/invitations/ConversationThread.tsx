@@ -18,6 +18,7 @@ interface Props {
    *  provided, the last mine=true bubble at or below this index gets
    *  a "Read" receipt rendered under it. */
   readHorizonIndex?: number | null;
+  onReact: (sid: string, emoji: string) => void;
 }
 
 /** Bubble list styled after Messenger. Consecutive messages by the
@@ -31,6 +32,7 @@ export function ConversationThread({
   loading,
   firstUnreadIndex,
   readHorizonIndex,
+  onReact,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -111,6 +113,8 @@ export function ConversationThread({
                 readByOtherAt !== null &&
                 item.group.messages.some((m) => m.index === readByOtherAt)
               }
+              selfIdentity={currentIdentity}
+              onReact={onReact}
             />
           );
         })}

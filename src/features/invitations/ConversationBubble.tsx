@@ -1,4 +1,7 @@
 import { cn } from "@/lib/cn";
+import { ReactionBar } from "./ReactionBar";
+import { ReactionPicker } from "./ReactionPicker";
+import { readReactions } from "./reactions";
 import type { ChatMessage } from "./useConversation";
 
 export type BubblePosition = "single" | "first" | "middle" | "last";
@@ -32,14 +35,23 @@ interface Props {
   message: ChatMessage;
   mine: boolean;
   position: BubblePosition;
+  selfIdentity: string | null;
+  onReact: (sid: string, emoji: string) => void;
 }
 
 /** A single Messenger-style speech bubble. Response-type messages
  *  carry a small "Response · Yes/No" eyebrow above the bubble body
- *  and a colored 2px border — they're single bubbles in practice,
- *  so grouping position is usually "single" for them anyway. */
-export function ConversationBubble({ message, mine, position }: Props) {
+ *  and a colored 2px border. The "+" picker appears on hover over
+ *  the row; applied reactions render as chips below the bubble. */
+export function ConversationBubble({
+  message,
+  mine,
+  position,
+  selfIdentity,
+  onReact,
+}: Props): React.ReactElement {
   const responseType = message.attributes?.responseType as "yes" | "no" | undefined;
+  const reactions = readReactions(message.attributes);
   const radius = mine ? MINE_RADIUS[position] : THEIRS_RADIUS[position];
   return (
     <div className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
@@ -48,17 +60,26 @@ export function ConversationBubble({ message, mine, position }: Props) {
           {responseType === "yes" ? "Response · Yes" : "Response · No"}
         </span>
       )}
-      <div
-        className={cn(
-          "px-3.5 py-2 text-[14px] leading-snug whitespace-pre-wrap wrap-break-word shadow-[0_1px_0_rgba(35,24,21,0.04)]",
-          radius,
-          mine ? "bg-bordeaux text-parchment" : "bg-parchment-2 border border-border text-walnut",
-          responseType === "yes" && "border-success border-2",
-          responseType === "no" && "border-bordeaux border-2",
-        )}
-      >
-        {message.body}
+      <div className={cn("flex items-center gap-1.5", mine ? "flex-row-reverse" : "flex-row")}>
+        <div
+          className={cn(
+            "px-3.5 py-2 text-[14px] leading-snug whitespace-pre-wrap wrap-break-word shadow-[0_1px_0_rgba(35,24,21,0.04)]",
+            radius,
+            mine ? "bg-bordeaux text-parchment" : "bg-parchment-2 border border-border text-walnut",
+            responseType === "yes" && "border-success border-2",
+            responseType === "no" && "border-bordeaux border-2",
+          )}
+        >
+          {message.body}
+        </div>
+        <ReactionPicker mine={mine} onPick={(emoji) => onReact(message.sid, emoji)} />
       </div>
+      <ReactionBar
+        reactions={reactions}
+        selfIdentity={selfIdentity}
+        onToggle={(emoji) => onReact(message.sid, emoji)}
+        mine={mine}
+      />
     </div>
   );
 }

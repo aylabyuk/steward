@@ -8,13 +8,20 @@ interface Props {
   /** When true, the last mine=true bubble in the group is the latest
    *  message the other side has marked as read — show "Read" under it. */
   readByOther?: boolean;
+  selfIdentity: string | null;
+  onReact: (sid: string, emoji: string) => void;
 }
 
 /** Renders one author's run of consecutive messages as a connected
  *  stack with a single avatar + trailing timestamp. Read receipt is
  *  a small "Read" label under the last bubble on mine=true groups
  *  when the other participant has read up to that index. */
-export function ConversationGroup({ group, readByOther }: Props): React.ReactElement {
+export function ConversationGroup({
+  group,
+  readByOther,
+  selfIdentity,
+  onReact,
+}: Props): React.ReactElement {
   const last = group.messages.at(-1)!;
   const timestamp = last.dateCreated?.toLocaleTimeString(undefined, {
     hour: "numeric",
@@ -49,6 +56,8 @@ export function ConversationGroup({ group, readByOther }: Props): React.ReactEle
               message={m}
               mine={group.mine}
               position={bubblePositionOf(i, group.messages.length)}
+              selfIdentity={selfIdentity}
+              onReact={onReact}
             />
           ))}
           {timestamp && (
