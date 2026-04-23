@@ -4,11 +4,12 @@ import { useTwilioChat } from "./twilioClientProvider";
 
 /** Per-conversation unread badge signal. Returns the unread
  *  message count for `conversationSid` as seen by the currently-
- *  connected Twilio participant (i.e., the bishop). null when the
- *  client isn't connected yet, when the sid is missing, or when
- *  Twilio doesn't have a read horizon recorded for the participant
- *  yet. Re-fetches on messageAdded so the badge reacts live to new
- *  speaker replies arriving. */
+ *  connected Twilio participant. null when the client isn't
+ *  connected yet, when the sid is missing, or when Twilio doesn't
+ *  have a read horizon recorded for the participant yet. Re-fetches
+ *  on messageAdded / updatedLastReadMessageIndex so the badge reacts
+ *  live to fresh replies arriving and to the local participant
+ *  advancing their read horizon. */
 export function useConversationUnread(conversationSid: string | null | undefined): number | null {
   const { client, status } = useTwilioChat();
   const [unread, setUnread] = useState<number | null>(null);
@@ -20,6 +21,7 @@ export function useConversationUnread(conversationSid: string | null | undefined
     }
     let cancelled = false;
     let convoRef: Conversation | null = null;
+    let handlerRef: (() => void) | null = null;
 
     async function refetch(convo: Conversation) {
       const count = await convo.getUnreadMessagesCount();
@@ -27,9 +29,8 @@ export function useConversationUnread(conversationSid: string | null | undefined
       // Twilio returns null when the participant has never marked
       // anything read (no read horizon set). In that case, every
       // message in the conversation is effectively unread — derive
-      // the count from lastMessage.index. Without this, badge never
-      // lights up on a brand-new conversation the bishop hasn't
-      // opened yet.
+      // the count from lastMessage.index. Without this, the badge
+      // never lights up on a brand-new conversation.
       if (count !== null) {
         setUnread(count);
         return;
@@ -47,6 +48,7 @@ export function useConversationUnread(conversationSid: string | null | undefined
         const handler = () => {
           void refetch(convo);
         };
+        handlerRef = handler;
         convo.on("messageAdded", handler);
         convo.on("updatedLastReadMessageIndex", handler);
       } catch {
@@ -54,11 +56,15 @@ export function useConversationUnread(conversationSid: string | null | undefined
       }
     })();
 
+    // Detach ONLY the handler this hook added. Using
+    // removeAllListeners on a shared conversation would clobber other
+    // subscribers (e.g. useConversation's own messageAdded hookup)
+    // and silently break them on drawer close.
     return () => {
       cancelled = true;
-      if (convoRef) {
-        convoRef.removeAllListeners("messageAdded");
-        convoRef.removeAllListeners("updatedLastReadMessageIndex");
+      if (convoRef && handlerRef) {
+        convoRef.off("messageAdded", handlerRef);
+        convoRef.off("updatedLastReadMessageIndex", handlerRef);
       }
     };
   }, [client, status, conversationSid]);
