@@ -1,4 +1,4 @@
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { buildInviteUrl, tryEmail, trySms } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
@@ -11,8 +11,9 @@ import type {
 
 /** Bishop-driven link rotation. Generates a new capability token on
  *  an existing invitation, preserving conversationSid + chat history
- *  + bishopricParticipants snapshot + any prior response. Returns the
- *  plaintext URL once; Firestore keeps only the new hash.
+ *  + bishopricParticipants snapshot + any prior response. The
+ *  plaintext URL is embedded in the SMS/email body and never returned
+ *  to the caller — only the delivery outcome travels back.
  *
  *  Bishop-driven rotations don't count against ROTATION_DAILY_CAP —
  *  that cap exists to limit SMS-cost exposure from a leaked link,
@@ -36,17 +37,68 @@ export async function rotateInvitationLink(
 
   const plaintextToken = generateInvitationToken();
   const tokenHash = hashInvitationToken(plaintextToken);
-  await ref.update({ tokenHash, tokenStatus: "active" as const });
+
+  // Refresh the speakerEmail + speakerPhone snapshot from the live
+  // speaker doc before we build the delivery payload. Without this,
+  // a bishop correcting a typo in the speaker's phone number and then
+  // hitting Resend would still deliver to the stale number on the
+  // invitation doc. The rest of the letter (name, date, wardName,
+  // inviterName) stays frozen — only delivery channels refresh.
+  const liveContact =
+    input.channels.length > 0 ? await readLiveContactInfo(db, input.wardId, invitation) : null;
+  const writePatch = liveContact ? contactWritePatch(liveContact) : {};
+  const effectiveContact: Pick<SpeakerInvitationShape, "speakerEmail" | "speakerPhone"> =
+    liveContact ?? {
+      ...(invitation.speakerEmail ? { speakerEmail: invitation.speakerEmail } : {}),
+      ...(invitation.speakerPhone ? { speakerPhone: invitation.speakerPhone } : {}),
+    };
+
+  await ref.update({ tokenHash, tokenStatus: "active" as const, ...writePatch });
 
   const inviteUrl = buildInviteUrl(origin, input.wardId, input.invitationId, plaintextToken);
-  const deliveryRecord = await deliverIfRequested(input, invitation, inviteUrl);
+  const freshInvitation: SpeakerInvitationShape = { ...invitation, ...effectiveContact };
+  const deliveryRecord = await deliverIfRequested(input, freshInvitation, inviteUrl);
   if (deliveryRecord.length > 0) {
     await ref.update({
       deliveryRecord: [...(invitation.deliveryRecord ?? []), ...deliveryRecord],
     });
   }
 
-  return { mode: "rotate", inviteUrl, deliveryRecord };
+  return { mode: "rotate", deliveryRecord };
+}
+
+interface LiveContact {
+  speakerEmail?: string;
+  speakerPhone?: string;
+}
+
+async function readLiveContactInfo(
+  db: FirebaseFirestore.Firestore,
+  wardId: string,
+  invitation: SpeakerInvitationShape,
+): Promise<LiveContact | null> {
+  const { meetingDate, speakerId } = invitation.speakerRef;
+  const speakerRef = db.doc(`wards/${wardId}/meetings/${meetingDate}/speakers/${speakerId}`);
+  const snap = await speakerRef.get();
+  if (!snap.exists) return null;
+  const speaker = snap.data() as { email?: string; phone?: string };
+  const out: LiveContact = {};
+  if (speaker.email) out.speakerEmail = speaker.email;
+  if (speaker.phone) out.speakerPhone = speaker.phone;
+  return out;
+}
+
+/** Convert the live contact into a Firestore update patch: set the
+ *  field when present, mark it for deletion when the speaker no
+ *  longer has that channel. Keeps the invitation snapshot honest so a
+ *  subsequent resend doesn't fall back to a removed channel. */
+function contactWritePatch(
+  live: LiveContact,
+): Record<string, string | FirebaseFirestore.FieldValue> {
+  return {
+    speakerEmail: live.speakerEmail ?? FieldValue.delete(),
+    speakerPhone: live.speakerPhone ?? FieldValue.delete(),
+  };
 }
 
 async function deliverIfRequested(

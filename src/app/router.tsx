@@ -4,6 +4,7 @@ import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./auth-gate";
 import { AcceptInvitePage } from "./routes/accept-invite";
+import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { MembersPage } from "./routes/members";
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
       { path: "settings/notifications", element: <NotificationSettingsPage /> },
       { path: "settings/templates/speaker-email", element: <SpeakerEmailTemplatePage /> },
       { path: "settings/templates/ward-invites", element: <WardInviteTemplatePage /> },
+      {
+        path: "ward/:wardId/invitations/:invitationId/view",
+        element: <InvitationViewPage />,
+      },
     ],
   },
   // Print views + full-screen editors share AuthGate's auth + ward

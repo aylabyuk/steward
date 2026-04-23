@@ -15,6 +15,9 @@ export interface EmailInput {
    *  `"Bishop Haymond (via Steward) <bishopric@mail.steward-app.ca>"`. */
   fromDisplayName: string;
   replyTo?: string;
+  /** Optional CC recipients. Used for the speaker's response-receipt
+   *  email so the bishopric sees a copy in the same thread. */
+  cc?: readonly string[];
   subject: string;
   text: string;
   html?: string;
@@ -30,6 +33,7 @@ export async function sendEmail(input: EmailInput): Promise<string | null> {
     subject: input.subject,
     text: input.text,
     ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+    ...(input.cc && input.cc.length > 0 ? { cc: [...input.cc] } : {}),
     ...(input.html ? { html: input.html } : {}),
   });
   return res.headers["x-message-id"] ?? null;

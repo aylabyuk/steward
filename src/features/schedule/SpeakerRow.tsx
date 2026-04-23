@@ -2,9 +2,11 @@ import { useState } from "react";
 import { BishopInvitationDialog } from "@/features/invitations/BishopInvitationDialog";
 import { useConversationUnread } from "@/features/invitations/useConversationUnread";
 import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
+import { useWardMembers } from "@/hooks/useWardMembers";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { Speaker, SpeakerStatus } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import { statusProvenanceLabel } from "./statusProvenance";
 
 interface Props {
   number: number;
@@ -34,6 +36,8 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
   const needsApply = Boolean(response && !response.acknowledgedAt);
   const unreadCount = useConversationUnread(invitation?.conversationSid);
   const hasUnread = typeof unreadCount === "number" && unreadCount > 0;
+  const members = useWardMembers();
+  const provenance = statusProvenanceLabel(speaker, members);
 
   return (
     <li className="flex items-center gap-3 py-3 border-b border-border last:border-b-0">
@@ -44,6 +48,11 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
         <div className="font-sans text-sm font-semibold text-walnut truncate">{speaker.name}</div>
         {speaker.topic && (
           <div className="font-serif italic text-sm text-walnut-2 truncate">{speaker.topic}</div>
+        )}
+        {provenance && (
+          <div className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-walnut-3 truncate mt-0.5">
+            {provenance}
+          </div>
         )}
       </div>
       <div

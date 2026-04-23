@@ -47,7 +47,6 @@ export interface FreshInvitationResponse {
 
 export interface RotateInvitationResponse {
   mode: "rotate";
-  inviteUrl: string;
   deliveryRecord: DeliveryEntry[];
 }
 
@@ -65,9 +64,8 @@ export async function callSendSpeakerInvitation(
 }
 
 /** Bishop-driven: rotate the capability token on an existing
- *  invitation and optionally redeliver via email/SMS. Pass
- *  `channels: []` for a copy-link-only flow that returns the new
- *  URL without triggering a redelivery. */
+ *  invitation and redeliver via email/SMS. The fresh plaintext URL
+ *  is embedded in the delivery body and never returned to the caller. */
 export async function callRotateInvitationLink(
   input: RotateInvitationRequest,
 ): Promise<RotateInvitationResponse> {
