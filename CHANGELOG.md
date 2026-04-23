@@ -7,6 +7,67 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-04-23
+
+Every message Steward sends on the bishopric's behalf is now editable
+from `/settings/templates` — invitation SMS, Yes/No response
+receipts, the bishopric notice, and the bishop-reply SMS/email pair.
+Defaults reproduce today's copy verbatim, so wards see no behavior
+change until they edit. The templates page also gains a mobile-first
+layout: each section collapses into an accordion row, and editing
+happens in a fullscreen modal instead of a cramped inline card.
+
+### Added
+
+- **Six new editable server-side message templates** (#55), joining
+  the existing three (speaker letter, speaker email for `mailto:`,
+  ward invitation) on `/settings/templates` — initial invitation SMS
+  (Twilio), speaker response receipts (accepted + declined, SendGrid
+  email), bishopric response notice (SendGrid email cc'd to the
+  ward), and the bishop-reply pair that goes to the speaker when
+  the bishopric posts in chat (SMS + email). Each template writes to
+  `wards/{wardId}/templates/{key}` with defaults that match the
+  prior hardcoded copy, so wards without an override see identical
+  behavior.
+- **Grouped PageRail** on `/settings/templates` — the nine sections
+  cluster under four headers (Speaker invitation / Response receipts /
+  Conversation / Ward members) so the rail stays scannable as it
+  doubles in size.
+- **Mobile accordion layout** for `/settings/templates` below 640px.
+  Each section collapses to a compact row (eyebrow + title + pencil
+  + chevron); tapping the row expands to show the description and
+  preview, and the pencil icon opens a fullscreen edit modal with
+  the editor, variable list, and Save / Cancel / Reset controls.
+
+### Changed
+
+- **`MessageTemplateCard` + `TemplateVariableList`** — shared
+  primitives so every template section on `/settings/templates` uses
+  the same variable-hint layout and preview chrome. The older
+  Speaker-email and Ward-invite cards now match the new ones.
+- **Receipt email builders** (`buildSpeakerReceipt`,
+  `buildBishopricReceipt`) take a `headerTemplate` arg. The structural
+  pieces — inline letter reproduction, meta lines (responded-at,
+  applied-by), divider rules, and the safety warning — stay
+  hardcoded so bishoprics don't have to reason about HTML. Only the
+  narrative header string is user-authored.
+
+### Infrastructure
+
+- **Functions side**: shared `interpolate` + `readMessageTemplate`
+  helpers (`functions/src/messageTemplates.ts`) fetch
+  `wards/{wardId}/templates/{key}` with default fallback. 76 unit
+  tests (+7 new for template read/interpolate + a drift-check that
+  asserts the client and server defaults stay identical).
+- **Client side**: generic `useMessageTemplate(key)` hook + shared
+  `writeMessageTemplate(wardId, key, { bodyMarkdown })` writer.
+  `invitationDelivery.ts` extracted from
+  `sendSpeakerInvitation.helpers.ts` to house the SMS/email
+  delivery paths (was approaching the 150-LOC cap).
+- **Firestore rules unchanged** — the existing
+  `match /templates/{templateId}` allow-list already covers the new
+  keys.
+
 ## [0.7.0] — 2026-04-23
 
 Chat polish and invitation resend / copy-link, plus two mobile-fit
@@ -586,7 +647,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/aylabyuk/steward/releases/tag/v0.8.0
 [0.7.0]: https://github.com/aylabyuk/steward/releases/tag/v0.7.0
 [0.6.0]: https://github.com/aylabyuk/steward/releases/tag/v0.6.0
 [0.5.0]: https://github.com/aylabyuk/steward/releases/tag/v0.5.0
