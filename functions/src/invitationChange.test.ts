@@ -42,6 +42,24 @@ describe("classifyInvitationChange", () => {
     });
   });
 
+  it("re-fires the speaker receipt when the answer flips yes → no", () => {
+    const before = mk({ response: { answer: "yes" } });
+    const after = mk({ response: { answer: "no", reason: "changed mind" } });
+    expect(classifyInvitationChange(before, after)).toEqual({
+      fireSpeaker: true,
+      fireBishopric: false,
+    });
+  });
+
+  it("re-fires the speaker receipt when the answer flips no → yes", () => {
+    const before = mk({ response: { answer: "no" } });
+    const after = mk({ response: { answer: "yes" } });
+    expect(classifyInvitationChange(before, after)).toEqual({
+      fireSpeaker: true,
+      fireBishopric: false,
+    });
+  });
+
   it("fires the bishopric receipt when acknowledgedAt appears", () => {
     const before = mk({ response: { answer: "yes" } });
     const after = mk({
