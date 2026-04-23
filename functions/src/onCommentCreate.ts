@@ -3,6 +3,7 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
 import { sendAndPrune } from "./fcm.js";
 import { filterRecipients, type RecipientCandidate } from "./recipients.js";
+import { STEWARD_ORIGIN } from "./secrets.js";
 import type { CommentDoc, FcmToken, MemberDoc, WardDoc } from "./types.js";
 
 export const onCommentCreate = onDocumentCreated(
@@ -41,12 +42,15 @@ export const onCommentCreate = onDocumentCreated(
       tokensByUid.set(r.uid, r.member.fcmTokens ?? []);
     }
 
+    const origin = (process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value()).replace(/\/+$/, "");
+    const link = `${origin}/week/${encodeURIComponent(date)}`;
     const outcome = await sendAndPrune(wardId, tokensByUid, {
       notification: {
         title: `${comment.authorDisplayName} mentioned you`,
         body: `On Sunday ${date}: ${truncate(comment.body, 120)}`,
       },
       data: { wardId, date, kind: "mention" },
+      webpush: { fcmOptions: { link } },
     });
 
     logger.info("comment-mention notification sent", {
