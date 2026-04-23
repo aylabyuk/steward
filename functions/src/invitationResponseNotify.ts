@@ -64,13 +64,19 @@ function formatShortDate(meetingDate: string): string {
 /** Push-notify every active bishopric member when a speaker submits
  *  or flips their yes/no on the invite page. Speakers themselves
  *  aren't targeted (they're the actor) and clerks are excluded —
- *  only bishopric gets paged on response activity. */
+ *  only bishopric gets paged on response activity.
+ *
+ *  The FCM payload carries `webpush.fcmOptions.link` so a tap routes
+ *  straight to the matching speaker's chat dialog (the SW's
+ *  `notificationclick` handler reads the same shape for browsers that
+ *  don't honor `fcmOptions.link` natively). */
 export async function notifyBishopricOfResponse(
   db: FirebaseFirestore.Firestore,
   wardId: string,
   invitationId: string,
   before: SpeakerInvitationShape | undefined,
   after: SpeakerInvitationShape,
+  origin: string,
 ): Promise<void> {
   const nextAnswer = after.response?.answer;
   if (!nextAnswer) return;
@@ -96,6 +102,7 @@ export async function notifyBishopricOfResponse(
     nextAnswer,
     ...(after.response?.reason ? { reason: after.response.reason } : {}),
   });
+  const link = `${origin.replace(/\/+$/, "")}/schedule?chat=${encodeURIComponent(invitationId)}`;
 
   const tokensByUid = new Map<string, readonly FcmToken[]>();
   for (const r of recipients) tokensByUid.set(r.uid, r.member.fcmTokens ?? []);
@@ -108,6 +115,7 @@ export async function notifyBishopricOfResponse(
         meetingDate: after.speakerRef.meetingDate,
         kind: "invitation-response",
       },
+      webpush: { fcmOptions: { link } },
     });
   } catch (err) {
     logger.error("response push fan-out failed", {

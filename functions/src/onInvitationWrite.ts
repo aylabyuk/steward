@@ -46,7 +46,7 @@ export const onInvitationWrite = onDocumentWritten(
         ]);
         await Promise.all([
           sendSpeakerReceipt(after, bishopric, headerTemplate, inviteUrl),
-          notifyBishopricOfResponse(db, wardId, invitationId, before, after),
+          notifyBishopricOfResponse(db, wardId, invitationId, before, after, origin),
         ]);
       }
       if (change.fireBishopric) {
