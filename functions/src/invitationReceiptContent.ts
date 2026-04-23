@@ -1,3 +1,4 @@
+import { interpolate } from "./messageTemplates.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 export interface ReceiptBuildArgs {
@@ -5,6 +6,12 @@ export interface ReceiptBuildArgs {
   bishopricViewUrl?: string;
   acknowledgedByName?: string | undefined;
   respondedAt?: Date | undefined;
+  /** Body of the matching server-side message template —
+   *  `speakerResponseAccepted` / `speakerResponseDeclined` for
+   *  `buildSpeakerReceipt`, `bishopricResponseReceipt` for
+   *  `buildBishopricReceipt`. Caller loads the template via
+   *  `readMessageTemplate` so builders stay pure. */
+  headerTemplate: string;
 }
 
 export interface ReceiptContent {
@@ -50,16 +57,17 @@ function letterText(invitation: SpeakerInvitationShape): string {
  *  the speaker already has the invite URL in their inbox/SMS, and
  *  rotating a fresh token per receipt would be gratuitous. */
 export function buildSpeakerReceipt(args: ReceiptBuildArgs): ReceiptContent {
-  const { invitation } = args;
+  const { invitation, headerTemplate } = args;
   const answer = invitation.response?.answer;
   if (!answer) throw new Error("speaker receipt requires a recorded response");
   const verb = answer === "yes" ? "accepted" : "declined";
 
   const subject = `You ${verb} the speaking invitation — ${invitation.assignedDate}`;
-  const headerText =
-    answer === "yes"
-      ? `You accepted the invitation to speak on ${invitation.assignedDate}. Thank you.`
-      : `You declined the invitation to speak on ${invitation.assignedDate}. Thank you for letting us know.`;
+  const headerText = interpolate(headerTemplate, {
+    speakerName: invitation.speakerName,
+    assignedDate: invitation.assignedDate,
+    reason: invitation.response?.reason ?? "",
+  });
   const text = [
     headerText,
     "",
@@ -94,13 +102,17 @@ ${letterHtml(invitation)}
  *  mirrors a response to `speaker.status`. Includes the letter inline
  *  for archival + a link to the read-only invitation view. */
 export function buildBishopricReceipt(args: ReceiptBuildArgs): ReceiptContent {
-  const { invitation, bishopricViewUrl, acknowledgedByName, respondedAt } = args;
+  const { invitation, bishopricViewUrl, acknowledgedByName, respondedAt, headerTemplate } = args;
   const answer = invitation.response?.answer;
   if (!answer) throw new Error("bishopric receipt requires a recorded response");
   const verb = answer === "yes" ? "accepted" : "declined";
 
   const subject = `${invitation.speakerName} ${verb} the speaking invitation — ${invitation.assignedDate}`;
-  const responseLine = `${invitation.speakerName} ${verb} the invitation to speak on ${invitation.assignedDate}.`;
+  const responseLine = interpolate(headerTemplate, {
+    speakerName: invitation.speakerName,
+    verb,
+    assignedDate: invitation.assignedDate,
+  });
   const metaLines: string[] = [];
   if (respondedAt) metaLines.push(`Responded: ${respondedAt.toLocaleString()}`);
   if (acknowledgedByName) metaLines.push(`Applied by: ${acknowledgedByName}`);

@@ -2,6 +2,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { sendAndPrune } from "./fcm.js";
 import { rotateTokenForBishopNotification } from "./issueSpeakerSession.helpers.js";
+import { interpolate, readMessageTemplate } from "./messageTemplates.js";
 import { filterRecipients, type RecipientCandidate } from "./recipients.js";
 import { STEWARD_ORIGIN } from "./secrets.js";
 import { buildInviteUrl } from "./sendSpeakerInvitation.helpers.js";
@@ -70,9 +71,16 @@ export async function smsSpeaker(inv: ResolvedInvitation, body: string): Promise
     });
   }
   const preview = truncate(body, 240);
-  const text = inviteUrl
-    ? `${inv.wardName}: new message from the bishopric about your speaking assignment — "${preview}". Open: ${inviteUrl}`
-    : `${inv.inviterName} (Steward): ${preview}`;
+  // Rotation-failed path stays hardcoded: it's an error fallback, not
+  // a user-authored message — we don't want a bishopric-edited template
+  // to leak a placeholder `{{inviteUrl}}` token into an SMS.
+  let text: string;
+  if (inviteUrl) {
+    const template = await readMessageTemplate(getFirestore(), inv.wardId, "bishopReplySms");
+    text = interpolate(template, { wardName: inv.wardName, preview, inviteUrl });
+  } else {
+    text = `${inv.inviterName} (Steward): ${preview}`;
+  }
   try {
     await sendSmsDirect({ to: inv.speakerPhone, body: text });
   } catch (err) {
@@ -99,21 +107,14 @@ function isSpeakerOnline(inv: ResolvedInvitation): boolean {
 export async function emailSpeaker(inv: ResolvedInvitation, body: string): Promise<void> {
   if (!inv.speakerEmail) return;
   const preview = truncate(body, 180);
-  const text = [
-    `${inv.inviterName} replied to your invitation for ${inv.assignedDate}:`,
-    "",
+  const template = await readMessageTemplate(getFirestore(), inv.wardId, "bishopReplyEmail");
+  const text = interpolate(template, {
+    inviterName: inv.inviterName,
+    assignedDate: inv.assignedDate,
     preview,
-    "",
-    "To reply back, open the invitation link in the text message we sent you.",
-    "",
-    `— ${inv.wardName}`,
-  ].join("\n");
-  const html = `<p>${escapeHtml(inv.inviterName)} replied to your invitation for <strong>${escapeHtml(
-    inv.assignedDate,
-  )}</strong>:</p>
-<blockquote style="margin:0 0 12px 0;padding-left:10px;border-left:3px solid #bca788;color:#4a3a30;"><em>${escapeHtml(preview)}</em></blockquote>
-<p style="color:#666;font-size:13px;">To reply back, open the invitation link in the text message we sent you.</p>
-<p style="color:#666;font-size:12px;">— ${escapeHtml(inv.wardName)}</p>`;
+    wardName: inv.wardName,
+  });
+  const html = textToParagraphHtml(text);
   try {
     await sendEmail({
       to: inv.speakerEmail,
@@ -125,6 +126,18 @@ export async function emailSpeaker(inv: ResolvedInvitation, body: string): Promi
   } catch (err) {
     logger.error("reply email failed", { err: (err as Error).message, token: inv.token });
   }
+}
+
+/** Render an author-editable plain-text email body into HTML: split
+ *  on blank lines for paragraphs, `<br>` for single newlines, escape
+ *  everything. Bishoprics author in text; we don't ask them to reason
+ *  about HTML. */
+function textToParagraphHtml(text: string): string {
+  return text
+    .split(/\n{2,}/)
+    .filter((p) => p.trim().length > 0)
+    .map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`)
+    .join("\n");
 }
 
 function truncate(s: string, max: number): string {

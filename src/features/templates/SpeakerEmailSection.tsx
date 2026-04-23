@@ -6,8 +6,18 @@ import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { renderSpeakerEmailBody } from "./renderSpeakerEmailBody";
 import { DEFAULT_SPEAKER_EMAIL_BODY } from "./speakerEmailDefaults";
 import { EditorSection } from "./SpeakerLetterEditor";
+import { TemplateVariableList } from "./TemplateVariableList";
 import { useSpeakerEmailTemplate } from "./useSpeakerEmailTemplate";
 import { writeSpeakerEmailTemplate } from "./writeSpeakerEmailTemplate";
+
+const VARIABLES = [
+  { name: "speakerName", hint: "Display name from the speaker form" },
+  { name: "date", hint: "Pre-formatted Sunday, e.g. 'Sunday, April 26, 2026'" },
+  { name: "wardName", hint: "Your ward name" },
+  { name: "inviterName", hint: "Bishop or counselor sending the invitation" },
+  { name: "topic", hint: "Assigned topic (blank if absent)" },
+  { name: "inviteUrl", hint: "Personal invite-page link for the speaker" },
+] as const;
 
 const SAMPLE_URL = "https://example.com/invite/speaker/your-ward/sample-token";
 
@@ -69,19 +79,19 @@ export function SpeakerEmailSection(): React.ReactElement {
       className="bg-chalk border border-border rounded-lg p-6 mb-4 scroll-mt-24"
     >
       <div className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium mb-1">
-        Template
+        Email
       </div>
       <h2 className="font-display text-[22px] font-semibold text-walnut mb-1">
         Speaker invitation email
       </h2>
-      <p className="font-serif italic text-[14px] text-walnut-2 mb-5">
-        The plain-text message your email client sends when you click "Send email" on a planned
-        speaker. Variables: <code>{"{{speakerName}}"}</code>, <code>{"{{date}}"}</code>,{" "}
-        <code>{"{{wardName}}"}</code>, <code>{"{{inviterName}}"}</code>, <code>{"{{topic}}"}</code>,{" "}
-        <code>{"{{inviteUrl}}"}</code>.
-      </p>
+      <div className="font-serif italic text-[14px] text-walnut-2 mb-4">
+        The plain-text message your email client opens when you click "Send email" on a planned
+        speaker.
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <TemplateVariableList variables={VARIABLES} />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] mt-4">
         <div className="flex flex-col gap-4">
           <EditorSection
             label="Email body"
