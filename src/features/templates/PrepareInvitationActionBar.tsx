@@ -121,16 +121,16 @@ export function PrepareInvitationActionBar({
       <ConfirmDialog
         open={pending === "send"}
         title={`Send invitation to ${speakerName}?`}
-        body="This snapshots the letter into a new invitation link, opens your email client with the message pre-filled, and marks the speaker as invited. You'll still review the message in your email client before hitting send there."
-        confirmLabel="Open email"
+        body={`This creates a new invitation link and emails it to ${speakerName}. Their status flips to "invited" once the email is queued. You'll see per-channel delivery status if anything fails.`}
+        confirmLabel="Send email"
         onConfirm={() => confirm(onSend)}
         onCancel={() => setPending(null)}
       />
       <ConfirmDialog
         open={pending === "sms"}
         title={`Text invitation to ${speakerName}?`}
-        body="This snapshots the letter into a new invitation link, opens your phone's Messages app with a short text pre-filled, and marks the speaker as invited. You'll still review the message in Messages before hitting send there."
-        confirmLabel="Open Messages"
+        body={`This creates a new invitation link and sends it as an SMS to ${speakerName} from the ward's Twilio number. Their status flips to "invited" once the SMS is queued. You'll see per-channel delivery status if anything fails.`}
+        confirmLabel="Send SMS"
         onConfirm={() => confirm(onSendSms)}
         onCancel={() => setPending(null)}
       />
