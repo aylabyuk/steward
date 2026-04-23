@@ -17,11 +17,27 @@ interface Props {
   showSmsHint?: boolean;
 }
 
-const MAX_ROWS_PX = 132;
 const SMS_SEGMENT = 160;
+const CONNECT_WAIT_MS = 5000;
+const CONNECT_POLL_MS = 100;
 
-/** Auto-growing composer with an optimistic pending bubble. Sends
- *  plain-text messages via the Twilio conversation. Quick-action
+/** Poll the conversation ref until Twilio populates it. `connect()`
+ *  returns before the client's first `stateChanged` event, so the
+ *  conversation prop can still be null immediately after the caller
+ *  awaited ensureReady. */
+async function waitForConversation(
+  ref: React.RefObject<Conversation | null>,
+): Promise<Conversation | null> {
+  const deadline = Date.now() + CONNECT_WAIT_MS;
+  while (!ref.current && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, CONNECT_POLL_MS));
+  }
+  return ref.current;
+}
+
+/** Multi-row composer with an optimistic pending bubble. Default
+ *  height is three rows; drag the bottom-right corner to expand.
+ *  Sends plain-text messages via the Twilio conversation. Quick-action
  *  (Yes/No) posts go through QuickActionButtons instead — those
  *  carry structured attributes. */
 export function ConversationComposer({
@@ -35,14 +51,15 @@ export function ConversationComposer({
   const [sending, setSending] = useState(false);
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
-
+  // Mirror the conversation prop in a ref so the async send path can
+  // poll for it without re-capturing a stale closure. Twilio's client
+  // finishes initializing a beat after `ensureReady` resolves, so the
+  // first tap can arrive before useConversation has populated the
+  // `conversation` prop.
+  const conversationRef = useRef(conversation);
   useEffect(() => {
-    const t = taRef.current;
-    if (!t) return;
-    t.style.height = "auto";
-    t.style.height = `${Math.min(t.scrollHeight, MAX_ROWS_PX)}px`;
-  }, [value]);
+    conversationRef.current = conversation;
+  }, [conversation]);
 
   async function handleSend() {
     const text = value.trim();
@@ -56,8 +73,9 @@ export function ConversationComposer({
         const ok = await ensureReady();
         if (!ok) throw new Error("Sign-in required.");
       }
-      if (!conversation) throw new Error("Not connected.");
-      await conversation.sendMessage(text);
+      const ready = await waitForConversation(conversationRef);
+      if (!ready) throw new Error("Still connecting — try again in a moment.");
+      await ready.sendMessage(text);
     } catch (err) {
       setError((err as Error).message);
       setValue(text);
@@ -68,13 +86,12 @@ export function ConversationComposer({
   }
 
   return (
-    <div className="flex flex-col bg-chalk border-t border-border">
+    <div className="mt-auto shrink-0 flex flex-col bg-chalk border-t border-border pb-[env(safe-area-inset-bottom)]">
       {pendingText && <PendingBubble text={pendingText} />}
       <div className="flex flex-col gap-1.5 p-3">
         {error && <p className="font-sans text-[11.5px] text-bordeaux">{error}</p>}
         <div className="flex gap-2 items-end">
           <textarea
-            ref={taRef}
             value={value}
             onChange={(e) => {
               setValue(e.target.value);
@@ -88,9 +105,9 @@ export function ConversationComposer({
             }}
             placeholder={placeholder}
             disabled={disabled || sending}
-            rows={1}
+            rows={3}
             aria-label={placeholder}
-            className="flex-1 font-sans text-[13.5px] px-3 py-2 bg-chalk border border-border-strong rounded-md text-walnut placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15 resize-none disabled:bg-parchment-2"
+            className="flex-1 font-sans text-[13.5px] px-3 py-2 bg-chalk border border-border-strong rounded-md text-walnut placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15 resize-y min-h-18 disabled:bg-parchment-2"
           />
           <button
             type="button"

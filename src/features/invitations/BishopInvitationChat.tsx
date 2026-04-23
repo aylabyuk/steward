@@ -34,7 +34,7 @@ export function BishopInvitationChat({
   const user = useAuthStore((s) => s.user);
   const members = useWardMembers();
   const twilio = useTwilioChat();
-  const { messages, conversation, authors, loading, toggleReaction } = useConversation(
+  const { messages, conversation, authors, loading } = useConversation(
     invitation.conversationSid ?? null,
   );
   const firstUnreadIndex = useFirstUnreadIndex(conversation);
@@ -109,9 +109,6 @@ export function BishopInvitationChat({
         loading={loading && twilio.status !== "ready"}
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
-        onReact={(sid, emoji) => {
-          if (twilio.identity) void toggleReaction(sid, emoji, twilio.identity);
-        }}
         fillHeight
       />
 

@@ -108,6 +108,7 @@ async function handleSpeakerTokenExchange(
     try {
       const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
       await sendInvitationSms({
+        wardId,
         speakerPhone: decision.speakerPhone,
         inviterName: decision.inviterName,
         wardName: decision.wardName,

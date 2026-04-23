@@ -171,13 +171,15 @@ service cloud.firestore {
               && matchesInvite(wardId));
         allow delete: if isActiveBishopric(wardId);
         // Roster updates are bishopric-only OR self-edits limited to a
-        // member's own notification prefs and FCM tokens (so a clerk can
-        // toggle quiet hours / register a device without touching role).
+        // member's own notification prefs, FCM tokens, and the Google
+        // profile fields synced on sign-in (displayName + photoURL) so
+        // a clerk can toggle quiet hours / register a device / refresh
+        // their avatar picture without touching their role.
         allow update: if isActiveBishopric(wardId)
           || (isActiveMember(wardId)
               && request.auth.uid == memberId
               && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['notificationPrefs', 'fcmTokens', 'updatedAt']));
+                  .hasOnly(['notificationPrefs', 'fcmTokens', 'displayName', 'photoURL', 'updatedAt']));
       }
 
       // Meetings and their speaker subcollection. Content edits are open to

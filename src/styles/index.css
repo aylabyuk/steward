@@ -246,6 +246,21 @@
   }
 }
 
+/* Soft pulse ring for attention-worthy FABs. Used on the speaker
+   invite page to draw the eye to the chat drawer when the speaker
+   hasn't responded yet or the bishop has replied. */
+@keyframes fabPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 46, 42, 0.55);
+  }
+  75% {
+    box-shadow: 0 0 0 14px rgba(139, 46, 42, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 46, 42, 0);
+  }
+}
+
 /* --------------------------------------------------------------------
    Speaker-letter print rules. A `<PrintOnlyLetter>` portal mounts a
    copy of the letter at `document.body` level; on screen it stays

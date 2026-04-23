@@ -10,7 +10,9 @@ interface SessionStatus {
  *  Renders a "Tap to continue" prompt on idle (so SMS-app link
  *  prefetchers can't consume the token on a bare GET), delegates to
  *  the chat only once the session reaches `"ready"`, and renders
- *  recovery copy for each non-ready branch. */
+ *  recovery copy for each non-ready branch. Lives inside the invite
+ *  page's floating drawer, so the non-ready states fill the drawer
+ *  and center their content rather than floating as a card. */
 export function SessionGate({
   status,
   onStart,
@@ -21,7 +23,9 @@ export function SessionGate({
   children: ReactNode;
 }): ReactElement {
   if (status.kind === "ready") return <>{children}</>;
-  if (status.kind === "loading") return <StateCard>Signing you in…</StateCard>;
+  if (status.kind === "loading") {
+    return <StateCard>Signing you in…</StateCard>;
+  }
   if (status.kind === "rotated") {
     const tail = status.phoneLast4 ? `ending in ••${status.phoneLast4}` : "on file";
     return (
@@ -53,32 +57,41 @@ export function SessionGate({
     );
   }
   return (
-    <div className="bg-chalk border border-border rounded-lg shadow-elev-1 p-5 flex flex-col gap-3">
-      <div>
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-          Continue to the conversation
-        </div>
-        <p className="font-serif text-[13px] text-walnut-2 mt-1 leading-relaxed">
-          Tap below to open the thread with the bishopric. You'll stay signed in on this device for
-          the rest of the invitation window.
-        </p>
+    <Frame>
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
+        Continue to the conversation
       </div>
+      <p className="font-serif text-[14px] text-walnut-2 mt-2 leading-relaxed max-w-sm">
+        Tap below to open the thread with the bishopric. You'll stay signed in on this device for
+        the rest of the invitation window.
+      </p>
       <button
         type="button"
         onClick={onStart}
-        className="self-start font-sans text-[13px] font-semibold px-4 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment hover:bg-bordeaux-deep"
+        className="mt-5 w-full max-w-xs font-sans text-[14px] font-semibold px-4 py-3 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep"
       >
         Continue
       </button>
+    </Frame>
+  );
+}
+
+/** Fills the drawer and centers its child vertically + horizontally.
+ *  The drawer already provides the chalk background + rounded border,
+ *  so non-ready states render flush (no card-in-card chrome). */
+function Frame({ children }: { children: ReactNode }): ReactElement {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center text-center p-6 gap-0">
+      {children}
     </div>
   );
 }
 
 function StateCard({ title, children }: { title?: string; children: ReactNode }): ReactElement {
   return (
-    <div className="bg-chalk border border-border rounded-lg shadow-elev-1 p-5">
-      {title && <p className="font-display text-[18px] text-walnut mb-2">{title}</p>}
-      <p className="font-serif text-[13px] text-walnut-2 leading-relaxed">{children}</p>
-    </div>
+    <Frame>
+      {title && <p className="font-display text-[20px] text-walnut mb-3">{title}</p>}
+      <p className="font-serif text-[14px] text-walnut-2 leading-relaxed max-w-sm">{children}</p>
+    </Frame>
   );
 }

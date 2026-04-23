@@ -57,3 +57,32 @@ export const speakerEmailTemplateSchema = z.object({
   updatedAt: z.any().optional(),
 });
 export type SpeakerEmailTemplate = z.infer<typeof speakerEmailTemplateSchema>;
+
+/**
+ * Shared shape for server-side messaging templates (SMS + email
+ * bodies sent by Cloud Functions). Each template lives at
+ * `wards/{wardId}/templates/{key}` and exposes the same
+ * `bodyMarkdown` + `updatedAt` pair the letter / email / invite
+ * templates already use. Six keys — see `MESSAGE_TEMPLATE_KEYS`.
+ *
+ * Templates govern only the authored narrative text; the structural
+ * framing around response-receipt emails (the inline letter excerpt,
+ * the divider rules, the "View in Steward" link, the warning text)
+ * stays hardcoded in the Cloud Function so bishoprics don't have to
+ * author HTML wrappers.
+ */
+export const messageTemplateSchema = z.object({
+  bodyMarkdown: z.string(),
+  updatedAt: z.any().optional(),
+});
+export type MessageTemplate = z.infer<typeof messageTemplateSchema>;
+
+export const MESSAGE_TEMPLATE_KEYS = [
+  "initialInvitationSms",
+  "speakerResponseAccepted",
+  "speakerResponseDeclined",
+  "bishopricResponseReceipt",
+  "bishopReplySms",
+  "bishopReplyEmail",
+] as const;
+export type MessageTemplateKey = (typeof MESSAGE_TEMPLATE_KEYS)[number];
