@@ -41,7 +41,7 @@ export function ConversationGroup({
           the flex row so the avatar below can align against the
           bubble stack without the eyebrow skewing the computation. */}
       {!group.mine && (
-        <span className="ml-10 font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
+        <span className="ml-11 font-mono text-[9.5px] tracking-[0.08em] text-walnut-3 mb-0.5 max-w-full truncate">
           {group.info.displayName}
         </span>
       )}
@@ -69,7 +69,7 @@ export function ConversationGroup({
       </div>
       {timestamp && (
         <span
-          className={cn("font-mono text-[9.5px] text-walnut-3 mt-0.5", !group.mine && "ml-10")}
+          className={cn("font-mono text-[9.5px] text-walnut-3 mt-0.5", !group.mine && "ml-11")}
           title={fullTimestamp}
         >
           {timestamp}
