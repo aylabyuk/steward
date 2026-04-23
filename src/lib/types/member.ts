@@ -44,6 +44,11 @@ export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
 export const memberSchema = z.object({
   email: z.email(),
   displayName: z.string().min(1),
+  /** Google profile picture URL captured at sign-in; refreshed on each
+   *  subsequent sign-in so avatar bubbles everywhere else in the app
+   *  can show the real face instead of initials. Optional — speakers
+   *  invited via the public link may not have one on file yet. */
+  photoURL: z.string().optional(),
   calling: callingSchema,
   role: roleSchema,
   active: z.boolean().default(true),
