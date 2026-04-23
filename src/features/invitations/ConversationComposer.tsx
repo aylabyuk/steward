@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { Conversation } from "@twilio/conversations";
 
 interface Props {
@@ -17,11 +17,11 @@ interface Props {
   showSmsHint?: boolean;
 }
 
-const MAX_ROWS_PX = 132;
 const SMS_SEGMENT = 160;
 
-/** Auto-growing composer with an optimistic pending bubble. Sends
- *  plain-text messages via the Twilio conversation. Quick-action
+/** Multi-row composer with an optimistic pending bubble. Default
+ *  height is three rows; drag the bottom-right corner to expand.
+ *  Sends plain-text messages via the Twilio conversation. Quick-action
  *  (Yes/No) posts go through QuickActionButtons instead — those
  *  carry structured attributes. */
 export function ConversationComposer({
@@ -35,14 +35,6 @@ export function ConversationComposer({
   const [sending, setSending] = useState(false);
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const t = taRef.current;
-    if (!t) return;
-    t.style.height = "auto";
-    t.style.height = `${Math.min(t.scrollHeight, MAX_ROWS_PX)}px`;
-  }, [value]);
 
   async function handleSend() {
     const text = value.trim();
@@ -74,7 +66,6 @@ export function ConversationComposer({
         {error && <p className="font-sans text-[11.5px] text-bordeaux">{error}</p>}
         <div className="flex gap-2 items-end">
           <textarea
-            ref={taRef}
             value={value}
             onChange={(e) => {
               setValue(e.target.value);
@@ -88,9 +79,9 @@ export function ConversationComposer({
             }}
             placeholder={placeholder}
             disabled={disabled || sending}
-            rows={1}
+            rows={3}
             aria-label={placeholder}
-            className="flex-1 font-sans text-[13.5px] px-3 py-2 bg-chalk border border-border-strong rounded-md text-walnut placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15 resize-none disabled:bg-parchment-2"
+            className="flex-1 font-sans text-[13.5px] px-3 py-2 bg-chalk border border-border-strong rounded-md text-walnut placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15 resize-y min-h-18 disabled:bg-parchment-2"
           />
           <button
             type="button"
