@@ -1,23 +1,15 @@
 import { useEffect, useState } from "react";
 import { readCurrentDeviceToken } from "./fcmToken";
 
-/** Resolves the FCM token registered on this browser/PWA right now.
- *  Returns null while pending, or if no token is registered (permission
- *  denied, SW not installed, etc). The `tokens` input re-triggers the
- *  lookup after subscribe/unsubscribe so the "This device" chip can
- *  follow state changes. */
+/** The FCM token subscribed on THIS browser/PWA (persisted in
+ *  localStorage at subscribe time). Used by the Profile page to flag
+ *  the matching `fcmTokens[]` row with a "This device" chip. The
+ *  `tokens` dep re-reads after subscribe/unsubscribe so the chip
+ *  follows state changes without a page reload. */
 export function useCurrentDeviceToken(tokens: readonly { token: string }[]): string | null {
-  const [current, setCurrent] = useState<string | null>(null);
+  const [current, setCurrent] = useState<string | null>(() => readCurrentDeviceToken());
   useEffect(() => {
-    let cancelled = false;
-    void readCurrentDeviceToken().then((token) => {
-      if (!cancelled) setCurrent(token);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // Re-run when the token set changes — after subscribe, the new token
-    // is in `tokens` and we want the chip to light up without a reload.
+    setCurrent(readCurrentDeviceToken());
   }, [tokens]);
   return current;
 }

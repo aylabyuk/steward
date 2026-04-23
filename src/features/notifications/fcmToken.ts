@@ -12,6 +12,37 @@ import { deriveDeviceName } from "./deriveDeviceName";
 
 const SW_PATH = "/firebase-messaging-sw.js";
 
+/** localStorage key for "the FCM token subscribed on THIS browser/PWA".
+ *  Read on mount by the Profile page to flag the matching fcmTokens[]
+ *  row with a "This device" chip. Scoping by localStorage (per-origin
+ *  per-browser) avoids the SW/permission timing issues we hit when
+ *  re-deriving via getToken — see commit history on #53. */
+const CURRENT_TOKEN_KEY = "steward:fcmToken:current";
+
+function rememberCurrentToken(token: string): void {
+  try {
+    localStorage.setItem(CURRENT_TOKEN_KEY, token);
+  } catch {
+    /* private-mode or disabled storage — chip won't light up, not fatal */
+  }
+}
+
+function forgetCurrentToken(): void {
+  try {
+    localStorage.removeItem(CURRENT_TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readCurrentDeviceToken(): string | null {
+  try {
+    return localStorage.getItem(CURRENT_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export interface SubscribeResult {
   token: string;
   platform: "web" | "ios" | "android";
@@ -69,28 +100,8 @@ export async function subscribeDevice(input: {
     fcmTokens: arrayUnion({ token, platform, name, updatedAt: Timestamp.now() }),
     updatedAt: serverTimestamp(),
   });
+  rememberCurrentToken(token);
   return { token, platform, name };
-}
-
-/** Returns the FCM token registered on this device *right now*, if
- *  any. Used by the Profile page to flag the matching `fcmTokens[]`
- *  row with a "This device" chip. Silent-returns null when messaging
- *  isn't supported, permission hasn't been granted, or no SW exists. */
-export async function readCurrentDeviceToken(): Promise<string | null> {
-  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-  if (!vapidKey) return null;
-  const messaging = await getMessagingIfSupported();
-  if (!messaging) return null;
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return null;
-  if (!("serviceWorker" in navigator)) return null;
-  const swReg = await navigator.serviceWorker.getRegistration(SW_PATH);
-  if (!swReg) return null;
-  try {
-    const token = await getToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
-    return token || null;
-  } catch {
-    return null;
-  }
 }
 
 export async function unsubscribeDevice(input: {
@@ -110,4 +121,5 @@ export async function unsubscribeDevice(input: {
     fcmTokens: arrayRemove(input.token),
     updatedAt: serverTimestamp(),
   });
+  if (readCurrentDeviceToken() === input.token.token) forgetCurrentToken();
 }
