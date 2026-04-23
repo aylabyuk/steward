@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { SpeakerInvitation } from "@/lib/types";
 import { BishopInvitationChat } from "./BishopInvitationChat";
+import { InvitationLinkActions } from "./InvitationLinkActions";
 
 interface Props {
   open: boolean;
@@ -53,6 +54,11 @@ export function BishopInvitationDialog({
               {invitation.speakerName}
             </div>
           </div>
+          <InvitationLinkActions
+            wardId={wardId}
+            invitationId={invitationId}
+            invitation={invitation}
+          />
           <button
             onClick={onClose}
             className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut px-2 py-1 transition-colors"
