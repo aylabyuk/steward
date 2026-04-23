@@ -6,7 +6,6 @@ import { notifyBishopricOfResponse } from "./invitationResponseNotify.js";
 import { readMessageTemplate } from "./messageTemplates.js";
 import {
   fetchActiveBishopricEmails,
-  rotateInviteUrl,
   sendBishopricReceipt,
   sendSpeakerReceipt,
 } from "./onInvitationWrite.helpers.js";
@@ -15,14 +14,18 @@ import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 /** Fires receipt emails on authoritative response transitions:
  *   - `response.answer` appears or flips → speaker receipt (to speaker,
- *      CC bishopric) with a freshly-rotated invite link so they can
- *      reopen the chat even if the original SMS has been deleted.
- *   - `response.acknowledgedAt` appears → bishopric receipt (to bishopric)
+ *      CC bishopric) + FCM push to the bishopric.
+ *   - `response.acknowledgedAt` appears → bishopric receipt (to bishopric).
+ *
+ *  The speaker receipt intentionally does NOT carry an invite link: any
+ *  URL we'd embed requires rotating the capability token, which in turn
+ *  invalidates the speaker's original SMS link. The canonical re-entry
+ *  point is the SMS — if the speaker reopens a consumed SMS link,
+ *  `decideTokenAction` rotates on demand and texts them a fresh URL.
+ *  See #73 for the regression this behavior restores.
  *
  *  Other writes (token rotation, delivery-record updates, heartbeats)
- *  are classified as no-ops and return early. The receipts contain the
- *  original letter inline so the email itself is the archive — no
- *  external dependency on the app being reachable. */
+ *  are classified as no-ops and return early. */
 export const onInvitationWrite = onDocumentWritten(
   "wards/{wardId}/speakerInvitations/{invitationId}",
   async (event) => {
@@ -40,12 +43,9 @@ export const onInvitationWrite = onDocumentWritten(
       if (change.fireSpeaker) {
         const answer = after.response?.answer;
         const key = answer === "yes" ? "speakerResponseAccepted" : "speakerResponseDeclined";
-        const [headerTemplate, inviteUrl] = await Promise.all([
-          readMessageTemplate(db, wardId, key),
-          rotateInviteUrl(wardId, invitationId, origin),
-        ]);
+        const headerTemplate = await readMessageTemplate(db, wardId, key);
         await Promise.all([
-          sendSpeakerReceipt(after, bishopric, headerTemplate, inviteUrl),
+          sendSpeakerReceipt(after, bishopric, headerTemplate),
           notifyBishopricOfResponse(db, wardId, invitationId, before, after, origin),
         ]);
       }

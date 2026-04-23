@@ -58,20 +58,7 @@ describe("buildSpeakerReceipt", () => {
     expect(content.html).toMatch(/I&#39;m out of town/);
   });
 
-  it("renders an invite URL when provided", () => {
-    const url = "https://steward-app.ca/invite/speaker/w1/inv1/tok123";
-    const content = buildSpeakerReceipt({
-      invitation: mk({ response: { answer: "yes" } }),
-      headerTemplate: DEFAULT_SPEAKER_RESPONSE_ACCEPTED,
-      inviteUrl: url,
-    });
-    expect(content.text).toMatch(
-      new RegExp(`Open your invitation page: ${url.replace(/[/.]/g, "\\$&")}`),
-    );
-    expect(content.html).toMatch(new RegExp(`href="${url.replace(/[/.]/g, "\\$&")}"`));
-  });
-
-  it("omits the invite URL block when not provided", () => {
+  it("does not embed an invite URL — the SMS stays canonical (#73)", () => {
     const content = buildSpeakerReceipt({
       invitation: mk({ response: { answer: "yes" } }),
       headerTemplate: DEFAULT_SPEAKER_RESPONSE_ACCEPTED,
