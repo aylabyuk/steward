@@ -25,8 +25,8 @@ async function guard<T>(action: () => Promise<T>, onError: (m: string) => void):
 }
 
 /** Single row in the Members & callings card. Avatar + identity,
- *  calling select, CC-on-emails toggle for clerks, deactivate /
- *  reactivate button. */
+ *  calling select, CC-on-emails toggle (any role can opt out),
+ *  deactivate / reactivate button. */
 export function MemberRow({
   wardId,
   members,
@@ -51,20 +51,21 @@ export function MemberRow({
       <div className="min-w-0">
         <div className="font-sans text-[15px] font-semibold text-walnut">{m.displayName}</div>
         <div className="font-mono text-[11.5px] text-walnut-3 mt-0.5 truncate">{m.email}</div>
-        {m.role === "clerk" && (
-          <label className="inline-flex items-center gap-1.5 mt-2 font-serif italic text-[12.5px] text-walnut-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={m.ccOnEmails}
-              disabled={!canEdit}
-              onChange={(e) =>
-                void guard(() => setCcOnEmails(wardId, member.id, e.target.checked), onError)
-              }
-              className="accent-bordeaux"
-            />
-            CC on outgoing emails
-          </label>
-        )}
+        <label
+          className="inline-flex items-center gap-1.5 mt-2 font-serif italic text-[12.5px] text-walnut-3 cursor-pointer"
+          title="CC this member on speaker-invitation receipts and other ward emails"
+        >
+          <input
+            type="checkbox"
+            checked={m.ccOnEmails}
+            disabled={!canEdit}
+            onChange={(e) =>
+              void guard(() => setCcOnEmails(wardId, member.id, e.target.checked), onError)
+            }
+            className="accent-bordeaux"
+          />
+          CC on outgoing emails
+        </label>
       </div>
       <select
         value={m.calling}
