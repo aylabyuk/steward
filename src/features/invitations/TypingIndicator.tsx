@@ -8,10 +8,7 @@ interface Props {
 /** One-line "X is typing…" row with an animated three-dot affordance.
  *  Renders nothing when no one is typing, so the caller doesn't need
  *  to gate on length. */
-export function TypingIndicator({
-  typingIdentities,
-  authors,
-}: Props): React.ReactElement | null {
+export function TypingIndicator({ typingIdentities, authors }: Props): React.ReactElement | null {
   if (typingIdentities.length === 0) return null;
   const names = typingIdentities.map((id) => authors.get(id)?.displayName ?? "Someone");
   const label = formatTypingLabel(names);

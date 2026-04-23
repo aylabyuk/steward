@@ -18,11 +18,7 @@ export function readReactions(attrs: Record<string, unknown> | null): Reactions 
 /** Toggles the caller's identity on a given emoji. Removes the
  *  emoji entry entirely when it ends up empty so the attribute
  *  doesn't accumulate dead keys. */
-export function toggleReaction(
-  current: Reactions,
-  emoji: string,
-  identity: string,
-): Reactions {
+export function toggleReaction(current: Reactions, emoji: string, identity: string): Reactions {
   const existing = current[emoji] ?? [];
   const hasMe = existing.includes(identity);
   const nextList = hasMe ? existing.filter((id) => id !== identity) : [...existing, identity];
