@@ -8,6 +8,10 @@ interface RailItem {
   /** Optional numeric badge rendered at the end of the row — used on
    *  the Ward settings rail for the member count. */
   count?: number;
+  /** Optional group label. When two consecutive items carry different
+   *  group strings, a brass-deep header renders between them. Used on
+   *  the Templates page to separate invitation / receipts / replies. */
+  group?: string;
 }
 
 interface Props {
@@ -50,23 +54,35 @@ export function PageRail({ items, elsewhere, label = "Page sections" }: Props): 
       <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep px-2.5 pt-1 pb-2">
         On this page
       </div>
-      {items.map((s) => (
-        <a
-          key={s.id}
-          href={`#${s.id}`}
-          className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-md border-l-2 -ml-0.5 text-[13.5px] transition-colors",
-            active === s.id
-              ? "border-bordeaux text-bordeaux-deep font-semibold bg-parchment-2/40"
-              : "border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut",
-          )}
-        >
-          <span className="flex-1">{s.label}</span>
-          {typeof s.count === "number" && (
-            <span className="font-mono text-[10px] tracking-[0.08em] text-walnut-3">{s.count}</span>
-          )}
-        </a>
-      ))}
+      {items.map((s, idx) => {
+        const prevGroup = idx > 0 ? items[idx - 1]?.group : undefined;
+        const showGroupHeader = s.group !== undefined && s.group !== prevGroup;
+        return (
+          <div key={s.id} className="contents">
+            {showGroupHeader && (
+              <div className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-walnut-3 px-2.5 pt-3 pb-1">
+                {s.group}
+              </div>
+            )}
+            <a
+              href={`#${s.id}`}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-md border-l-2 -ml-0.5 text-[13.5px] transition-colors",
+                active === s.id
+                  ? "border-bordeaux text-bordeaux-deep font-semibold bg-parchment-2/40"
+                  : "border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut",
+              )}
+            >
+              <span className="flex-1">{s.label}</span>
+              {typeof s.count === "number" && (
+                <span className="font-mono text-[10px] tracking-[0.08em] text-walnut-3">
+                  {s.count}
+                </span>
+              )}
+            </a>
+          </div>
+        );
+      })}
       {elsewhere && elsewhere.length > 0 && (
         <>
           <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep px-2.5 pt-4 pb-2">

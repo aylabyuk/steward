@@ -132,7 +132,7 @@ async function deliverIfRequested(
     );
   }
   if (input.channels.includes("sms") && invitation.speakerPhone) {
-    out.push(await trySms(invitation.speakerPhone, emailArgs));
+    out.push(await trySms(input.wardId, invitation.speakerPhone, emailArgs));
   }
   return out;
 }
