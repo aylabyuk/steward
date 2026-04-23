@@ -58,9 +58,10 @@ Steward is built for the **bishopric** (bishop + counselors) and **secretaries**
 
 ## Email CC policy
 
-Speaker-invitation emails (sent server-side by the `sendSpeakerInvitation` / `onInvitationWrite` Cloud Functions via SendGrid) CC every **active** member whose **`ccOnEmails`** flag is true — bishopric, secretary, or clerk alike. The toggle lives on each member row in Ward settings → Members & callings; default is `true` for back-compat with pre-toggle member docs.
+Speaker-invitation emails (sent server-side by the `sendSpeakerInvitation` / `onInvitationWrite` Cloud Functions via SendGrid) CC active bishopric + `role: "clerk"` members with `ccOnEmails: true`:
 
-- Bishopric is not auto-included anymore — if a bishopric member turns their toggle off, they opt out of the thread and miss both the speaker's response and the bishopric-side acknowledgement receipt. Intentional: the toggle has to mean something.
+- **Bishopric**: always CC'd, non-togglable. Bishopric visibility on speaker invitations is the whole point — the Ward settings UI flags the row as "Always CC'd" instead of offering a toggle.
+- **Secretaries + clerks** (`role: "clerk"`): CC'd when their per-member `ccOnEmails` toggle is true (default). Turn off on the Ward settings roster for members who don't need to be in the thread.
 - Client-side `mailto:` flows (when they land) reuse the same rule via `src/features/speakers/computeCc.ts`.
 
 Applies to all email fan-outs: speaker invitation, speaker-response receipts, and any future ward email feature.
