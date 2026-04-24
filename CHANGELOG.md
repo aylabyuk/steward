@@ -7,6 +7,48 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.10] — 2026-04-24
+
+Root-cause fix for #106. v0.9.9 shipped a defensive boot cleanup;
+this release stops the ghost SW from ever being created in the
+first place.
+
+### Fixed
+
+- **Prime `messaging.swRegistration` on boot** (#110). The ghost
+  service worker at `/firebase-cloud-messaging-push-scope` was being
+  registered by Firebase's own SDK during every callable invocation.
+  Trace: `TwilioAutoConnect` (active on `/schedule` for any signed-in
+  bishop) → `callIssueSpeakerSession` → Firebase Functions' shared
+  `contextProvider.getContext()` → `getMessagingToken()` →
+  `messaging.getToken()` with no args → `Tke(messaging, undefined)` →
+  `registerDefaultSw(messaging)` →
+  `navigator.serviceWorker.register("/firebase-messaging-sw.js",
+  { scope: "/firebase-cloud-messaging-push-scope" })`.
+
+  Critically, `getMessagingToken()`'s guard only bails when
+  `Notification.permission !== 'granted'` — and that permission
+  survives "Clear site data" in Chrome. Any user who ever granted
+  notification permission hit the ghost path every time they
+  visited `/schedule`. Two concurrent push subscriptions (one on our
+  scope-`/` SW, one on the ghost) then contended; FCM invalidated
+  one of them and emitted
+  `messaging/registration-token-not-registered` after 2–4 sends.
+  That matches the server-side diagnostic logs captured from v0.9.5
+  onward.
+
+  The fix is a one-liner: after registering our SW on boot,
+  construct the messaging singleton and assign
+  `messaging.swRegistration = swReg` directly. That short-circuits
+  Firebase's internal `registerDefaultSw` call for every future
+  callable-triggered token lookup. No permission prompt, no extra
+  network traffic, no push-subscription churn.
+
+  The defensive boot-time unregister of any existing
+  `/firebase-cloud-messaging-push-scope` registration from v0.9.9
+  stays in place as a backstop for users who already had the ghost
+  on their profile before this release.
+
 ## [0.9.9] — 2026-04-24
 
 Defensive fix targeting the unsubscribe-on-chat bug (#106). Diagnostic
@@ -1079,7 +1121,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.9...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.10...HEAD
+[0.9.10]: https://github.com/aylabyuk/steward/releases/tag/v0.9.10
 [0.9.9]: https://github.com/aylabyuk/steward/releases/tag/v0.9.9
 [0.9.8]: https://github.com/aylabyuk/steward/releases/tag/v0.9.8
 [0.9.7]: https://github.com/aylabyuk/steward/releases/tag/v0.9.7
