@@ -4,13 +4,13 @@ interface Props {
   draft: Draft;
   date: string;
   /** "invite" (default) — Step 2 behaviour: planned speakers get the
-   *  "Prepare invitation →" button; non-planned get the "Already X"
-   *  message. "edit" — Step 1 behaviour: planned speakers get a
-   *  same-dimensions invisible spacer (no redundant affordance while
-   *  the bishop is already editing), non-planned speakers still get
-   *  the "Already X" message. Matching dimensions between the two
-   *  modes keeps the card total-height stable across step
-   *  transitions. */
+   *  "Prepare invitation →" button; non-planned get the "Already X
+   *  — open edit mode to change" message. "edit" — Step 1 behaviour:
+   *  everyone gets an invisible placeholder matching the Step 2 band
+   *  dimensions; the bishop is already in edit mode, so neither the
+   *  Prepare button nor the "open edit mode to change" nudge fits
+   *  there. The matched footprint keeps the card total-height stable
+   *  across step transitions. */
   step?: "edit" | "invite";
 }
 
@@ -27,20 +27,23 @@ export function SpeakerLockedBand({ draft, date, step = "invite" }: Props): Reac
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  if (step === "edit") {
+    // Visually hidden placeholder for Step 1 regardless of status —
+    // the bishop is already editing, so neither the "Prepare
+    // invitation" button nor the "open edit mode to change" nudge
+    // belong here. Matching the Step 2 band's vertical footprint
+    // keeps the card height stable across step transitions.
+    return (
+      <div
+        aria-hidden
+        className="w-full mb-2.5 border border-transparent font-mono text-[10px] tracking-[0.14em] font-medium py-2 invisible"
+      >
+        Prepare invitation →
+      </div>
+    );
+  }
+
   if (status === "planned") {
-    if (step === "edit") {
-      // Visually hidden placeholder — reserves the same vertical
-      // footprint as the Step 2 button so the card height stays
-      // stable when the bishop flips between steps.
-      return (
-        <div
-          aria-hidden
-          className="w-full mb-2.5 border border-transparent font-mono text-[10px] tracking-[0.14em] font-medium py-2 invisible"
-        >
-          Prepare invitation →
-        </div>
-      );
-    }
     return (
       <button
         type="button"
