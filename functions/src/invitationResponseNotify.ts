@@ -77,7 +77,17 @@ export async function notifyBishopricOfResponse(
   after: SpeakerInvitationShape,
 ): Promise<void> {
   const nextAnswer = after.response?.answer;
-  if (!nextAnswer) return;
+  if (!nextAnswer) {
+    logger.info("response push skipped — no nextAnswer", { wardId, invitationId });
+    return;
+  }
+
+  logger.info("response push: start", {
+    wardId,
+    invitationId,
+    prevAnswer: before?.response?.answer ?? null,
+    nextAnswer,
+  });
 
   const wardSnap = await db.doc(`wards/${wardId}`).get();
   const ward = wardSnap.data() as WardDoc | undefined;
@@ -91,6 +101,13 @@ export async function notifyBishopricOfResponse(
     })
     .filter((c): c is RecipientCandidate => c !== null);
   const recipients = filterRecipients(candidates, { now: new Date(), timezone });
+  logger.info("response push: recipients", {
+    wardId,
+    invitationId,
+    bishopricCandidates: candidates.length,
+    recipientsAfterFilter: recipients.length,
+    candidateUids: candidates.map((c) => c.uid),
+  });
   if (recipients.length === 0) return;
 
   const payload = composeResponseNotification({
@@ -102,9 +119,20 @@ export async function notifyBishopricOfResponse(
   });
 
   const tokensByUid = new Map<string, readonly FcmToken[]>();
-  for (const r of recipients) tokensByUid.set(r.uid, r.member.fcmTokens ?? []);
+  let totalTokens = 0;
+  for (const r of recipients) {
+    const tokens = r.member.fcmTokens ?? [];
+    tokensByUid.set(r.uid, tokens);
+    totalTokens += tokens.length;
+  }
+  logger.info("response push: sending", {
+    wardId,
+    invitationId,
+    recipientCount: recipients.length,
+    totalTokens,
+  });
   try {
-    await sendDisplayPush(wardId, tokensByUid, {
+    const outcome = await sendDisplayPush(wardId, tokensByUid, {
       title: payload.title,
       body: payload.body,
       data: {
@@ -113,6 +141,13 @@ export async function notifyBishopricOfResponse(
         meetingDate: after.speakerRef.meetingDate,
         kind: "invitation-response",
       },
+    });
+    logger.info("response push: outcome", {
+      wardId,
+      invitationId,
+      successCount: outcome.successCount,
+      failureCount: outcome.failureCount,
+      deadTokenCount: outcome.deadTokens.length,
     });
   } catch (err) {
     logger.error("response push fan-out failed", {
