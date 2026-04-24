@@ -1,3 +1,4 @@
+import { SpeakerChatLauncher } from "@/features/invitations/SpeakerChatLauncher";
 import type { WithId } from "@/hooks/_sub";
 import type { Speaker } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -45,9 +46,22 @@ interface SpeakerRowProps extends DragHandlers {
   speaker: WithId<Speaker>;
   index: number;
   isLast: boolean;
+  /** Threaded so each row can host a `SpeakerChatLauncher` — clicking
+   *  the chat icon opens the bishopric/speaker conversation for that
+   *  individual speaker, mirroring the affordance on the schedule
+   *  view. */
+  wardId: string;
+  date: string;
 }
 
-export function SpeakerListRow({ speaker: s, index, isLast, ...drag }: SpeakerRowProps) {
+export function SpeakerListRow({
+  speaker: s,
+  index,
+  isLast,
+  wardId,
+  date,
+  ...drag
+}: SpeakerRowProps) {
   return (
     <li
       {...useDragProps(drag)}
@@ -72,6 +86,7 @@ export function SpeakerListRow({ speaker: s, index, isLast, ...drag }: SpeakerRo
       </div>
       <div className="flex items-center gap-2.5">
         <StatusPill status={s.data.status} />
+        <SpeakerChatLauncher wardId={wardId} date={date} speaker={s.data} speakerId={s.id} />
         <Grip />
       </div>
     </li>
