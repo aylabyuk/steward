@@ -112,7 +112,8 @@ export function ConversationThread({
         {items.map((item) => {
           if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
           if (item.kind === "unread") return <UnreadDivider key={item.key} />;
-          if (item.kind === "system") return <SystemNotice key={item.key} body={item.body} />;
+          if (item.kind === "system")
+            return <SystemNotice key={item.key} body={item.body} status={item.status} />;
           return (
             <ConversationGroup
               key={item.key}
@@ -142,18 +143,24 @@ function findLastMineIndex(
   return null;
 }
 
-/** Plain centered line for system-posted status-change messages
- *  ("Assignment confirmed — thank you for speaking this Sunday.").
- *  No container, no padding, no wrap — reads as a quiet event
- *  between regular participant groups. */
-function SystemNotice({ body }: { body: string }) {
+/** Centered one-line system notice for status-change messages,
+ *  mirroring the DayDivider rule-label-rule pattern so it reads as
+ *  a thread event rather than a message. Text + rule colour pivot
+ *  on status: green for confirmed, red for declined. */
+function SystemNotice({ body, status }: { body: string; status: "confirmed" | "declined" }) {
+  const textCls = status === "confirmed" ? "text-success" : "text-bordeaux";
+  const ruleCls = status === "confirmed" ? "bg-success/40" : "bg-bordeaux/40";
   return (
-    <p
-      role="status"
-      title={body}
-      className="font-serif italic text-[12px] text-walnut-3 text-center truncate"
-    >
-      {body}
-    </p>
+    <div className="flex items-center gap-2 -my-1" role="status" aria-label={body}>
+      <div aria-hidden="true" className={`flex-1 h-px ${ruleCls}`} />
+      <span
+        aria-hidden="true"
+        className={`font-serif italic text-[12px] ${textCls} truncate`}
+        title={body}
+      >
+        {body}
+      </span>
+      <div aria-hidden="true" className={`flex-1 h-px ${ruleCls}`} />
+    </div>
   );
 }
