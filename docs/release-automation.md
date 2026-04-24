@@ -15,7 +15,7 @@ Vercel handles the frontend redeploy via its own GitHub integration — nothing 
 
 ### 1. Auto-merge for release PRs — self-hosted
 
-GitHub's built-in auto-merge is gated behind Pro on private repos, so we roll our own. [`.github/workflows/auto-merge-release.yml`](../.github/workflows/auto-merge-release.yml) triggers on CI completion: if the PR's title starts with `chore(release):` or `Release:` AND CI succeeded, it merges via `gh pr merge`.
+GitHub's built-in auto-merge is gated behind Pro on private repos, so we roll our own. [`.github/workflows/auto-merge-release.yml`](../.github/workflows/auto-merge-release.yml) triggers on CI completion: if the PR's title starts with `chore(release):` or `Release:` AND CI succeeded, it merges via `gh pr merge`. After merging a PR that targets `main`, it then **explicitly dispatches** the Release workflow via `gh workflow run` (necessary because GitHub suppresses downstream `push` triggers for events driven by the default `GITHUB_TOKEN` — a `push: branches: [main]` trigger alone would never fire on an auto-merge).
 
 **Nothing to configure** — the workflow uses the default `GITHUB_TOKEN` so it ships working. Feature PRs are untouched by the title filter; they still need a human review + click.
 
