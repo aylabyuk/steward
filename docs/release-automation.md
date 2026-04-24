@@ -39,10 +39,16 @@ Create a dedicated service account in the prod project with only the permissions
      (`firebase.googleapis.com/.../adminSdkConfig`) during functions
      deploy. Without it, deploy fails with `403 The caller does not
      have permission` before any function is updated.
-   - `Secret Manager Secret Accessor` — read Twilio secrets
+   - `Secret Manager Viewer` — read metadata on the Twilio secrets
      (`TWILIO_ACCOUNT_SID`, etc.) that the Cloud Functions declare
-     via `defineSecret`. Without it, deploy fails with `403
-     Permission 'secretmanager.secrets.get' denied`.
+     via `defineSecret`. The Firebase CLI calls `secrets.get` during
+     deploy to verify each secret exists + is versioned; that
+     permission is in **Viewer**, *not* `Secret Manager Secret
+     Accessor` (Accessor only grants `versions.access` — the
+     permission the function's own runtime SA uses to read the
+     value at invoke time, which is a separate binding). Without
+     Viewer, deploy fails with `403 Permission
+     'secretmanager.secrets.get' denied`.
    - `Service Account User` — act as the default Cloud Functions runtime SA
    - `Cloud Build Editor` — trigger the build step for function deploys
    - `Artifact Registry Writer` — push the function container image
