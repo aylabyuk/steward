@@ -20,6 +20,12 @@ jobs:
   changes:
     name: Detect changed paths
     runs-on: ubuntu-latest
+    # dorny/paths-filter calls the PR listFiles API for pull_request
+    # events. Needs pull-requests: read because the default
+    # GITHUB_TOKEN scope on this repo doesn't include it.
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       app: ${{ steps.filter.outputs.app }}
       functions: ${{ steps.filter.outputs.functions }}
