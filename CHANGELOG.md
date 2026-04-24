@@ -7,6 +7,37 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.11] — 2026-04-24
+
+Third time's the fix for #106. v0.9.10 landed the right idea — prime
+`messaging.swRegistration` to short-circuit Firebase's internal
+`registerDefaultSw` — but did so from a `window.addEventListener("load", …)`
+callback, which runs *after* React component effects mount. On the
+affected browsers, `TwilioAutoConnect`'s `useEffect` fires a Firebase
+callable in the same tick as hydration, losing the race: the callable's
+internal `messaging.getToken()` call sees `swRegistration` unset,
+auto-registers the ghost, and the defensive cleanup from v0.9.9 then
+catches it on the *next* load.
+
+### Fixed
+
+- **Synchronous stub prime at module-import time** (#113). Instead of
+  waiting for a real `ServiceWorkerRegistration` — which only arrives
+  after the async `serviceWorker.register()` call — we assign a stub
+  (`{ scope: "/", __stewardStub: true }`) to `messaging.swRegistration`
+  synchronously before React renders. That satisfies
+  `Tke(messaging, undefined)`'s `!e.swRegistration` guard, which is the
+  only thing that matters for blocking `registerDefaultSw`. Firebase
+  Functions' callable path already wraps `messaging.getToken()` in a
+  `try/catch` and returns undefined on throw — so a stub that lacks
+  `pushManager` causes the callable to proceed without the
+  `Firebase-Instance-ID-Token` header (optional). Our own
+  `subscribeDevice` explicitly passes a real `ServiceWorkerRegistration`
+  to `getToken`, which replaces the stub via Firebase's `Tke`
+  `e.swRegistration = t` branch — first-subscribe flow unchanged.
+  The actual `serviceWorker.register()` + stub→real swap still runs on
+  `load` as before, but past the sync prime it's purely cosmetic.
+
 ## [0.9.10] — 2026-04-24
 
 Root-cause fix for #106. v0.9.9 shipped a defensive boot cleanup;
@@ -1121,7 +1152,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.10...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.11...HEAD
+[0.9.11]: https://github.com/aylabyuk/steward/releases/tag/v0.9.11
 [0.9.10]: https://github.com/aylabyuk/steward/releases/tag/v0.9.10
 [0.9.9]: https://github.com/aylabyuk/steward/releases/tag/v0.9.9
 [0.9.8]: https://github.com/aylabyuk/steward/releases/tag/v0.9.8
