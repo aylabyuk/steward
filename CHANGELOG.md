@@ -7,6 +7,23 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.7] — 2026-04-24
+
+Release-pipeline smoke-test follow-up. v0.9.6 merged to main but the
+Release workflow never fired — GitHub suppresses downstream workflow
+triggers for events driven by the default `GITHUB_TOKEN`, so the
+auto-merge's push to main didn't cascade into `release.yml`. This
+release carries the fix and is the re-test.
+
+### Fixed
+
+- **Release workflow dispatches explicitly from auto-merge** (#95).
+  `release.yml` gains a `workflow_dispatch` trigger; the
+  auto-merge-release workflow calls `gh workflow run` after merging
+  a `main`-bound PR. The existing `push: branches: [main]` trigger
+  stays as a fallback for human-driven merges. Both paths are
+  idempotent via the tag-exists check.
+
 ## [0.9.6] — 2026-04-24
 
 Infrastructure-only release. No user-visible change — this is the
@@ -1001,7 +1018,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.6...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.7...HEAD
+[0.9.7]: https://github.com/aylabyuk/steward/releases/tag/v0.9.7
 [0.9.6]: https://github.com/aylabyuk/steward/releases/tag/v0.9.6
 [0.9.5]: https://github.com/aylabyuk/steward/releases/tag/v0.9.5
 [0.9.4]: https://github.com/aylabyuk/steward/releases/tag/v0.9.4

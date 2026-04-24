@@ -17,6 +17,14 @@ name: Release
 #     at deploy time via functions/.env.steward-prod-65a36.
 
 on:
+  # Chained from auto-merge-release via `gh workflow run`. Needed
+  # because GitHub suppresses downstream workflow triggers for events
+  # driven by the default GITHUB_TOKEN — a `push` trigger would never
+  # fire on an auto-merge. workflow_dispatch is explicitly allowed.
+  workflow_dispatch:
+  # Fallback for human-driven merges (manual merge via the UI, direct
+  # push recovery, etc.). Harmless if both fire — the tag-check step
+  # makes the re-run idempotent.
   push:
     branches: [main]
 
