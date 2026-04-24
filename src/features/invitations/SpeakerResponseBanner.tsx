@@ -1,3 +1,4 @@
+import { formatShortSunday } from "@/features/schedule/dateFormat";
 import type { SpeakerStatus } from "@/lib/types";
 
 interface Props {
@@ -9,6 +10,10 @@ interface Props {
    *  status via the chat-banner pills. When present, this drives the
    *  banner; when absent we fall back to `answer`. */
   currentStatus?: SpeakerStatus | null;
+  /** ISO `YYYY-MM-DD` of the meeting the speaker is assigned to.
+   *  Substituted into the subtitle copy instead of the ambiguous
+   *  "this Sunday" so the date is unambiguous. */
+  meetingDate: string;
 }
 
 /** Speaker-side confirmation banner rendered under the conversation
@@ -25,12 +30,17 @@ interface Props {
  *       invitations that predate the `currentSpeakerStatus` mirror.
  *    3. Nothing before the speaker has replied (keeps the chat
  *       header quiet while Quick-Action buttons are visible). */
-export function SpeakerResponseBanner({ answer, currentStatus }: Props): React.ReactElement | null {
+export function SpeakerResponseBanner({
+  answer,
+  currentStatus,
+  meetingDate,
+}: Props): React.ReactElement | null {
+  const when = formatShortSunday(meetingDate);
   if (currentStatus === "confirmed") {
     return (
       <Banner
         tone="success"
-        title="Your assignment is confirmed. Thank you!"
+        title={`Your assignment is confirmed for ${when}. Thank you!`}
         subtitle="The bishopric will follow up with any remaining details in the chat below."
       />
     );
@@ -40,7 +50,7 @@ export function SpeakerResponseBanner({ answer, currentStatus }: Props): React.R
       <Banner
         tone="danger"
         title="Your assignment has been updated to declined."
-        subtitle="You are no longer scheduled to speak this Sunday. See the chat below for any follow-up."
+        subtitle={`You are no longer scheduled to speak on ${when}. See the chat below for any follow-up.`}
       />
     );
   }
@@ -48,7 +58,7 @@ export function SpeakerResponseBanner({ answer, currentStatus }: Props): React.R
     return (
       <Banner
         tone="success"
-        title="You accepted this invitation. Thank you!"
+        title={`You accepted the invitation to speak on ${when}. Thank you!`}
         subtitle="The bishopric will follow up with any remaining details in the chat below."
       />
     );
@@ -57,7 +67,7 @@ export function SpeakerResponseBanner({ answer, currentStatus }: Props): React.R
     return (
       <Banner
         tone="danger"
-        title="You declined this invitation."
+        title={`You declined the invitation to speak on ${when}.`}
         subtitle="The bishopric has been notified and will respond in the chat below if needed."
       />
     );

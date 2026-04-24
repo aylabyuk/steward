@@ -66,7 +66,13 @@ export function BishopInvitationChat({
     setApplyError(null);
     try {
       await updateSpeaker(wardId, date, speakerId, { status: next });
-      await noteBishopStatusChange({ wardId, invitationId, status: next, conversation });
+      await noteBishopStatusChange({
+        wardId,
+        invitationId,
+        meetingDate: date,
+        status: next,
+        conversation,
+      });
     } catch (err) {
       setApplyError((err as Error).message);
     }
@@ -105,6 +111,7 @@ export function BishopInvitationChat({
       await noteBishopStatusChange({
         wardId,
         invitationId,
+        meetingDate: date,
         status: applied,
         conversation,
       });
