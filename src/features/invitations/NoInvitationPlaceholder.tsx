@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import type { Speaker } from "@/lib/types";
 
 interface Props {
@@ -19,8 +18,16 @@ export function NoInvitationPlaceholder({
   date,
   onNavigate,
 }: Props): React.ReactElement {
-  const prepareHref = `/week/${date}/speaker/${speakerId}/prepare`;
+  const prepareHref = `/week/${encodeURIComponent(date)}/speaker/${encodeURIComponent(speakerId)}/prepare`;
   const view = deriveView(speaker);
+  function openPrepare() {
+    // Open in a new tab to match the rest of the app (SpeakerLockedBand
+    // uses the same pattern). The Prepare page's own Cancel button
+    // calls window.close(), which only works when the page was opened
+    // via window.open — same-tab navigation would break that button.
+    window.open(prepareHref, "_blank", "noopener,noreferrer");
+    onNavigate?.();
+  }
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 py-10 bg-chalk overflow-y-auto">
       <div className="w-12 h-12 rounded-full bg-parchment-2 flex items-center justify-center text-walnut-3">
@@ -44,13 +51,13 @@ export function NoInvitationPlaceholder({
           {view.body}
         </p>
       </div>
-      <Link
-        to={prepareHref}
-        onClick={onNavigate}
+      <button
+        type="button"
+        onClick={openPrepare}
         className="font-sans text-[13px] font-semibold px-4 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors"
       >
         {view.ctaLabel}
-      </Link>
+      </button>
     </div>
   );
 }
