@@ -1,21 +1,25 @@
 /**
- * Registers the Firebase Cloud Messaging service worker on app boot. This
- * doubles as the PWA install signal (browsers require a registered SW for
- * the install prompt). Subscribe + push handling happens in
- * `features/notifications/fcmToken.ts`.
+ * Registers the Firebase Cloud Messaging service worker on app boot and
+ * primes the Firebase messaging singleton's `swRegistration` slot so the
+ * SDK never auto-registers a ghost SW at
+ * `/firebase-cloud-messaging-push-scope`. See issue #106 for the chase.
  *
- * Also primes the Firebase messaging singleton's `swRegistration` to point
- * at our scope-"/" registration so Firebase's internal
- * `registerDefaultSw` never fires — see issue #106 for the chase. Without
- * this, the first callable function invocation (e.g.
- * `callIssueSpeakerSession` from `TwilioAutoConnect`) triggers
- * `Functions.contextProvider.getContext()` →
- * `this.messaging.getToken()` (no args), which calls the SDK's internal
- * `Tke(messaging, undefined)` → `registerDefaultSw(messaging)` and lands
- * a ghost SW at scope `/firebase-cloud-messaging-push-scope`. That ghost
- * then contends with our real registration and FCM invalidates the
- * primary push subscription (observed as
- * `messaging/registration-token-not-registered` after 2–4 sends).
+ * Priming happens SYNCHRONOUSLY at module-import time, not deferred. A
+ * React effect that fires a Firebase callable (e.g. `TwilioAutoConnect`)
+ * mounts in the same tick as hydration, which is earlier than the browser
+ * `load` event. Without a synchronous prime, Firebase's
+ * `getMessagingToken()` auto-registers the ghost before we can stop it.
+ *
+ * We use a stub object (not a real ServiceWorkerRegistration) for the
+ * sync prime because the real registration only arrives after the async
+ * `navigator.serviceWorker.register()` call resolves. The stub satisfies
+ * the only guard that matters — `Tke(messaging, undefined)`'s
+ * `!e.swRegistration` check — and Firebase's
+ * Functions-callable path is tolerant of downstream errors when the
+ * stub's `pushManager` doesn't exist (`getMessagingToken()` returns
+ * undefined on throw). Our own `subscribeDevice` explicitly passes a
+ * real SW registration to `getToken`, which replaces the stub via
+ * `Tke`'s `e.swRegistration = t` branch.
  *
  * No-op on the server / in tests where `navigator` isn't available.
  */
@@ -25,6 +29,34 @@ import { app } from "./firebase";
 
 const GHOST_SCOPE_SUFFIX = "/firebase-cloud-messaging-push-scope";
 const SW_PATH = "/firebase-messaging-sw.js";
+
+interface MessagingInternal {
+  swRegistration?: ServiceWorkerRegistration | { scope: string; __stewardStub: true };
+}
+
+function primeStub(): void {
+  try {
+    const messaging = getMessaging(app) as unknown as MessagingInternal;
+    if (!messaging.swRegistration) {
+      messaging.swRegistration = { scope: "/", __stewardStub: true };
+    }
+  } catch {
+    // jsdom / unsupported environments — not actionable.
+  }
+}
+
+async function swapStubForRealRegistration(swReg: ServiceWorkerRegistration): Promise<void> {
+  try {
+    const messaging = getMessaging(app) as unknown as MessagingInternal;
+    const existing = messaging.swRegistration;
+    // Only replace our own stub; preserve anything Firebase already set.
+    if (!existing || (existing as { __stewardStub?: true }).__stewardStub) {
+      messaging.swRegistration = swReg;
+    }
+  } catch {
+    /* see primeStub */
+  }
+}
 
 async function unregisterGhostScopeRegistration(): Promise<void> {
   try {
@@ -40,38 +72,16 @@ async function unregisterGhostScopeRegistration(): Promise<void> {
   }
 }
 
-/** Seed the Firebase messaging singleton with our SW registration so its
- *  internal `updateSwReg(messaging, undefined)` path (reachable via
- *  `Functions.contextProvider.getMessagingToken()`) skips
- *  `registerDefaultSw` and never creates a registration at
- *  `/firebase-cloud-messaging-push-scope`.
- *
- *  Direct assignment is the cheapest way to set the property without
- *  triggering `getToken()`'s permission prompt — we explicitly don't
- *  want to prompt on boot. `swRegistration` is a non-public field on
- *  the `MessagingService` class, so we cast; the property has existed
- *  since messaging was introduced and is what all internal paths read
- *  and write. */
-async function primeMessagingSwRegistration(swReg: ServiceWorkerRegistration): Promise<void> {
-  try {
-    // getMessaging is safe to call on boot — it just constructs the
-    // service object; nothing is sent over the network and no SW is
-    // registered as a side effect.
-    const messaging = getMessaging(app) as unknown as {
-      swRegistration?: ServiceWorkerRegistration;
-    };
-    messaging.swRegistration = swReg;
-  } catch (err) {
-    // Environments without messaging support (jsdom, some mobile
-    // browsers) throw from getMessaging. Swallow — downstream code
-    // already degrades via getMessagingIfSupported().
-    console.warn("[steward] prime messaging.swRegistration skipped", err);
-  }
-}
-
 export function registerFcmServiceWorker(): void {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
-  // Defer past first paint so we don't block hydration.
+
+  // SYNC prime: beats any React effect that fires a Firebase callable in
+  // the same tick as hydration.
+  primeStub();
+
+  // The actual SW registration + real-swReg swap can still wait for
+  // `load` — it's cosmetic past the sync prime (ghost is already blocked
+  // from that moment onward).
   window.addEventListener(
     "load",
     () => {
@@ -79,7 +89,7 @@ export function registerFcmServiceWorker(): void {
         await unregisterGhostScopeRegistration();
         try {
           const swReg = await navigator.serviceWorker.register(SW_PATH);
-          await primeMessagingSwRegistration(swReg);
+          await swapStubForRealRegistration(swReg);
         } catch (err) {
           console.error("FCM service worker registration failed", err);
         }
