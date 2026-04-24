@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { OverflowMenu, type OverflowMenuItem } from "@/components/ui/OverflowMenu";
 import type { SpeakerInvitation } from "@/lib/types";
 import { callRotateInvitationLink } from "./invitationsCallable";
@@ -29,6 +30,7 @@ export function InvitationLinkActions({
   invitation,
 }: Props): React.ReactElement {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const deliverable = availableChannels(invitation);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function InvitationLinkActions({
   if (deliverable.length > 0) {
     items.push({
       label: `Resend via ${formatChannels(deliverable)}`,
-      onSelect: () => void resend(),
+      onSelect: () => setConfirmOpen(true),
     });
   }
 
@@ -82,6 +84,18 @@ export function InvitationLinkActions({
         </span>
       )}
       <OverflowMenu items={items} ariaLabel="Invitation link actions" />
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Resend invitation link?"
+        body={`A new invitation link will be delivered to ${invitation.speakerName} via ${formatChannels(deliverable)}. Any earlier link is invalidated.`}
+        confirmLabel={`Resend via ${formatChannels(deliverable)}`}
+        busy={status.kind === "working"}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          void resend();
+        }}
+      />
     </div>
   );
 }
