@@ -141,5 +141,14 @@ export const speakerInvitationSchema = z.object({
    *  the heartbeat is fresh the speaker is presumed to be looking at
    *  the chat live and we stay quiet. */
   speakerLastSeenAt: z.any().optional(),
+
+  /** Mirror of the underlying speaker doc's status, kept on the
+   *  invitation so the speaker-side page can render status-aware
+   *  copy without subscribing to the meeting-scoped speaker doc
+   *  (which the speaker's capability-token session can't read).
+   *  Written by the bishop's client when it applies a response or
+   *  changes status via the chat-banner pills. Absent on pre-rollout
+   *  invitations — the speaker page treats that as unchanged. */
+  currentSpeakerStatus: z.enum(["planned", "invited", "confirmed", "declined"]).optional(),
 });
 export type SpeakerInvitation = z.infer<typeof speakerInvitationSchema>;
