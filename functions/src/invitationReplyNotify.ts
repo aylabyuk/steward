@@ -1,86 +1,16 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
-import { sendDisplayPush } from "./fcm.js";
 import { rotateTokenForBishopNotification } from "./issueSpeakerSession.helpers.js";
 import { interpolate, readMessageTemplate } from "./messageTemplates.js";
-import { filterRecipients, type RecipientCandidate } from "./recipients.js";
 import { STEWARD_ORIGIN } from "./secrets.js";
 import { buildInviteUrl } from "./sendSpeakerInvitation.helpers.js";
 import { sendEmail } from "./sendgrid/client.js";
 import { sendSmsDirect } from "./twilio/messaging.js";
-import type { FcmToken, MemberDoc, WardDoc } from "./types.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 export interface ResolvedInvitation extends SpeakerInvitationShape {
   wardId: string;
   token: string;
-}
-
-/** Speaker posted in the conversation → FCM push to active
- *  bishopric members of the ward. Reuses the quiet-hours + token
- *  pruning helpers that the mention notifications already use.
- *
- *  The payload carries `webpush.fcmOptions.link` so a tap deep-links
- *  to the speaker's chat dialog on the Schedule page; the SW
- *  `notificationclick` handler reads the same shape for browsers that
- *  don't honor `fcmOptions.link` natively. */
-export async function pushToBishopric(inv: ResolvedInvitation, body: string): Promise<void> {
-  const db = getFirestore();
-  logger.info("reply push: start", { wardId: inv.wardId, invitationId: inv.token });
-
-  const wardSnap = await db.doc(`wards/${inv.wardId}`).get();
-  const ward = wardSnap.data() as WardDoc | undefined;
-  const timezone = ward?.settings?.timezone ?? "UTC";
-  const membersSnap = await db.collection(`wards/${inv.wardId}/members`).get();
-  const candidates: RecipientCandidate[] = membersSnap.docs
-    .map((d) => {
-      const m = d.data() as MemberDoc;
-      return m.role === "bishopric" ? { uid: d.id, member: m } : null;
-    })
-    .filter((c): c is RecipientCandidate => c !== null);
-  const recipients = filterRecipients(candidates, { now: new Date(), timezone });
-  logger.info("reply push: recipients", {
-    wardId: inv.wardId,
-    invitationId: inv.token,
-    bishopricCandidates: candidates.length,
-    recipientsAfterFilter: recipients.length,
-    candidateUids: candidates.map((c) => c.uid),
-  });
-  if (recipients.length === 0) return;
-
-  const tokensByUid = new Map<string, readonly FcmToken[]>();
-  let totalTokens = 0;
-  for (const r of recipients) {
-    const tokens = r.member.fcmTokens ?? [];
-    tokensByUid.set(r.uid, tokens);
-    totalTokens += tokens.length;
-  }
-  logger.info("reply push: sending", {
-    wardId: inv.wardId,
-    invitationId: inv.token,
-    recipientCount: recipients.length,
-    totalTokens,
-  });
-  try {
-    const outcome = await sendDisplayPush(inv.wardId, tokensByUid, {
-      title: `${inv.speakerName} replied`,
-      body: truncate(body, 120),
-      data: { wardId: inv.wardId, invitationId: inv.token, kind: "invitation-reply" },
-    });
-    logger.info("reply push: outcome", {
-      wardId: inv.wardId,
-      invitationId: inv.token,
-      successCount: outcome.successCount,
-      failureCount: outcome.failureCount,
-      deadTokenCount: outcome.deadTokens.length,
-    });
-  } catch (err) {
-    logger.error("reply push fan-out failed", {
-      wardId: inv.wardId,
-      invitationId: inv.token,
-      err: (err as Error).message,
-    });
-  }
 }
 
 /** Max age of the speaker's `speakerLastSeenAt` heartbeat before we

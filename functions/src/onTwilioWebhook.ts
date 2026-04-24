@@ -2,12 +2,8 @@ import { getFirestore } from "firebase-admin/firestore";
 import { onRequest, type Request } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import twilio from "twilio";
-import {
-  emailSpeaker,
-  pushToBishopric,
-  smsSpeaker,
-  type ResolvedInvitation,
-} from "./invitationReplyNotify.js";
+import { emailSpeaker, smsSpeaker, type ResolvedInvitation } from "./invitationReplyNotify.js";
+import { pushToBishopric } from "./invitationReplyPush.js";
 import {
   TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN,
@@ -32,8 +28,9 @@ const WEBHOOK_SECRETS = [
  *  event; we filter to `onMessageAdded` and fan out:
  *
  *   - `speaker:*` authored → FCM push to active bishopric members
- *   - `uid:*` (bishopric) authored → SendGrid email to the speaker
- *     (SMS already delivered by Twilio via the participant binding)
+ *   - `uid:*` (bishopric) authored → SMS + email to the speaker,
+ *     AND FCM push to other active bishopric members in the ward
+ *     (the sender is filtered out)
  *
  *  Post-expiry messages are logged and ignored defensively. */
 export const onTwilioWebhook = onRequest(
@@ -71,9 +68,16 @@ export const onTwilioWebhook = onRequest(
     if (author.startsWith("speaker:")) {
       await pushToBishopric(invitation, body);
     } else if (author.startsWith("uid:")) {
-      // Run both in parallel — SMS is the primary channel, email is
-      // best-effort and no-ops silently when SendGrid isn't wired.
-      await Promise.all([smsSpeaker(invitation, body), emailSpeaker(invitation, body)]);
+      const senderBishopUid = author.slice("uid:".length);
+      // All three run in parallel. SMS is the primary channel for the
+      // speaker, email is best-effort (no-ops when SendGrid isn't
+      // wired), and the bishop-to-bishop push keeps peer bishopric
+      // members in the loop without re-notifying the sender.
+      await Promise.all([
+        smsSpeaker(invitation, body),
+        emailSpeaker(invitation, body),
+        pushToBishopric(invitation, body, { senderBishopUid }),
+      ]);
     }
     res.status(200).send("ok");
   },
