@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { CheckIcon, PrintIcon, SendIcon } from "@/features/schedule/SpeakerInviteIcons";
+import { PrepareInvitationDialogs } from "./PrepareInvitationDialogs";
 import { PrepareInvitationGroupBtn as GroupBtn } from "./PrepareInvitationGroupBtn";
 import { RevertIcon, SmsIcon } from "./PrepareInvitationIcons";
 
@@ -12,23 +12,32 @@ interface Props {
   canSmsReason: string | null;
   hasOverride: boolean;
   speakerName: string;
+  /** Current email / phone on file for the speaker. Used to prefill
+   *  the Send-channel dialog; empty strings are handled (the dialog
+   *  treats them as a first-time-add flow). */
+  speakerEmail: string;
+  speakerPhone: string;
   onRevert: () => void;
   onMarkInvited: () => void;
   onPrint: () => void;
-  onSend: () => void;
-  onSendSms: () => void;
+  /** Called with the final email the bishop confirmed in the dialog.
+   *  The parent is responsible for persisting it to the speaker doc
+   *  when it differs from what was on file. */
+  onSend: (email: string) => void;
+  onSendSms: (phone: string) => void;
 }
 
-type PendingConfirm = "revert" | "markInvited" | "printAndMarkInvited" | "send" | "sms" | null;
+type PendingConfirm = "revert" | "markInvited" | "printAndMarkInvited" | null;
+type PendingSend = "email" | "sms" | null;
 
 /** Top-of-page action toolbar for the Prepare Invitation page.
  *  Icon-only buttons in a connected group — labels travel via `title`
- *  (desktop tooltip) and `aria-label` (screen readers). Destructive /
- *  silent-state-change / side-effecting actions (Revert, Mark invited
- *  only, Send email, Send SMS) gate on a confirm modal so an accidental
- *  tap doesn't flip status, wipe an override, or fire a live mailto /
- *  Messages handoff. Cancel lives on the page chrome, not in this
- *  toolbar. */
+ *  (desktop tooltip) and `aria-label` (screen readers). Send Email
+ *  and Send SMS are always enabled; they open a SendChannelDialog
+ *  that lets the bishop confirm or edit the destination (saving any
+ *  change to the speaker record) before firing. Other destructive /
+ *  side-effecting actions gate on a ConfirmDialog. Cancel lives on
+ *  the page chrome, not in this toolbar. */
 export function PrepareInvitationActionBar({
   busy,
   canSend,
@@ -37,6 +46,8 @@ export function PrepareInvitationActionBar({
   canSmsReason,
   hasOverride,
   speakerName,
+  speakerEmail,
+  speakerPhone,
   onRevert,
   onMarkInvited,
   onPrint,
@@ -44,11 +55,7 @@ export function PrepareInvitationActionBar({
   onSendSms,
 }: Props) {
   const [pending, setPending] = useState<PendingConfirm>(null);
-
-  function confirm<T>(run: () => T) {
-    setPending(null);
-    run();
-  }
+  const [pendingSend, setPendingSend] = useState<PendingSend>(null);
 
   const hint = canSendReason ?? canSmsReason;
   // When neither channel is available, printing is the only "I've
@@ -90,16 +97,16 @@ export function PrepareInvitationActionBar({
         <GroupBtn
           position="mid"
           label="Send SMS"
-          onClick={() => setPending("sms")}
-          disabled={busy || !canSms}
+          onClick={() => setPendingSend("sms")}
+          disabled={busy}
         >
           <SmsIcon />
         </GroupBtn>
         <GroupBtn
           position="last"
           label="Send email"
-          onClick={() => setPending("send")}
-          disabled={busy || !canSend}
+          onClick={() => setPendingSend("email")}
+          disabled={busy}
           primary
         >
           <SendIcon />
@@ -109,55 +116,21 @@ export function PrepareInvitationActionBar({
         <span className="font-serif italic text-[11px] sm:text-[11.5px] text-walnut-3">{hint}</span>
       )}
 
-      <ConfirmDialog
-        open={pending === "revert"}
-        title={hasOverride ? "Clear per-speaker override?" : "Revert to ward default?"}
-        body={
-          hasOverride
-            ? `This deletes ${speakerName}'s saved letter override and restores the ward default. Any unsaved edits in the editor are also discarded.`
-            : "This resets the editor to the ward default template. Any unsaved edits in the editor are discarded."
-        }
-        confirmLabel={hasOverride ? "Clear override" : "Revert"}
-        danger={hasOverride}
-        onConfirm={() => confirm(onRevert)}
-        onCancel={() => setPending(null)}
-      />
-      <ConfirmDialog
-        open={pending === "markInvited"}
-        title="Mark as invited without sending?"
-        body={`${speakerName}'s status will be set to "invited" — no email is sent. Use this if you've already reached them another way (phone, in person, separate email).`}
-        confirmLabel="Mark invited"
-        onConfirm={() => confirm(onMarkInvited)}
-        onCancel={() => setPending(null)}
-      />
-      <ConfirmDialog
-        open={pending === "printAndMarkInvited"}
-        title="Print letter and mark as invited?"
-        body={`${speakerName} has no phone or email on file, so printing the letter is how you'll hand off this invitation. We'll open the print dialog now and set their status to "invited" so the schedule reflects that you've delivered it.`}
-        confirmLabel="Print & mark invited"
-        onConfirm={() =>
-          confirm(() => {
-            onPrint();
-            onMarkInvited();
-          })
-        }
-        onCancel={() => setPending(null)}
-      />
-      <ConfirmDialog
-        open={pending === "send"}
-        title={`Send invitation to ${speakerName}?`}
-        body={`This creates a new invitation link and emails it to ${speakerName}. Their status flips to "invited" once the email is queued. You'll see per-channel delivery status if anything fails.`}
-        confirmLabel="Send email"
-        onConfirm={() => confirm(onSend)}
-        onCancel={() => setPending(null)}
-      />
-      <ConfirmDialog
-        open={pending === "sms"}
-        title={`Text invitation to ${speakerName}?`}
-        body={`This creates a new invitation link and sends it as an SMS to ${speakerName} from the ward's Twilio number. Their status flips to "invited" once the SMS is queued. You'll see per-channel delivery status if anything fails.`}
-        confirmLabel="Send SMS"
-        onConfirm={() => confirm(onSendSms)}
-        onCancel={() => setPending(null)}
+      <PrepareInvitationDialogs
+        pending={pending}
+        pendingSend={pendingSend}
+        busy={busy}
+        hasOverride={hasOverride}
+        speakerName={speakerName}
+        speakerEmail={speakerEmail}
+        speakerPhone={speakerPhone}
+        onCancelPending={() => setPending(null)}
+        onCancelPendingSend={() => setPendingSend(null)}
+        onRevert={onRevert}
+        onMarkInvited={onMarkInvited}
+        onPrint={onPrint}
+        onSend={onSend}
+        onSendSms={onSendSms}
       />
     </div>
   );
