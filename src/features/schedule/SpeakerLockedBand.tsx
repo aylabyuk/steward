@@ -11,14 +11,16 @@ interface Props {
    *  Step 2 band dimensions so the card height stays stable across
    *  step transitions. */
   step?: "edit" | "invite";
-  /** Latest invitation id for this speaker (if any). Drives the
-   *  "open conversation" button's URL handoff — SpeakerRow auto-opens
-   *  its chat dialog whenever `?chat=<invitationId>` matches. */
+  /** Latest invitation id for this speaker, when one exists. The
+   *  button still works without one — SpeakerRow's dialog handles
+   *  the no-invitation case with a placeholder. */
   invitationId?: string | null;
   /** Called by the Step 2 "open conversation" button right before it
    *  navigates — the parent closes the Assign modal so the chat
-   *  dialog renders on top of the clean schedule view. */
-  onOpenChat?: (invitationId: string) => void;
+   *  dialog renders on top of the clean schedule view. Receives the
+   *  invitationId when one is on file so the URL hint can pick the
+   *  exact invitation; null means route via speakerId instead. */
+  onOpenChat?: (invitationId: string | null) => void;
 }
 
 /** Band that sits above the speaker-detail fields in both steps of
@@ -41,8 +43,8 @@ export function SpeakerLockedBand({
   }
 
   function openChat() {
-    if (!invitationId || !onOpenChat) return;
-    onOpenChat(invitationId);
+    if (!onOpenChat) return;
+    onOpenChat(invitationId ?? null);
   }
 
   if (step === "edit") {
@@ -82,14 +84,12 @@ export function SpeakerLockedBand({
         ? "Already declined — open conversation"
         : "Already invited — open conversation";
 
-  const canOpen = Boolean(invitationId && onOpenChat);
   return (
     <button
       type="button"
       onClick={openChat}
-      disabled={!canOpen}
+      disabled={!onOpenChat}
       aria-label={label}
-      title={canOpen ? undefined : "No invitation on file — open the chat from the schedule row."}
       className="w-full mb-2.5 border border-walnut bg-walnut text-parchment rounded-md font-mono text-[10px] uppercase tracking-[0.14em] font-medium py-2 hover:bg-walnut-2 shadow-[0_1px_0_rgba(35,24,21,0.18)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
     >
       {label} →
