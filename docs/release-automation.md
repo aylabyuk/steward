@@ -21,7 +21,25 @@ GitHub's built-in auto-merge is gated behind Pro on private repos, so we roll ou
 
 If GitHub ever flips auto-merge into the free plan, this workflow can be deleted + release-to-main skill reverts to `gh pr merge --auto`. Until then, the self-host is cheaper than $4/mo for Pro.
 
-### 2. GCP service account for deploys
+### 2. Enable required APIs on the prod project
+
+The deploy SA can only act on APIs that are actually enabled on `steward-prod-65a36`. Some of these were enabled when the Firebase project was first provisioned; `cloudbilling.googleapis.com` in particular is often disabled on hobby-tier projects and has to be turned on explicitly before the first GHA-driven deploy.
+
+```bash
+gcloud services enable \
+  cloudbilling.googleapis.com \
+  cloudfunctions.googleapis.com \
+  cloudbuild.googleapis.com \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  firebaseextensions.googleapis.com \
+  --project=steward-prod-65a36
+```
+
+Firebase CLI will auto-enable most of these on first use when invoked by an Owner, but the SA-driven path can't — it'll 403 with "Cloud Billing API has not been used in project 308185652610 before or it is disabled" on the billing check that runs before function upload.
+
+### 3. GCP service account for deploys
 
 Create a dedicated service account in the prod project with only the permissions needed to deploy.
 
@@ -32,8 +50,32 @@ Create a dedicated service account in the prod project with only the permissions
    - Description: `Used by .github/workflows/release.yml to deploy Firestore rules/indexes + Cloud Functions.`
 2. **Grant these roles** (narrow-as-possible; don't use `Owner`):
    - `Cloud Functions Admin` — deploy functions
+   - `Cloud Run Admin` — update the underlying Cloud Run services (Gen2 functions run on Cloud Run)
    - `Cloud Datastore Index Admin` — deploy Firestore indexes
    - `Firebase Rules Admin` — deploy Firestore rules
+   - `Firebase Admin` — read the Firebase Admin SDK config
+     (`firebase.googleapis.com/.../adminSdkConfig`) during functions
+     deploy. Without it, deploy fails with `403 The caller does not
+     have permission` before any function is updated.
+   - `Secret Manager Viewer` — read metadata on the Twilio secrets
+     (`TWILIO_ACCOUNT_SID`, etc.) that the Cloud Functions declare
+     via `defineSecret`. The Firebase CLI calls `secrets.get` during
+     deploy to verify each secret exists + is versioned; that
+     permission is in **Viewer**, *not* `Secret Manager Secret
+     Accessor` (Accessor only grants `versions.access` — the
+     permission the function's own runtime SA uses to read the
+     value at invoke time, which is a separate binding). Without
+     Viewer, deploy fails with `403 Permission
+     'secretmanager.secrets.get' denied`.
+   - `Cloud Scheduler Admin` — create / update the Cloud Scheduler
+     jobs that back `scheduledNudges` + `drainNotificationQueue`.
+     Without it, deploy fails near the end with `403 lacks IAM
+     permission "cloudscheduler.jobs.update"` and Firebase skips
+     subsequent deletes.
+   - `Eventarc Admin` — create / update the Eventarc triggers that
+     back Firestore-event functions (`onMeetingWrite`,
+     `onCommentCreate`, `onInvitationWrite`). Gen2 Firestore
+     triggers are Eventarc under the hood.
    - `Service Account User` — act as the default Cloud Functions runtime SA
    - `Cloud Build Editor` — trigger the build step for function deploys
    - `Artifact Registry Writer` — push the function container image
@@ -43,18 +85,18 @@ Create a dedicated service account in the prod project with only the permissions
 
 > **Migration target — Workload Identity Federation (WIF)**: same permissions, no long-lived key, GitHub uses OIDC tokens to impersonate the SA. Better security posture. Worth doing once the project is stable enough that the extra 20 min of IAM config is cheap. See [google-github-actions/auth WIF setup](https://github.com/google-github-actions/auth#setting-up-workload-identity-federation).
 
-### 3. GitHub Actions secrets + variables
+### 4. GitHub Actions secrets + variables
 
 **Settings → Secrets and variables → Actions.**
 
 | Kind | Name | Value |
 | --- | --- | --- |
-| Secret | `FIREBASE_SERVICE_ACCOUNT_JSON` | Paste the full JSON file contents from step 2.3 |
+| Secret | `FIREBASE_SERVICE_ACCOUNT_JSON` | Paste the full JSON file contents from step 3.3 |
 | Variable | `STEWARD_ORIGIN_PROD` | `https://steward-ten.vercel.app` |
 
 The JSON content is multi-line; GitHub handles newlines correctly when pasted into the secret value field.
 
-### 4. Smoke-test the pipeline
+### 5. Smoke-test the pipeline
 
 1. Merge a trivial no-op release (e.g., bump patch, add a CHANGELOG note).
 2. Watch the **Actions** tab for the `Release` workflow.
