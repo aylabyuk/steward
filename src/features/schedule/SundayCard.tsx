@@ -142,16 +142,22 @@ export function SundayCard({
           )
         }
       >
-        {step === "edit" ? (
+        {/* Both step subtrees stay mounted so the back-to-edit
+         *  transition doesn't re-seed SpeakerEditList's drafts from
+         *  scratch — hitting Back used to blank the card grid for
+         *  a frame while `useSpeakers()` re-hydrated. `hidden` keeps
+         *  the DOM present but removes layout + interactivity. */}
+        <div className={step === "edit" ? "" : "hidden"} aria-hidden={step !== "edit"}>
           <SpeakerEditList
             ref={editListRef}
             date={date}
             wardId={wardId}
             nonMeetingSundays={nonMeetingSundays}
           />
-        ) : (
+        </div>
+        <div className={step === "invite" ? "" : "hidden"} aria-hidden={step !== "invite"}>
           <SpeakerInvitationLauncher date={date} speakers={speakers} />
-        )}
+        </div>
       </AssignDialog>
     </article>
   );
