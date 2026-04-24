@@ -34,6 +34,10 @@ Create a dedicated service account in the prod project with only the permissions
    - `Cloud Functions Admin` — deploy functions
    - `Cloud Datastore Index Admin` — deploy Firestore indexes
    - `Firebase Rules Admin` — deploy Firestore rules
+   - `Firebase Admin` — needed to read the Firebase Admin SDK config
+     (`firebase.googleapis.com/.../adminSdkConfig`) during functions
+     deploy. Without it, deploy fails with `403 The caller does not
+     have permission` before any function is updated.
    - `Service Account User` — act as the default Cloud Functions runtime SA
    - `Cloud Build Editor` — trigger the build step for function deploys
    - `Artifact Registry Writer` — push the function container image
