@@ -108,8 +108,11 @@ Do this as a single commit titled `chore(release): vX.Y.Z`:
      ```
 
 4. Commit both files on a `chore/release-vX.Y.Z` branch and open a PR
-   into `develop` with auto-merge enabled. Direct pushes to `develop`
-   are blocked by the project's PR-only rule:
+   into `develop`. The
+   [auto-merge-release](../../.github/workflows/auto-merge-release.yml)
+   workflow auto-merges it once CI passes, because the title matches
+   `^chore\(release\):`. Direct pushes to `develop` are blocked by the
+   project's PR-only rule:
    ```bash
    git checkout -b chore/release-vX.Y.Z
    git add package.json CHANGELOG.md
@@ -117,11 +120,10 @@ Do this as a single commit titled `chore(release): vX.Y.Z`:
    git push -u origin chore/release-vX.Y.Z
    gh pr create --base develop --head chore/release-vX.Y.Z \
      --title "chore(release): vX.Y.Z" \
-     --body "Release-prep commit for vX.Y.Z. Merge this, then the develop → main PR auto-merges on CI pass."
-   gh pr merge --auto --merge  # auto-merges once CI goes green
+     --body "Release-prep commit for vX.Y.Z."
    ```
 
-5. Wait for the PR to auto-merge. Sync develop:
+5. Wait for the PR to auto-merge (watch Actions tab). Sync develop:
    ```bash
    git checkout develop && git pull --ff-only
    ```
@@ -129,18 +131,19 @@ Do this as a single commit titled `chore(release): vX.Y.Z`:
 ## Open the release PR (develop → main)
 
 Do NOT fast-forward `main` locally. Open a PR so CI runs on the merge
-ref and GitHub enforces the branch's merge strategy.
+ref and GitHub enforces the branch's merge strategy. The auto-merge
+workflow picks up on the `Release:` title prefix.
 
 ```bash
 gh pr create --base main --head develop \
   --title "Release: <short summary>" \
   --body "<markdown checklist — features, fixes, test plan>"
-gh pr merge --auto --merge   # auto-merges once CI is green
 ```
 
-Auto-merge requires **Settings → Pull Requests → Allow auto-merge** to
-be enabled in the repo. If it's disabled, the command errors — flip
-the checkbox and retry.
+Auto-merge is handled by
+[.github/workflows/auto-merge-release.yml](../../.github/workflows/auto-merge-release.yml)
+— no local flag needed. Watch the Actions tab to see CI → merge →
+release workflow run.
 
 ## What happens after merge
 
