@@ -64,7 +64,7 @@ export function BishopInvitationDialog({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-chalk flex flex-col w-full max-w-xl h-[100dvh] sm:h-auto sm:max-h-[94vh] sm:rounded-[14px] sm:border sm:border-border-strong sm:shadow-elev-3 overflow-hidden">
+      <div className="bg-chalk flex flex-col w-full max-w-xl h-[100dvh] sm:h-auto sm:min-h-140 sm:max-h-[94vh] sm:rounded-[14px] sm:border sm:border-border-strong sm:shadow-elev-3 overflow-hidden">
         <div className="flex items-start gap-3 px-5 py-3.5 border-b border-border bg-parchment">
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
