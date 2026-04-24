@@ -9,6 +9,7 @@ import { InvitationStatusBanner } from "./InvitationStatusBanner";
 import { TypingIndicator } from "./TypingIndicator";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { callIssueSpeakerSession } from "./invitationsCallable";
+import { noteBishopStatusChange } from "./statusChangeNotice";
 import { useBishopAuthors } from "./useBishopAuthors";
 import { useConversation } from "./useConversation";
 import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
@@ -65,6 +66,7 @@ export function BishopInvitationChat({
     setApplyError(null);
     try {
       await updateSpeaker(wardId, date, speakerId, { status: next });
+      await noteBishopStatusChange({ wardId, invitationId, status: next, conversation });
     } catch (err) {
       setApplyError((err as Error).message);
     }
@@ -99,6 +101,13 @@ export function BishopInvitationChat({
     setApplyError(null);
     try {
       await applyResponseToSpeaker({ wardId, invitationId, bishopUid: user.uid });
+      const applied = invitation.response?.answer === "yes" ? "confirmed" : "declined";
+      await noteBishopStatusChange({
+        wardId,
+        invitationId,
+        status: applied,
+        conversation,
+      });
     } catch (err) {
       setApplyError((err as Error).message);
     } finally {

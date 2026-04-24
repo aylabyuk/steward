@@ -32,6 +32,12 @@ interface Props {
    *  banner above the thread so they always see their committed
    *  answer after submission. Null before they reply. */
   responseAnswer?: "yes" | "no" | null;
+  /** Mirror of the speaker doc's current status, written onto the
+   *  invitation by the bishop's client when they confirm / decline.
+   *  Takes precedence over `responseAnswer` in the banner so a
+   *  speaker who said yes but then asked to bow out (and the bishop
+   *  flipped status to declined) sees the accurate outcome. */
+  currentStatus?: import("@/lib/types").SpeakerStatus | null;
   /** When present, the chat's header renders a small close affordance
    *  that invokes this callback. Used by the invite page's floating
    *  drawer so the speaker can dismiss the chat back over the letter. */
@@ -138,7 +144,10 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     >
       <SpeakerChatHeader onClose={props.onClose} />
 
-      <SpeakerResponseBanner answer={props.responseAnswer} />
+      <SpeakerResponseBanner
+        answer={props.responseAnswer}
+        {...(props.currentStatus !== undefined ? { currentStatus: props.currentStatus } : {})}
+      />
 
       <ConversationThread
         messages={messages}
