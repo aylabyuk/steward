@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useMinuteTick } from "@/hooks/useMinuteTick";
 import { cn } from "@/lib/cn";
 import { ConversationGroup } from "./ConversationGroup";
 import { JumpToLatest } from "./JumpToLatest";
@@ -55,10 +56,13 @@ export function ConversationThread({
   const [pendingDeleteSid, setPendingDeleteSid] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const lastSeenIndexRef = useRef<number | null>(null);
+  // Drives the 30-min edit/delete cutoff — the long-press menu must
+  // disappear once a message expires, even if no new traffic arrives.
+  const nowMinute = useMinuteTick();
 
   const permissions = useMemo(
-    () => buildMessagePermissions(currentIdentity, messages),
-    [currentIdentity, messages],
+    () => buildMessagePermissions(currentIdentity, messages, nowMinute * 60_000),
+    [currentIdentity, messages, nowMinute],
   );
 
   const items = useMemo(

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLongPress } from "@/hooks/useLongPress";
 import { cn } from "@/lib/cn";
 import { BubbleActions } from "./BubbleActions";
 import { BubbleEditForm } from "./BubbleEditForm";
@@ -37,10 +38,10 @@ interface Props {
   onDelete?: () => Promise<void> | void;
 }
 
-/** A single Messenger-style speech bubble with optional hover-actions
- *  (edit / delete) on the avatar-opposite side. Response-type
- *  messages keep a small "Response · Yes/No" eyebrow above the body
- *  and a colored 2px border. */
+/** A single Messenger-style speech bubble. Long-press the bubble to
+ *  reveal an edit/delete menu when the viewer has permission; the
+ *  press itself shows a brass-coloured halo + slight scale-down so
+ *  the gesture is discoverable. */
 export function ConversationBubble({
   message,
   mine,
@@ -55,7 +56,17 @@ export function ConversationBubble({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.body);
   const [saving, setSaving] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const editAvailable = Boolean(canEdit && onEdit);
+  const deleteAvailable = Boolean(canDelete && onDelete);
+  const actionsAvailable = editAvailable || deleteAvailable;
+
+  const { pressing, bind } = useLongPress({
+    enabled: actionsAvailable && !editing,
+    onLongPress: () => setMenuOpen(true),
+  });
 
   useEffect(() => {
     if (!editing) return;
@@ -90,41 +101,47 @@ export function ConversationBubble({
           {responseType === "yes" ? "Response · Yes" : "Response · No"}
         </span>
       )}
-      <div className={cn("group flex items-center gap-1", mine ? "flex-row" : "flex-row-reverse")}>
-        {!editing && (
-          <BubbleActions
+      <div className="relative">
+        {editing ? (
+          <BubbleEditForm
+            draft={draft}
+            setDraft={setDraft}
+            onCancel={() => setEditing(false)}
+            onSave={save}
+            saving={saving}
             mine={mine}
-            canEdit={Boolean(canEdit && onEdit)}
-            canDelete={Boolean(canDelete && onDelete)}
-            onEdit={() => setEditing(true)}
-            onDelete={() => {
-              if (onDelete) void onDelete();
-            }}
+            textareaRef={textareaRef}
           />
+        ) : (
+          <div
+            {...(actionsAvailable ? bind : {})}
+            className={cn(
+              "px-3.5 py-2 text-[14px] leading-snug whitespace-pre-wrap wrap-break-word shadow-[0_1px_0_rgba(35,24,21,0.04)] min-w-0",
+              radius,
+              mine
+                ? "bg-bordeaux text-parchment"
+                : "bg-parchment-2 border border-border text-walnut",
+              responseType === "yes" && "border-success border-2",
+              responseType === "no" && "border-bordeaux border-2",
+              actionsAvailable &&
+                "select-none transition-[transform,box-shadow] duration-500 ease-out touch-manipulation",
+              pressing && "scale-[0.97] shadow-[0_0_0_3px_rgba(193,140,35,0.55)]",
+            )}
+          >
+            {message.body}
+          </div>
         )}
-        <div
-          className={cn(
-            "px-3.5 py-2 text-[14px] leading-snug whitespace-pre-wrap wrap-break-word shadow-[0_1px_0_rgba(35,24,21,0.04)] min-w-0",
-            radius,
-            mine ? "bg-bordeaux text-parchment" : "bg-parchment-2 border border-border text-walnut",
-            responseType === "yes" && "border-success border-2",
-            responseType === "no" && "border-bordeaux border-2",
-          )}
-        >
-          {editing ? (
-            <BubbleEditForm
-              draft={draft}
-              setDraft={setDraft}
-              onCancel={() => setEditing(false)}
-              onSave={save}
-              saving={saving}
-              mine={mine}
-              textareaRef={textareaRef}
-            />
-          ) : (
-            message.body
-          )}
-        </div>
+        <BubbleActions
+          open={menuOpen}
+          mine={mine}
+          canEdit={editAvailable}
+          canDelete={deleteAvailable}
+          onClose={() => setMenuOpen(false)}
+          onEdit={() => setEditing(true)}
+          onDelete={() => {
+            if (onDelete) void onDelete();
+          }}
+        />
       </div>
       {message.dateUpdated &&
         message.dateCreated &&
