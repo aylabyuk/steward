@@ -7,6 +7,33 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.6] — 2026-04-24
+
+Infrastructure-only release. No user-visible change — this is the
+smoke-test release for the new automated release pipeline (#92) and
+also ships diagnostic logs around the push-unsubscribe bug still
+under investigation.
+
+### Infrastructure
+
+- **Automated release pipeline.** Two new GitHub Actions workflows
+  take over the post-merge steps that were being run by hand:
+  - `.github/workflows/auto-merge-release.yml` — self-hosted
+    replacement for GitHub's built-in auto-merge (gated behind Pro
+    on private repos). Merges PRs whose title starts with
+    `chore(release):` or `Release:` once CI goes green.
+  - `.github/workflows/release.yml` — on push to `main`, creates the
+    `vX.Y.Z` tag + GitHub Release, then deploys Firestore rules +
+    indexes + Cloud Functions to `steward-prod-65a36`.
+
+  The `release-to-main` skill is updated accordingly. Feature PRs
+  still require human review + merge; only the two mechanical
+  release PRs auto-merge.
+- **Diagnostic logs** in `pushToBishopric` (bishop-reply FCM path)
+  and `sendAndPrune` (every FCM failure, pruning events with
+  dead/remaining counts). Lets us trace unsubscribe-on-chat-reply
+  bug reports against the actual server behavior without guessing.
+
 ## [0.9.5] — 2026-04-24
 
 Two fixes surfaced from prod log inspection while chasing the ongoing
@@ -974,7 +1001,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.5...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.6...HEAD
+[0.9.6]: https://github.com/aylabyuk/steward/releases/tag/v0.9.6
 [0.9.5]: https://github.com/aylabyuk/steward/releases/tag/v0.9.5
 [0.9.4]: https://github.com/aylabyuk/steward/releases/tag/v0.9.4
 [0.9.3]: https://github.com/aylabyuk/steward/releases/tag/v0.9.3
