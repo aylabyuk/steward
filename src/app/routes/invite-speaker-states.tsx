@@ -70,10 +70,11 @@ export function PrintToolbar(): React.ReactElement {
       <button
         type="button"
         onClick={() => window.print()}
-        className="inline-flex items-center gap-1.5 rounded-md border border-walnut bg-walnut px-3.5 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-chalk hover:bg-walnut-2 shadow-elev-2"
+        title="Print · Save as PDF"
+        aria-label="Print · Save as PDF"
+        className="inline-flex items-center justify-center rounded-md border border-walnut bg-walnut w-9 h-9 text-chalk hover:bg-walnut-2 shadow-elev-2"
       >
         <PrinterIcon />
-        Print · Save as PDF
       </button>
     </div>
   );
@@ -82,8 +83,8 @@ export function PrintToolbar(): React.ReactElement {
 function PrinterIcon() {
   return (
     <svg
-      width="12"
-      height="12"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

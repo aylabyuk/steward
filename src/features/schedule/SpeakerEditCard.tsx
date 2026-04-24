@@ -5,7 +5,6 @@ import { isE164, toE164 } from "@/features/templates/smsInvitation";
 import { SpeakerCardHeader } from "./SpeakerCardHeader";
 import type { Draft } from "./speakerDraft";
 import { SpeakerLockedBand } from "./SpeakerLockedBand";
-import { SpeakerStatusPills } from "./SpeakerStatusPills";
 
 interface Props {
   draft: Draft;
@@ -13,10 +12,9 @@ interface Props {
   onChange: (partial: Partial<Draft>) => void;
   onRemove: () => void;
   /** Step-2 read-only mode: disables all inputs, hides the remove
-   *  button, and swaps the status pills for a Prepare-invitation
-   *  action (planned) or an "already handled" note (invited /
-   *  confirmed). The same card shell renders in both modes so the
-   *  modal's dimensions stay stable across steps. */
+   *  button, and shows the Prepare-invitation action band. The same
+   *  card shell renders in both modes so the modal's dimensions stay
+   *  stable across steps. */
   locked?: { date: string };
 }
 
@@ -31,11 +29,7 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove, locked }: Pr
     <div className="bg-chalk border border-border rounded-lg p-3 flex flex-col">
       <SpeakerCardHeader index={index} onRemove={readOnly ? null : onRemove} />
 
-      {locked ? (
-        <SpeakerLockedBand draft={draft} date={locked.date} />
-      ) : (
-        <SpeakerStatusPills status={draft.status} onChange={(status) => onChange({ status })} />
-      )}
+      {locked && <SpeakerLockedBand draft={draft} date={locked.date} />}
 
       <div className="flex flex-col gap-2.5">
         <label className="flex flex-col gap-1">

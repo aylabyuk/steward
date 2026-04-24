@@ -3,13 +3,18 @@ import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import type { Speaker, SpeakerInvitation } from "@/lib/types";
 import { BishopInvitationChat } from "./BishopInvitationChat";
 import { InvitationLinkActions } from "./InvitationLinkActions";
+import { NoInvitationPlaceholder } from "./NoInvitationPlaceholder";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   wardId: string;
-  invitationId: string;
-  invitation: SpeakerInvitation;
+  /** Null when the speaker hasn't been invited yet. The dialog still
+   *  opens so the bishopric has a single place to see the speaker's
+   *  current state; the body renders a "contact them directly"
+   *  placeholder in that case. */
+  invitationId: string | null;
+  invitation: SpeakerInvitation | null;
   /** Speaker doc + its path coordinates — threaded so the chat's
    *  status banner can render the bishopric-set status and apply
    *  manual overrides via updateSpeaker. */
@@ -66,14 +71,16 @@ export function BishopInvitationDialog({
               Conversation
             </div>
             <div className="font-display text-xl font-semibold text-walnut tracking-[-0.01em] leading-tight mt-0.5">
-              {invitation.speakerName}
+              {speaker.name}
             </div>
           </div>
-          <InvitationLinkActions
-            wardId={wardId}
-            invitationId={invitationId}
-            invitation={invitation}
-          />
+          {invitation && invitationId && (
+            <InvitationLinkActions
+              wardId={wardId}
+              invitationId={invitationId}
+              invitation={invitation}
+            />
+          )}
           <button
             onClick={onClose}
             className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut px-2 py-1 transition-colors"
@@ -82,14 +89,18 @@ export function BishopInvitationDialog({
             Close
           </button>
         </div>
-        <BishopInvitationChat
-          wardId={wardId}
-          invitationId={invitationId}
-          invitation={invitation}
-          speaker={speaker}
-          date={date}
-          speakerId={speakerId}
-        />
+        {invitation && invitationId ? (
+          <BishopInvitationChat
+            wardId={wardId}
+            invitationId={invitationId}
+            invitation={invitation}
+            speaker={speaker}
+            date={date}
+            speakerId={speakerId}
+          />
+        ) : (
+          <NoInvitationPlaceholder speaker={speaker} />
+        )}
       </div>
     </div>
   );
