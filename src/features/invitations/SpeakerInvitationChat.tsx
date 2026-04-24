@@ -14,6 +14,7 @@ import { useTypingParticipants } from "./useTypingParticipants";
 import { useSpeakerHeartbeat } from "./useSpeakerHeartbeat";
 import { useTwilioChat } from "./twilioClientProvider";
 import { writeSpeakerResponse } from "./invitationActions";
+import { removeMessage, updateMessageBody } from "./messageMutations";
 import { buildSpeakerAuthorMap } from "./speakerAuthorMap";
 
 interface Props {
@@ -163,6 +164,8 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
         {...(props.fillHeight ? { fillHeight: true } : {})}
+        onDeleteMessage={(sid) => removeMessage(conversation, sid)}
+        onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />

@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/cn";
 import { ConversationGroup } from "./ConversationGroup";
 import { JumpToLatest } from "./JumpToLatest";
+import { SystemNotice } from "./SystemNotice";
 import { DayDivider, UnreadDivider } from "./ThreadDividers";
+import { buildMessagePermissions, findLastMineIndex } from "./messageActions";
 import { buildThreadItems } from "./threadItems";
 import type { AuthorMap, ChatMessage } from "./useConversation";
 
@@ -24,6 +27,11 @@ interface Props {
    *  is capped at 60vh — right for the speaker landing page where the
    *  thread sits inside a naturally-stacking scroll column. */
   fillHeight?: boolean;
+  /** Per-message action handlers. When omitted, edit/delete UI is
+   *  hidden even if permissions would otherwise allow it (the
+   *  action isn't wired into the embedding chat). */
+  onEditMessage?: (sid: string, nextBody: string) => Promise<void> | void;
+  onDeleteMessage?: (sid: string) => Promise<void> | void;
 }
 
 /** Bubble list styled after Messenger. Consecutive messages by the
@@ -38,11 +46,20 @@ export function ConversationThread({
   firstUnreadIndex,
   readHorizonIndex,
   fillHeight,
+  onEditMessage,
+  onDeleteMessage,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [unseenCount, setUnseenCount] = useState(0);
+  const [pendingDeleteSid, setPendingDeleteSid] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const lastSeenIndexRef = useRef<number | null>(null);
+
+  const permissions = useMemo(
+    () => buildMessagePermissions(currentIdentity, messages),
+    [currentIdentity, messages],
+  );
 
   const items = useMemo(
     () =>
@@ -72,6 +89,17 @@ export function ConversationThread({
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!pendingDeleteSid || !onDeleteMessage) return;
+    setDeleting(true);
+    try {
+      await onDeleteMessage(pendingDeleteSid);
+      setPendingDeleteSid(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (loading) {
@@ -123,44 +151,24 @@ export function ConversationThread({
                 readByOtherAt !== null &&
                 item.group.messages.some((m) => m.index === readByOtherAt)
               }
+              permissions={permissions}
+              {...(onEditMessage ? { onEditMessage } : {})}
+              {...(onDeleteMessage ? { onRequestDelete: setPendingDeleteSid } : {})}
             />
           );
         })}
       </div>
       {!atBottom && <JumpToLatest unseenCount={unseenCount} onJump={jumpToBottom} />}
-    </div>
-  );
-}
-
-function findLastMineIndex(
-  messages: readonly ChatMessage[],
-  currentIdentity: string | null,
-): number | null {
-  if (!currentIdentity) return null;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i]!.author === currentIdentity) return messages[i]!.index;
-  }
-  return null;
-}
-
-/** Centered one-line system notice for status-change messages,
- *  mirroring the DayDivider rule-label-rule pattern so it reads as
- *  a thread event rather than a message. Text + rule colour pivot
- *  on status: green for confirmed, red for declined. */
-function SystemNotice({ body, status }: { body: string; status: "confirmed" | "declined" }) {
-  const textCls = status === "confirmed" ? "text-success" : "text-bordeaux";
-  const ruleCls = status === "confirmed" ? "bg-success/40" : "bg-bordeaux/40";
-  return (
-    <div className="flex items-center gap-2 -my-1" role="status" aria-label={body}>
-      <div aria-hidden="true" className={`flex-1 h-px ${ruleCls}`} />
-      <span
-        aria-hidden="true"
-        className={`font-serif italic text-[12px] ${textCls} truncate`}
-        title={body}
-      >
-        {body}
-      </span>
-      <div aria-hidden="true" className={`flex-1 h-px ${ruleCls}`} />
+      <ConfirmDialog
+        open={pendingDeleteSid !== null}
+        title="Delete this message?"
+        body="The message will be removed for everyone in this conversation. This can't be undone."
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setPendingDeleteSid(null)}
+      />
     </div>
   );
 }
