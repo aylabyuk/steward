@@ -1,0 +1,109 @@
+name: Release
+
+# Runs on every push to `main` — which happens only after a
+# develop → main release PR merges. Tags the commit, publishes a
+# GitHub Release, and deploys Firestore rules + indexes + Cloud
+# Functions to the prod project. Vercel handles the frontend via
+# its own GitHub integration.
+#
+# Required secrets (repo Settings → Secrets → Actions):
+#   - FIREBASE_SERVICE_ACCOUNT_JSON : JSON key for a GCP service
+#     account with deploy permissions on steward-prod-65a36.
+#     See docs/release-automation.md for setup.
+#
+# Required variables (repo Settings → Variables → Actions):
+#   - STEWARD_ORIGIN_PROD : the prod web origin, e.g.
+#     https://steward-ten.vercel.app. Baked into Cloud Functions
+#     at deploy time via functions/.env.steward-prod-65a36.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag + release + Firebase deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Read version from package.json
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if tag already exists
+        id: tag-check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "Tag v${{ steps.version.outputs.version }} already exists — nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create + push tag
+        if: steps.tag-check.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Extract changelog section
+        if: steps.tag-check.outputs.exists == 'false'
+        run: |
+          awk '/^## \[${{ steps.version.outputs.version }}\]/,/^## \[/{print}' CHANGELOG.md \
+            | sed '$d' > /tmp/release-notes.md
+          cat /tmp/release-notes.md
+
+      - name: Create GitHub Release
+        if: steps.tag-check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --title "v${{ steps.version.outputs.version }}" \
+            --notes-file /tmp/release-notes.md
+
+      # Firebase deploys run on every main push, even if the tag
+      # already exists — lets us redeploy after a manual SA rotation
+      # or an ad-hoc push without bumping version. Cheap; Firebase
+      # CLI's own hash check skips unchanged functions.
+
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Write prod functions env
+        run: |
+          cat > functions/.env.steward-prod-65a36 <<EOF
+          STEWARD_ORIGIN=${{ vars.STEWARD_ORIGIN_PROD }}
+          EOF
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
+      - name: Build functions
+        run: pnpm --filter @steward/functions build
+
+      - name: Deploy Firestore rules + indexes
+        run: pnpm exec firebase deploy --only firestore:rules,firestore:indexes --project=steward-prod-65a36 --non-interactive
+
+      - name: Deploy Cloud Functions
+        run: pnpm exec firebase deploy --only functions --project=steward-prod-65a36 --non-interactive
