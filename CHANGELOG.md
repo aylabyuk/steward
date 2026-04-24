@@ -7,6 +7,26 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.13] — 2026-04-24
+
+### Added
+
+- **Bishop-to-bishop push in speaker-invitation chat** (#119). When one
+  bishopric member posts a message in a speaker invitation conversation,
+  peer active bishopric members of the ward now receive an FCM push —
+  the sender is filtered out. Closes a fanout gap where only the
+  speaker was notified (via SMS + email) when a bishop posted.
+  Speaker-authored messages continue to push all active bishopric as
+  before. Speaker-side push delivery is unchanged (still SMS + email
+  only — browser push isn't wired on the invite page).
+
+  Implementation: [pushToBishopric()](functions/src/invitationReplyPush.ts)
+  gains an optional `senderBishopUid` param that flows through
+  [filterRecipients()](functions/src/recipients.ts#L21)'s existing
+  `excludeUid` plumbing. The push title is `{senderDisplayName}
+  replied` for bishop-authored messages; the speaker-authored path
+  still titles with `{speakerName} replied`.
+
 ## [0.9.12] — 2026-04-24
 
 The real fix for #106. v0.9.9/.10/.11 closed the ghost SW path
@@ -1184,7 +1204,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.12...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.13...HEAD
+[0.9.13]: https://github.com/aylabyuk/steward/releases/tag/v0.9.13
 [0.9.12]: https://github.com/aylabyuk/steward/releases/tag/v0.9.12
 [0.9.11]: https://github.com/aylabyuk/steward/releases/tag/v0.9.11
 [0.9.10]: https://github.com/aylabyuk/steward/releases/tag/v0.9.10
