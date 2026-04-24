@@ -79,12 +79,13 @@ function LauncherRow({ speaker, date, index, onClose }: LauncherRowProps): React
     role: speaker.data.role,
   });
 
-  function onOpenChat(id: string) {
+  function onOpenChat(id: string | null) {
     onClose();
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        next.set("chat", id);
+        if (id) next.set("chat", id);
+        else next.set("chatSpeaker", speaker.id);
         return next;
       },
       { replace: true },

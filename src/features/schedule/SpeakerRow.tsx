@@ -35,20 +35,27 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
   const unreadCount = useConversationUnread(invitation?.conversationSid);
   const hasUnread = typeof unreadCount === "number" && unreadCount > 0;
 
-  // Auto-open the dialog when a push notification deep-links us here
-  // via `?chat=<invitationId>`. Each row checks independently — only
-  // the matching one opens + clears the query. Invitation loads async,
-  // so we can't check until it arrives.
+  // Auto-open the dialog when something hands us a URL hint:
+  //   `?chat=<invitationId>`      — push-notification deep link
+  //   `?chatSpeaker=<speakerId>`  — Assign modal's "open conversation"
+  //                                  button (may have no invitation yet)
+  // Each row checks independently — only the matching one opens +
+  // clears the query. Invitation-keyed match waits for the invitation
+  // subscription to resolve; speakerId-keyed match is available
+  // immediately.
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
-    if (!invitation) return;
-    const target = searchParams.get("chat");
-    if (!target || target !== invitation.invitationId) return;
+    const chatKey = searchParams.get("chat");
+    const speakerKey = searchParams.get("chatSpeaker");
+    const invitationMatches = invitation && chatKey === invitation.invitationId;
+    const speakerMatches = speakerKey === speakerId;
+    if (!invitationMatches && !speakerMatches) return;
     setOpen(true);
     const next = new URLSearchParams(searchParams);
-    next.delete("chat");
+    if (invitationMatches) next.delete("chat");
+    if (speakerMatches) next.delete("chatSpeaker");
     setSearchParams(next, { replace: true });
-  }, [invitation, searchParams, setSearchParams]);
+  }, [invitation, speakerId, searchParams, setSearchParams]);
 
   return (
     <li className="flex items-center gap-3 py-3 border-b border-border last:border-b-0">
