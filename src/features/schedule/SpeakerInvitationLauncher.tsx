@@ -13,10 +13,6 @@ interface Props {
    *  loading-state flicker on the Edit → Invite transition — the
    *  parent already has fresh post-save data ready. */
   speakers: readonly WithId<Speaker>[];
-  /** Called by the "open conversation" button on non-planned cards.
-   *  Closes the Assign modal so the per-speaker chat dialog renders
-   *  on top of the clean schedule view. */
-  onClose: () => void;
 }
 
 const noop = () => {};
@@ -27,7 +23,7 @@ const noop = () => {};
  *  the detail fields swaps between "Prepare invitation" (planned) and
  *  "Already X — open conversation" (non-planned). Declined speakers
  *  are hidden — they have a different re-invite flow. */
-export function SpeakerInvitationLauncher({ date, speakers, onClose }: Props) {
+export function SpeakerInvitationLauncher({ date, speakers }: Props) {
   const rows = speakers.filter((s) => s.data.status !== "declined");
 
   if (rows.length === 0) {
@@ -46,7 +42,7 @@ export function SpeakerInvitationLauncher({ date, speakers, onClose }: Props) {
       </p>
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
         {rows.map((s, i) => (
-          <LauncherRow key={s.id} speaker={s} date={date} index={i} onClose={onClose} />
+          <LauncherRow key={s.id} speaker={s} date={date} index={i} />
         ))}
       </div>
     </div>
@@ -57,14 +53,16 @@ interface LauncherRowProps {
   speaker: WithId<Speaker>;
   date: string;
   index: number;
-  onClose: () => void;
 }
 
 /** One speaker card in Step 2. Subscribes to the speaker's latest
  *  invitation so the non-planned "open conversation" button knows
  *  which chat to route to — SpeakerRow on the schedule auto-opens
- *  its dialog when `?chat=<invitationId>` matches. */
-function LauncherRow({ speaker, date, index, onClose }: LauncherRowProps): React.ReactElement {
+ *  its dialog when `?chat=<invitationId>` or `?chatSpeaker=<id>`
+ *  matches. Deliberately keeps the Assign modal open underneath so
+ *  the bishop can flip between conversation threads without losing
+ *  the speaker-overview context. */
+function LauncherRow({ speaker, date, index }: LauncherRowProps): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const latest = useLatestInvitation(wardId, date, speaker.id);
   const invitationId = latest.invitation?.invitationId ?? null;
@@ -80,7 +78,6 @@ function LauncherRow({ speaker, date, index, onClose }: LauncherRowProps): React
   });
 
   function onOpenChat(id: string | null) {
-    onClose();
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);

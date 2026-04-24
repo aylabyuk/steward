@@ -156,11 +156,7 @@ export function SundayCard({
           />
         </div>
         <div className={step === "invite" ? "" : "hidden"} aria-hidden={step !== "invite"}>
-          <SpeakerInvitationLauncher
-            date={date}
-            speakers={speakers}
-            onClose={() => setAssignDialogOpen(false)}
-          />
+          <SpeakerInvitationLauncher date={date} speakers={speakers} />
         </div>
       </AssignDialog>
     </article>
