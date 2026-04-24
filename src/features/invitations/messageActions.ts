@@ -19,6 +19,12 @@ export function findLastMineIndex(
  *  current user's own messages. */
 export const RECENT_EDITABLE_WINDOW = 5;
 
+/** After this many milliseconds from creation, edit + delete become
+ *  unavailable on a message. Matches the "can retract" window most
+ *  messengers use — long enough to fix a typo, short enough that
+ *  older context stays stable for everyone else reading the thread. */
+export const EDIT_DELETE_WINDOW_MS = 30 * 60 * 1000;
+
 export interface Permissions {
   canDelete: (message: ChatMessage) => boolean;
   canEdit: (message: ChatMessage) => boolean;
@@ -44,10 +50,16 @@ export interface Permissions {
  *   - Within the author's last `RECENT_EDITABLE_WINDOW` sent
  *     messages (not the thread's last N).
  *   - Same structural exclusions as delete.
+ *
+ *  Both predicates additionally require the message to be within
+ *  `EDIT_DELETE_WINDOW_MS` of `dateCreated` — older messages return
+ *  false even if they're in-window by count, so the affordance
+ *  disappears once the message has settled.
  */
 export function buildMessagePermissions(
   currentIdentity: string | null,
   messages: readonly ChatMessage[],
+  nowMs: number = Date.now(),
 ): Permissions {
   if (!currentIdentity) {
     return { canDelete: () => false, canEdit: () => false };
@@ -72,13 +84,20 @@ export function buildMessagePermissions(
     return author === currentIdentity;
   };
 
+  const isWithinWindow = (m: ChatMessage): boolean => {
+    if (!m.dateCreated) return false;
+    return nowMs - m.dateCreated.getTime() <= EDIT_DELETE_WINDOW_MS;
+  };
+
   return {
     canDelete(m: ChatMessage): boolean {
       if (!deletableSids.has(m.sid)) return false;
+      if (!isWithinWindow(m)) return false;
       return sameSide(m.author);
     },
     canEdit(m: ChatMessage): boolean {
       if (!editableSids.has(m.sid)) return false;
+      if (!isWithinWindow(m)) return false;
       return m.author === currentIdentity;
     },
   };
