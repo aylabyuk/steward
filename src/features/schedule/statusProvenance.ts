@@ -25,23 +25,38 @@ function formatShortDate(value: unknown): string | null {
 
 /** Compact label describing who set the speaker's current status and
  *  how, for surfaces that want to show provenance next to the status
- *  badge. Returns null when the status is planned/invited (provenance
- *  is meaningful only for the terminal states) or when the speaker
- *  doc is missing the provenance fields (legacy rows pre-rollout). */
+ *  badge. Returns null only when the speaker doc is missing the
+ *  provenance fields (legacy rows pre-rollout) — every live status
+ *  (planned / invited / confirmed / declined) gets a label so the
+ *  banner's height stays stable across transitions. */
 export function statusProvenanceLabel(
   speaker: Speaker,
   members: SubState<WithId<Member>[]>,
 ): string | null {
-  if (speaker.status !== "confirmed" && speaker.status !== "declined") return null;
   if (!speaker.statusSource) return null;
   const who = resolveName(speaker.statusSetBy, members);
   const when = formatShortDate(speaker.statusSetAt);
-  const source = speaker.statusSource === "speaker-response" ? "from reply" : "set manually";
+  const verb = statusVerb(speaker.status ?? "planned", speaker.statusSource);
   const byPart = who ? ` by ${who}` : "";
   const whenPart = when ? ` · ${when}` : "";
   const prefix =
-    speaker.statusSource === "speaker-response"
-      ? `${source} · applied${byPart}`
-      : `${source}${byPart}`;
+    speaker.statusSource === "speaker-response" ? `${verb} · applied${byPart}` : `${verb}${byPart}`;
   return `${prefix}${whenPart}`;
+}
+
+function statusVerb(
+  status: NonNullable<Speaker["status"]>,
+  source: NonNullable<Speaker["statusSource"]>,
+): string {
+  if (source === "speaker-response") return "from reply";
+  switch (status) {
+    case "planned":
+      return "planned";
+    case "invited":
+      return "invited";
+    case "confirmed":
+      return "set manually";
+    case "declined":
+      return "set manually";
+  }
 }

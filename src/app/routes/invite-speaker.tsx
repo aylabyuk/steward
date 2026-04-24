@@ -122,6 +122,7 @@ function InviteLandingContent({
               speakerName={invitation.speakerName}
               bishopricParticipants={invitation.bishopricParticipants}
               hasResponse={!!invitation.response}
+              responseAnswer={invitation.response?.answer ?? null}
               onClose={() => setChatOpen(false)}
               fillHeight
             />

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { SPEAKER_STATUSES, type SpeakerStatus } from "@/lib/types";
+import type { SubState } from "@/hooks/_sub";
+import { SPEAKER_STATUSES, type Member, type SpeakerStatus, type WithId } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import type { StatusSource } from "@/lib/types/meeting";
 
 const STATE_LABELS: Record<SpeakerStatus, string> = {
   planned: "Planned",
@@ -23,8 +25,13 @@ type NonPlannedStatus = Exclude<SpeakerStatus, "planned">;
  *  speaker is marked as invited/confirmed/declined, the Prepare
  *  Invitation flow is gated off. The confirm dialog spells out both
  *  the semantic (what this status means) and the consequence (need
- *  to switch back to Planned to send from the app). */
-const CONFIRM_COPY: Record<
+ *  to switch back to Planned to send from the app).
+ *
+ *  When the current status was set by the speaker (via their yes/no
+ *  reply) or by another bishopric member, the dialog prepends a
+ *  context line so the reviewer understands whose decision they'd be
+ *  overriding. */
+const BASE_CONFIRM_COPY: Record<
   NonPlannedStatus,
   { title: string; body: string; confirmLabel: string }
 > = {
@@ -48,12 +55,26 @@ const CONFIRM_COPY: Record<
 interface Props {
   status: SpeakerStatus;
   onChange: (status: SpeakerStatus) => void;
+  /** Provenance context used to tailor the confirm-dialog body. When
+   *  omitted the dialog falls back to the vanilla copy (useful for
+   *  callsites where provenance isn't readily available). */
+  currentStatusSource?: StatusSource;
+  currentStatusSetBy?: string;
+  members?: SubState<WithId<Member>[]>;
+  currentUserUid?: string | undefined;
 }
 
 /** Segmented-control row of speaker statuses. Clicking any non-planned
  *  pill pops a confirm dialog explaining what the status means and
  *  the consequence (no in-app invitation while in that state). */
-export function SpeakerStatusPills({ status, onChange }: Props) {
+export function SpeakerStatusPills({
+  status,
+  onChange,
+  currentStatusSource,
+  currentStatusSetBy,
+  members,
+  currentUserUid,
+}: Props) {
   const [pending, setPending] = useState<NonPlannedStatus | null>(null);
 
   function requestChange(next: SpeakerStatus) {
@@ -64,6 +85,10 @@ export function SpeakerStatusPills({ status, onChange }: Props) {
     }
     setPending(next);
   }
+
+  const copy = pending
+    ? decorateConfirmCopy(pending, currentStatusSource, currentStatusSetBy, members, currentUserUid)
+    : null;
 
   return (
     <>
@@ -88,12 +113,12 @@ export function SpeakerStatusPills({ status, onChange }: Props) {
           </button>
         ))}
       </div>
-      {pending && (
+      {pending && copy && (
         <ConfirmDialog
           open
-          title={CONFIRM_COPY[pending].title}
-          body={CONFIRM_COPY[pending].body}
-          confirmLabel={CONFIRM_COPY[pending].confirmLabel}
+          title={copy.title}
+          body={copy.body}
+          confirmLabel={copy.confirmLabel}
           danger={pending === "declined"}
           onCancel={() => setPending(null)}
           onConfirm={() => {
@@ -104,4 +129,35 @@ export function SpeakerStatusPills({ status, onChange }: Props) {
       )}
     </>
   );
+}
+
+function decorateConfirmCopy(
+  next: NonPlannedStatus,
+  source: StatusSource | undefined,
+  setBy: string | undefined,
+  members: SubState<WithId<Member>[]> | undefined,
+  currentUserUid: string | undefined,
+): { title: string; body: string; confirmLabel: string } {
+  const base = BASE_CONFIRM_COPY[next];
+  const prefix = overridePrefix(source, setBy, members, currentUserUid);
+  if (!prefix) return base;
+  return { ...base, body: `${prefix} ${base.body}` };
+}
+
+function overridePrefix(
+  source: StatusSource | undefined,
+  setBy: string | undefined,
+  members: SubState<WithId<Member>[]> | undefined,
+  currentUserUid: string | undefined,
+): string | null {
+  if (!source) return null;
+  if (source === "speaker-response") {
+    return "The speaker set this status by replying to the invitation. Overriding it won't change their reply — it only updates the schedule record.";
+  }
+  // Manual changes: call out the setter if it was someone other than
+  // the current signed-in user; stay quiet when self-overriding.
+  if (!setBy || setBy === currentUserUid) return null;
+  const who = members?.data.find((m) => m.id === setBy)?.data.displayName;
+  if (!who) return null;
+  return `${who} set the current status. Override with care — there's no automatic notification to them.`;
 }

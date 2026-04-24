@@ -116,6 +116,7 @@ export function BishopInvitationChat({
         applying={applying}
         applyError={applyError}
         onStatusChange={onStatusChange}
+        currentUserUid={user?.uid}
       />
 
       <ConversationThread
