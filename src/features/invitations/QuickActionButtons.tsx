@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Conversation } from "@twilio/conversations";
+import { formatShortSunday } from "@/features/schedule/dateFormat";
 import { cn } from "@/lib/cn";
 
 interface Props {
@@ -8,6 +9,10 @@ interface Props {
   /** Called with the submitted answer so the caller can mirror it
    *  into `invitation.response` in Firestore (bishop-visible badge). */
   onSubmit: (answer: "yes" | "no", reason?: string) => Promise<void>;
+  /** ISO `YYYY-MM-DD` of the meeting — substituted into the prompt
+   *  ("Can you speak on Sun May 20?") instead of the ambiguous
+   *  "this Sunday". */
+  meetingDate: string;
 }
 
 type Mode = "idle" | "noReason";
@@ -28,6 +33,7 @@ export function QuickActionButtons({
   conversation,
   ensureReady,
   onSubmit,
+  meetingDate,
 }: Props): React.ReactElement {
   const [mode, setMode] = useState<Mode>("idle");
   const [reason, setReason] = useState("");
@@ -94,7 +100,9 @@ export function QuickActionButtons({
 
   return (
     <div className="flex flex-col gap-2 p-3 border-t border-border bg-chalk">
-      <p className="font-serif text-[13.5px] text-walnut-2">Can you speak on this Sunday?</p>
+      <p className="font-serif text-[13.5px] text-walnut-2">
+        Can you speak on {formatShortSunday(meetingDate)}?
+      </p>
       <div className="flex gap-2">
         <button
           type="button"

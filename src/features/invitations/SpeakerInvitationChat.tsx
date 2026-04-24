@@ -28,6 +28,11 @@ interface Props {
     email?: string | undefined;
   }[];
   hasResponse: boolean;
+  /** ISO `YYYY-MM-DD` of the meeting the speaker is assigned to —
+   *  substituted into QuickAction prompts and the response banner so
+   *  copy reads "speak on Sun May 20" instead of the ambiguous
+   *  "this Sunday". */
+  meetingDate: string;
   /** The speaker's own answer. Drives the "You accepted / declined"
    *  banner above the thread so they always see their committed
    *  answer after submission. Null before they reply. */
@@ -146,6 +151,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
 
       <SpeakerResponseBanner
         answer={props.responseAnswer}
+        meetingDate={props.meetingDate}
         {...(props.currentStatus !== undefined ? { currentStatus: props.currentStatus } : {})}
       />
 
@@ -166,6 +172,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
           conversation={conversation}
           ensureReady={ensureReady}
           onSubmit={submitResponse}
+          meetingDate={props.meetingDate}
         />
       )}
 
