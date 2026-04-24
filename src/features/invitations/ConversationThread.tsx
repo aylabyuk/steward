@@ -112,6 +112,7 @@ export function ConversationThread({
         {items.map((item) => {
           if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
           if (item.kind === "unread") return <UnreadDivider key={item.key} />;
+          if (item.kind === "system") return <SystemNotice key={item.key} body={item.body} />;
           return (
             <ConversationGroup
               key={item.key}
@@ -139,4 +140,18 @@ function findLastMineIndex(
     if (messages[i]!.author === currentIdentity) return messages[i]!.index;
   }
   return null;
+}
+
+/** Centered pill used for system-posted status-change lines
+ *  ("Assignment confirmed — thank you for speaking this Sunday.").
+ *  Kept visually distinct from participant bubbles so the change
+ *  reads as a record update, not as a message from either side. */
+function SystemNotice({ body }: { body: string }) {
+  return (
+    <div className="flex justify-center" role="status">
+      <span className="inline-block px-3.5 py-1.5 rounded-full border border-border bg-parchment-2 font-serif italic text-[12.5px] text-walnut-2 max-w-[88%] text-center">
+        {body}
+      </span>
+    </div>
+  );
 }

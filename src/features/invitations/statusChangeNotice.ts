@@ -3,14 +3,22 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { SpeakerStatus } from "@/lib/types";
 
-/** Wording for the neutral status-change chat messages. Kept free of
+/** Wording for the neutral status-change messages. Kept free of
  *  "the bishopric" framing so the line reads as a calm record update
- *  rather than a rebuke — the message author bubble already carries
- *  the specific bishop's name via the existing uid:<uid> identity. */
+ *  rather than a rebuke — the message is rendered as a centered
+ *  system notice in the thread, not attributed to any participant. */
 const BODY_BY_STATUS: Partial<Record<SpeakerStatus, string>> = {
-  confirmed: "Your assignment is confirmed — thank you for speaking this Sunday.",
-  declined: "Your assignment has been updated to declined. Thank you for letting us know.",
+  confirmed: "Assignment confirmed — thank you for speaking this Sunday.",
+  declined: "Assignment updated to declined. Thank you for letting us know.",
 };
+
+/** Marker on the Twilio Message's attributes subtree. The thread
+ *  renderer keys off this and drops the message out of the normal
+ *  grouped-bubble flow, rendering it as a muted system line instead. */
+export interface StatusChangeAttributes {
+  kind: "status-change";
+  status: Exclude<SpeakerStatus, "planned" | "invited">;
+}
 
 /** After an authoritative bishop-driven status transition
  *  (invited/planned → confirmed or declined), mirror the new value
@@ -37,8 +45,10 @@ export async function noteBishopStatusChange(args: {
   });
   const body = BODY_BY_STATUS[status];
   if (!body || !conversation) return;
+  if (status !== "confirmed" && status !== "declined") return;
+  const attributes: StatusChangeAttributes = { kind: "status-change", status };
   try {
-    await conversation.sendMessage(body);
+    await conversation.sendMessage(body, attributes);
   } catch (err) {
     console.warn("[steward] status-change chat message failed", err);
   }
