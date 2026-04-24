@@ -92,6 +92,9 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
           wardId={wardId}
           invitationId={invitation.invitationId}
           invitation={invitation}
+          speaker={speaker}
+          date={date}
+          speakerId={speakerId}
         />
       )}
     </li>
