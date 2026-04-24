@@ -1,25 +1,45 @@
 /**
  * Registers the Firebase Cloud Messaging service worker on app boot and
- * primes the Firebase messaging singleton's `swRegistration` slot so the
- * SDK never auto-registers a ghost SW at
- * `/firebase-cloud-messaging-push-scope`. See issue #106 for the chase.
+ * primes the Firebase messaging singleton with our SW registration and
+ * VAPID key so the SDK never (a) auto-registers a ghost SW at
+ * `/firebase-cloud-messaging-push-scope` nor (b) mints a stand-in token
+ * against the Firebase default VAPID key. See issue #106 for the chase.
  *
  * Priming happens SYNCHRONOUSLY at module-import time, not deferred. A
  * React effect that fires a Firebase callable (e.g. `TwilioAutoConnect`)
  * mounts in the same tick as hydration, which is earlier than the browser
  * `load` event. Without a synchronous prime, Firebase's
- * `getMessagingToken()` auto-registers the ghost before we can stop it.
+ * `getMessagingToken()` — invoked for every Functions callable — runs
+ * through its token lifecycle against a freshly-constructed messaging
+ * singleton whose `swRegistration` and `vapidKey` slots are both unset,
+ * defaulting the VAPID to Firebase's built-in sample key and
+ * auto-registering the ghost SW.
  *
- * We use a stub object (not a real ServiceWorkerRegistration) for the
- * sync prime because the real registration only arrives after the async
- * `navigator.serviceWorker.register()` call resolves. The stub satisfies
- * the only guard that matters — `Tke(messaging, undefined)`'s
- * `!e.swRegistration` check — and Firebase's
- * Functions-callable path is tolerant of downstream errors when the
- * stub's `pushManager` doesn't exist (`getMessagingToken()` returns
- * undefined on throw). Our own `subscribeDevice` explicitly passes a
- * real SW registration to `getToken`, which replaces the stub via
- * `Tke`'s `e.swRegistration = t` branch.
+ * For `swRegistration`, we use a stub object (not a real
+ * ServiceWorkerRegistration) because the real registration only arrives
+ * after the async `navigator.serviceWorker.register()` call resolves.
+ * The stub satisfies the only guard that matters in
+ * `Tke(messaging, undefined)` (the `!e.swRegistration` check) and
+ * Firebase's callable path tolerates the downstream error when the
+ * stub's `pushManager` doesn't exist — `getMessagingToken()` wraps
+ * `messaging.getToken()` in a try/catch and returns undefined on throw,
+ * causing the callable to proceed without the optional
+ * `Firebase-Instance-ID-Token` header.
+ *
+ * For `vapidKey`, we prime it with ours (`VITE_FIREBASE_VAPID_KEY`) so
+ * that when Firebase's internal token lookup eventually runs
+ * `mke(messaging)` against a real subscription, its
+ * `bke(stored.subscriptionOptions, current.subscriptionOptions)`
+ * equality check passes. Without this, any post-subscribe callable
+ * invocation would see a VAPID mismatch vs the IDB-stored token, call
+ * `hee()` to delete that token from FCM, and mint a new one with the
+ * default key — leaving the Firestore-stored token dangling and
+ * triggering `messaging/registration-token-not-registered` on the
+ * next server-side push.
+ *
+ * Our own `subscribeDevice` explicitly passes a real SW registration
+ * and the same VAPID key to `getToken`, which `Tke`/`Cke` then treat
+ * as idempotent assignments.
  *
  * No-op on the server / in tests where `navigator` isn't available.
  */
@@ -32,6 +52,7 @@ const SW_PATH = "/firebase-messaging-sw.js";
 
 interface MessagingInternal {
   swRegistration?: ServiceWorkerRegistration | { scope: string; __stewardStub: true };
+  vapidKey?: string;
 }
 
 function primeStub(): void {
@@ -39,6 +60,10 @@ function primeStub(): void {
     const messaging = getMessaging(app) as unknown as MessagingInternal;
     if (!messaging.swRegistration) {
       messaging.swRegistration = { scope: "/", __stewardStub: true };
+    }
+    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+    if (vapidKey && !messaging.vapidKey) {
+      messaging.vapidKey = vapidKey;
     }
   } catch {
     // jsdom / unsupported environments — not actionable.
