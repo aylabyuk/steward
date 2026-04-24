@@ -24,7 +24,21 @@ export function BubbleEditForm({
   textareaRef,
 }: Props) {
   return (
-    <div className="flex flex-col gap-1.5 min-w-48">
+    <div className="relative flex flex-col gap-1.5 min-w-48">
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={saving}
+        aria-label="Cancel edit"
+        className={cn(
+          "absolute top-1 right-1 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors disabled:opacity-50",
+          mine
+            ? "text-parchment/80 hover:text-parchment hover:bg-bordeaux/60"
+            : "text-walnut-3 hover:text-walnut hover:bg-parchment-2",
+        )}
+      >
+        <CloseIcon />
+      </button>
       <textarea
         ref={textareaRef}
         value={draft}
@@ -42,26 +56,13 @@ export function BubbleEditForm({
           }
         }}
         className={cn(
-          "font-sans text-[14px] leading-snug rounded-md p-2 resize-none focus:outline-none",
+          "font-sans text-[14px] leading-snug rounded-md p-2 pr-8 resize-none focus:outline-none",
           mine
             ? "bg-bordeaux-deep text-parchment border border-bordeaux-deep focus:border-parchment/40"
             : "bg-chalk text-walnut border border-border-strong focus:border-bordeaux",
         )}
       />
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={saving}
-          className={cn(
-            "font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-md transition-colors",
-            mine
-              ? "text-parchment/75 hover:text-parchment hover:bg-bordeaux-deep"
-              : "text-walnut-3 hover:text-walnut hover:bg-parchment-2",
-          )}
-        >
-          Cancel
-        </button>
+      <div className="flex items-center justify-end">
         <button
           type="button"
           onClick={onSave}
@@ -77,5 +78,13 @@ export function BubbleEditForm({
         </button>
       </div>
     </div>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   );
 }
