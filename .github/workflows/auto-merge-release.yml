@@ -27,6 +27,11 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      # `actions: write` lets `gh workflow run` dispatch the Release
+      # workflow after merging a main-bound PR. Without it the
+      # dispatch step fails with HTTP 403 "Resource not accessible by
+      # integration" and the Release workflow never fires.
+      actions: write
     steps:
       - name: Resolve + merge matching PR
         id: merge
