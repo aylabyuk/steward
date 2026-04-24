@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { OverflowMenu } from "@/components/ui/OverflowMenu";
+import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
+import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
@@ -74,84 +76,87 @@ export function WeekEditor({ date }: Props) {
   ];
 
   return (
-    <main className="pb-30">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div>
-          <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
+    <TwilioChatProvider>
+      <TwilioAutoConnect wardId={wardId} />
+      <main className="pb-30">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <div>
+            <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
 
-          <CancellationBanner wardId={wardId} date={date} cancellation={cancellation} />
-          <CancelDialog
-            open={confirmingCancel}
-            onClose={() => setConfirmingCancel(false)}
-            onConfirm={async (reason) => {
-              if (!authUid) return;
-              await cancelMeeting(wardId, date, reason, authUid, nonMeeting);
-            }}
-          />
+            <CancellationBanner wardId={wardId} date={date} cancellation={cancellation} />
+            <CancelDialog
+              open={confirmingCancel}
+              onClose={() => setConfirmingCancel(false)}
+              onConfirm={async (reason) => {
+                if (!authUid) return;
+                await cancelMeeting(wardId, date, reason, authUid, nonMeeting);
+              }}
+            />
 
-          {isNonMeeting ? (
-            <div className="rounded-xl border border-border bg-parchment-2 p-5 text-sm text-walnut-2">
-              No sacrament meeting is held on {TYPE_LABELS[type].toLowerCase()} Sundays.
-            </div>
-          ) : (
-            <>
-              <ProgramApproval
-                date={date}
-                report={report}
-                status={currentStatus}
-                approvals={meeting.data?.approvals ?? []}
-                requiredApprovals={meeting.data?.requiredApprovals}
-                onRequestApproval={approval.requestApproval}
-                onApprove={approval.approve}
-                canApprove={approval.canApprove}
-                alreadyApproved={approval.alreadyApproved}
-                error={approval.error}
-                busy={approval.busy}
-                memberReady={approval.memberReady}
-              />
-              {isLocked && (
-                <LockBanner status={currentStatus} onUnlock={approval.openResetDialog} />
-              )}
-              <div className="flex justify-center mb-4 lg:hidden">
-                <StatusLegend />
+            {isNonMeeting ? (
+              <div className="rounded-xl border border-border bg-parchment-2 p-5 text-sm text-walnut-2">
+                No sacrament meeting is held on {TYPE_LABELS[type].toLowerCase()} Sundays.
               </div>
-              <div
-                className={isLocked ? "pointer-events-none opacity-60 select-none" : ""}
-                aria-disabled={isLocked}
-              >
-                <ProgramSections
-                  wardId={wardId}
+            ) : (
+              <>
+                <ProgramApproval
                   date={date}
-                  meeting={meeting.data}
-                  type={type}
-                  speakers={speakers.data}
-                  nonMeetingSundays={nonMeeting}
+                  report={report}
+                  status={currentStatus}
+                  approvals={meeting.data?.approvals ?? []}
+                  requiredApprovals={meeting.data?.requiredApprovals}
+                  onRequestApproval={approval.requestApproval}
+                  onApprove={approval.approve}
+                  canApprove={approval.canApprove}
+                  alreadyApproved={approval.alreadyApproved}
+                  error={approval.error}
+                  busy={approval.busy}
+                  memberReady={approval.memberReady}
                 />
-              </div>
-              <ResetToDraftDialog
-                open={approval.resetDialogOpen}
-                status={currentStatus}
-                liveApprovals={liveApprovals}
-                onClose={approval.closeResetDialog}
-                onConfirm={approval.resetToDraft}
-              />
-            </>
-          )}
+                {isLocked && (
+                  <LockBanner status={currentStatus} onUnlock={approval.openResetDialog} />
+                )}
+                <div className="flex justify-center mb-4 lg:hidden">
+                  <StatusLegend />
+                </div>
+                <div
+                  className={isLocked ? "pointer-events-none opacity-60 select-none" : ""}
+                  aria-disabled={isLocked}
+                >
+                  <ProgramSections
+                    wardId={wardId}
+                    date={date}
+                    meeting={meeting.data}
+                    type={type}
+                    speakers={speakers.data}
+                    nonMeetingSundays={nonMeeting}
+                  />
+                </div>
+                <ResetToDraftDialog
+                  open={approval.resetDialogOpen}
+                  status={currentStatus}
+                  liveApprovals={liveApprovals}
+                  onClose={approval.closeResetDialog}
+                  onConfirm={approval.resetToDraft}
+                />
+              </>
+            )}
+          </div>
+
+          {!isNonMeeting && <ProgramSide wardId={wardId} date={date} rail={rail} />}
         </div>
 
-        {!isNonMeeting && <ProgramSide wardId={wardId} date={date} rail={rail} />}
-      </div>
-
-      {!isNonMeeting && (
-        <ProgramSaveBar
-          status={currentStatus}
-          ready={report.ready}
-          remaining={report.missing.length + report.unconfirmed.length}
-          busy={approval.busy}
-          onRequestApproval={approval.requestApproval}
-        />
-      )}
-      <HistoryModal date={date} open={historyOpen} onClose={() => setHistoryOpen(false)} />
-    </main>
+        {!isNonMeeting && (
+          <ProgramSaveBar
+            status={currentStatus}
+            ready={report.ready}
+            remaining={report.missing.length + report.unconfirmed.length}
+            busy={approval.busy}
+            onRequestApproval={approval.requestApproval}
+          />
+        )}
+        <HistoryModal date={date} open={historyOpen} onClose={() => setHistoryOpen(false)} />
+      </main>
+    </TwilioChatProvider>
   );
 }
