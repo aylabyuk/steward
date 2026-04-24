@@ -4,19 +4,24 @@ import { logger } from "firebase-functions/v2";
 /** In local dev the Firebase emulator sets `FUNCTIONS_EMULATOR=true`.
  *  We use that as the single signal to stub SendGrid delivery — real
  *  sends would need a live API key that dev machines shouldn't carry
- *  anyway. Outside the emulator a missing key still throws, so a
- *  prod mis-config fails loud. */
+ *  anyway. */
 function isStubbed(): boolean {
   return process.env.FUNCTIONS_EMULATOR === "true";
 }
 
 let configured = false;
-function ensureConfigured(): void {
-  if (configured) return;
+/** Returns true when SendGrid is ready to send; false when the key is
+ *  missing. Missing-config is NOT a throw — callers degrade gracefully
+ *  (log + skip) so that email failures don't cascade into killing
+ *  unrelated side effects (FCM pushes, SMS, status writes) that
+ *  happen alongside in the same Cloud Function invocation. */
+function ensureConfigured(): boolean {
+  if (configured) return true;
   const key = process.env.SENDGRID_API_KEY;
-  if (!key) throw new Error("SENDGRID_API_KEY missing.");
+  if (!key) return false;
   sgMail.setApiKey(key);
   configured = true;
+  return true;
 }
 
 export interface EmailInput {
@@ -45,9 +50,21 @@ export async function sendEmail(input: EmailInput): Promise<string | null> {
     });
     return `stub-${Date.now()}`;
   }
-  ensureConfigured();
+  if (!ensureConfigured()) {
+    logger.warn("sendEmail skipped — SENDGRID_API_KEY not configured", {
+      to: input.to,
+      subject: input.subject,
+    });
+    return null;
+  }
   const fromAddress = process.env.INVITATION_FROM_EMAIL;
-  if (!fromAddress) throw new Error("INVITATION_FROM_EMAIL missing.");
+  if (!fromAddress) {
+    logger.warn("sendEmail skipped — INVITATION_FROM_EMAIL not configured", {
+      to: input.to,
+      subject: input.subject,
+    });
+    return null;
+  }
   const [res] = await sgMail.send({
     to: input.to,
     from: { email: fromAddress, name: input.fromDisplayName },
