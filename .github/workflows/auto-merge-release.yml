@@ -1,0 +1,59 @@
+name: Auto-merge release PRs
+
+# Self-hosted replacement for GitHub's built-in auto-merge, which is
+# gated behind Pro on private repos. Triggers on CI completion; if the
+# PR's title starts with `chore(release):` or `Release:` AND CI
+# succeeded, merges the PR automatically. Feature PRs are NOT affected
+# — they still need a human review + click.
+#
+# The release workflow (.github/workflows/release.yml) takes over from
+# here once main is pushed.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+concurrency:
+  group: auto-merge-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  auto-merge:
+    name: Merge release PR on green CI
+    # Only run if CI succeeded. Skip for failure/cancelled/timed-out.
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Resolve + merge matching PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          # Find the open PR for this head branch. There's usually exactly one.
+          PR_JSON=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --head "$HEAD_BRANCH" \
+            --state open \
+            --json number,title,headRefOid,mergeable,mergeStateStatus)
+
+          PR_NUMBER=$(echo "$PR_JSON" | jq -r \
+            --arg sha "$HEAD_SHA" \
+            '.[] | select(.headRefOid == $sha) |
+             select(.title | test("^chore\\(release\\):|^Release:")) |
+             .number' | head -1)
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No matching release PR for branch $HEAD_BRANCH @ $HEAD_SHA — nothing to auto-merge."
+            exit 0
+          fi
+
+          echo "Auto-merging PR #$PR_NUMBER ($HEAD_BRANCH)"
+          gh pr merge "$PR_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --merge \
+            --delete-branch
