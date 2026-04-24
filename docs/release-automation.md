@@ -13,13 +13,13 @@ Vercel handles the frontend redeploy via its own GitHub integration — nothing 
 
 ## One-time setup
 
-### 1. Repo settings — enable auto-merge
+### 1. Auto-merge for release PRs — self-hosted
 
-**Settings → General → Pull Requests → ✅ Allow auto-merge → Save.**
+GitHub's built-in auto-merge is gated behind Pro on private repos, so we roll our own. [`.github/workflows/auto-merge-release.yml`](../.github/workflows/auto-merge-release.yml) triggers on CI completion: if the PR's title starts with `chore(release):` or `Release:` AND CI succeeded, it merges via `gh pr merge`.
 
-Lets me (or anyone opening a release PR) set `--auto --merge` on `gh pr create`. The PR merges automatically once CI goes green; no human click required for the mechanical release PRs (`chore(release): vX.Y.Z` and the `develop → main` one).
+**Nothing to configure** — the workflow uses the default `GITHUB_TOKEN` so it ships working. Feature PRs are untouched by the title filter; they still need a human review + click.
 
-Feature PR review stays manual — those still need a human eyes + merge click.
+If GitHub ever flips auto-merge into the free plan, this workflow can be deleted + release-to-main skill reverts to `gh pr merge --auto`. Until then, the self-host is cheaper than $4/mo for Pro.
 
 ### 2. GCP service account for deploys
 
