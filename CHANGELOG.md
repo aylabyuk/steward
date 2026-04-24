@@ -7,6 +7,33 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.5] — 2026-04-24
+
+Two fixes surfaced from prod log inspection while chasing the ongoing
+push-delivery issue.
+
+### Fixed
+
+- **Missing Firestore indexes** for two collection-group queries that
+  were failing every execution with `9 FAILED_PRECONDITION`:
+  - `notificationQueue.dispatchAt` — used by `drainNotificationQueue`'s
+    minute-tick scheduled run. Meeting-change push fan-out had been
+    dead silently since the collection-group rewrite.
+  - `speakerInvitations.conversationSid` — used by
+    `onTwilioWebhook.findInvitationByConversation`. Bishop-reply →
+    speaker SMS had been dead too.
+
+  Both added as `fieldOverrides` (the same pattern as the existing
+  `invites.email` override).
+
+### Infrastructure
+
+- **Structured diagnostic logs** in `notifyBishopricOfResponse` so
+  we can see exactly where a response push drops: trigger entry,
+  candidate + recipient counts, token total, and `sendAndPrune`
+  outcome (`successCount` / `failureCount` / `deadTokenCount`).
+  Kept permanently — cheap to run, saves the next debug cycle.
+
 ## [0.9.4] — 2026-04-24
 
 Third push-delivery hotfix in a row. Prod Cloud Function logs revealed
@@ -947,7 +974,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.4...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.5...HEAD
+[0.9.5]: https://github.com/aylabyuk/steward/releases/tag/v0.9.5
 [0.9.4]: https://github.com/aylabyuk/steward/releases/tag/v0.9.4
 [0.9.3]: https://github.com/aylabyuk/steward/releases/tag/v0.9.3
 [0.9.2]: https://github.com/aylabyuk/steward/releases/tag/v0.9.2
