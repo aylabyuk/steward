@@ -7,6 +7,39 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.4] — 2026-04-24
+
+Third push-delivery hotfix in a row. Prod Cloud Function logs revealed
+`onInvitationWrite` was throwing `SENDGRID_API_KEY missing.` on every
+speaker response — prod has no SendGrid configured. The throw rejected
+the `Promise.all` wrapping the email receipt and the FCM push, and
+when the outer try/catch caught, the container tore down and killed
+the in-flight push fan-out. Net effect: speaker responded → no email
+AND no push.
+
+### Fixed
+
+- **`sendEmail` degrades gracefully on missing config** in
+  `functions/src/sendgrid/client.ts`. Missing `SENDGRID_API_KEY` or
+  `INVITATION_FROM_EMAIL` now logs a warning and returns `null`
+  instead of throwing. Real send-time API errors (bad key, bounced
+  recipient) still throw — those are genuine errors worth escalating.
+  Rationale: a missing config shouldn't cascade into killing
+  unrelated side effects (FCM, SMS, status writes) that share the
+  same Cloud Function invocation.
+- **`Promise.all` → `Promise.allSettled`** in `onInvitationWrite`'s
+  speaker-response path. Each side effect (speaker receipt email,
+  bishopric FCM push) now runs independently; one failing no longer
+  short-circuits the other. Rejected entries are logged individually.
+  Defense in depth on top of the fix above.
+
+### Known follow-up
+
+Email receipts still won't send in prod until SendGrid is configured.
+Set `SENDGRID_API_KEY` and `INVITATION_FROM_EMAIL` in
+`functions/.env.steward-prod-65a36` (or declare via `defineSecret`)
+when email is in scope.
+
 ## [0.9.3] — 2026-04-24
 
 Second hotfix for push-notification delivery. v0.9.2 moved payloads to
@@ -914,7 +947,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.3...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.4...HEAD
+[0.9.4]: https://github.com/aylabyuk/steward/releases/tag/v0.9.4
 [0.9.3]: https://github.com/aylabyuk/steward/releases/tag/v0.9.3
 [0.9.2]: https://github.com/aylabyuk/steward/releases/tag/v0.9.2
 [0.9.1]: https://github.com/aylabyuk/steward/releases/tag/v0.9.1

@@ -44,10 +44,24 @@ export const onInvitationWrite = onDocumentWritten(
         const answer = after.response?.answer;
         const key = answer === "yes" ? "speakerResponseAccepted" : "speakerResponseDeclined";
         const headerTemplate = await readMessageTemplate(db, wardId, key);
-        await Promise.all([
+        // allSettled — one leg failing must NOT cancel the other.
+        // Promise.all rejects on first failure; the outer try/catch
+        // then catches and the function exits, which tears down the
+        // container and kills any in-flight operation. Waiting on
+        // allSettled keeps both sides running to completion.
+        const results = await Promise.allSettled([
           sendSpeakerReceipt(after, bishopric, headerTemplate),
           notifyBishopricOfResponse(db, wardId, invitationId, before, after),
         ]);
+        for (const r of results) {
+          if (r.status === "rejected") {
+            logger.error("speaker-response side effect failed", {
+              wardId,
+              invitationId,
+              err: (r.reason as Error)?.message ?? String(r.reason),
+            });
+          }
+        }
       }
       if (change.fireBishopric) {
         const headerTemplate = await readMessageTemplate(db, wardId, "bishopricResponseReceipt");
