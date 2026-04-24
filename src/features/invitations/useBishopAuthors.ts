@@ -34,6 +34,7 @@ export function useBishopAuthors({
       if (!m.data.active) continue;
       const info: AuthorInfo = { displayName: m.data.displayName, role: m.data.role };
       if (m.data.email) info.email = m.data.email;
+      if (m.data.photoURL) info.photoURL = m.data.photoURL;
       map.set(`uid:${m.id}`, info);
     }
     const speakerInfo: AuthorInfo = { displayName: invitation.speakerName, role: "speaker" };
@@ -46,7 +47,12 @@ export function useBishopAuthors({
         displayName: existing?.displayName ?? user.displayName ?? "You",
       };
       if (existing?.role) info.role = existing.role;
-      if (user.photoURL) info.photoURL = user.photoURL;
+      // Prefer the live Firebase Auth photoURL (freshest) but fall back
+      // to the member-doc-synced value — email sign-ins don't always
+      // carry a photoURL on the auth user even when a historical Google
+      // session back-filled one on the member doc.
+      const photoURL = user.photoURL ?? existing?.photoURL;
+      if (photoURL) info.photoURL = photoURL;
       const email = existing?.email ?? user.email;
       if (email) info.email = email;
       map.set(`uid:${user.uid}`, info);
