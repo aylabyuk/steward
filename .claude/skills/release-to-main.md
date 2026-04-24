@@ -1,14 +1,24 @@
 ---
 name: release-to-main
-description: Promote develop → main for a Steward production release. Handles the PR, the changelog + version bump, tagging, and the Firebase rules/indexes deploys. Use when the user says "ship to prod", "publish to production", "release", or similar.
+description: Promote develop → main for a Steward production release. Handles the PR, the changelog + version bump, and the release-PR auto-merge setup. Tagging + GitHub Release + Firebase deploys run automatically via .github/workflows/release.yml after main merges. Use when the user says "ship to prod", "publish to production", "release", or similar.
 ---
 
 # Release develop → main (Steward)
 
-This skill encodes the release workflow for Steward. It exists
-because the release path touches three systems: GitHub (PR merge),
-Vercel (auto-deploy off `main`), and Firebase (rules + indexes on
-`steward-prod-65a36`, deployed by hand).
+This skill encodes the release workflow for Steward. Most of the
+release path is automated now — see
+[docs/release-automation.md](../../docs/release-automation.md) for
+setup. The human still writes the changelog and opens the release PRs;
+everything post-main-merge is automatic.
+
+**Automation split:**
+
+- **Manual** (via this skill): changelog entry, version bump, opening
+  the `chore(release)` PR and the `develop → main` PR with auto-merge
+  enabled.
+- **Automatic** (`.github/workflows/release.yml`, on push to `main`):
+  tag, GitHub Release, Firestore rules + indexes deploy, Cloud
+  Functions deploy.
 
 ## Branch topology
 
@@ -97,16 +107,26 @@ Do this as a single commit titled `chore(release): vX.Y.Z`:
      [X.Y.Z]: https://github.com/aylabyuk/steward/releases/tag/vX.Y.Z
      ```
 
-4. Commit both files together and push `develop`:
+4. Commit both files on a `chore/release-vX.Y.Z` branch and open a PR
+   into `develop` with auto-merge enabled. Direct pushes to `develop`
+   are blocked by the project's PR-only rule:
    ```bash
+   git checkout -b chore/release-vX.Y.Z
    git add package.json CHANGELOG.md
    git commit -m "chore(release): vX.Y.Z"
-   git push origin develop
+   git push -u origin chore/release-vX.Y.Z
+   gh pr create --base develop --head chore/release-vX.Y.Z \
+     --title "chore(release): vX.Y.Z" \
+     --body "Release-prep commit for vX.Y.Z. Merge this, then the develop → main PR auto-merges on CI pass."
+   gh pr merge --auto --merge  # auto-merges once CI goes green
    ```
 
-5. Wait for develop CI to go green on this commit.
+5. Wait for the PR to auto-merge. Sync develop:
+   ```bash
+   git checkout develop && git pull --ff-only
+   ```
 
-## Open the release PR
+## Open the release PR (develop → main)
 
 Do NOT fast-forward `main` locally. Open a PR so CI runs on the merge
 ref and GitHub enforces the branch's merge strategy.
@@ -115,26 +135,37 @@ ref and GitHub enforces the branch's merge strategy.
 gh pr create --base main --head develop \
   --title "Release: <short summary>" \
   --body "<markdown checklist — features, fixes, test plan>"
+gh pr merge --auto --merge   # auto-merges once CI is green
 ```
 
-Wait for CI to go green on the PR before merging.
+Auto-merge requires **Settings → Pull Requests → Allow auto-merge** to
+be enabled in the repo. If it's disabled, the command errors — flip
+the checkbox and retry.
 
-## Merge
+## What happens after merge
 
-Click Merge on the GitHub UI — the only available method is "Create
-a merge commit" (enforced at the repo level). Confirm with the user
-before the click — this is a high-severity production action.
+**Zero human steps** — the
+[.github/workflows/release.yml](../../.github/workflows/release.yml)
+workflow runs on every push to `main`:
 
-## Post-merge sync
+1. Reads `package.json` version
+2. Creates + pushes `vX.Y.Z` tag (skips if it already exists)
+3. Creates GitHub Release with the matching CHANGELOG section
+4. Deploys Firestore rules + indexes to `steward-prod-65a36`
+5. Deploys Cloud Functions to `steward-prod-65a36`
 
-Merge-commit preserves develop's SHAs on main, so the post-merge
-state is: `main == develop + one merge commit`. Pull the merge
-commit down onto develop with a fast-forward:
+Vercel handles the frontend redeploy via its own GitHub integration.
+
+Watch the Actions tab (**Actions → Release**) to confirm. Typical
+run-time is 3–5 minutes. If any step fails, the workflow surfaces the
+error and the tag/release may or may not exist depending on where it
+failed — rerun after fixing.
+
+Local post-merge sync:
 
 ```bash
 git fetch origin
-git checkout develop
-git pull --ff-only origin develop    # picks up the merge commit
+git checkout develop && git pull --ff-only origin develop
 ```
 
 If you maintain any long-running local branches (e.g. `version-2`),
@@ -147,53 +178,35 @@ Never force-push to `develop` or `main` as part of this flow. The
 legacy `git reset --hard && git push --force-with-lease` dance is no
 longer needed and is explicitly forbidden — see Guardrails.
 
-## Tag the release
+## Tag + Firebase deploy — automated
 
-Tag the merge commit on `main` with the version from `package.json`.
-Tags drive the compare links in `CHANGELOG.md` and become the source
-of truth for "what's in production right now".
+All of this is handled by
+[.github/workflows/release.yml](../../.github/workflows/release.yml)
+when the `develop → main` PR merges. See
+[docs/release-automation.md](../../docs/release-automation.md) for
+the full pipeline.
 
-```bash
-git checkout main
-git pull --ff-only origin main
-VERSION=$(node -p "require('./package.json').version")
-git tag -a "v$VERSION" -m "Release v$VERSION"
-git push origin "v$VERSION"
-```
+The workflow:
 
-Optionally, create a GitHub Release from the tag with the changelog
-section as the body:
+1. Creates the `vX.Y.Z` tag on the merge commit (skips if already there).
+2. Publishes a GitHub Release with the matching CHANGELOG section.
+3. Deploys Firestore rules + indexes to `steward-prod-65a36`.
+4. Deploys Cloud Functions to `steward-prod-65a36`.
 
-```bash
-gh release create "v$VERSION" --title "v$VERSION" \
-  --notes-file <(awk "/## \[$VERSION\]/,/## \[/{print}" CHANGELOG.md | sed '$d')
-```
+Vercel handles the frontend via its own integration — nothing for us
+to run.
 
-## Deploy Firebase (prod project: steward-prod-65a36)
+If the workflow fails, the Actions tab surfaces the error. Common
+failure modes and their fixes are documented in
+`docs/release-automation.md § Smoke-test the pipeline`.
 
-Only the frontend deploys via Vercel automatically. Firestore rules
-and indexes must be deployed manually. Pause for explicit user
-confirmation before each command.
+### Firestore index caveat
 
-### 1. Rules
-
-```bash
-firebase deploy --only firestore:rules --project=prod
-```
-
-Expect: "rules file firestore.rules compiled successfully" +
-"Rules published successfully". Takes seconds.
-
-### 2. Indexes
-
-```bash
-firebase deploy --only firestore:indexes --project=prod
-```
-
-Caveat: a single-field collectionGroup query needs a **field
-override**, not a composite index. If deploy rejects with "this index
-is not necessary, configure using single field index controls", move
-the entry from `indexes` to `fieldOverrides`:
+Index changes take effect asynchronously. A single-field
+collectionGroup query needs a **field override**, not a composite
+index. If a deploy rejects with "this index is not necessary,
+configure using single field index controls", move the entry from
+`indexes` to `fieldOverrides` in `firestore.indexes.json`:
 
 ```json
 {
@@ -208,29 +221,17 @@ the entry from `indexes` to `fieldOverrides`:
 ```
 
 Indexes build async — expect minutes for small collections, longer
-for millions of docs. Queries may return partial results until
+for millions of docs. Queries may return partial results until the
 build completes.
-
-### 3. Cloud Functions (only if functions/ changed)
-
-```bash
-firebase deploy --only functions --project=prod
-```
-
-Check first:
-```bash
-git diff origin/main~N..origin/main -- functions/ | head -5
-```
-where N is the release size. Skip if empty.
 
 ## Verify
 
-After rules + indexes deploy + the Vercel prod build lands:
+After the Release workflow finishes and the Vercel prod build lands:
 
 - Hit the production URL, sign in, confirm the Schedule loads
 - Try one write (e.g. edit a meeting field) to confirm rules accept
   legitimate writes
-- Check Firestore console → Indexes tab: any new indexes should show
+- Check Firestore Console → Indexes tab: any new indexes should show
   "Building" → "Enabled" within a few minutes
 
 ## Guardrails
