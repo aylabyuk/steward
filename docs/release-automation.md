@@ -32,12 +32,17 @@ Create a dedicated service account in the prod project with only the permissions
    - Description: `Used by .github/workflows/release.yml to deploy Firestore rules/indexes + Cloud Functions.`
 2. **Grant these roles** (narrow-as-possible; don't use `Owner`):
    - `Cloud Functions Admin` — deploy functions
+   - `Cloud Run Admin` — update the underlying Cloud Run services (Gen2 functions run on Cloud Run)
    - `Cloud Datastore Index Admin` — deploy Firestore indexes
    - `Firebase Rules Admin` — deploy Firestore rules
-   - `Firebase Admin` — needed to read the Firebase Admin SDK config
+   - `Firebase Admin` — read the Firebase Admin SDK config
      (`firebase.googleapis.com/.../adminSdkConfig`) during functions
      deploy. Without it, deploy fails with `403 The caller does not
      have permission` before any function is updated.
+   - `Secret Manager Secret Accessor` — read Twilio secrets
+     (`TWILIO_ACCOUNT_SID`, etc.) that the Cloud Functions declare
+     via `defineSecret`. Without it, deploy fails with `403
+     Permission 'secretmanager.secrets.get' denied`.
    - `Service Account User` — act as the default Cloud Functions runtime SA
    - `Cloud Build Editor` — trigger the build step for function deploys
    - `Artifact Registry Writer` — push the function container image
