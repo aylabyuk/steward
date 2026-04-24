@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
-import type { SpeakerInvitation } from "@/lib/types";
+import type { Speaker, SpeakerInvitation } from "@/lib/types";
 import { BishopInvitationChat } from "./BishopInvitationChat";
 import { InvitationLinkActions } from "./InvitationLinkActions";
 
@@ -10,6 +10,12 @@ interface Props {
   wardId: string;
   invitationId: string;
   invitation: SpeakerInvitation;
+  /** Speaker doc + its path coordinates — threaded so the chat's
+   *  status banner can render the bishopric-set status and apply
+   *  manual overrides via updateSpeaker. */
+  speaker: Speaker;
+  date: string;
+  speakerId: string;
 }
 
 /** Nested modal that hosts the bishop-side chat pane from inside the
@@ -25,6 +31,9 @@ export function BishopInvitationDialog({
   wardId,
   invitationId,
   invitation,
+  speaker,
+  date,
+  speakerId,
 }: Props): React.ReactElement | null {
   useLockBodyScroll(open);
 
@@ -73,7 +82,14 @@ export function BishopInvitationDialog({
             Close
           </button>
         </div>
-        <BishopInvitationChat wardId={wardId} invitationId={invitationId} invitation={invitation} />
+        <BishopInvitationChat
+          wardId={wardId}
+          invitationId={invitationId}
+          invitation={invitation}
+          speaker={speaker}
+          date={date}
+          speakerId={speakerId}
+        />
       </div>
     </div>
   );
