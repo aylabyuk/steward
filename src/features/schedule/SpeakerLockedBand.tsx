@@ -3,15 +3,21 @@ import type { Draft } from "./speakerDraft";
 interface Props {
   draft: Draft;
   date: string;
+  /** "invite" (default) — Step 2 behaviour: planned speakers get the
+   *  "Prepare invitation →" button; non-planned get the "Already X"
+   *  message. "edit" — Step 1 behaviour: planned speakers get a
+   *  same-dimensions invisible spacer (no redundant affordance while
+   *  the bishop is already editing), non-planned speakers still get
+   *  the "Already X" message. Matching dimensions between the two
+   *  modes keeps the card total-height stable across step
+   *  transitions. */
+  step?: "edit" | "invite";
 }
 
-/** Replaces the SpeakerStatusPills row on a locked (step-2) card.
- *  Planned speakers get a primary "Prepare invitation →" action
- *  that opens the full Prepare page in a new tab. Everything else
- *  shows a muted "Already X — open edit mode to change" note;
- *  reviewing / applying responses lives on the Sunday card's
- *  per-speaker chat icon now, not here. */
-export function SpeakerLockedBand({ draft, date }: Props): React.ReactElement {
+/** Band that sits above the speaker-detail fields in both steps of
+ *  the Assign Speakers modal. See Props for the step-specific
+ *  branching. */
+export function SpeakerLockedBand({ draft, date, step = "invite" }: Props): React.ReactElement {
   const status = draft.status;
   const persisted = draft.id !== null;
 
@@ -22,6 +28,19 @@ export function SpeakerLockedBand({ draft, date }: Props): React.ReactElement {
   }
 
   if (status === "planned") {
+    if (step === "edit") {
+      // Visually hidden placeholder — reserves the same vertical
+      // footprint as the Step 2 button so the card height stays
+      // stable when the bishop flips between steps.
+      return (
+        <div
+          aria-hidden
+          className="w-full mb-2.5 border border-transparent font-mono text-[10px] tracking-[0.14em] font-medium py-2 invisible"
+        >
+          Prepare invitation →
+        </div>
+      );
+    }
     return (
       <button
         type="button"
