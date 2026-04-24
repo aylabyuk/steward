@@ -1,5 +1,6 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging, type MulticastMessage } from "firebase-admin/messaging";
+import { logger } from "firebase-functions/v2";
 import type { FcmToken } from "./types.js";
 
 /** Display payload for a user-visible push. Title/body ride inside
@@ -69,16 +70,27 @@ export async function sendAndPrune(
   });
 
   const deadByUid = new Map<string, Set<string>>();
+  const rejectedByUid = new Map<string, { code: string; tokenSuffix: string }[]>();
   response.responses.forEach((resp, idx) => {
     if (resp.success) return;
-    const code = resp.error?.code ?? "";
-    if (!DEAD_TOKEN_CODES.has(code)) return;
+    const code = resp.error?.code ?? "unknown";
     const entry = flat[idx];
     if (!entry) return;
+    // Track every failure, not just the ones we'd prune — so we can
+    // see at a glance whether FCM rejected for a transient reason vs.
+    // a dead token.
+    const list = rejectedByUid.get(entry.uid) ?? [];
+    list.push({ code, tokenSuffix: entry.token.slice(-12) });
+    rejectedByUid.set(entry.uid, list);
+    if (!DEAD_TOKEN_CODES.has(code)) return;
     const set = deadByUid.get(entry.uid) ?? new Set<string>();
     set.add(entry.token);
     deadByUid.set(entry.uid, set);
   });
+
+  for (const [uid, failures] of rejectedByUid) {
+    logger.warn("fcm: token failure(s)", { wardId, uid, failures });
+  }
 
   const allDead: string[] = [];
   await Promise.all(
@@ -86,6 +98,12 @@ export async function sendAndPrune(
       const tokens = tokensByUid.get(uid) ?? [];
       const kept = tokens.filter((t) => !dead.has(t.token));
       for (const tok of dead) allDead.push(tok);
+      logger.warn("fcm: pruning dead tokens", {
+        wardId,
+        uid,
+        deadCount: dead.size,
+        remainingCount: kept.length,
+      });
       return getFirestore().doc(`wards/${wardId}/members/${uid}`).update({ fcmTokens: kept });
     }),
   );
