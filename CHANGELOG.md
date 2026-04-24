@@ -7,6 +7,38 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.12] — 2026-04-24
+
+The real fix for #106. v0.9.9/.10/.11 closed the ghost SW path
+progressively; v0.9.11 verified via DevTools that the ghost is fully
+gone. But FCM tokens kept dying with
+`messaging/registration-token-not-registered` after 2–4 sends — so the
+ghost was necessary-but-insufficient. The remaining loop is a VAPID key
+mismatch inside Firebase's own token cache.
+
+### Fixed
+
+- **Prime `messaging.vapidKey` on boot** (#116). Tracing Firebase's
+  `mke()` (getTokenInternal) revealed the full bug: when
+  `messaging.getToken()` is called with no args (the pattern used by
+  Firebase Functions' shared `contextProvider.getMessagingToken()` on
+  every callable invocation), `Cke(messaging, undefined)` defaults
+  `messaging.vapidKey` to Firebase's built-in sample key (`uee`). The
+  downstream token-lookup builds `subscriptionOptions` with the
+  default VAPID, compares against the IDB-stored token (whose stored
+  `subscriptionOptions.vapidKey` is ours), detects the mismatch in
+  `bke()`, and calls `hee()` to **DELETE our stored token from the FCM
+  backend** before minting a replacement against the default key. The
+  Firestore-persisted token is now dangling; the next server-side push
+  returns `messaging/registration-token-not-registered`; the token
+  gets pruned; the banner reappears.
+
+  Fix is a one-line addition to [src/lib/registerSw.ts](src/lib/registerSw.ts)'s
+  sync prime: assign `messaging.vapidKey = VITE_FIREBASE_VAPID_KEY`
+  alongside the `swRegistration` stub. `Cke`'s default-assignment
+  branch never runs; stored token and live messaging state agree;
+  no `hee()` delete loop.
+
 ## [0.9.11] — 2026-04-24
 
 Third time's the fix for #106. v0.9.10 landed the right idea — prime
@@ -1152,7 +1184,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.11...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.12...HEAD
+[0.9.12]: https://github.com/aylabyuk/steward/releases/tag/v0.9.12
 [0.9.11]: https://github.com/aylabyuk/steward/releases/tag/v0.9.11
 [0.9.10]: https://github.com/aylabyuk/steward/releases/tag/v0.9.10
 [0.9.9]: https://github.com/aylabyuk/steward/releases/tag/v0.9.9
