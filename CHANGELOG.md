@@ -7,6 +7,37 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.8] — 2026-04-24
+
+Infrastructure-only release. No user-visible change — this is the
+clean-slate smoke test of the now-fully-automated release pipeline
+after v0.9.7's staged permission rollout, plus a CI-time
+optimization for docs-only changes.
+
+### Infrastructure
+
+- **CI path filter** (#100). A new `changes` gate job uses
+  `dorny/paths-filter` to decide whether the expensive lint +
+  format + typecheck + Vitest + rules + Playwright cycle and the
+  functions build/test job actually need to run. Docs-only PRs
+  (e.g. edits to `docs/**`, `CLAUDE.md`, `.claude/**`, CHANGELOG
+  prose) now finish CI in under ten seconds instead of ~3 minutes.
+  The gate job always runs and always succeeds, so required status
+  checks stay green and `auto-merge-release`'s `workflow_run`
+  trigger still fires — no behaviour change for release flows.
+- **Release pipeline IAM + API documentation completed**
+  (#99, #101, #102, #103). The release service account's role list
+  in `docs/release-automation.md` now reflects what v0.9.7's
+  empirical smoke test actually needed: `Cloud Run Admin` (Gen2
+  functions on Cloud Run), `Secret Manager Viewer` (read metadata
+  on `defineSecret`-declared Twilio creds during deploy — *not*
+  `Secret Manager Secret Accessor`, which is a runtime-SA concern),
+  `Cloud Scheduler Admin` (for `scheduledNudges` +
+  `drainNotificationQueue`), and `Eventarc Admin` (for Firestore-
+  triggered functions). A new setup step also enumerates the
+  `gcloud services enable` list so the Cloud Billing API pre-check
+  doesn't 403 on a fresh SA-driven deploy.
+
 ## [0.9.7] — 2026-04-24
 
 Release-pipeline smoke-test follow-up. v0.9.6 merged to main but the
@@ -1018,7 +1049,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.7...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.8...HEAD
+[0.9.8]: https://github.com/aylabyuk/steward/releases/tag/v0.9.8
 [0.9.7]: https://github.com/aylabyuk/steward/releases/tag/v0.9.7
 [0.9.6]: https://github.com/aylabyuk/steward/releases/tag/v0.9.6
 [0.9.5]: https://github.com/aylabyuk/steward/releases/tag/v0.9.5
