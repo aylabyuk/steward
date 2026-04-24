@@ -11,8 +11,63 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decide which expensive jobs actually need to run. Docs-only PRs
+  # (changelog prose, CLAUDE.md, docs/**, .claude/**) shouldn't pay
+  # for a 10-minute lint + typecheck + Vitest + Playwright cycle.
+  # This job ALWAYS runs and always succeeds, so the overall
+  # workflow conclusion stays `success` for auto-merge + required
+  # status checks, even when the two downstream jobs skip.
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    # dorny/paths-filter calls the PR listFiles API for pull_request
+    # events. Needs pull-requests: read because the default
+    # GITHUB_TOKEN scope on this repo doesn't include it.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      functions: ${{ steps.filter.outputs.functions }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            app:
+              - 'src/**'
+              - 'public/**'
+              - 'scripts/**'
+              - 'e2e/**'
+              - 'tests/**'
+              - 'functions/**'
+              - 'firestore.rules'
+              - 'firestore.indexes.json'
+              - 'firebase.json'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'vite.config.ts'
+              - 'vitest.config.ts'
+              - 'vitest.rules.config.ts'
+              - 'playwright.config.ts'
+              - 'playwright.emulators.config.ts'
+              - 'tsconfig*.json'
+              - 'biome.json'
+              - 'vercel.json'
+              - 'index.html'
+              - '.github/workflows/ci.yml'
+            functions:
+              - 'functions/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.github/workflows/ci.yml'
+
   ci:
     name: lint · format · typecheck · test · build · e2e
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -77,6 +132,8 @@ jobs:
 
   functions:
     name: functions · build · test
+    needs: changes
+    if: needs.changes.outputs.functions == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
