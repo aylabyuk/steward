@@ -11,7 +11,7 @@ export interface MessageGroup {
 export type ThreadItem =
   | { kind: "day"; key: string; label: string }
   | { kind: "unread"; key: string }
-  | { kind: "system"; key: string; body: string }
+  | { kind: "system"; key: string; body: string; status: "confirmed" | "declined" }
   | { kind: "group"; key: string; group: MessageGroup };
 
 export interface BuildOpts {
@@ -49,9 +49,12 @@ export function buildThreadItems(opts: BuildOpts): ThreadItem[] {
     // no author bubble, no grouping. Posted by the bishop's client
     // under their uid but displayed as a neutral system event.
     if (m.attributes && m.attributes.kind === "status-change") {
-      pushGroup();
-      items.push({ kind: "system", key: m.sid, body: m.body });
-      continue;
+      const status = m.attributes.status;
+      if (status === "confirmed" || status === "declined") {
+        pushGroup();
+        items.push({ kind: "system", key: m.sid, body: m.body, status });
+        continue;
+      }
     }
     const mine = m.author === currentIdentity;
     if (
