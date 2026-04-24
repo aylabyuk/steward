@@ -13,10 +13,10 @@ const STATE_LABELS: Record<SpeakerStatus, string> = {
 };
 
 const STATE_ACTIVE: Record<SpeakerStatus, string> = {
-  planned: "bg-parchment-2 text-walnut",
-  invited: "bg-brass-soft text-walnut",
-  confirmed: "bg-success-soft text-success",
-  declined: "bg-danger-soft text-bordeaux",
+  planned: "bg-gradient-to-br from-parchment-2 to-parchment text-walnut",
+  invited: "bg-gradient-to-br from-brass-soft to-brass-soft/60 text-walnut",
+  confirmed: "bg-gradient-to-br from-success-soft to-success-soft/60 text-success",
+  declined: "bg-gradient-to-br from-danger-soft to-danger-soft/60 text-bordeaux",
 };
 
 type NonPlannedStatus = Exclude<SpeakerStatus, "planned">;
