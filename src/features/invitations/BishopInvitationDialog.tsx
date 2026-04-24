@@ -99,7 +99,12 @@ export function BishopInvitationDialog({
             speakerId={speakerId}
           />
         ) : (
-          <NoInvitationPlaceholder speaker={speaker} />
+          <NoInvitationPlaceholder
+            speaker={speaker}
+            speakerId={speakerId}
+            date={date}
+            onNavigate={onClose}
+          />
         )}
       </div>
     </div>

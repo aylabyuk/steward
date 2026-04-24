@@ -19,7 +19,7 @@ interface Props {
   onSendSms: () => void;
 }
 
-type PendingConfirm = "revert" | "markInvited" | "send" | "sms" | null;
+type PendingConfirm = "revert" | "markInvited" | "printAndMarkInvited" | "send" | "sms" | null;
 
 /** Top-of-page action toolbar for the Prepare Invitation page.
  *  Icon-only buttons in a connected group — labels travel via `title`
@@ -51,6 +51,13 @@ export function PrepareInvitationActionBar({
   }
 
   const hint = canSendReason ?? canSmsReason;
+  // When neither channel is available, printing is the only "I've
+  // sent" signal — surface a confirm that also flips status to
+  // invited so the record stays in sync with reality. Speakers with
+  // contact keep the plain print-only behavior (they can still use
+  // Send or Mark invited buttons explicitly).
+  const printTriggersMarkInvited = !canSend && !canSms;
+  const printHandler = printTriggersMarkInvited ? () => setPending("printAndMarkInvited") : onPrint;
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -72,7 +79,12 @@ export function PrepareInvitationActionBar({
         >
           <CheckIcon />
         </GroupBtn>
-        <GroupBtn position="mid" label="Print letter" onClick={onPrint} disabled={busy}>
+        <GroupBtn
+          position="mid"
+          label={printTriggersMarkInvited ? "Print letter and mark invited" : "Print letter"}
+          onClick={printHandler}
+          disabled={busy}
+        >
           <PrintIcon />
         </GroupBtn>
         <GroupBtn
@@ -116,6 +128,19 @@ export function PrepareInvitationActionBar({
         body={`${speakerName}'s status will be set to "invited" — no email is sent. Use this if you've already reached them another way (phone, in person, separate email).`}
         confirmLabel="Mark invited"
         onConfirm={() => confirm(onMarkInvited)}
+        onCancel={() => setPending(null)}
+      />
+      <ConfirmDialog
+        open={pending === "printAndMarkInvited"}
+        title="Print letter and mark as invited?"
+        body={`${speakerName} has no phone or email on file, so printing the letter is how you'll hand off this invitation. We'll open the print dialog now and set their status to "invited" so the schedule reflects that you've delivered it.`}
+        confirmLabel="Print & mark invited"
+        onConfirm={() =>
+          confirm(() => {
+            onPrint();
+            onMarkInvited();
+          })
+        }
         onCancel={() => setPending(null)}
       />
       <ConfirmDialog

@@ -1,19 +1,27 @@
+import { Link } from "react-router";
 import type { Speaker } from "@/lib/types";
 
 interface Props {
   speaker: Speaker;
+  speakerId: string;
+  date: string;
+  onNavigate?: () => void;
 }
 
 /** Renders inside the BishopInvitationDialog when the speaker hasn't
  *  been invited through Steward yet — the in-app chat channel isn't
  *  available because no Twilio conversation has been provisioned. We
- *  tell the bishopric that directly and suggest external contact
- *  methods they can use right now, so the dialog is still useful as
- *  a consolidated "this is the speaker's state" surface. */
-export function NoInvitationPlaceholder({ speaker }: Props): React.ReactElement {
-  const email = speaker.email;
-  const phone = speaker.phone;
-  const hasContact = Boolean(email || phone);
+ *  tell the bishopric that directly and offer a direct path to the
+ *  Prepare Invitation page where they can send or print the letter
+ *  (print works even when the speaker has no phone or email on
+ *  file — see prepare-invitation.tsx's action bar). */
+export function NoInvitationPlaceholder({
+  speaker,
+  speakerId,
+  date,
+  onNavigate,
+}: Props): React.ReactElement {
+  const prepareHref = `/week/${date}/speaker/${speakerId}/prepare`;
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 py-10 bg-chalk overflow-y-auto">
       <div className="w-12 h-12 rounded-full bg-parchment-2 flex items-center justify-center text-walnut-3">
@@ -37,46 +45,17 @@ export function NoInvitationPlaceholder({ speaker }: Props): React.ReactElement 
         </p>
         <p className="font-serif italic text-[13.5px] text-walnut-2 mt-1.5 leading-relaxed">
           No Steward invitation has been sent to {speaker.name} yet, so there's no in-app
-          conversation to open. In the meantime, reach out directly using the details below, then
-          come back here to send the formal invitation.
+          conversation to open. Prepare the invitation to send or print it — the chat opens
+          automatically once an invitation is on file.
         </p>
       </div>
-      {hasContact ? (
-        <div className="w-full max-w-sm bg-parchment-2 border border-border rounded-lg p-3.5">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium mb-2">
-            Contact directly
-          </div>
-          <ul className="flex flex-col gap-1.5 font-sans text-[13.5px] text-walnut">
-            {phone && (
-              <li>
-                <a
-                  href={`tel:${phone}`}
-                  className="underline decoration-border hover:text-bordeaux"
-                >
-                  {phone}
-                </a>
-              </li>
-            )}
-            {email && (
-              <li>
-                <a
-                  href={`mailto:${email}`}
-                  className="underline decoration-border hover:text-bordeaux break-all"
-                >
-                  {email}
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
-      ) : (
-        <div className="w-full max-w-sm bg-parchment-2 border border-border rounded-lg p-3.5 text-center">
-          <p className="font-serif italic text-[13px] text-walnut-2">
-            No phone or email on file. Add contact details on the speaker's card to enable direct
-            outreach.
-          </p>
-        </div>
-      )}
+      <Link
+        to={prepareHref}
+        onClick={onNavigate}
+        className="font-sans text-[13px] font-semibold px-4 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors"
+      >
+        Prepare invitation
+      </Link>
     </div>
   );
 }

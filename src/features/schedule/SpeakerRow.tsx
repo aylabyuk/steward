@@ -18,10 +18,11 @@ interface Props {
 }
 
 const STATE_CLS: Record<SpeakerStatus, string> = {
-  planned: "bg-parchment-2 text-walnut-2 border-border",
-  invited: "bg-brass-soft/40 text-brass-deep border-brass-soft",
-  confirmed: "bg-success-soft text-success border-success-soft",
-  declined: "bg-danger-soft text-bordeaux border-danger-soft",
+  planned: "bg-gradient-to-br from-parchment-2 to-parchment text-walnut-2 border-border",
+  invited: "bg-gradient-to-br from-brass-soft to-brass-soft/50 text-brass-deep border-brass-soft",
+  confirmed:
+    "bg-gradient-to-br from-success-soft to-success-soft/60 text-success border-success-soft",
+  declined: "bg-gradient-to-br from-danger-soft to-danger-soft/60 text-bordeaux border-danger-soft",
 };
 
 export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
