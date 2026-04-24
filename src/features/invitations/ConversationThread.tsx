@@ -142,16 +142,18 @@ function findLastMineIndex(
   return null;
 }
 
-/** Centered pill used for system-posted status-change lines
+/** Plain centered line for system-posted status-change messages
  *  ("Assignment confirmed — thank you for speaking this Sunday.").
- *  Kept visually distinct from participant bubbles so the change
- *  reads as a record update, not as a message from either side. */
+ *  No container, no padding, no wrap — reads as a quiet event
+ *  between regular participant groups. */
 function SystemNotice({ body }: { body: string }) {
   return (
-    <div className="flex justify-center" role="status">
-      <span className="inline-block px-3.5 py-1.5 rounded-full border border-border bg-parchment-2 font-serif italic text-[12.5px] text-walnut-2 max-w-[88%] text-center">
-        {body}
-      </span>
-    </div>
+    <p
+      role="status"
+      title={body}
+      className="font-serif italic text-[12px] text-walnut-3 text-center truncate"
+    >
+      {body}
+    </p>
   );
 }
