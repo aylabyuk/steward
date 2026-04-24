@@ -100,6 +100,7 @@ export function BishopInvitationDialog({
           />
         ) : (
           <NoInvitationPlaceholder
+            wardId={wardId}
             speaker={speaker}
             speakerId={speakerId}
             date={date}
