@@ -21,7 +21,25 @@ GitHub's built-in auto-merge is gated behind Pro on private repos, so we roll ou
 
 If GitHub ever flips auto-merge into the free plan, this workflow can be deleted + release-to-main skill reverts to `gh pr merge --auto`. Until then, the self-host is cheaper than $4/mo for Pro.
 
-### 2. GCP service account for deploys
+### 2. Enable required APIs on the prod project
+
+The deploy SA can only act on APIs that are actually enabled on `steward-prod-65a36`. Some of these were enabled when the Firebase project was first provisioned; `cloudbilling.googleapis.com` in particular is often disabled on hobby-tier projects and has to be turned on explicitly before the first GHA-driven deploy.
+
+```bash
+gcloud services enable \
+  cloudbilling.googleapis.com \
+  cloudfunctions.googleapis.com \
+  cloudbuild.googleapis.com \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  firebaseextensions.googleapis.com \
+  --project=steward-prod-65a36
+```
+
+Firebase CLI will auto-enable most of these on first use when invoked by an Owner, but the SA-driven path can't — it'll 403 with "Cloud Billing API has not been used in project 308185652610 before or it is disabled" on the billing check that runs before function upload.
+
+### 3. GCP service account for deploys
 
 Create a dedicated service account in the prod project with only the permissions needed to deploy.
 
@@ -58,18 +76,18 @@ Create a dedicated service account in the prod project with only the permissions
 
 > **Migration target — Workload Identity Federation (WIF)**: same permissions, no long-lived key, GitHub uses OIDC tokens to impersonate the SA. Better security posture. Worth doing once the project is stable enough that the extra 20 min of IAM config is cheap. See [google-github-actions/auth WIF setup](https://github.com/google-github-actions/auth#setting-up-workload-identity-federation).
 
-### 3. GitHub Actions secrets + variables
+### 4. GitHub Actions secrets + variables
 
 **Settings → Secrets and variables → Actions.**
 
 | Kind | Name | Value |
 | --- | --- | --- |
-| Secret | `FIREBASE_SERVICE_ACCOUNT_JSON` | Paste the full JSON file contents from step 2.3 |
+| Secret | `FIREBASE_SERVICE_ACCOUNT_JSON` | Paste the full JSON file contents from step 3.3 |
 | Variable | `STEWARD_ORIGIN_PROD` | `https://steward-ten.vercel.app` |
 
 The JSON content is multi-line; GitHub handles newlines correctly when pasted into the secret value field.
 
-### 4. Smoke-test the pipeline
+### 5. Smoke-test the pipeline
 
 1. Merge a trivial no-op release (e.g., bump patch, add a CHANGELOG note).
 2. Watch the **Actions** tab for the `Release` workflow.
