@@ -67,6 +67,15 @@ Create a dedicated service account in the prod project with only the permissions
      value at invoke time, which is a separate binding). Without
      Viewer, deploy fails with `403 Permission
      'secretmanager.secrets.get' denied`.
+   - `Cloud Scheduler Admin` — create / update the Cloud Scheduler
+     jobs that back `scheduledNudges` + `drainNotificationQueue`.
+     Without it, deploy fails near the end with `403 lacks IAM
+     permission "cloudscheduler.jobs.update"` and Firebase skips
+     subsequent deletes.
+   - `Eventarc Admin` — create / update the Eventarc triggers that
+     back Firestore-event functions (`onMeetingWrite`,
+     `onCommentCreate`, `onInvitationWrite`). Gen2 Firestore
+     triggers are Eventarc under the hood.
    - `Service Account User` — act as the default Cloud Functions runtime SA
    - `Cloud Build Editor` — trigger the build step for function deploys
    - `Artifact Registry Writer` — push the function container image
