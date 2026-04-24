@@ -4,7 +4,9 @@ import { statusProvenanceLabel } from "@/features/schedule/statusProvenance";
 import { updateSpeaker } from "@/features/speakers/speakerActions";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
+import { cn } from "@/lib/cn";
 import type { Speaker, SpeakerStatus } from "@/lib/types";
+import { statusStripBg } from "./statusStripBg";
 
 interface Props {
   wardId: string;
@@ -56,7 +58,12 @@ export function NoInvitationPlaceholder({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-chalk">
-      <div className="px-4 py-3.5 border-b border-border bg-parchment-2">
+      <div
+        className={cn(
+          "px-4 py-3.5 border-b border-border",
+          statusStripBg(speaker.status ?? "planned"),
+        )}
+      >
         <SpeakerStatusPills
           status={speaker.status ?? "planned"}
           onChange={onStatusChange}
