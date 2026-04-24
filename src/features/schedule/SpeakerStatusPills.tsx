@@ -4,6 +4,7 @@ import type { SubState } from "@/hooks/_sub";
 import { SPEAKER_STATUSES, type Member, type SpeakerStatus, type WithId } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import type { StatusSource } from "@/lib/types/meeting";
+import { computeConfirmCopy } from "./speakerStatusConfirmCopy";
 
 const STATE_LABELS: Record<SpeakerStatus, string> = {
   planned: "Planned",
@@ -19,39 +20,6 @@ const STATE_ACTIVE: Record<SpeakerStatus, string> = {
   declined: "bg-danger-soft text-bordeaux",
 };
 
-type NonPlannedStatus = Exclude<SpeakerStatus, "planned">;
-
-/** Each non-planned state is a one-way-ish commitment: once the
- *  speaker is marked as invited/confirmed/declined, the Prepare
- *  Invitation flow is gated off. The confirm dialog spells out both
- *  the semantic (what this status means) and the consequence (need
- *  to switch back to Planned to send from the app).
- *
- *  When the current status was set by the speaker (via their yes/no
- *  reply) or by another bishopric member, the dialog prepends a
- *  context line so the reviewer understands whose decision they'd be
- *  overriding. */
-const BASE_CONFIRM_COPY: Record<
-  NonPlannedStatus,
-  { title: string; body: string; confirmLabel: string }
-> = {
-  invited: {
-    title: "Mark as Invited?",
-    body: "Use this when you've already reached out through another channel — email, SMS, or a hallway conversation. You won't be able to send an in-app invitation for this speaker unless you switch them back to Planned.",
-    confirmLabel: "Mark as Invited",
-  },
-  confirmed: {
-    title: "Mark as Confirmed?",
-    body: "Use this once the speaker has accepted the invitation. You won't be able to send further invitations unless you switch them back to Planned.",
-    confirmLabel: "Mark as Confirmed",
-  },
-  declined: {
-    title: "Mark as Declined?",
-    body: "We'll keep the speaker on file until you add a replacement. You won't be able to send further invitations unless you switch them back to Planned.",
-    confirmLabel: "Mark as Declined",
-  },
-};
-
 interface Props {
   status: SpeakerStatus;
   onChange: (status: SpeakerStatus) => void;
@@ -64,9 +32,11 @@ interface Props {
   currentUserUid?: string | undefined;
 }
 
-/** Segmented-control row of speaker statuses. Clicking any non-planned
- *  pill pops a confirm dialog explaining what the status means and
- *  the consequence (no in-app invitation while in that state). */
+/** Segmented-control row of speaker statuses. Every transition pops a
+ *  confirm dialog with provenance-aware copy — forward moves (→
+ *  invited / confirmed / declined) explain the consequence; rollbacks
+ *  out of a terminal state (confirmed/declined → planned/invited) add
+ *  friction so a misclick doesn't silently erase a real commitment. */
 export function SpeakerStatusPills({
   status,
   onChange,
@@ -75,11 +45,16 @@ export function SpeakerStatusPills({
   members,
   currentUserUid,
 }: Props) {
-  const [pending, setPending] = useState<NonPlannedStatus | null>(null);
+  const [pending, setPending] = useState<SpeakerStatus | null>(null);
 
   function requestChange(next: SpeakerStatus) {
     if (next === status) return;
-    if (next === "planned") {
+    // Invited → Planned stays frictionless (no real commitment to
+    // erase). Terminal → any non-terminal goes through the heavier
+    // rollback dialog; forward moves go through the base forward
+    // dialog. Both paths handled by computeConfirmCopy.
+    const isTerminal = status === "confirmed" || status === "declined";
+    if (!isTerminal && next === "planned") {
       onChange(next);
       return;
     }
@@ -87,7 +62,14 @@ export function SpeakerStatusPills({
   }
 
   const copy = pending
-    ? decorateConfirmCopy(pending, currentStatusSource, currentStatusSetBy, members, currentUserUid)
+    ? computeConfirmCopy({
+        current: status,
+        next: pending,
+        currentStatusSource,
+        currentStatusSetBy,
+        members,
+        currentUserUid,
+      })
     : null;
 
   return (
@@ -119,7 +101,7 @@ export function SpeakerStatusPills({
           title={copy.title}
           body={copy.body}
           confirmLabel={copy.confirmLabel}
-          danger={pending === "declined"}
+          danger={copy.danger}
           onCancel={() => setPending(null)}
           onConfirm={() => {
             onChange(pending);
@@ -129,35 +111,4 @@ export function SpeakerStatusPills({
       )}
     </>
   );
-}
-
-function decorateConfirmCopy(
-  next: NonPlannedStatus,
-  source: StatusSource | undefined,
-  setBy: string | undefined,
-  members: SubState<WithId<Member>[]> | undefined,
-  currentUserUid: string | undefined,
-): { title: string; body: string; confirmLabel: string } {
-  const base = BASE_CONFIRM_COPY[next];
-  const prefix = overridePrefix(source, setBy, members, currentUserUid);
-  if (!prefix) return base;
-  return { ...base, body: `${prefix} ${base.body}` };
-}
-
-function overridePrefix(
-  source: StatusSource | undefined,
-  setBy: string | undefined,
-  members: SubState<WithId<Member>[]> | undefined,
-  currentUserUid: string | undefined,
-): string | null {
-  if (!source) return null;
-  if (source === "speaker-response") {
-    return "The speaker set this status by replying to the invitation. Overriding it won't change their reply — it only updates the schedule record.";
-  }
-  // Manual changes: call out the setter if it was someone other than
-  // the current signed-in user; stay quiet when self-overriding.
-  if (!setBy || setBy === currentUserUid) return null;
-  const who = members?.data.find((m) => m.id === setBy)?.data.displayName;
-  if (!who) return null;
-  return `${who} set the current status. Override with care — there's no automatic notification to them.`;
 }
