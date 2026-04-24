@@ -9,6 +9,10 @@ export interface ChatMessage {
   author: string;
   body: string;
   dateCreated: Date | null;
+  /** Set only when the message has been edited after creation. The
+   *  bubble renders a small "Edited" tag when this is strictly later
+   *  than `dateCreated`. */
+  dateUpdated: Date | null;
   /** Parsed attributes — `{ responseType: 'yes' | 'no', reason? }`
    *  for the structured quick-action messages, `{ kind: 'invitation' }`
    *  for the initial letter, else null. */
@@ -54,6 +58,19 @@ export function useConversation(conversationSid: string | null): ConversationHoo
     const onMessageAdded = (m: Message) => {
       setState((s) => ({ ...s, messages: [...s.messages, toChatMessage(m)] }));
     };
+    const onMessageUpdated = (args: { message: Message }) => {
+      const next = toChatMessage(args.message);
+      setState((s) => ({
+        ...s,
+        messages: s.messages.map((existing) => (existing.sid === next.sid ? next : existing)),
+      }));
+    };
+    const onMessageRemoved = (m: Message) => {
+      setState((s) => ({
+        ...s,
+        messages: s.messages.filter((existing) => existing.sid !== m.sid),
+      }));
+    };
     const onParticipantUpdate = (p: Participant) => {
       setState((s) => {
         if (!p.identity) return s;
@@ -89,6 +106,8 @@ export function useConversation(conversationSid: string | null): ConversationHoo
           error: null,
         });
         convo.on("messageAdded", onMessageAdded);
+        convo.on("messageUpdated", onMessageUpdated);
+        convo.on("messageRemoved", onMessageRemoved);
         convo.on("participantJoined", onParticipantUpdate);
         convo.on("participantUpdated", onParticipantUpdatedEvent);
       } catch (err) {
@@ -110,6 +129,8 @@ export function useConversation(conversationSid: string | null): ConversationHoo
       cancelled = true;
       if (convo) {
         convo.off("messageAdded", onMessageAdded);
+        convo.off("messageUpdated", onMessageUpdated);
+        convo.off("messageRemoved", onMessageRemoved);
         convo.off("participantJoined", onParticipantUpdate);
         convo.off("participantUpdated", onParticipantUpdatedEvent);
       }

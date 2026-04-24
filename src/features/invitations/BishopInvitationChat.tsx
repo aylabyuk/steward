@@ -9,6 +9,7 @@ import { InvitationStatusBanner } from "./InvitationStatusBanner";
 import { TypingIndicator } from "./TypingIndicator";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { callIssueSpeakerSession } from "./invitationsCallable";
+import { removeMessage, updateMessageBody } from "./messageMutations";
 import { noteBishopStatusChange } from "./statusChangeNotice";
 import { useBishopAuthors } from "./useBishopAuthors";
 import { useConversation } from "./useConversation";
@@ -143,6 +144,8 @@ export function BishopInvitationChat({
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
         fillHeight
+        onDeleteMessage={(sid) => removeMessage(conversation, sid)}
+        onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
