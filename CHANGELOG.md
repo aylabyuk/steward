@@ -7,6 +7,43 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.3] — 2026-04-24
+
+Second hotfix for push-notification delivery. v0.9.2 moved payloads to
+data-only so iOS would accept them, but kept the Firebase JS SDK's
+`onBackgroundMessage` as the SW handler — and that handler is gated by
+the SDK's FCM-detection filter. DevTools Push tests silently dropped,
+and in some iOS contexts real FCM pushes also dropped. A secondary SW
+registration at `/firebase-cloud-messaging-push-scope` (auto-created
+when `firebase.messaging()` runs inside the SW) was compounding the
+problem.
+
+### Fixed
+
+- **Raw `push` event listener in the SW** replaces
+  `messaging.onBackgroundMessage`. Fires for every push regardless of
+  source (FCM, DevTools Push, direct Web Push), parses the payload
+  itself, and always calls `showNotification()` inside
+  `event.waitUntil` — the exact shape iOS Safari requires.
+- **Firebase SDK imports removed from the SW.** `firebase.messaging()`
+  inside the SW was auto-registering a secondary SW at
+  `/firebase-cloud-messaging-push-scope`. Dropping the SDK entirely
+  means a single SW registration at scope `/`; push subscriptions
+  bind unambiguously.
+
+### Changed
+
+- **`scripts/generate-sw.mjs` simplified** to a direct file copy. The
+  SW no longer needs `VITE_FIREBASE_*` placeholders since it doesn't
+  initialize Firebase anymore. Kept as a pre-build step so the
+  template → output relationship stays explicit for future additions.
+
+### Known follow-up
+
+Anyone subscribed to push before this release needs to re-subscribe
+once so their push subscription binds to the new single-scope SW.
+Path: `/settings/profile` → toggle **Push on this device** off → on.
+
 ## [0.9.2] — 2026-04-23
 
 Hotfix for silently-dropped push notifications on iOS PWAs installed to
@@ -877,7 +914,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.3...HEAD
+[0.9.3]: https://github.com/aylabyuk/steward/releases/tag/v0.9.3
 [0.9.2]: https://github.com/aylabyuk/steward/releases/tag/v0.9.2
 [0.9.1]: https://github.com/aylabyuk/steward/releases/tag/v0.9.1
 [0.9.0]: https://github.com/aylabyuk/steward/releases/tag/v0.9.0
