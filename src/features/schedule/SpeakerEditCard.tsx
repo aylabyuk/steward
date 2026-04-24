@@ -12,10 +12,17 @@ interface Props {
   onChange: (partial: Partial<Draft>) => void;
   onRemove: () => void;
   /** Step-2 read-only mode: disables all inputs, hides the remove
-   *  button, and shows the Prepare-invitation action band. The same
-   *  card shell renders in both modes so the modal's dimensions stay
-   *  stable across steps. */
-  locked?: { date: string };
+   *  button, and shows the Prepare-invitation / open-conversation
+   *  action band. Same card shell renders in both modes so the
+   *  modal's dimensions stay stable across steps. `invitationId` +
+   *  `onOpenChat` drive the non-planned "open conversation" button;
+   *  the parent is responsible for closing the Assign modal before
+   *  the chat dialog opens. */
+  locked?: {
+    date: string;
+    invitationId?: string | null;
+    onOpenChat?: (invitationId: string) => void;
+  };
 }
 
 const INPUT_CLS =
@@ -38,6 +45,8 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove, locked }: Pr
         draft={draft}
         date={locked?.date ?? ""}
         step={locked ? "invite" : "edit"}
+        invitationId={locked?.invitationId ?? null}
+        {...(locked?.onOpenChat ? { onOpenChat: locked.onOpenChat } : {})}
       />
 
       <div className="flex flex-col gap-2.5">
