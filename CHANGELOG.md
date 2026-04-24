@@ -7,6 +7,36 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.9.9] — 2026-04-24
+
+Defensive fix targeting the unsubscribe-on-chat bug (#106). Diagnostic
+logs from v0.9.5 and v0.9.6 proved the server side is healthy — FCM
+rejects the affected user's tokens with
+`messaging/registration-token-not-registered` after only 2–4 successful
+sends per fresh subscription. DevTools on that user's browser shows a
+ghost service worker registered at `/firebase-cloud-messaging-push-scope`
+alongside the legitimate one at `/`, both pointing at
+`firebase-messaging-sw.js`.
+
+Static analysis of the deployed bundle ruled out any current code path
+as the ghost's creator; it's almost certainly a persistent leftover
+from pre-v0.9.3 builds (when the SW imported the Firebase compat SDK).
+The ghost's presence correlates with FCM invalidating the active token
+(the newer-subscription-supersedes-older rule).
+
+### Fixed
+
+- **Unregister leftover FCM push-scope SW on boot** (#107). On every
+  app load, [src/lib/registerSw.ts](src/lib/registerSw.ts) now
+  enumerates existing service-worker registrations and unregisters any
+  at scope ending in `/firebase-cloud-messaging-push-scope` before
+  registering our own. Idempotent; safe for users who never had the
+  old SW. Logs each removal at `console.info` — the next clean-slate
+  test on the affected browser will tell us whether the ghost is
+  purely persistent (log fires once, never again) or being actively
+  re-created by something we haven't found (log fires every reload).
+  Either way we get a definitive next signal for #106.
+
 ## [0.9.8] — 2026-04-24
 
 Infrastructure-only release. No user-visible change — this is the
@@ -1049,7 +1079,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.8...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.9...HEAD
+[0.9.9]: https://github.com/aylabyuk/steward/releases/tag/v0.9.9
 [0.9.8]: https://github.com/aylabyuk/steward/releases/tag/v0.9.8
 [0.9.7]: https://github.com/aylabyuk/steward/releases/tag/v0.9.7
 [0.9.6]: https://github.com/aylabyuk/steward/releases/tag/v0.9.6
