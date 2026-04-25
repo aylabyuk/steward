@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   $createParagraphNode,
   $getSelection,
@@ -12,7 +11,8 @@ import {
   INSERT_UNORDERED_LIST_COMMAND,
   REMOVE_LIST_COMMAND,
 } from "@lexical/list";
-import { ToolbarButton } from "./ToolbarButton";
+import { Icon, type IconName } from "./Icon";
+import { usePopover } from "./usePopover";
 import type { BlockType } from "./useToolbarState";
 
 interface Props {
@@ -20,29 +20,27 @@ interface Props {
   current: BlockType;
 }
 
-const OPTIONS: { value: BlockType; label: string; icon: string }[] = [
-  { value: "paragraph", label: "Paragraph", icon: "¶" },
-  { value: "h1", label: "Heading 1", icon: "H1" },
-  { value: "h2", label: "Heading 2", icon: "H2" },
-  { value: "h3", label: "Heading 3", icon: "H3" },
-  { value: "quote", label: "Quote", icon: "❝" },
-  { value: "bullet", label: "Bullet list", icon: "•" },
-  { value: "number", label: "Numbered list", icon: "1." },
+interface Option {
+  key: BlockType;
+  label: string;
+  icon: IconName;
+}
+
+const OPTIONS: Option[] = [
+  { key: "paragraph", label: "Normal", icon: "text" },
+  { key: "h1", label: "Heading 1", icon: "heading1" },
+  { key: "h2", label: "Heading 2", icon: "heading2" },
+  { key: "h3", label: "Heading 3", icon: "heading3" },
+  { key: "bullet", label: "Bullet list", icon: "list" },
+  { key: "number", label: "Numbered list", icon: "listOrdered" },
+  { key: "quote", label: "Quote", icon: "quote" },
 ];
 
-const LABEL_BY_VALUE = Object.fromEntries(OPTIONS.map((o) => [o.value, o.label])) as Record<
-  BlockType,
-  string
->;
-
-/** Block-type selector — paragraph / H1-3 / quote / bullet / numbered.
- *  Click commits via Lexical's heading / quote factories or the list
- *  insertion commands. The popover picks up + paints the current block
- *  type, so the bishop sees what they're working in. */
 export function BlockTypeDropdown({ editor, current }: Props) {
-  const [open, setOpen] = useState(false);
+  const pop = usePopover();
+  const active = OPTIONS.find((o) => o.key === current) ?? OPTIONS[0]!;
 
-  function applyBlock(value: BlockType) {
+  function apply(value: BlockType) {
     editor.update(() => {
       const sel = $getSelection();
       if (!$isRangeSelection(sel)) return;
@@ -69,40 +67,44 @@ export function BlockTypeDropdown({ editor, current }: Props) {
           break;
       }
     });
-    setOpen(false);
+    pop.setOpen(false);
   }
 
   return (
-    <span className="relative inline-flex">
-      <ToolbarButton
-        label={LABEL_BY_VALUE[current]}
-        onClick={() => setOpen((o) => !o)}
-        className="px-2 min-w-[8rem] justify-between gap-2"
+    <div ref={pop.ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        className="tb-select tb-block-select"
+        onClick={() => pop.setOpen((o) => !o)}
+        onMouseDown={(e) => e.preventDefault()}
       >
-        <span className="truncate text-left flex-1">{LABEL_BY_VALUE[current]}</span>
-        <span aria-hidden className="text-walnut-3">
-          ▾
+        <span className="tb-select__icon">
+          <Icon name={active.icon} size={14} />
         </span>
-      </ToolbarButton>
-      {open && (
-        <div
-          role="menu"
-          className="absolute top-[calc(100%+4px)] left-0 z-30 w-44 rounded-md border border-border-strong bg-chalk shadow-elev-3 py-1"
-          onMouseDown={(e) => e.preventDefault()}
-        >
+        <span className="tb-select__label">{active.label}</span>
+        <Icon name="chevronDown" size={11} sw={2} className="tb-select__caret lucide" />
+      </button>
+      {pop.open && (
+        <div className="tb-popover" style={{ position: "absolute", top: 38, left: 0 }}>
           {OPTIONS.map((opt) => (
             <button
-              key={opt.value}
+              key={opt.key}
               type="button"
-              onClick={() => applyBlock(opt.value)}
-              className={`w-full px-3 py-1.5 flex items-center gap-2 text-left text-[13px] hover:bg-parchment-2 ${current === opt.value ? "bg-parchment-2/60" : ""}`}
+              className="tb-popover__item"
+              onClick={() => apply(opt.key)}
+              onMouseDown={(e) => e.preventDefault()}
             >
-              <span className="font-mono text-walnut-3 w-6 text-center">{opt.icon}</span>
-              <span className="text-walnut">{opt.label}</span>
+              <Icon name={opt.icon} size={16} />
+              {opt.label}
+              {current === opt.key && (
+                <span className="kbd">
+                  <Icon name="check" size={14} />
+                </span>
+              )}
             </button>
           ))}
         </div>
       )}
-    </span>
+    </div>
   );
 }

@@ -9,30 +9,30 @@ interface Props {
   className?: string;
 }
 
-/** Shared pill-style button used across the page-editor toolbar.
- *  `active` paints the walnut-on-parchment "pressed" look matching
- *  the floating-selection toolbar buttons. */
+/** Toolbar pill button matching the bishopric-pwa design kit's
+ *  `.tb-btn` shape — 32px tall, transparent until hover/pressed,
+ *  active state paints accent-soft + bordeaux-deep text + bordeaux-soft
+ *  border. Shared across every toolbar control that isn't a select
+ *  or a stepper. */
 export function ToolbarButton({ label, active, disabled, onClick, children, className }: Props) {
   return (
     <button
       type="button"
+      title={label}
       aria-label={label}
       aria-pressed={active}
-      title={label}
       disabled={disabled}
       onClick={onClick}
       onMouseDown={(e) => e.preventDefault()}
-      className={cn(
-        "h-8 min-w-8 px-2 rounded-md grid place-items-center text-[13px] text-walnut hover:bg-parchment-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
-        active && "bg-walnut text-parchment hover:bg-walnut-2 hover:text-parchment",
-        className,
-      )}
+      className={cn("tb-btn", className)}
     >
       {children}
     </button>
   );
 }
 
+/** 1px vertical hairline matching `.tb-divider` — separates groups
+ *  inside the toolbar. */
 export function ToolbarSep() {
-  return <span aria-hidden className="mx-1 w-px h-5 bg-border" />;
+  return <span aria-hidden className="tb-divider" />;
 }
