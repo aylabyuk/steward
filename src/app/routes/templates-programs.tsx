@@ -5,7 +5,8 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import type { ProgramTemplateKey } from "@/lib/types";
+import type { ProgramMargins, ProgramTemplateKey } from "@/lib/types";
+import { DEFAULT_MARGINS } from "@/features/program-templates/ProgramCanvas";
 import { ProgramTemplatesPanel } from "@/features/program-templates/ProgramTemplatesPanel";
 import { defaultProgramTemplate } from "@/features/program-templates/programTemplateDefaults";
 import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
@@ -43,32 +44,40 @@ export function ProgramTemplatesPage(): React.ReactElement {
   const [activeKey, setActiveKey] = useState<ProgramTemplateKey>("conductingProgram");
   const conducting = useProgramTemplate("conductingProgram");
   const congregation = useProgramTemplate("congregationProgram");
-  const stored =
-    activeKey === "conductingProgram"
-      ? conducting.data?.editorStateJson
-      : congregation.data?.editorStateJson;
+  const activeDoc = activeKey === "conductingProgram" ? conducting.data : congregation.data;
+  const stored = activeDoc?.editorStateJson;
+  const storedMargins = activeDoc?.margins;
   const initialJson = stored ?? defaultProgramTemplate(activeKey);
+  const initialMargins = storedMargins ?? DEFAULT_MARGINS[activeKey];
   const isUsingDefault = !stored;
 
   const [draft, setDraft] = useState<Record<ProgramTemplateKey, string | null>>({
     conductingProgram: null,
     congregationProgram: null,
   });
+  const [marginDraft, setMarginDraft] = useState<Record<ProgramTemplateKey, ProgramMargins | null>>(
+    { conductingProgram: null, congregationProgram: null },
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const editorJson = draft[activeKey] ?? initialJson;
-  const dirty = draft[activeKey] !== null && draft[activeKey] !== initialJson;
+  const margins = marginDraft[activeKey] ?? initialMargins;
+  const jsonDirty = draft[activeKey] !== null && draft[activeKey] !== initialJson;
+  const marginsDirty =
+    marginDraft[activeKey] !== null &&
+    JSON.stringify(marginDraft[activeKey]) !== JSON.stringify(initialMargins);
+  const dirty = jsonDirty || marginsDirty;
 
   async function save() {
     if (!wardId) return;
-    const json = draft[activeKey];
-    if (json === null) return;
+    const jsonToSave = draft[activeKey] ?? initialJson;
+    const marginsToSave = marginDraft[activeKey] ?? initialMargins;
     setSaving(true);
     setError(null);
     try {
-      await writeProgramTemplate(wardId, activeKey, json);
+      await writeProgramTemplate(wardId, activeKey, jsonToSave, marginsToSave);
       setSavedAt(nowLabel());
     } catch (e) {
       setError(friendlyWriteError(e));
@@ -124,9 +133,11 @@ export function ProgramTemplatesPage(): React.ReactElement {
         description={activeTab.description}
         ariaLabel={activeTab.label}
         editorJson={editorJson}
+        margins={margins}
         canEdit={canEdit}
         usingDefault={isUsingDefault && draft[activeKey] === null}
         onChange={(json) => setDraft((d) => ({ ...d, [activeKey]: json }))}
+        onMarginsChange={(m) => setMarginDraft((d) => ({ ...d, [activeKey]: m }))}
       />
 
       <SaveBar
@@ -136,6 +147,7 @@ export function ProgramTemplatesPage(): React.ReactElement {
         error={error}
         onDiscard={() => {
           setDraft((d) => ({ ...d, [activeKey]: null }));
+          setMarginDraft((d) => ({ ...d, [activeKey]: null }));
           setError(null);
         }}
         onSave={() => void save()}

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ProgramTemplateKey } from "@/lib/types";
+import type { ProgramMargins, ProgramTemplateKey } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { EditorResizeHandle } from "./EditorResizeHandle";
+import { MarginsButton } from "./MarginsButton";
 import { MobileProgramPreviewButton } from "./MobileProgramPreviewButton";
 import { ProgramTemplateEditor } from "./ProgramTemplateEditor";
 import { buildSampleVariables } from "./programTemplateRender";
@@ -22,9 +23,11 @@ interface Props {
   description: string;
   ariaLabel: string;
   editorJson: string | null;
+  margins: ProgramMargins;
   canEdit: boolean;
   usingDefault: boolean;
   onChange: (json: string) => void;
+  onMarginsChange: (margins: ProgramMargins) => void;
 }
 
 /** Two-column body of the program-templates page: Lexical editor +
@@ -36,9 +39,11 @@ export function ProgramTemplatesPanel({
   description,
   ariaLabel,
   editorJson,
+  margins,
   canEdit,
   usingDefault,
   onChange,
+  onMarginsChange,
 }: Props) {
   const previewVars = useMemo(() => buildSampleVariables(), []);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,6 +83,7 @@ export function ProgramTemplatesPanel({
               System default — save to lock in
             </span>
           )}
+          <MarginsButton variant={activeKey} margins={margins} onChange={onMarginsChange} />
           <SwapSidesButton
             previewSide={previewSide}
             onClick={() => setPreviewSide((s) => (s === "left" ? "right" : "left"))}
@@ -126,7 +132,12 @@ export function ProgramTemplatesPanel({
             </span>
           </div>
           {editorJson ? (
-            <ScaledProgramPreview variant={activeKey} json={editorJson} variables={previewVars} />
+            <ScaledProgramPreview
+              variant={activeKey}
+              json={editorJson}
+              variables={previewVars}
+              margins={margins}
+            />
           ) : (
             <div className="rounded-lg border border-border bg-chalk p-5">
               <p className="font-serif italic text-walnut-3">
@@ -137,7 +148,12 @@ export function ProgramTemplatesPanel({
         </aside>
       </div>
 
-      <MobileProgramPreviewButton variant={activeKey} json={editorJson} variables={previewVars} />
+      <MobileProgramPreviewButton
+        variant={activeKey}
+        json={editorJson}
+        variables={previewVars}
+        margins={margins}
+      />
     </div>
   );
 }

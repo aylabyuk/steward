@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
-import type { ProgramTemplateKey } from "@/lib/types";
+import type { ProgramMargins, ProgramTemplateKey } from "@/lib/types";
 import { useFitScale } from "@/hooks/useFitScale";
 import { LetterPreviewZoomControls } from "@/features/templates/LetterPreviewZoomControls";
 import { PROGRAM_CANVAS_DIMS, ProgramCanvas } from "./ProgramCanvas";
@@ -12,6 +12,8 @@ interface Props {
   json: string;
   /** Variable map used to resolve `{{token}}` chips at preview time. */
   variables: Record<string, string>;
+  /** Page margins (in). Forwarded to canvas; falls back to variant default. */
+  margins?: ProgramMargins;
 }
 
 /** True 8.5 × 11 paper preview with mouse-wheel zoom + drag pan
@@ -20,7 +22,7 @@ interface Props {
  *  can zoom in to verify margins / hymn rows / variable spacing.
  *  Reuses the same `react-zoom-pan-pinch` setup as the speaker-letter
  *  preview so the gesture vocabulary is consistent. */
-export function ScaledProgramPreview({ variant, json, variables }: Props) {
+export function ScaledProgramPreview({ variant, json, variables, margins }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const dims = PROGRAM_CANVAS_DIMS[variant];
   const fitScale = useFitScale(ref, dims.w, dims.h);
@@ -51,7 +53,7 @@ export function ScaledProgramPreview({ variant, json, variables }: Props) {
                 wrapperStyle={{ width: "100%", height: "100%", cursor: "grab" }}
                 contentStyle={{ width: dims.w, height: "auto" }}
               >
-                <ProgramCanvas variant={variant}>
+                <ProgramCanvas variant={variant} margins={margins}>
                   {renderProgramState(json, variables)}
                 </ProgramCanvas>
               </TransformComponent>
