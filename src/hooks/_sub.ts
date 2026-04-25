@@ -46,6 +46,17 @@ export function useDocSnapshot<T>(
     return onSnapshot(
       ref,
       (snap) => {
+        // Firestore fires onSnapshot up to twice on first subscribe:
+        // once with `metadata.fromCache: true` (local cache) before
+        // the server response arrives, and again with `fromCache:
+        // false` once it does. When the cache is empty (first visit
+        // OR right after a write that hasn't propagated to the local
+        // listener yet) the cache-miss fire reports `snap.exists() ===
+        // false` even though the server has the doc — handing the
+        // caller a transient "no data" state that races against the
+        // authoritative result. Skip those fires so callers only see
+        // a single, authoritative resolution.
+        if (snap.metadata.fromCache && !snap.exists()) return;
         if (!snap.exists()) {
           setState({ data: null, loading: false, error: null });
           return;
