@@ -4,7 +4,7 @@ import { useSpeakers } from "@/hooks/useMeeting";
 import type { NonMeetingSunday } from "@/lib/types";
 import { AddSpeakerCard } from "./AddSpeakerCard";
 import { SpeakerEditCard } from "./SpeakerEditCard";
-import { emptyDraft, fromSpeaker, isDirty, type Draft } from "./speakerDraft";
+import { emptyDraft, fromSpeaker, isDirty, syncStatusFromLive, type Draft } from "./speakerDraft";
 
 interface Props {
   date: string;
@@ -37,22 +37,30 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   const seededRef = useRef(false);
 
   useEffect(() => {
-    if (seededRef.current || speakers.loading) return;
-    const seeded = speakers.data.map((s) =>
-      fromSpeaker(s.id, {
-        name: s.data.name,
-        email: s.data.email,
-        phone: s.data.phone,
-        topic: s.data.topic,
-        status: s.data.status,
-        role: s.data.role,
-      }),
-    );
-    const originals = new Map<string, Draft>();
-    seeded.forEach((d) => originals.set(d.tempId, { ...d }));
-    originalsRef.current = originals;
-    setDrafts(seeded);
-    seededRef.current = true;
+    if (speakers.loading) return;
+    if (!seededRef.current) {
+      const seeded = speakers.data.map((s) =>
+        fromSpeaker(s.id, {
+          name: s.data.name,
+          email: s.data.email,
+          phone: s.data.phone,
+          topic: s.data.topic,
+          status: s.data.status,
+          role: s.data.role,
+        }),
+      );
+      const originals = new Map<string, Draft>();
+      seeded.forEach((d) => originals.set(d.tempId, { ...d }));
+      originalsRef.current = originals;
+      setDrafts(seeded);
+      seededRef.current = true;
+      return;
+    }
+    // Subsequent server pushes (e.g. step 2 marking a speaker
+    // "invited", or the chat-side status switcher flipping to
+    // "confirmed") need to flow back into the local draft so
+    // step 1 doesn't show a stale "planned" pill.
+    setDrafts((prev) => syncStatusFromLive(prev, speakers.data, originalsRef.current));
   }, [speakers.loading, speakers.data]);
 
   function updateDraft(tempId: string, partial: Partial<Draft>) {

@@ -52,7 +52,7 @@ export function SpeakerEditFields({ draft, readOnly, softLocked, onChange }: Pro
 
       <label className="flex flex-col gap-1">
         <span className={LABEL_CLS}>
-          Email <Optional />
+          Email <Optional suffix="enable email communication" />
         </span>
         {readOnly && !draft.email.trim() ? (
           <div className={NOTHING_SET_CLS}>Nothing set</div>
@@ -100,7 +100,7 @@ export function SpeakerEditFields({ draft, readOnly, softLocked, onChange }: Pro
 
       <label className="flex flex-col gap-1">
         <span className={LABEL_CLS}>
-          Topic <Optional />
+          Topic <Optional suffix="let the speaker choose a topic" />
         </span>
         {readOnly && !draft.topic.trim() ? (
           <div className={NOTHING_SET_CLS}>Nothing set</div>
