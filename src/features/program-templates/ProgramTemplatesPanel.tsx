@@ -32,41 +32,37 @@ export function ProgramTemplatesPanel({
 }: Props) {
   const previewVars = useMemo(() => buildSampleVariables(), []);
   return (
-    <div className="flex-1 px-5 sm:px-8 py-5 pb-24 max-w-7xl w-full mx-auto">
-      <p className="font-serif italic text-[14px] text-walnut-2 mb-4">{description}</p>
-      {usingDefault && (
-        <div className="mb-4 rounded-md border border-brass-soft bg-brass-soft/30 px-3 py-2 flex items-start gap-2">
-          <span
-            aria-hidden
-            className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-semibold mt-0.5"
-          >
-            ★
+    <div className="flex-1 lg:min-h-0 flex flex-col px-4 sm:px-8 pt-4 pb-4 lg:overflow-hidden">
+      <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
+        <p className="font-serif italic text-[14px] text-walnut-2">{description}</p>
+        {usingDefault && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brass-soft bg-brass-soft/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep">
+            <span aria-hidden>★</span>
+            System default — save to lock in
           </span>
-          <p className="font-sans text-[12.5px] text-walnut-2 leading-relaxed">
-            Showing the system default. Save to lock it in for your ward — you can edit it any time
-            after.
-          </p>
-        </div>
-      )}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
-        <div className="flex flex-col gap-2">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
+        )}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] items-start lg:flex-1 lg:min-h-0">
+        <div className="flex flex-col gap-2 lg:h-full lg:min-h-0">
+          <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
             Editor
           </div>
-          <ProgramTemplateEditor
-            key={activeKey}
-            ariaLabel={ariaLabel}
-            initialStateJson={editorJson}
-            onChange={onChange}
-          />
-          {!canEdit && (
-            <p className="font-sans text-[12px] text-walnut-3">
-              Read-only — only active members can edit ward templates.
-            </p>
-          )}
+          <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+            <ProgramTemplateEditor
+              key={activeKey}
+              ariaLabel={ariaLabel}
+              initialStateJson={editorJson}
+              onChange={onChange}
+            />
+            {!canEdit && (
+              <p className="mt-2 font-sans text-[12px] text-walnut-3">
+                Read-only — only active members can edit ward templates.
+              </p>
+            )}
+          </div>
         </div>
-        <aside className="flex flex-col gap-2 min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium flex items-baseline justify-between">
+        <aside className="hidden lg:flex flex-col gap-2 min-w-0 lg:h-full lg:min-h-0">
+          <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium flex items-baseline justify-between">
             <span>Preview · sample data</span>
             <span className="text-walnut-3">
               {activeKey === "congregationProgram" ? "11 × 8.5 in landscape" : "8.5 × 11 in"}

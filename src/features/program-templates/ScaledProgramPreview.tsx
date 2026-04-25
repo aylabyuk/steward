@@ -13,23 +13,27 @@ interface Props {
 }
 
 /** Renders the program at true 8.5 × 11 print proportions, then
- *  scales the whole sheet down to fit the host column. The bishop
- *  sees the actual layout — paper bounds, margins, two-up congregation
- *  columns — so they know what'll come out of the printer.
- *
- *  Implementation note: width-only fit (height is unconstrained) so
- *  long-but-narrow pages still scale by width and just clip vertically
- *  inside the fixed sheet — same behaviour the printer would give. */
+ *  fits the whole sheet inside the host column on both axes — width
+ *  AND height — so the bishop sees the printed layout in one glance
+ *  without scrolling. The container is `flex: 1` so a parent that
+ *  uses `lg:h-full` will give the preview the maximum vertical room
+ *  the viewport allows. */
 export function ScaledProgramPreview({ variant, json, variables }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const dims = PROGRAM_CANVAS_DIMS[variant];
-  const scale = useFitScale(ref, dims.w);
+  const scale = useFitScale(ref, dims.w, dims.h);
   return (
     <div
       ref={ref}
-      className="rounded-md border border-border bg-parchment-2/40 p-3 overflow-hidden"
+      className="rounded-md border border-border bg-parchment-2/40 p-3 overflow-hidden flex-1 min-h-0 grid place-items-center"
     >
-      <div className="relative" style={{ height: dims.h * scale }}>
+      <div
+        style={{
+          width: dims.w * scale,
+          height: dims.h * scale,
+          position: "relative",
+        }}
+      >
         <div
           style={{
             transform: `scale(${scale})`,

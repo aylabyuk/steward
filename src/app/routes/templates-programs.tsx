@@ -80,8 +80,8 @@ export function ProgramTemplatesPage(): React.ReactElement {
   const activeTab = TABS.find((t) => t.key === activeKey)!;
 
   return (
-    <main className="min-h-dvh bg-parchment flex flex-col">
-      <header className="border-b border-border bg-chalk px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
+    <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
+      <header className="shrink-0 border-b border-border bg-chalk px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1 min-w-0">
           <Link
             to="/schedule"
@@ -102,7 +102,7 @@ export function ProgramTemplatesPage(): React.ReactElement {
         </button>
       </header>
 
-      <nav className="flex gap-1 border-b border-border bg-parchment-2/30 px-5 sm:px-8 pt-3">
+      <nav className="shrink-0 flex gap-1 border-b border-border bg-parchment-2/30 px-5 sm:px-8 pt-3">
         {TABS.map((t) => (
           <button
             key={t.key}
