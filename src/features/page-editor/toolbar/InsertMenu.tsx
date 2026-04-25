@@ -1,6 +1,6 @@
-import { useState } from "react";
 import type { LexicalEditor } from "lexical";
-import { ToolbarButton } from "./ToolbarButton";
+import { Icon } from "./Icon";
+import { usePopover } from "./usePopover";
 import type { SlashCommand } from "../plugins/SlashCommandRegistry";
 
 interface Props {
@@ -9,44 +9,69 @@ interface Props {
 }
 
 /** Insert dropdown — surfaces every slash command as a clickable
- *  menu entry so the bishop doesn't have to type `/` to find them.
- *  Re-uses the same registry the slash plugin consumes, so any
- *  future addition lights up automatically. */
+ *  menu entry so the bishop doesn't need to type `/` to find them.
+ *  Re-uses the same registry the slash plugin consumes. */
 export function InsertMenu({ editor, commands }: Props) {
-  const [open, setOpen] = useState(false);
+  const pop = usePopover();
   function fire(cmd: SlashCommand) {
     editor.update(() => cmd.onSelect(editor));
-    setOpen(false);
+    pop.setOpen(false);
   }
   return (
-    <span className="relative inline-flex">
-      <ToolbarButton label="Insert" onClick={() => setOpen((o) => !o)} className="gap-1.5">
-        <span aria-hidden>＋</span>
-        <span className="text-[12px]">Insert</span>
-        <span aria-hidden className="text-walnut-3 text-[10px]">
-          ▾
-        </span>
-      </ToolbarButton>
-      {open && (
+    <div ref={pop.ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        title="Insert"
+        className="tb-btn"
+        onClick={() => pop.setOpen((o) => !o)}
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        <Icon name="plus" sw={2.2} />
+        <span>Insert</span>
+        <Icon name="chevronDown" size={11} className="caret lucide" sw={2} />
+      </button>
+      {pop.open && (
         <div
-          role="menu"
-          className="absolute top-[calc(100%+4px)] left-0 z-30 w-64 max-h-80 overflow-y-auto rounded-md border border-border-strong bg-chalk shadow-elev-3 py-1"
-          onMouseDown={(e) => e.preventDefault()}
+          className="tb-popover"
+          style={{
+            position: "absolute",
+            top: 38,
+            left: 0,
+            minWidth: 240,
+            maxHeight: 320,
+            overflowY: "auto",
+          }}
         >
           {commands.map((cmd) => (
             <button
               key={cmd.id}
               type="button"
+              className="tb-popover__item"
               onClick={() => fire(cmd)}
-              className="w-full px-3 py-1.5 flex items-center gap-2.5 text-left hover:bg-parchment-2"
+              onMouseDown={(e) => e.preventDefault()}
             >
               {cmd.icon && (
-                <span className="font-mono text-walnut-2 w-5 text-center">{cmd.icon}</span>
+                <span
+                  aria-hidden
+                  style={{ width: 18, textAlign: "center", color: "var(--color-brass-deep)" }}
+                >
+                  {cmd.icon}
+                </span>
               )}
-              <span className="flex-1 min-w-0">
-                <span className="block text-[13px] text-walnut">{cmd.label}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 13, color: "var(--color-walnut)" }}>
+                  {cmd.label}
+                </span>
                 {cmd.description && (
-                  <span className="block font-serif italic text-[11.5px] text-walnut-3">
+                  <span
+                    style={{
+                      display: "block",
+                      fontFamily: "var(--font-serif)",
+                      fontStyle: "italic",
+                      fontSize: 11.5,
+                      color: "var(--color-walnut-3)",
+                    }}
+                  >
                     {cmd.description}
                   </span>
                 )}
@@ -55,6 +80,6 @@ export function InsertMenu({ editor, commands }: Props) {
           ))}
         </div>
       )}
-    </span>
+    </div>
   );
 }
