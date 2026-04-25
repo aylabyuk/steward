@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { ProgramTemplateKey } from "@/lib/types";
+import { MobileProgramPreviewButton } from "./MobileProgramPreviewButton";
 import { ProgramTemplateEditor } from "./ProgramTemplateEditor";
 import { buildSampleVariables } from "./programTemplateRender";
 import { ScaledProgramPreview } from "./ScaledProgramPreview";
@@ -32,7 +33,7 @@ export function ProgramTemplatesPanel({
 }: Props) {
   const previewVars = useMemo(() => buildSampleVariables(), []);
   return (
-    <div className="flex-1 lg:min-h-0 flex flex-col px-4 sm:px-8 pt-4 pb-4 lg:overflow-hidden">
+    <div className="flex-1 lg:min-h-0 flex flex-col px-4 sm:px-8 pt-4 pb-24 lg:pb-4 lg:overflow-hidden">
       <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
         <p className="font-serif italic text-[14px] text-walnut-2">{description}</p>
         {usingDefault && (
@@ -79,6 +80,8 @@ export function ProgramTemplatesPanel({
           )}
         </aside>
       </div>
+
+      <MobileProgramPreviewButton variant={activeKey} json={editorJson} variables={previewVars} />
     </div>
   );
 }
