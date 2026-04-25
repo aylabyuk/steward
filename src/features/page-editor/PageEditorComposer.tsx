@@ -11,6 +11,8 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { Klass, LexicalEditor, LexicalNode } from "lexical";
 import { FloatingSelectionToolbar } from "@/features/program-templates/FloatingSelectionToolbar";
 import { lexicalTheme } from "@/features/program-templates/lexicalTheme";
+import { PageEditorAutoLink } from "./plugins/PageEditorAutoLink";
+import { PageEditorMarkdownShortcuts } from "./plugins/PageEditorMarkdownShortcuts";
 
 interface Props {
   /** Stable namespace — drives editor identity for collaborative state
@@ -83,6 +85,8 @@ export function PageEditorComposer({
       <ListPlugin />
       <LinkPlugin />
       <HorizontalRulePlugin />
+      <PageEditorAutoLink />
+      <PageEditorMarkdownShortcuts />
       <FloatingSelectionToolbar />
       <StateJsonOnChangePlugin onChange={onChange} />
     </LexicalComposer>
