@@ -36,11 +36,17 @@ export function serializeForInterpolation(state: SerializedEditorState): string 
 }
 
 /** Splits the editor state into the legacy `bodyMarkdown` /
- *  `footerMarkdown` field pair the existing storage + email path
+ *  `footerMarkdown` field pair the existing storage + print path
  *  expect. The split point is the first `signature-block` node;
  *  everything before is body, the last paragraph after it is
- *  footer. Used during the dual-write window so older readers
- *  (Cloud Functions, receipt emails) keep working unchanged. */
+ *  footer.
+ *
+ *  Differs from {@link serializeForInterpolation}: `LetterCanvas`
+ *  inserts the assigned-Sunday callout + signature row as page
+ *  chrome, so we *omit* those nodes from the markdown — emitting
+ *  them would duplicate them on the printed letter. Email/SMS
+ *  paths that don't have chrome continue to use
+ *  `serializeForInterpolation` instead. */
 export function legacyFieldsFromState(state: SerializedEditorState): {
   bodyMarkdown: string;
   footerMarkdown: string;
@@ -48,27 +54,25 @@ export function legacyFieldsFromState(state: SerializedEditorState): {
   const root = state.root as SerializedElementNode;
   const blocks = root.children ?? [];
   const sigIdx = blocks.findIndex((b) => b.type === "signature-block");
-  if (sigIdx < 0) {
-    return {
-      bodyMarkdown: blocks.map(serializeBlock).filter(Boolean).join("\n\n"),
-      footerMarkdown: "",
-    };
-  }
-  const before = blocks.slice(0, sigIdx);
-  const after = blocks.slice(sigIdx + 1);
-  const bodyMarkdown = before.map(serializeBlock).filter(Boolean).join("\n\n");
-  // The footer is conventionally a single trailing paragraph (the
-  // scripture). When there are multiple post-signature paragraphs we
-  // keep the last one as `footerMarkdown` and append the rest to the
-  // body so no content gets dropped.
+  const before = sigIdx < 0 ? blocks : blocks.slice(0, sigIdx);
+  const after = sigIdx < 0 ? [] : blocks.slice(sigIdx + 1);
+  const bodyMarkdown = before.map(serializeBlockForLegacy).filter(Boolean).join("\n\n");
   if (after.length === 0) return { bodyMarkdown, footerMarkdown: "" };
   const footerBlock = after[after.length - 1];
-  const footerMarkdown = serializeBlock(footerBlock);
-  const carry = after.slice(0, -1).map(serializeBlock).filter(Boolean).join("\n\n");
+  const footerMarkdown = serializeBlockForLegacy(footerBlock);
+  const carry = after.slice(0, -1).map(serializeBlockForLegacy).filter(Boolean).join("\n\n");
   return {
     bodyMarkdown: carry ? `${bodyMarkdown}\n\n${carry}` : bodyMarkdown,
     footerMarkdown,
   };
+}
+
+/** Variant of {@link serializeBlock} that omits the assigned-Sunday
+ *  callout + signature block. The legacy print path renders both as
+ *  page chrome, so emitting them as content would double them up. */
+function serializeBlockForLegacy(node: SerializedLexicalNode): string {
+  if (node.type === "assigned-sunday-callout" || node.type === "signature-block") return "";
+  return serializeBlock(node);
 }
 
 function serializeBlock(node: SerializedLexicalNode): string {
