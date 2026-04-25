@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { LetterPageStyle } from "@/lib/types/template";
 import { LetterRenderContextProvider } from "./letterRenderContext";
 import {
@@ -7,7 +8,7 @@ import {
 } from "./letterEditorConfig";
 import { PageCanvas } from "./PageCanvas";
 import { PageEditorComposer } from "./PageEditorComposer";
-import { PageStylePanel } from "./PageStylePanel";
+import { PageStage } from "./PageStage";
 import { PageToolbar } from "./toolbar/PageToolbar";
 
 interface Props {
@@ -21,29 +22,20 @@ interface Props {
    *  transformers and splices in the assigned-Sunday callout +
    *  signature block + footer scripture paragraph. */
   initialMarkdown: { bodyMarkdown: string; footerMarkdown: string };
-  /** Optional page-frame styling (border + paper). */
+  /** Optional page-frame styling (border + paper / size / orientation). */
   pageStyle?: LetterPageStyle;
-  /** Fires on every user edit with the editor state serialised as
-   *  Lexical JSON. */
   onChange: (stateJson: string) => void;
-  /** Fires once after hydration with the initial editor state — the
-   *  host should seed both working + saved baselines so dirty starts
-   *  clean. Without this, pageStyle-only edits couldn't be saved. */
   onInitial?: (stateJson: string) => void;
-  /** Fires when the bishop edits the page style. Omit to hide the
-   *  page-style panel (e.g. read-only contexts, the wizard's per-
-   *  speaker preview). */
   onPageStyleChange?: (next: LetterPageStyle) => void;
   ariaLabel: string;
-  /** When true, the editor is read-only (e.g. the user lacks edit
-   *  permission). */
   editorDisabled?: boolean;
 }
 
-/** Composes the WYSIWYG speaker-letter editor: page canvas with the
- *  letter chrome (ornament, eyebrow, title, date) wrapping a single
- *  Lexical contenteditable that owns greeting + body + assigned-Sunday
- *  callout + signature + closing scripture as one continuous flow. */
+/** WYSIWYG speaker-letter editor — Word-style layout: full-width
+ *  sticky toolbar at top, then a zoomable scrollable PageStage that
+ *  centers the paper. Header chrome (ornament, eyebrow, title, etc.)
+ *  is part of the editor's content (see `buildInitialLetterState`),
+ *  so every text on the printed letter is editable. */
 export function LetterPageEditor({
   assignedDate,
   initialJson,
@@ -56,18 +48,12 @@ export function LetterPageEditor({
   editorDisabled,
 }: Props) {
   const initialState = initialJson ?? buildInitialLetterState(initialMarkdown);
+  const [zoom, setZoom] = useState(1);
   return (
     <LetterRenderContextProvider assignedDate={assignedDate}>
       <div
-        className={`relative max-w-[8.5in] mx-auto ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
+        className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
       >
-        {onPageStyleChange && (
-          <PageStylePanel
-            value={pageStyle}
-            onChange={onPageStyleChange}
-            disabled={editorDisabled}
-          />
-        )}
         <PageEditorComposer
           namespace="LetterPageEditor"
           nodes={LETTER_EDITOR_NODES}
@@ -80,15 +66,21 @@ export function LetterPageEditor({
             <PageToolbar
               slashCommands={LETTER_SLASH_COMMANDS}
               pageStyle={pageStyle}
+              zoom={zoom}
+              onZoomChange={setZoom}
               {...(onPageStyleChange ? { onPageStyleChange } : {})}
             />
           }
           page={(contentEditable) => (
-            <PageCanvas variant="letter" pageStyle={pageStyle} chrome={null}>
-              <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
-                {contentEditable}
-              </div>
-            </PageCanvas>
+            <div className="flex-1 min-h-0">
+              <PageStage zoom={zoom} onZoomChange={setZoom}>
+                <PageCanvas variant="letter" pageStyle={pageStyle} chrome={null}>
+                  <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
+                    {contentEditable}
+                  </div>
+                </PageCanvas>
+              </PageStage>
+            </div>
           )}
         />
       </div>

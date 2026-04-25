@@ -47,7 +47,7 @@ export function PrepareInvitationLetterTab({
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
       />
-      <div className="relative h-full overflow-y-auto bg-parchment py-6 px-2 sm:px-4">
+      <div className="relative h-full">
         {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
         <LetterPageEditor
           key={resetKey}

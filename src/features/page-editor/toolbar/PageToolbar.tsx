@@ -8,6 +8,7 @@ import { InsertMenu } from "./InsertMenu";
 import { PageSizeDropdown } from "./PageSizeDropdown";
 import { ToolbarButton, ToolbarSep } from "./ToolbarButton";
 import { useToolbarState } from "./useToolbarState";
+import { ZoomControls } from "./ZoomControls";
 import type { SlashCommand } from "../plugins/SlashCommandRegistry";
 
 interface Props {
@@ -20,6 +21,9 @@ interface Props {
    *  per-speaker preview where size is fixed). */
   pageStyle?: LetterPageStyle | null;
   onPageStyleChange?: (next: LetterPageStyle) => void;
+  /** Zoom factor + setter. Omit to hide the zoom group. */
+  zoom?: number;
+  onZoomChange?: (next: number) => void;
 }
 
 /** Sticky page-level toolbar — playground-style controls that always
@@ -27,11 +31,17 @@ interface Props {
  *  shows quick formats above the cursor; this stays anchored to the
  *  editor for block-level moves (alignment, block type, insert) and
  *  page-level decisions (size, orientation). */
-export function PageToolbar({ slashCommands, pageStyle, onPageStyleChange }: Props) {
+export function PageToolbar({
+  slashCommands,
+  pageStyle,
+  onPageStyleChange,
+  zoom,
+  onZoomChange,
+}: Props) {
   const [editor] = useLexicalComposerContext();
   const s = useToolbarState(editor);
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-1 flex-wrap bg-parchment-2 border-b border-border-strong px-3 py-1.5 shadow-[0_1px_0_var(--color-border)]">
+    <div className="sticky top-0 z-20 flex items-center gap-1 flex-wrap bg-parchment-2 border-b border-border-strong px-3 py-1.5 shadow-[0_1px_0_var(--color-border)] w-full">
       <ToolbarButton
         label="Undo (⌘Z)"
         disabled={!s.canUndo}
@@ -108,7 +118,13 @@ export function PageToolbar({ slashCommands, pageStyle, onPageStyleChange }: Pro
       <ToolbarSep />
       <InsertMenu editor={editor} commands={slashCommands} />
       <span className="flex-1" />
-      {onPageStyleChange && <PageSizeDropdown value={pageStyle} onChange={onPageStyleChange} />}
+      {zoom !== undefined && onZoomChange && <ZoomControls zoom={zoom} onChange={onZoomChange} />}
+      {onPageStyleChange && (
+        <>
+          <ToolbarSep />
+          <PageSizeDropdown value={pageStyle} onChange={onPageStyleChange} />
+        </>
+      )}
     </div>
   );
 }
