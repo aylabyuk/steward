@@ -2,6 +2,7 @@ import type { LexicalEditor, TextFormatType } from "lexical";
 import { FORMAT_TEXT_COMMAND } from "lexical";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { cn } from "@/lib/cn";
+import { StyleSwatchesButton } from "./StyleSwatchesPopover";
 
 export interface ActiveFormats {
   bold: boolean;
@@ -87,6 +88,8 @@ export function ToolbarButtons({ editor, active }: ToolbarButtonsProps) {
       <FmtBtn label="Link" active={active.link} onClick={() => toggleLink(editor, active.link)}>
         <LinkIcon />
       </FmtBtn>
+      <Sep />
+      <StyleSwatchesButton editor={editor} />
     </>
   );
 }
