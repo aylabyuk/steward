@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
 import { Avatar } from "@/components/ui/Avatar";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/cn";
+import { MenuItemDisabled, MenuLink, MenuLinkWithToggle } from "./UserMenuItems";
+import { useDevicePushToggle } from "./useDevicePushToggle";
 
 function ChevronDown({ size = 14 }: { size?: number }) {
   return (
@@ -24,6 +25,7 @@ export function UserMenu() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const me = useCurrentMember();
+  const push = useDevicePushToggle();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -83,15 +85,22 @@ export function UserMenu() {
             <Avatar user={avatarUser} size="lg" />
             <div className="min-w-0">
               <div className="truncate text-sm font-medium text-walnut">{name}</div>
-              <div className="truncate text-xs uppercase tracking-wider text-walnut-3">
-                {user?.email}
-              </div>
+              <div className="truncate text-[11px] text-walnut-3">{user?.email}</div>
             </div>
           </div>
 
           <MenuLink to="/settings/profile" onClick={close}>
             Profile
           </MenuLink>
+          <MenuLinkWithToggle
+            to="/settings/notifications"
+            onClickLink={close}
+            label="Notifications"
+            toggleChecked={push.checked}
+            toggleDisabled={!push.ready || push.busy}
+            toggleAriaLabel="Push notifications on this device"
+            onToggleChange={(next) => void push.toggle(next)}
+          />
           <MenuLink to="/settings/ward" onClick={close}>
             Ward settings
           </MenuLink>
@@ -101,9 +110,7 @@ export function UserMenu() {
           <MenuLink to="/settings/templates" onClick={close}>
             Templates
           </MenuLink>
-          <MenuLink to="/settings/templates/speaker-letter" onClick={close} newTab>
-            Speaker invitation letter
-          </MenuLink>
+          <MenuItemDisabled label="About" hint="Coming soon" />
 
           <div className="border-t border-border" />
 
@@ -114,38 +121,23 @@ export function UserMenu() {
           >
             Sign out
           </button>
+
+          <div className="border-t border-border" />
+
+          <a
+            href={`https://github.com/aylabyuk/steward/releases/tag/v${__APP_VERSION__}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={close}
+            role="menuitem"
+            aria-label={`Version ${__APP_VERSION__} — open release notes`}
+            className="block px-2.5 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut hover:bg-parchment-2 hover:rounded transition-colors"
+          >
+            v{__APP_VERSION__} ↗
+          </a>
         </div>
       )}
     </div>
   );
 }
 
-interface MenuLinkProps {
-  to: string;
-  onClick: () => void;
-  newTab?: boolean;
-  children: React.ReactNode;
-}
-
-function MenuLink({ to, onClick, newTab, children }: MenuLinkProps) {
-  return (
-    <Link
-      to={to}
-      onClick={onClick}
-      target={newTab ? "_blank" : undefined}
-      rel={newTab ? "noopener noreferrer" : undefined}
-      role="menuitem"
-      className="block px-2.5 py-2 text-sm text-walnut transition-colors hover:rounded hover:bg-parchment-2"
-    >
-      {children}
-      {newTab && (
-        <span
-          aria-label="Opens in a new tab"
-          className="ml-2 font-mono text-[9px] uppercase tracking-[0.14em] text-walnut-3"
-        >
-          ↗
-        </span>
-      )}
-    </Link>
-  );
-}
