@@ -1,6 +1,10 @@
 import type { LetterPageStyle } from "@/lib/types/template";
 import { LetterRenderContextProvider } from "./letterRenderContext";
-import { LETTER_EDITOR_NODES, buildInitialLetterState } from "./letterEditorConfig";
+import {
+  LETTER_EDITOR_NODES,
+  LETTER_SLASH_COMMANDS,
+  buildInitialLetterState,
+} from "./letterEditorConfig";
 import { PageCanvas } from "./PageCanvas";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PageStylePanel } from "./PageStylePanel";
@@ -77,6 +81,7 @@ export function LetterPageEditor({
           onChange={onChange}
           onInitial={onInitial}
           ariaLabel={ariaLabel}
+          slashCommands={LETTER_SLASH_COMMANDS}
           page={(contentEditable) => (
             <PageCanvas
               variant="letter"

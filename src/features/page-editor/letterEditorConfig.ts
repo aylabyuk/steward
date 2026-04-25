@@ -9,6 +9,8 @@ import { $createSignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { PAGE_EDITOR_BASE_NODES } from "./pageEditorNodes";
 import { PAGE_EDITOR_MARKDOWN_TRANSFORMERS } from "./plugins/PageEditorMarkdownShortcuts";
 
+export { LETTER_SLASH_COMMANDS } from "./letterSlashCommands";
+
 export const LETTER_EDITOR_NODES = PAGE_EDITOR_BASE_NODES;
 
 /** Transformer list used for hydrating legacy `bodyMarkdown` /
