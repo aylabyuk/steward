@@ -35,11 +35,11 @@ export function EditorResizeHandle({ onDragStart, onDrag }: Props) {
       onPointerCancel={() => {
         startX.current = null;
       }}
-      className="hidden lg:flex shrink-0 w-3 mx-1 cursor-col-resize items-center justify-center group select-none touch-none"
+      className="hidden lg:flex lg:order-2 shrink-0 w-4 mx-2 cursor-col-resize items-center justify-center group select-none touch-none"
     >
       <span
         aria-hidden
-        className="block w-0.5 h-10 bg-border-strong group-hover:bg-walnut-3 group-active:bg-walnut transition-colors rounded-full"
+        className="block w-1 h-12 bg-walnut-3/60 group-hover:bg-walnut-2 group-active:bg-walnut transition-colors rounded-full"
       />
     </div>
   );
