@@ -14,7 +14,7 @@ const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e/emulators",
-  testMatch: /wysiwyg-letter-persist\.spec\.ts$/,
+  testMatch: /wysiwyg-.*\.spec\.ts$/,
   fullyParallel: false,
   forbidOnly: false,
   retries: 0,
