@@ -2,16 +2,12 @@ import { useParams, Navigate } from "react-router";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
+import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
+import { renderProgramState } from "@/features/program-templates/programTemplateRender";
 import { PrintLayout } from "./PrintLayout";
-import {
-  formatLongDate,
-  orderedSpeakers,
-  personName,
-  speakerSequence,
-  type SequenceEntry,
-} from "./programData";
-import { RowFreeform, RowHymn, RowLabeled, RowSection } from "./programRows";
-import type { SacramentMeeting } from "@/lib/types";
+import { buildMeetingVariables } from "./buildMeetingVariables";
+import { LegacyCongregationCopy } from "./LegacyCongregationCopy";
+import { formatLongDate, orderedSpeakers, speakerSequence } from "./programData";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -21,11 +17,12 @@ export function CongregationProgram() {
   const ward = useWardSettings();
   const meeting = useMeeting(date ?? null);
   const speakers = useSpeakers(date ?? null);
+  const template = useProgramTemplate("congregationProgram");
 
   if (!date || !ISO_DATE.test(date)) return <Navigate to="/schedule" replace />;
   if (!authed) return <Navigate to="/login" replace />;
 
-  const ready = !ward.loading && !meeting.loading && !speakers.loading;
+  const ready = !ward.loading && !meeting.loading && !speakers.loading && !template.loading;
   const m = meeting.data;
   const approved = m?.status === "approved";
 
@@ -40,9 +37,21 @@ export function CongregationProgram() {
     .map((v) => (v.details ? `${v.name} (${v.details})` : v.name))
     .join(", ");
 
-  const copy = (
-    <ProgramCopy
-      m={m}
+  const copy = template.data?.editorStateJson ? (
+    <TemplateCopy
+      wardName={wardName}
+      dateLong={dateLong}
+      json={template.data.editorStateJson}
+      variables={buildMeetingVariables({
+        date,
+        meeting: m ?? null,
+        speakers: speakers.data,
+        ward: ward.data ?? null,
+      })}
+    />
+  ) : (
+    <LegacyCongregationCopy
+      m={m ?? null}
       wardName={wardName}
       dateLong={dateLong}
       sequence={sequence}
@@ -67,15 +76,17 @@ export function CongregationProgram() {
   );
 }
 
-interface CopyProps {
-  m: SacramentMeeting | null;
+function TemplateCopy({
+  wardName,
+  dateLong,
+  json,
+  variables,
+}: {
   wardName: string;
   dateLong: string;
-  sequence: readonly SequenceEntry[];
-  visitorText: string;
-}
-
-function ProgramCopy({ m, wardName, dateLong, sequence, visitorText }: CopyProps) {
+  json: string;
+  variables: Record<string, string>;
+}) {
   return (
     <>
       <header className="mb-3 border-b-2 border-walnut pb-2">
@@ -86,67 +97,7 @@ function ProgramCopy({ m, wardName, dateLong, sequence, visitorText }: CopyProps
           {dateLong}
         </h1>
       </header>
-
-      <RowSection title="Presiding & conducting" dense>
-        <RowLabeled label="Presiding" value={personName(m?.presiding)} dense />
-        <RowLabeled label="Conducting" value={personName(m?.conducting)} dense />
-        {visitorText && <RowLabeled label="Visitors" value={visitorText} dense />}
-      </RowSection>
-
-      {m?.showAnnouncements && (m?.announcements ?? "").trim().length > 0 && (
-        <RowSection title="Announcements" dense>
-          <RowFreeform label="Announcements" value={m.announcements} dense />
-        </RowSection>
-      )}
-
-      <RowSection title="Music" dense>
-        <RowLabeled label="Pianist" value={personName(m?.pianist)} dense />
-        <RowLabeled label="Chorister" value={personName(m?.chorister)} dense />
-      </RowSection>
-
-      <RowSection title="Opening" dense>
-        <RowHymn
-          label="Opening hymn"
-          number={m?.openingHymn?.number}
-          title={m?.openingHymn?.title}
-          dense
-        />
-        <RowLabeled label="Invocation" value={personName(m?.openingPrayer)} dense />
-      </RowSection>
-
-      <RowSection title="Sacrament" dense>
-        <RowHymn
-          label="Sacrament hymn"
-          number={m?.sacramentHymn?.number}
-          title={m?.sacramentHymn?.title}
-          dense
-        />
-      </RowSection>
-
-      <RowSection title="Speakers & music" dense>
-        {sequence.map((entry, i) =>
-          entry.kind === "speaker" ? (
-            <RowLabeled
-              key={`s-${entry.data.id}`}
-              label={`Speaker ${entry.index + 1}`}
-              value={entry.data.name}
-              dense
-            />
-          ) : (
-            <RowLabeled key={`mid-${i}`} label="Interlude" value={entry.label} dense />
-          ),
-        )}
-      </RowSection>
-
-      <RowSection title="Closing" dense>
-        <RowHymn
-          label="Closing hymn"
-          number={m?.closingHymn?.number}
-          title={m?.closingHymn?.title}
-          dense
-        />
-        <RowLabeled label="Benediction" value={personName(m?.benediction)} dense />
-      </RowSection>
+      {renderProgramState(json, variables)}
     </>
   );
 }
