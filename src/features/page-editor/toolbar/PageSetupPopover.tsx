@@ -70,35 +70,31 @@ export function PageSetupPopover({ value, onChange }: Props) {
       {pop.open && (
         <div
           className="tb-popover tb-popover--page"
-          style={{
-            position: "absolute",
-            top: 38,
-            right: 0,
-            maxHeight: 420,
-            overflowY: "auto",
-          }}
+          style={{ position: "absolute", top: 38, right: 0 }}
         >
           <div className="tb-page-group">
             <div className="tb-page-group__label">Page size</div>
             <div className="tb-page-group__list">
-              {PAGE_SIZES.map((sz) => {
-                const { label, meta } = SIZE_LABELS[sz];
-                return (
-                  <button
-                    key={sz}
-                    type="button"
-                    className={
-                      current.pageSize === sz
-                        ? "tb-page-option tb-page-option--active"
-                        : "tb-page-option"
-                    }
-                    onClick={() => set({ pageSize: sz })}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    {meta ? `${label} (${meta})` : label}
-                  </button>
-                );
-              })}
+              {PAGE_SIZES.map((sz) => (
+                <button
+                  key={sz}
+                  type="button"
+                  title={
+                    SIZE_LABELS[sz].meta
+                      ? `${SIZE_LABELS[sz].label} (${SIZE_LABELS[sz].meta})`
+                      : SIZE_LABELS[sz].label
+                  }
+                  className={
+                    current.pageSize === sz
+                      ? "tb-page-option tb-page-option--active"
+                      : "tb-page-option"
+                  }
+                  onClick={() => set({ pageSize: sz })}
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  {SIZE_LABELS[sz].label}
+                </button>
+              ))}
             </div>
           </div>
           <div className="tb-page-group__divider" />
