@@ -19,24 +19,57 @@ import { z } from "zod";
  */
 /** Standard print sizes in CSS inches. Kept as a closed enum so the
  *  toolbar's page-size dropdown can render predictable options + the
- *  print-time canvas can dimension itself without a runtime lookup. */
-export const PAGE_SIZES = ["letter", "legal", "tabloid", "a4", "a5", "executive", "folio"] as const;
+ *  print-time canvas can dimension itself without a runtime lookup.
+ *  `pageless` is a flow-only mode (no fixed page boundaries — the
+ *  contenteditable scrolls naturally and prints to whatever paper
+ *  the printer is loaded with). */
+export const PAGE_SIZES = [
+  "pageless",
+  "letter",
+  "a4",
+  "legal",
+  "tabloid",
+  "a3",
+  "a5",
+  "statement",
+  "executive",
+  "folio",
+] as const;
 export const pageSizeSchema = z.enum(PAGE_SIZES);
 export type PageSize = z.infer<typeof pageSizeSchema>;
 
 export const PAGE_SIZE_INCHES: Record<PageSize, { width: number; height: number; label: string }> =
   {
+    pageless: { width: 8.5, height: 11, label: "Pageless" },
     letter: { width: 8.5, height: 11, label: 'Letter (8.5" × 11")' },
+    a4: { width: 8.27, height: 11.69, label: 'A4 (8.27" × 11.69")' },
     legal: { width: 8.5, height: 14, label: 'Legal (8.5" × 14")' },
     tabloid: { width: 11, height: 17, label: 'Tabloid (11" × 17")' },
-    a4: { width: 8.27, height: 11.69, label: 'A4 (8.27" × 11.69")' },
+    a3: { width: 11.69, height: 16.54, label: 'A3 (11.69" × 16.54")' },
     a5: { width: 5.83, height: 8.27, label: 'A5 (5.83" × 8.27")' },
+    statement: { width: 5.5, height: 8.5, label: 'Statement (5.5" × 8.5")' },
     executive: { width: 7.25, height: 10.5, label: 'Executive (7.25" × 10.5")' },
     folio: { width: 8.5, height: 13, label: 'Folio (8.5" × 13")' },
   };
 
 export const orientationSchema = z.enum(["portrait", "landscape"]);
 export type Orientation = z.infer<typeof orientationSchema>;
+
+/** Margins preset — three named tiers matching the design kit's
+ *  segmented control. Numeric inch values live with the renderer
+ *  (`MARGIN_PRESET_INCHES`) so the schema stays a small enum. */
+export const MARGIN_PRESETS = ["narrow", "normal", "wide"] as const;
+export const marginPresetSchema = z.enum(MARGIN_PRESETS);
+export type MarginPreset = z.infer<typeof marginPresetSchema>;
+
+export const MARGIN_PRESET_INCHES: Record<
+  MarginPreset,
+  { vertical: number; horizontal: number; label: string }
+> = {
+  narrow: { vertical: 0.4, horizontal: 0.55, label: "Narrow" },
+  normal: { vertical: 0.85, horizontal: 0.95, label: "Normal" },
+  wide: { vertical: 1.1, horizontal: 1.4, label: "Wide" },
+};
 
 export const letterPageStyleSchema = z.object({
   borderColor: z.enum(["none", "walnut", "brass-deep", "bordeaux"]).default("none"),
@@ -45,6 +78,7 @@ export const letterPageStyleSchema = z.object({
   paper: z.enum(["chalk", "parchment", "parchment-2"]).default("chalk"),
   pageSize: pageSizeSchema.default("letter"),
   orientation: orientationSchema.default("portrait"),
+  margins: marginPresetSchema.default("normal"),
 });
 export type LetterPageStyle = z.infer<typeof letterPageStyleSchema>;
 

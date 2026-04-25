@@ -1,6 +1,8 @@
 import {
+  MARGIN_PRESETS,
   PAGE_SIZES,
   type LetterPageStyle,
+  type MarginPreset,
   type Orientation,
   type PageSize,
 } from "@/lib/types/template";
@@ -19,16 +21,26 @@ const DEFAULT: LetterPageStyle = {
   paper: "chalk",
   pageSize: "letter",
   orientation: "portrait",
+  margins: "normal",
 };
 
-const SIZE_LABELS: Record<PageSize, { label: string; meta: string }> = {
+const SIZE_LABELS: Record<PageSize, { label: string; meta: string | null }> = {
+  pageless: { label: "Pageless", meta: null },
   letter: { label: "Letter", meta: '8.5" × 11"' },
+  a4: { label: "A4", meta: '8.27" × 11.69"' },
   legal: { label: "Legal", meta: '8.5" × 14"' },
   tabloid: { label: "Tabloid", meta: '11" × 17"' },
-  a4: { label: "A4", meta: '8.27" × 11.69"' },
+  a3: { label: "A3", meta: '11.69" × 16.54"' },
   a5: { label: "A5", meta: '5.83" × 8.27"' },
+  statement: { label: "Statement", meta: '5.5" × 8.5"' },
   executive: { label: "Executive", meta: '7.25" × 10.5"' },
   folio: { label: "Folio", meta: '8.5" × 13"' },
+};
+
+const MARGIN_LABELS: Record<MarginPreset, string> = {
+  narrow: "Narrow",
+  normal: "Normal",
+  wide: "Wide",
 };
 
 /** Page setup popover — matches the design kit's `popover--page`
@@ -63,21 +75,24 @@ export function PageSetupPopover({ value, onChange }: Props) {
           <div className="tb-page-group">
             <div className="tb-page-group__label">Page size</div>
             <div className="tb-page-group__list">
-              {PAGE_SIZES.map((sz) => (
-                <button
-                  key={sz}
-                  type="button"
-                  className={
-                    current.pageSize === sz
-                      ? "tb-page-option tb-page-option--active"
-                      : "tb-page-option"
-                  }
-                  onClick={() => set({ pageSize: sz })}
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  {SIZE_LABELS[sz].label} ({SIZE_LABELS[sz].meta})
-                </button>
-              ))}
+              {PAGE_SIZES.map((sz) => {
+                const { label, meta } = SIZE_LABELS[sz];
+                return (
+                  <button
+                    key={sz}
+                    type="button"
+                    className={
+                      current.pageSize === sz
+                        ? "tb-page-option tb-page-option--active"
+                        : "tb-page-option"
+                    }
+                    onClick={() => set({ pageSize: sz })}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {meta ? `${label} (${meta})` : label}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div className="tb-page-group__divider" />
@@ -101,9 +116,31 @@ export function PageSetupPopover({ value, onChange }: Props) {
               ))}
             </div>
           </div>
+          <div className="tb-page-group__divider" />
+          <div className="tb-page-group">
+            <div className="tb-page-group__label">Margins</div>
+            <div className="tb-page-segmented tb-page-segmented--3">
+              {MARGIN_PRESETS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={
+                    (current.margins ?? "normal") === m
+                      ? "tb-page-segmented__btn tb-page-segmented__btn--active"
+                      : "tb-page-segmented__btn"
+                  }
+                  onClick={() => set({ margins: m })}
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  {MARGIN_LABELS[m]}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="tb-page-current">
-            Currently: {SIZE_LABELS[current.pageSize].label} ({SIZE_LABELS[current.pageSize].meta})
-            · {current.orientation}
+            Currently: {SIZE_LABELS[current.pageSize].label}
+            {SIZE_LABELS[current.pageSize].meta ? ` (${SIZE_LABELS[current.pageSize].meta})` : ""} ·{" "}
+            {current.orientation} · {MARGIN_LABELS[current.margins ?? "normal"]} margins
           </div>
         </div>
       )}
