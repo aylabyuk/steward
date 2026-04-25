@@ -105,16 +105,20 @@ interface StatePluginProps {
   onInitial?: (json: string) => void;
 }
 
-/** Surfaces the editor state as Lexical JSON. The very first update
- *  (the hydration tick) goes to `onInitial` so the host can seed
- *  both its working state and saved baseline; subsequent dirty
- *  updates flow to `onChange`. Pulled out of the composer so the
- *  file stays under the 150-LOC cap. */
+/** Surfaces the editor state as Lexical JSON. Lexical commits the
+ *  initial hydration synchronously during render (inside the
+ *  composer's `useMemo`), which is *before* this effect can register
+ *  an update listener — so the hydration tick never reaches the
+ *  listener. We capture the post-hydration state synchronously when
+ *  the effect runs, then let the listener emit only dirty updates.
+ *  Without this, the bishop's first keystroke gets mis-classified as
+ *  "initial" and silently re-baselined, which surfaced as "save
+ *  doesn't persist" because the bishop's intent never registered as
+ *  a dirty edit. */
 function StateJsonOnChangePlugin({ onChange, onInitial }: StatePluginProps): null {
   const [editor] = useLexicalComposerContext();
   const onChangeRef = useRef(onChange);
   const onInitialRef = useRef(onInitial);
-  const seenFirst = useRef(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -124,15 +128,11 @@ function StateJsonOnChangePlugin({ onChange, onInitial }: StatePluginProps): nul
   }, [onInitial]);
 
   useEffect(() => {
+    const initialJson = JSON.stringify(editor.getEditorState().toJSON());
+    onInitialRef.current?.(initialJson);
     return editor.registerUpdateListener(({ editorState, dirtyElements, dirtyLeaves }) => {
-      const json = JSON.stringify(editorState.toJSON());
-      if (!seenFirst.current) {
-        seenFirst.current = true;
-        onInitialRef.current?.(json);
-        return;
-      }
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-      onChangeRef.current(json);
+      onChangeRef.current(JSON.stringify(editorState.toJSON()));
     });
   }, [editor]);
   return null;
