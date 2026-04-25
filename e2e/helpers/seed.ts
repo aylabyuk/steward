@@ -4,7 +4,13 @@
 // Assumes both emulators are running on their default ports (Auth :9099 and
 // Firestore :8080) under project id 'demo-steward'.
 
-const PROJECT = "demo-steward";
+// Project ID defaults to `demo-steward` to match the firebase
+// emulators:exec wrapper in `pnpm test:e2e:emulators`. When a developer
+// already has emulators running under a different project ID (e.g.
+// the dev server's `steward-dev-…` project), they can override via
+// `FIREBASE_PROJECT=…` so seeding targets the live emulator instead
+// of starting a fresh one.
+const PROJECT = process.env.FIREBASE_PROJECT ?? "demo-steward";
 const AUTH_HOST = "127.0.0.1:9099";
 const FIRESTORE_HOST = "127.0.0.1:8080";
 const FAKE_API_KEY = "fake-api-key";
