@@ -38,7 +38,7 @@ export interface CreateSpeakerInput {
   role?: SpeakerRole | undefined;
 }
 
-export async function createSpeaker(input: CreateSpeakerInput): Promise<void> {
+export async function createSpeaker(input: CreateSpeakerInput): Promise<string> {
   return withSaveError(async () => {
     // Creating a speaker before the meeting doc exists would orphan the
     // subcollection entry. Ensure the parent meeting is there first.
@@ -73,6 +73,7 @@ export async function createSpeaker(input: CreateSpeakerInput): Promise<void> {
     }
     await batch.commit();
     await writeMeetingPatch(input.wardId, input.date, {});
+    return ref.id;
   });
 }
 
