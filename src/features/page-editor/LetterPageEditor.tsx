@@ -26,6 +26,10 @@ interface Props {
   /** Fires on every user edit with the editor state serialised as
    *  Lexical JSON. */
   onChange: (stateJson: string) => void;
+  /** Fires once after hydration with the initial editor state — the
+   *  host should seed both working + saved baselines so dirty starts
+   *  clean. Without this, pageStyle-only edits couldn't be saved. */
+  onInitial?: (stateJson: string) => void;
   /** Fires when the bishop edits the page style. Omit to hide the
    *  page-style panel (e.g. read-only contexts, the wizard's per-
    *  speaker preview). */
@@ -48,6 +52,7 @@ export function LetterPageEditor({
   initialMarkdown,
   pageStyle,
   onChange,
+  onInitial,
   onPageStyleChange,
   ariaLabel,
   editorDisabled,
@@ -70,6 +75,7 @@ export function LetterPageEditor({
           nodes={LETTER_EDITOR_NODES}
           initialState={initialState}
           onChange={onChange}
+          onInitial={onInitial}
           ariaLabel={ariaLabel}
           page={(contentEditable) => (
             <PageCanvas

@@ -83,6 +83,15 @@ export function useSpeakerLetterTemplateEditor() {
     setError(null);
   }
 
+  /** Called by `PageEditorComposer` once on mount with the hydrated
+   *  state. Seeds both `stateJson` and `savedJson` so dirty starts at
+   *  false and `save()` always has content to write — even when the
+   *  bishop only edits page-style. */
+  function captureInitial(json: string) {
+    setStateJson(json);
+    setSavedJson(json);
+  }
+
   return {
     seeded,
     dirty,
@@ -96,6 +105,7 @@ export function useSpeakerLetterTemplateEditor() {
     editorKey,
     setStateJson,
     setPageStyle,
+    captureInitial,
     save,
     discard,
   };
