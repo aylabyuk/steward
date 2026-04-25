@@ -10,7 +10,7 @@ import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation"
 import { interpolate } from "@/features/templates/interpolate";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
-import { SpeakerLetterPanel } from "@/features/speaker-letter-template/SpeakerLetterPanel";
+import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
 import { PostPrintConfirmStep } from "./PostPrintConfirmStep";
 import { ReviewLetterFooter } from "./ReviewLetterFooter";
 import { useReviewLetterAction } from "./useReviewLetterAction";
@@ -107,23 +107,19 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
       />
-      <SpeakerLetterPanel
-        wardName={wardName}
-        sampleDate={vars.date}
-        sampleToday={vars.today}
-        body={form.letterBody}
-        footer={form.letterFooter}
-        renderedBody={renderedBody}
-        renderedFooter={renderedFooter}
-        canEdit={true}
-        usingDefault={false}
-        resetKey={form.resetKey}
-        onBodyChange={form.setLetterBody}
-        onFooterChange={form.setLetterFooter}
-        description={`Edit the letter for ${speaker.data.name}. Variables resolve at send time.`}
-        namespace="speakerInviteWizard"
-        reserveBottomGap={false}
-      />
+      <div className="flex-1 min-h-0 overflow-y-auto bg-parchment py-6 px-4 sm:px-8 pb-4">
+        <LetterPageEditor
+          key={form.resetKey}
+          wardName={wardName}
+          today={vars.today}
+          assignedDate={vars.date}
+          initialJson={form.initialJson}
+          initialMarkdown={form.initialMarkdown}
+          onChange={form.setLetterStateJson}
+          onInitial={form.captureInitial}
+          ariaLabel={`Letter for ${speaker.data.name}`}
+        />
+      </div>
       {(form.error || actions.error) && (
         <p className="shrink-0 px-5 sm:px-8 pb-2 font-sans text-[12.5px] text-bordeaux">
           {form.error ?? actions.error}

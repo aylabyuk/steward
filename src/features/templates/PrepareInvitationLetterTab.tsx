@@ -1,41 +1,42 @@
-import { useMemo, useState } from "react";
-import { cn } from "@/lib/cn";
-import { EditPreviewToggle, type LetterViewMode } from "./EditPreviewToggle";
+import { useMemo } from "react";
+import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
 import { PrintOnlyLetter } from "./PrintOnlyLetter";
-import { ScaledLetterPreview } from "./ScaledLetterPreview";
-import { EditorSection } from "./MarkdownEditor";
 import { interpolate } from "./interpolate";
 import type { LetterVars } from "./prepareInvitationVars";
 
 interface Props {
+  initialJson: string | null;
+  initialMarkdown: { bodyMarkdown: string; footerMarkdown: string };
   body: string;
   footer: string;
-  setBody: (v: string) => void;
-  setFooter: (v: string) => void;
+  onChange: (json: string) => void;
+  onInitial: (json: string) => void;
+  resetKey: number;
   vars: LetterVars;
-  /** Desktop-only toolbar rendered absolute-top-right inside the
-   *  preview container. Mobile uses the page-header toolbar instead. */
+  /** Optional toolbar slot rendered absolute-top-right of the editor
+   *  surface. Phase 2 keeps the existing per-speaker action bar
+   *  composed by the parent. */
   previewToolbar?: React.ReactNode;
 }
 
-/** Letter-editor column on the left, paper-sized preview on the right.
- *  The preview mimics a real 8.5×11 sheet so the bishop sees the
- *  letter at its true proportions before printing or sending. On
- *  mobile the right column is hidden and a tab toggle lets the bishop
- *  flip between Edit and Preview in the same column — keeping the
- *  page's primary CTA the only red button on screen. */
+/** Per-speaker letter editor on the prepare-invitation route — same
+ *  WYSIWYG canvas as the ward template page. The legacy split-pane
+ *  preview is gone; the editor IS the preview. PrintOnlyLetter
+ *  continues to portal a true 8.5×11 sheet for the print path during
+ *  the JSON dual-write window. */
 export function PrepareInvitationLetterTab({
+  initialJson,
+  initialMarkdown,
   body,
   footer,
-  setBody,
-  setFooter,
+  onChange,
+  onInitial,
+  resetKey,
   vars,
   previewToolbar,
 }: Props) {
   const renderedBody = useMemo(() => interpolate(body, vars), [body, vars]);
   const renderedFooter = useMemo(() => interpolate(footer, vars), [footer, vars]);
-  const [viewMode, setViewMode] = useState<LetterViewMode>("edit");
-  const showPreviewOnMobile = viewMode === "preview";
 
   return (
     <>
@@ -46,46 +47,19 @@ export function PrepareInvitationLetterTab({
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start lg:h-full lg:min-h-0">
-        <div className="flex flex-col gap-4 min-w-0 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2">
-          <EditPreviewToggle className="lg:hidden" value={viewMode} onChange={setViewMode} />
-          {showPreviewOnMobile && (
-            <div className="lg:hidden h-[70dvh] min-h-105">
-              <ScaledLetterPreview
-                wardName={vars.wardName}
-                assignedDate={vars.date}
-                today={vars.today}
-                bodyMarkdown={renderedBody}
-                footerMarkdown={renderedFooter}
-                height="100%"
-              />
-            </div>
-          )}
-          <div className={cn("flex flex-col gap-8", showPreviewOnMobile && "hidden lg:flex")}>
-            <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
-            <EditorSection
-              label="Footer (scripture)"
-              initialMarkdown={footer}
-              onChange={setFooter}
-            />
-          </div>
-        </div>
-        <aside className="hidden lg:flex flex-col gap-2 min-w-0 lg:h-full lg:min-h-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            Preview — 8.5 × 11 in
-          </div>
-          <div className="relative flex-1 min-h-0">
-            <ScaledLetterPreview
-              wardName={vars.wardName}
-              assignedDate={vars.date}
-              today={vars.today}
-              bodyMarkdown={renderedBody}
-              footerMarkdown={renderedFooter}
-              height="100%"
-            />
-            {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
-          </div>
-        </aside>
+      <div className="relative h-full overflow-y-auto bg-parchment py-6 px-2 sm:px-4">
+        {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
+        <LetterPageEditor
+          key={resetKey}
+          wardName={vars.wardName}
+          today={vars.today}
+          assignedDate={vars.date}
+          initialJson={initialJson}
+          initialMarkdown={initialMarkdown}
+          onChange={onChange}
+          onInitial={onInitial}
+          ariaLabel={`Letter for ${vars.speakerName}`}
+        />
       </div>
     </>
   );
