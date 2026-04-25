@@ -43,15 +43,17 @@ export function ProgramTemplateEditor({ initialStateJson, onChange, ariaLabel }:
   };
 
   return (
-    <div className="rounded-lg border border-border bg-chalk overflow-hidden">
+    <div className="rounded-lg border border-border bg-chalk overflow-hidden flex flex-col lg:h-full lg:min-h-0">
       <LexicalComposer initialConfig={initialConfig}>
-        <ProgramToolbar />
-        <div className="relative">
+        <div className="sticky top-0 z-10 bg-parchment-2 shadow-[0_1px_0_var(--color-border)]">
+          <ProgramToolbar />
+        </div>
+        <div className="relative flex-1 min-h-0 overflow-y-auto">
           <RichTextPlugin
             contentEditable={
               <ContentEditable
                 aria-label={ariaLabel}
-                className="prose prose-sm max-w-none min-h-[280px] px-4 py-3 font-serif text-walnut text-[15px] leading-relaxed focus:outline-none"
+                className="prose prose-sm max-w-none min-h-70 px-4 py-3 font-serif text-walnut text-[15px] leading-relaxed focus:outline-none"
               />
             }
             placeholder={

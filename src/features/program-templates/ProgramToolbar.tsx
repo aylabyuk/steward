@@ -79,7 +79,7 @@ export function ProgramToolbar() {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, mode);
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-parchment-2/40 flex-wrap">
+    <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border flex-wrap">
       <ProgramToolbarButton
         ariaLabel="Undo"
         label="↶"
