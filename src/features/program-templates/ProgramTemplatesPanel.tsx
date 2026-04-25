@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { ProgramTemplateKey } from "@/lib/types";
 import { ProgramTemplateEditor } from "./ProgramTemplateEditor";
-import { buildSampleVariables, renderProgramState } from "./programTemplateRender";
+import { buildSampleVariables } from "./programTemplateRender";
+import { ScaledProgramPreview } from "./ScaledProgramPreview";
 
 interface Props {
   activeKey: ProgramTemplateKey;
@@ -65,18 +66,21 @@ export function ProgramTemplatesPanel({
           )}
         </div>
         <aside className="flex flex-col gap-2 min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-            Preview · sample data
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium flex items-baseline justify-between">
+            <span>Preview · sample data</span>
+            <span className="text-walnut-3">
+              {activeKey === "congregationProgram" ? "11 × 8.5 in landscape" : "8.5 × 11 in"}
+            </span>
           </div>
-          <div className="rounded-lg border border-border bg-chalk p-5 prose prose-sm max-w-none font-serif text-walnut">
-            {editorJson ? (
-              renderProgramState(editorJson, previewVars)
-            ) : (
+          {editorJson ? (
+            <ScaledProgramPreview variant={activeKey} json={editorJson} variables={previewVars} />
+          ) : (
+            <div className="rounded-lg border border-border bg-chalk p-5">
               <p className="font-serif italic text-walnut-3">
                 Empty template — start typing on the left.
               </p>
-            )}
-          </div>
+            </div>
+          )}
         </aside>
       </div>
     </div>
