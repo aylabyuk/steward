@@ -1,40 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { SaveBar } from "@/components/ui/SaveBar";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import type { ProgramMargins, ProgramTemplateKey } from "@/lib/types";
+import type { ProgramTemplateKey } from "@/lib/types";
 import { DEFAULT_MARGINS } from "@/features/program-templates/ProgramCanvas";
-import { ProgramTemplatesPanel } from "@/features/program-templates/ProgramTemplatesPanel";
 import { defaultProgramTemplate } from "@/features/program-templates/programTemplateDefaults";
 import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
 import { writeProgramTemplate } from "@/features/program-templates/writeProgramTemplate";
+import { ProgramPageEditor } from "@/features/page-editor/ProgramPageEditor";
 
-const TABS: { key: ProgramTemplateKey; label: string; description: string }[] = [
-  {
-    key: "conductingProgram",
-    label: "Conducting copy",
-    description:
-      "Bishop's script-cue edition. Variables can stand in for speakers, hymns, leadership and announcements.",
-  },
-  {
-    key: "congregationProgram",
-    label: "Congregation copy",
-    description:
-      "Two-column printable program seen by the ward. Same variable surface; different layout at print time.",
-  },
+const TABS: { key: ProgramTemplateKey; label: string }[] = [
+  { key: "conductingProgram", label: "Conducting copy" },
+  { key: "congregationProgram", label: "Congregation copy" },
 ];
 
 function nowLabel(): string {
   return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-/** /settings/templates/programs — conducting + congregation editors
- *  (Lexical, JSON-state storage). State is the source of truth; the
- *  preview pane resolves variable chips against sample data so the
- *  bishop sees the printed output as they author. */
+/** /settings/templates/programs — WYSIWYG editor for both program
+ *  copies. The editor IS the page; chrome (eyebrow + paper frame)
+ *  renders around a single contenteditable. Tab switches between
+ *  conducting + congregation copies, each with its own draft state. */
 export function ProgramTemplatesPage(): React.ReactElement {
   useFullViewportLayout();
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -45,39 +35,36 @@ export function ProgramTemplatesPage(): React.ReactElement {
   const conducting = useProgramTemplate("conductingProgram");
   const congregation = useProgramTemplate("congregationProgram");
   const activeDoc = activeKey === "conductingProgram" ? conducting.data : congregation.data;
-  const stored = activeDoc?.editorStateJson;
-  const storedMargins = activeDoc?.margins;
-  const initialJson = stored ?? defaultProgramTemplate(activeKey);
-  const initialMargins = storedMargins ?? DEFAULT_MARGINS[activeKey];
-  const isUsingDefault = !stored;
+  const initialJson = activeDoc?.editorStateJson ?? defaultProgramTemplate(activeKey);
+  const usingDefault = !activeDoc?.editorStateJson;
 
   const [draft, setDraft] = useState<Record<ProgramTemplateKey, string | null>>({
     conductingProgram: null,
     congregationProgram: null,
   });
-  const [marginDraft, setMarginDraft] = useState<Record<ProgramTemplateKey, ProgramMargins | null>>(
-    { conductingProgram: null, congregationProgram: null },
-  );
+  const [editorKey, setEditorKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
+  // Reset the editor's mount key whenever the active tab flips so
+  // Lexical hydrates from the new tab's initial state.
+  useEffect(() => {
+    setEditorKey((k) => k + 1);
+  }, [activeKey]);
+
   const editorJson = draft[activeKey] ?? initialJson;
-  const margins = marginDraft[activeKey] ?? initialMargins;
-  const jsonDirty = draft[activeKey] !== null && draft[activeKey] !== initialJson;
-  const marginsDirty =
-    marginDraft[activeKey] !== null &&
-    JSON.stringify(marginDraft[activeKey]) !== JSON.stringify(initialMargins);
-  const dirty = jsonDirty || marginsDirty;
+  const dirty = draft[activeKey] !== null && draft[activeKey] !== initialJson;
 
   async function save() {
     if (!wardId) return;
     const jsonToSave = draft[activeKey] ?? initialJson;
-    const marginsToSave = marginDraft[activeKey] ?? initialMargins;
+    const margins = activeDoc?.margins ?? DEFAULT_MARGINS[activeKey];
     setSaving(true);
     setError(null);
     try {
-      await writeProgramTemplate(wardId, activeKey, jsonToSave, marginsToSave);
+      await writeProgramTemplate(wardId, activeKey, jsonToSave, margins);
+      setDraft((d) => ({ ...d, [activeKey]: null }));
       setSavedAt(nowLabel());
     } catch (e) {
       setError(friendlyWriteError(e));
@@ -86,7 +73,11 @@ export function ProgramTemplatesPage(): React.ReactElement {
     }
   }
 
-  const activeTab = TABS.find((t) => t.key === activeKey)!;
+  function discard() {
+    setDraft((d) => ({ ...d, [activeKey]: null }));
+    setEditorKey((k) => k + 1);
+    setError(null);
+  }
 
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
@@ -102,13 +93,21 @@ export function ProgramTemplatesPage(): React.ReactElement {
             Program templates
           </h1>
         </div>
-        <button
-          type="button"
-          onClick={() => window.close()}
-          className="shrink-0 rounded-md border border-border-strong bg-chalk px-3 py-1.5 font-sans text-[12.5px] font-semibold text-walnut-2 hover:bg-parchment-2"
-        >
-          Close
-        </button>
+        <div className="flex items-center gap-2">
+          {usingDefault && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-brass-soft bg-brass-soft/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep">
+              <span aria-hidden>★</span>
+              System default — save to lock in
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="shrink-0 rounded-md border border-border-strong bg-chalk px-3 py-1.5 font-sans text-[12.5px] font-semibold text-walnut-2 hover:bg-parchment-2"
+          >
+            Close
+          </button>
+        </div>
       </header>
 
       <nav className="shrink-0 flex gap-1 border-b border-border bg-parchment-2/30 px-5 sm:px-8 pt-3">
@@ -128,28 +127,23 @@ export function ProgramTemplatesPage(): React.ReactElement {
         ))}
       </nav>
 
-      <ProgramTemplatesPanel
-        activeKey={activeKey}
-        description={activeTab.description}
-        ariaLabel={activeTab.label}
-        editorJson={editorJson}
-        margins={margins}
-        canEdit={canEdit}
-        usingDefault={isUsingDefault && draft[activeKey] === null}
-        onChange={(json) => setDraft((d) => ({ ...d, [activeKey]: json }))}
-        onMarginsChange={(m) => setMarginDraft((d) => ({ ...d, [activeKey]: m }))}
-      />
+      <div className="flex-1 lg:min-h-0 overflow-y-auto bg-parchment py-8 px-4 sm:px-8 pb-24">
+        <ProgramPageEditor
+          key={`${activeKey}-${editorKey}`}
+          variant={activeKey}
+          initialJson={editorJson}
+          onChange={(json) => setDraft((d) => ({ ...d, [activeKey]: json }))}
+          ariaLabel={TABS.find((t) => t.key === activeKey)!.label}
+          editorDisabled={!canEdit}
+        />
+      </div>
 
       <SaveBar
         dirty={dirty && canEdit}
         saving={saving}
         savedAt={savedAt}
         error={error}
-        onDiscard={() => {
-          setDraft((d) => ({ ...d, [activeKey]: null }));
-          setMarginDraft((d) => ({ ...d, [activeKey]: null }));
-          setError(null);
-        }}
+        onDiscard={discard}
         onSave={() => void save()}
       />
     </main>
