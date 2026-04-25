@@ -51,8 +51,6 @@ export function PrepareInvitationLetterTab({
         {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
         <LetterPageEditor
           key={resetKey}
-          wardName={vars.wardName}
-          today={vars.today}
           assignedDate={vars.date}
           initialJson={initialJson}
           initialMarkdown={initialMarkdown}

@@ -8,13 +8,9 @@ import {
 import { PageCanvas } from "./PageCanvas";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PageStylePanel } from "./PageStylePanel";
-import { LetterChrome } from "./chrome/LetterChrome";
+import { PageToolbar } from "./toolbar/PageToolbar";
 
 interface Props {
-  /** Ward name for the chrome eyebrow ("Sacrament Meeting · Ward Name"). */
-  wardName: string;
-  /** Today's date label, e.g. "April 21, 2026". */
-  today: string;
   /** Sample assigned-Sunday date for the AssignedSundayCalloutNode in
    *  authoring view. Per-speaker contexts (wizard, send) override this. */
   assignedDate: string;
@@ -49,8 +45,6 @@ interface Props {
  *  Lexical contenteditable that owns greeting + body + assigned-Sunday
  *  callout + signature + closing scripture as one continuous flow. */
 export function LetterPageEditor({
-  wardName,
-  today,
   assignedDate,
   initialJson,
   initialMarkdown,
@@ -82,12 +76,15 @@ export function LetterPageEditor({
           onInitial={onInitial}
           ariaLabel={ariaLabel}
           slashCommands={LETTER_SLASH_COMMANDS}
-          page={(contentEditable) => (
-            <PageCanvas
-              variant="letter"
+          pageToolbar={
+            <PageToolbar
+              slashCommands={LETTER_SLASH_COMMANDS}
               pageStyle={pageStyle}
-              chrome={<LetterChrome wardName={wardName} today={today} />}
-            >
+              {...(onPageStyleChange ? { onPageStyleChange } : {})}
+            />
+          }
+          page={(contentEditable) => (
+            <PageCanvas variant="letter" pageStyle={pageStyle} chrome={null}>
               <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
                 {contentEditable}
               </div>

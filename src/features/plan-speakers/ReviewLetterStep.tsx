@@ -110,8 +110,6 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
       <div className="flex-1 min-h-0 overflow-y-auto bg-parchment py-6 px-4 sm:px-8 pb-4">
         <LetterPageEditor
           key={form.resetKey}
-          wardName={wardName}
-          today={vars.today}
           assignedDate={vars.date}
           initialJson={form.initialJson}
           initialMarkdown={form.initialMarkdown}

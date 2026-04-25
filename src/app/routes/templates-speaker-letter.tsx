@@ -68,8 +68,6 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
         {editor.seeded && (
           <LetterPageEditor
             key={editor.editorKey}
-            wardName={wardName}
-            today={SAMPLE.today}
             assignedDate={SAMPLE.date}
             initialJson={editor.initialJson}
             initialMarkdown={editor.initialMarkdown}

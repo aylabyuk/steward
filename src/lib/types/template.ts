@@ -17,11 +17,34 @@ import { z } from "zod";
  * `{{inviterName}}`, `{{today}}`) — interpolation happens at render
  * time. See `src/features/templates/interpolate.ts`.
  */
+/** Standard print sizes in CSS inches. Kept as a closed enum so the
+ *  toolbar's page-size dropdown can render predictable options + the
+ *  print-time canvas can dimension itself without a runtime lookup. */
+export const PAGE_SIZES = ["letter", "legal", "tabloid", "a4", "a5", "executive", "folio"] as const;
+export const pageSizeSchema = z.enum(PAGE_SIZES);
+export type PageSize = z.infer<typeof pageSizeSchema>;
+
+export const PAGE_SIZE_INCHES: Record<PageSize, { width: number; height: number; label: string }> =
+  {
+    letter: { width: 8.5, height: 11, label: 'Letter (8.5" × 11")' },
+    legal: { width: 8.5, height: 14, label: 'Legal (8.5" × 14")' },
+    tabloid: { width: 11, height: 17, label: 'Tabloid (11" × 17")' },
+    a4: { width: 8.27, height: 11.69, label: 'A4 (8.27" × 11.69")' },
+    a5: { width: 5.83, height: 8.27, label: 'A5 (5.83" × 8.27")' },
+    executive: { width: 7.25, height: 10.5, label: 'Executive (7.25" × 10.5")' },
+    folio: { width: 8.5, height: 13, label: 'Folio (8.5" × 13")' },
+  };
+
+export const orientationSchema = z.enum(["portrait", "landscape"]);
+export type Orientation = z.infer<typeof orientationSchema>;
+
 export const letterPageStyleSchema = z.object({
   borderColor: z.enum(["none", "walnut", "brass-deep", "bordeaux"]).default("none"),
   borderWidth: z.number().min(0).max(4).default(0),
   borderStyle: z.enum(["solid", "double", "rule-and-ornament"]).default("solid"),
   paper: z.enum(["chalk", "parchment", "parchment-2"]).default("chalk"),
+  pageSize: pageSizeSchema.default("letter"),
+  orientation: orientationSchema.default("portrait"),
 });
 export type LetterPageStyle = z.infer<typeof letterPageStyleSchema>;
 
@@ -121,6 +144,9 @@ export const programMarginsSchema = z.object({
 export type ProgramMargins = z.infer<typeof programMarginsSchema>;
 
 export const programTemplateSchema = z.object({
+  /** Page-frame style + paper size — same shape as the letter template
+   *  so PageCanvas + the page-size toolbar can be reused unchanged. */
+  pageStyle: letterPageStyleSchema.nullable().optional(),
   editorStateJson: z.string(),
   /** Page margins in inches. Optional for back-compat with templates
    *  saved before the margin editor shipped — falls back to the
