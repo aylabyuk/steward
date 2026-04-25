@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { PAGE_SIZE_INCHES, type LetterPageStyle } from "@/lib/types/template";
+import { MARGIN_PRESET_INCHES, PAGE_SIZE_INCHES, type LetterPageStyle } from "@/lib/types/template";
 
 interface Props {
   /** Variant drives the chrome surface kind. The actual paper size +
@@ -47,7 +47,10 @@ export function PageCanvas({ variant, pageStyle, chrome, children, compact }: Pr
   const landscape = (pageStyle?.orientation ?? "portrait") === "landscape";
   const widthIn = landscape ? size.height : size.width;
   const heightIn = landscape ? size.width : size.height;
-  const padTopIn = variant === "letter" ? 0.85 : 0.6;
+  const margins = MARGIN_PRESET_INCHES[pageStyle?.margins ?? "normal"];
+  const padHIn = margins.horizontal;
+  const padTopIn = variant === "letter" ? margins.vertical + 0.1 : margins.vertical;
+  const padBottomIn = margins.vertical;
   return (
     <div
       className={cn(
@@ -66,10 +69,10 @@ export function PageCanvas({ variant, pageStyle, chrome, children, compact }: Pr
           : {
               width: `${widthIn}in`,
               minHeight: `${heightIn}in`,
-              paddingLeft: variant === "letter" ? "0.75in" : "0.6in",
-              paddingRight: variant === "letter" ? "0.75in" : "0.6in",
+              paddingLeft: `${padHIn}in`,
+              paddingRight: `${padHIn}in`,
               paddingTop: `${padTopIn}in`,
-              paddingBottom: "0.6in",
+              paddingBottom: `${padBottomIn}in`,
               ...(borderWidth > 0 ? { borderWidth: `${borderWidth}px`, borderStyle: "solid" } : {}),
             }
       }
