@@ -46,6 +46,12 @@ export function useDocSnapshot<T>(
     return onSnapshot(
       ref,
       (snap) => {
+        console.log("[sub-snapshot]", {
+          path: key,
+          exists: snap.exists(),
+          fromCache: snap.metadata.fromCache,
+          hasPendingWrites: snap.metadata.hasPendingWrites,
+        });
         // Firestore fires onSnapshot up to twice on first subscribe:
         // once with `metadata.fromCache: true` (local cache) before
         // the server response arrives, and again with `fromCache:
