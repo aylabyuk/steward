@@ -138,7 +138,7 @@ export function ProgramTemplatesPage(): React.ReactElement {
         ))}
       </nav>
 
-      <div className="flex-1 lg:min-h-0 overflow-y-auto bg-parchment py-8 px-4 sm:px-8 pb-24">
+      <div className="flex-1 min-h-0 pb-16">
         <ProgramPageEditor
           key={`${activeKey}-${editorKey}`}
           variant={activeKey}

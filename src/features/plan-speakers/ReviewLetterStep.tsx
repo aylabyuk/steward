@@ -107,7 +107,7 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
       />
-      <div className="flex-1 min-h-0 overflow-y-auto bg-parchment py-6 px-4 sm:px-8 pb-4">
+      <div className="flex-1 min-h-0">
         <LetterPageEditor
           key={form.resetKey}
           assignedDate={vars.date}
