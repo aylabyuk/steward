@@ -67,14 +67,20 @@ export function ProgramTemplatesPanel({
 
   return (
     <div className="flex-1 lg:min-h-0 flex flex-col px-4 sm:px-8 pt-4 pb-24 lg:overflow-hidden">
-      <div className="shrink-0 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
-        <p className="font-serif italic text-[14px] text-walnut-2">{description}</p>
-        {usingDefault && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brass-soft bg-brass-soft/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep">
-            <span aria-hidden>★</span>
-            System default — save to lock in
-          </span>
-        )}
+      <div className="shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
+        <p className="font-serif italic text-[14px] text-walnut-2 min-w-0 flex-1">{description}</p>
+        <div className="flex items-center gap-2 shrink-0">
+          {usingDefault && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brass-soft bg-brass-soft/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep">
+              <span aria-hidden>★</span>
+              System default — save to lock in
+            </span>
+          )}
+          <SwapSidesButton
+            previewSide={previewSide}
+            onClick={() => setPreviewSide((s) => (s === "left" ? "right" : "left"))}
+          />
+        </div>
       </div>
       <div
         ref={containerRef}
@@ -87,12 +93,8 @@ export function ProgramTemplatesPanel({
           )}
           style={{ "--editor-w": `${editorWidth}px` } as React.CSSProperties}
         >
-          <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium flex items-center justify-between">
-            <span>Editor</span>
-            <SwapSidesButton
-              previewSide={previewSide}
-              onClick={() => setPreviewSide((s) => (s === "left" ? "right" : "left"))}
-            />
+          <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
+            Editor
           </div>
           <div className="lg:flex-1 lg:min-h-0 flex flex-col">
             <ProgramTemplateEditor
