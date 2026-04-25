@@ -3,6 +3,7 @@ import { LetterRenderContextProvider } from "./letterRenderContext";
 import { LETTER_EDITOR_NODES, buildInitialLetterState } from "./letterEditorConfig";
 import { PageCanvas } from "./PageCanvas";
 import { PageEditorComposer } from "./PageEditorComposer";
+import { PageStylePanel } from "./PageStylePanel";
 import { LetterChrome } from "./chrome/LetterChrome";
 
 interface Props {
@@ -25,6 +26,10 @@ interface Props {
   /** Fires on every user edit with the editor state serialised as
    *  Lexical JSON. */
   onChange: (stateJson: string) => void;
+  /** Fires when the bishop edits the page style. Omit to hide the
+   *  page-style panel (e.g. read-only contexts, the wizard's per-
+   *  speaker preview). */
+  onPageStyleChange?: (next: LetterPageStyle) => void;
   ariaLabel: string;
   /** When true, the editor is read-only (e.g. the user lacks edit
    *  permission). */
@@ -43,13 +48,23 @@ export function LetterPageEditor({
   initialMarkdown,
   pageStyle,
   onChange,
+  onPageStyleChange,
   ariaLabel,
   editorDisabled,
 }: Props) {
   const initialState = initialJson ?? buildInitialLetterState(initialMarkdown);
   return (
     <LetterRenderContextProvider assignedDate={assignedDate}>
-      <div className={editorDisabled ? "opacity-60 pointer-events-none" : undefined}>
+      <div
+        className={`relative max-w-[8.5in] mx-auto ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
+      >
+        {onPageStyleChange && (
+          <PageStylePanel
+            value={pageStyle}
+            onChange={onPageStyleChange}
+            disabled={editorDisabled}
+          />
+        )}
         <PageEditorComposer
           namespace="LetterPageEditor"
           nodes={LETTER_EDITOR_NODES}
@@ -60,11 +75,7 @@ export function LetterPageEditor({
             <PageCanvas
               variant="letter"
               pageStyle={pageStyle}
-              chrome={
-                <LetterChrome wardName={wardName} today={today}>
-                  {null}
-                </LetterChrome>
-              }
+              chrome={<LetterChrome wardName={wardName} today={today} />}
             >
               <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
                 {contentEditable}
