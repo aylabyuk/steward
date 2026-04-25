@@ -92,7 +92,7 @@ export function ProgramTemplatesPanel({
           <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
             Editor
           </div>
-          <div className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+          <div className="lg:flex-1 lg:min-h-0 flex flex-col">
             <ProgramTemplateEditor
               key={activeKey}
               ariaLabel={ariaLabel}
@@ -100,7 +100,7 @@ export function ProgramTemplatesPanel({
               onChange={onChange}
             />
             {!canEdit && (
-              <p className="mt-2 font-sans text-[12px] text-walnut-3">
+              <p className="mt-2 font-sans text-[12px] text-walnut-3 shrink-0">
                 Read-only — only active members can edit ward templates.
               </p>
             )}
