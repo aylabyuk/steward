@@ -1,25 +1,21 @@
 import { cn } from "@/lib/cn";
-import type { LetterPageStyle } from "@/lib/types/template";
+import { PAGE_SIZE_INCHES, type LetterPageStyle } from "@/lib/types/template";
 
 interface Props {
-  /** Variant drives the natural width + chrome surface. `letter` is
-   *  8.5 × 11 in print; `conducting` / `congregation` add pagination
-   *  in Phase 3. */
+  /** Variant drives the chrome surface kind. The actual paper size +
+   *  orientation come from `pageStyle`. */
   variant: "letter" | "conducting" | "congregation";
-  /** Page-level styling (border + paper) — falls back to the variant
-   *  default when omitted. Edited via `PageStylePanel` (Phase 1
-   *  follow-up). */
+  /** Page-level styling (border / paper / size / orientation). Falls
+   *  back to letter-portrait when omitted. */
   pageStyle?: LetterPageStyle;
   /** Render-only chrome (ornament, eyebrow, title, date). Sits as a
    *  CSS-positioned overlay around the editable region. */
   chrome: React.ReactNode;
-  /** The Lexical contenteditable subtree. The canvas reserves vertical
-   *  space for the chrome and lets the contenteditable claim the rest
-   *  of the page; long content extends the page naturally. */
+  /** The Lexical contenteditable subtree. */
   children: React.ReactNode;
   /** When true, tighten paddings + shadows for an on-screen authoring
    *  view. The print path keeps `false` so the canvas renders at true
-   *  letter-sheet proportions. */
+   *  paper-sheet proportions. */
   compact?: boolean;
 }
 
@@ -36,19 +32,22 @@ const BORDER_COLOR_CLASS: Record<NonNullable<LetterPageStyle["borderColor"]>, st
   bordeaux: "border-bordeaux",
 };
 
-/** The visible 8.5 × 11 paper that the page editor lives inside.
- *  Chalk background, drop shadow, exact-DPI dimensions in CSS `in`
- *  units, printer margins as inner padding. Chrome overlays the
- *  content area; the editable region scrolls inside the page —
- *  the page itself sits inside whatever scroll container the host
- *  route provides. */
+/** The visible paper sheet that the page editor lives inside. Sized
+ *  in CSS `in` units so authoring + print paths share the same
+ *  geometry. The bishop picks paper size + orientation via the
+ *  page-style controls; the inner padding (margins) defaults to
+ *  ~0.6–0.85 in. */
 export function PageCanvas({ variant, pageStyle, chrome, children, compact }: Props) {
   const paperClass = pageStyle?.paper ? PAPER_BG_CLASS[pageStyle.paper] : "bg-chalk";
   const borderClass = pageStyle?.borderColor
     ? BORDER_COLOR_CLASS[pageStyle.borderColor]
     : "border-transparent";
   const borderWidth = pageStyle?.borderWidth ?? 0;
-  const isLetter = variant === "letter";
+  const size = PAGE_SIZE_INCHES[pageStyle?.pageSize ?? "letter"];
+  const landscape = (pageStyle?.orientation ?? "portrait") === "landscape";
+  const widthIn = landscape ? size.height : size.width;
+  const heightIn = landscape ? size.width : size.height;
+  const padTopIn = variant === "letter" ? 0.85 : 0.6;
   return (
     <div
       className={cn(
@@ -56,13 +55,23 @@ export function PageCanvas({ variant, pageStyle, chrome, children, compact }: Pr
         "text-walnut font-serif relative mx-auto",
         compact
           ? "w-full max-w-[680px] px-8 py-10 rounded-md shadow-elev-3"
-          : isLetter
-            ? "w-[8.5in] min-h-[11in] px-[0.75in] pt-[0.85in] pb-[0.6in] shadow-[0_12px_40px_rgba(58,37,25,0.18)]"
-            : "w-[8.5in] min-h-[11in] px-[0.6in] pt-[0.6in] pb-[0.6in] shadow-[0_12px_40px_rgba(58,37,25,0.18)]",
+          : "shadow-[0_12px_40px_rgba(58,37,25,0.18)]",
         borderWidth > 0 && borderClass,
       )}
       style={
-        borderWidth > 0 ? { borderWidth: `${borderWidth}px`, borderStyle: "solid" } : undefined
+        compact
+          ? borderWidth > 0
+            ? { borderWidth: `${borderWidth}px`, borderStyle: "solid" }
+            : undefined
+          : {
+              width: `${widthIn}in`,
+              minHeight: `${heightIn}in`,
+              paddingLeft: variant === "letter" ? "0.75in" : "0.6in",
+              paddingRight: variant === "letter" ? "0.75in" : "0.6in",
+              paddingTop: `${padTopIn}in`,
+              paddingBottom: "0.6in",
+              ...(borderWidth > 0 ? { borderWidth: `${borderWidth}px`, borderStyle: "solid" } : {}),
+            }
       }
     >
       <div
