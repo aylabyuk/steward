@@ -45,13 +45,6 @@ export const PROGRAM_VARIABLES: readonly ProgramVariable[] = [
 
   // Speakers
   {
-    token: "speakersSequence",
-    label: "Speakers (with mid-meeting interlude)",
-    group: "speakers",
-    sample:
-      "1. Brother Park — On the still small voice\n2. Musical number — Sister Lee\n3. Sister Reeves — Faith and works",
-  },
-  {
     token: "speaker1",
     label: "Speaker 1",
     group: "speakers",
@@ -64,6 +57,13 @@ export const PROGRAM_VARIABLES: readonly ProgramVariable[] = [
     sample: "Sister Reeves — Faith and works",
   },
   { token: "speaker3", label: "Speaker 3", group: "speakers", sample: "" },
+  { token: "speaker4", label: "Speaker 4", group: "speakers", sample: "" },
+  {
+    token: "midMeetingInterlude",
+    label: "Mid-meeting interlude",
+    group: "speakers",
+    sample: "Musical number — Sister Lee",
+  },
 
   // Free-form
   { token: "openingPrayer", label: "Opening prayer", group: "free-form", sample: "Brother Tan" },
