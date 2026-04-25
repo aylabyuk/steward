@@ -66,8 +66,8 @@ describe("SundayCard", () => {
     expect(heading).toBeInTheDocument();
   });
 
-  it("shows Add speaker button", () => {
+  it("shows Plan speakers link", () => {
     renderCard();
-    expect(screen.getByText("Add speaker")).toBeInTheDocument();
+    expect(screen.getByText("Plan speakers")).toBeInTheDocument();
   });
 });

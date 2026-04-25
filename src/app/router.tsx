@@ -7,6 +7,8 @@ import { AcceptInvitePage } from "./routes/accept-invite";
 import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
+import { NotificationsPage } from "./routes/notifications";
+import { PlanSpeakersRoute } from "./routes/plan-speakers";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { ProfilePage } from "./routes/profile";
 import { TemplatesPage } from "./routes/templates";
@@ -28,6 +30,7 @@ export const router = createBrowserRouter([
       { path: "settings", element: <Navigate to="/schedule" replace /> },
       { path: "settings/ward", element: <WardSettingsPage /> },
       { path: "settings/profile", element: <ProfilePage /> },
+      { path: "settings/notifications", element: <NotificationsPage /> },
       { path: "settings/templates", element: <TemplatesPage /> },
       {
         path: "ward/:wardId/invitations/:invitationId/view",
@@ -53,6 +56,7 @@ export const router = createBrowserRouter([
         path: "/week/:date/speaker/:speakerId/prepare",
         element: <PrepareInvitationPage />,
       },
+      { path: "/plan/:date", element: <PlanSpeakersRoute /> },
     ],
   },
   // Accept-invite skips AuthGate because the invitee isn't a ward member
