@@ -71,7 +71,7 @@ export function MessageTemplateCardDesktop({
         {previewNode}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border flex items-center justify-end gap-2">
+      <div className="mt-4 pt-4 border-t border-border lg:border-t-0 lg:pt-0 flex items-center justify-end gap-2">
         <button
           type="button"
           onClick={onReset}
