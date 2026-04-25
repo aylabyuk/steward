@@ -7,6 +7,7 @@ import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import type { ProgramTemplateKey } from "@/lib/types";
 import { ProgramTemplatesPanel } from "@/features/program-templates/ProgramTemplatesPanel";
+import { defaultProgramTemplate } from "@/features/program-templates/programTemplateDefaults";
 import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
 import { writeProgramTemplate } from "@/features/program-templates/writeProgramTemplate";
 
@@ -42,10 +43,12 @@ export function ProgramTemplatesPage(): React.ReactElement {
   const [activeKey, setActiveKey] = useState<ProgramTemplateKey>("conductingProgram");
   const conducting = useProgramTemplate("conductingProgram");
   const congregation = useProgramTemplate("congregationProgram");
-  const initialJson =
+  const stored =
     activeKey === "conductingProgram"
-      ? (conducting.data?.editorStateJson ?? null)
-      : (congregation.data?.editorStateJson ?? null);
+      ? conducting.data?.editorStateJson
+      : congregation.data?.editorStateJson;
+  const initialJson = stored ?? defaultProgramTemplate(activeKey);
+  const isUsingDefault = !stored;
 
   const [draft, setDraft] = useState<Record<ProgramTemplateKey, string | null>>({
     conductingProgram: null,
@@ -56,7 +59,7 @@ export function ProgramTemplatesPage(): React.ReactElement {
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const editorJson = draft[activeKey] ?? initialJson;
-  const dirty = draft[activeKey] !== null && draft[activeKey] !== (initialJson ?? "");
+  const dirty = draft[activeKey] !== null && draft[activeKey] !== initialJson;
 
   async function save() {
     if (!wardId) return;
@@ -122,6 +125,7 @@ export function ProgramTemplatesPage(): React.ReactElement {
         ariaLabel={activeTab.label}
         editorJson={editorJson}
         canEdit={canEdit}
+        usingDefault={isUsingDefault && draft[activeKey] === null}
         onChange={(json) => setDraft((d) => ({ ...d, [activeKey]: json }))}
       />
 
