@@ -24,13 +24,21 @@ export function useDocSnapshot<T>(
 ): DocSubState<T> {
   const authStatus = useAuthStore((s) => s.status);
   const signedIn = authStatus === "signed_in";
-  const authLoading = authStatus === "loading";
   const ready =
     signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
+  // Always start in `loading: true` — the very first React commit
+  // happens *before* any effect can subscribe, so callers can't be
+  // allowed to treat that pre-subscription frame as "loaded with no
+  // data". (Earlier code used `ready || authLoading` here, which
+  // surfaced loading=false in the brief window where auth had
+  // resolved but `wardId` was still being hydrated from the
+  // current-ward store. The speaker-letter editor read that as "no
+  // template exists, seed defaults" and locked seeded=true before
+  // the real onSnapshot fired.)
   const [state, setState] = useState<DocSubState<T>>({
     data: null,
-    loading: ready || authLoading,
+    loading: true,
     error: null,
   });
 
@@ -91,13 +99,14 @@ export function useCollectionSnapshot<T>(
 ): SubState<WithId<T>[]> {
   const authStatus = useAuthStore((s) => s.status);
   const signedIn = authStatus === "signed_in";
-  const authLoading = authStatus === "loading";
   const ready =
     signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
+  // Same rationale as useDocSnapshot — always start loading=true so
+  // callers don't read the pre-subscription frame as "loaded empty".
   const [state, setState] = useState<SubState<WithId<T>[]>>({
     data: [],
-    loading: ready || authLoading,
+    loading: true,
     error: null,
   });
 
