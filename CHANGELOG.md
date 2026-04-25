@@ -7,6 +7,69 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-04-25
+
+The big plan-speakers release: the per-Sunday "Assign speakers" modal
+is replaced by a guided three-step wizard, the app shell gets a
+mobile-first top bar and a new bordeaux S app icon, and Notifications
+move out of the Profile page onto a dedicated surface with a
+quick-toggle in the user menu.
+
+### Added
+
+- **Guided plan-speakers wizard at `/plan/:date`**. Replaces the
+  per-Sunday Assign-speakers modal with a focused, three-step flow:
+  Roster (name + topic + role for up to four speakers) → Invitations
+  (one speaker at a time, choose Send / Resend / Print / Skip and
+  edit the letter inline before firing) → Summary. The contact
+  prompt collects email/phone inline when missing, the print path
+  prompts "Did you hand-deliver?" to mark invited, and a sticky
+  `WizardFooter` keeps the primary CTA visible at every step on both
+  mobile and desktop.
+
+- **Type-to-confirm speaker delete**. Removing a persisted speaker
+  from the roster requires typing their name, with extra-stern
+  warning copy when the speaker has already been invited or
+  confirmed for the Sunday.
+
+- **Edit / Preview tab toggle on the mobile letter editor**.
+  Replaces the floating Preview FAB with an inline tab so the page
+  has a single primary CTA.
+
+- **Standalone Notifications page at `/settings/notifications`**.
+  Moved out of Profile so device toggle + quiet hours have a
+  dedicated surface. The user menu surfaces a Notifications row
+  with a quick on/off switch for the current device, and an About
+  row (disabled, "Coming soon").
+
+### Changed
+
+- **App icon and brand mark redesigned** to a bordeaux S monogram
+  (replaces the V mark and the slate-S favicon). The PWA manifest
+  and `<meta theme-color>` align with the new palette.
+
+- **Mobile top bar condensed**. Drops the "Steward" wordmark and
+  inline version chip on small screens — only the monogram + ward
+  name + avatar render. The version moves into the user-menu
+  dropdown as a release-notes link.
+
+- **Subscribe prompt now requires opt-in**. The "Not now" escape on
+  "Get notified about program updates" is gone so bishopric users
+  can't dismiss push notifications without enabling them.
+
+### Fixed
+
+- **Edge-to-edge rendering on full-viewport pages**. The plan-speakers
+  wizard, speaker-letter template editor, and speaker-invite landing
+  now disable the global `scrollbar-gutter: stable` rule on `<html>`
+  while mounted, so the right edge no longer paints an empty
+  scrollbar band.
+
+### Infrastructure
+
+- New `useFullViewportLayout` hook centralizes the gutter-override
+  pattern for any future full-viewport page.
+
 ## [0.10.1] — 2026-04-25
 
 ### Fixed
@@ -1343,7 +1406,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/aylabyuk/steward/releases/tag/v0.11.0
 [0.10.1]: https://github.com/aylabyuk/steward/releases/tag/v0.10.1
 [0.10.0]: https://github.com/aylabyuk/steward/releases/tag/v0.10.0
 [0.9.13]: https://github.com/aylabyuk/steward/releases/tag/v0.9.13
