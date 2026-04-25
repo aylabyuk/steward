@@ -11,6 +11,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { Klass, LexicalEditor, LexicalNode } from "lexical";
 import { FloatingSelectionToolbar } from "@/features/program-templates/FloatingSelectionToolbar";
 import { lexicalTheme } from "@/features/program-templates/lexicalTheme";
+import { ImagePlugin } from "./plugins/ImagePlugin";
 import { PageEditorAutoLink } from "./plugins/PageEditorAutoLink";
 import { PageEditorMarkdownShortcuts } from "./plugins/PageEditorMarkdownShortcuts";
 
@@ -94,6 +95,7 @@ export function PageEditorComposer({
       <HorizontalRulePlugin />
       <PageEditorAutoLink />
       <PageEditorMarkdownShortcuts />
+      <ImagePlugin />
       <FloatingSelectionToolbar />
       <StateJsonOnChangePlugin onChange={onChange} onInitial={onInitial} />
     </LexicalComposer>
