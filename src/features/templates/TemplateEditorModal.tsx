@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
-import { EditorSection } from "./SpeakerLetterEditor";
+import { EditorSection } from "./MarkdownEditor";
 import { TemplateVariableList, type TemplateVariableDoc } from "./TemplateVariableList";
 
 interface Props {

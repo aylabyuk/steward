@@ -12,6 +12,7 @@ import { PlanSpeakersRoute } from "./routes/plan-speakers";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { ProfilePage } from "./routes/profile";
 import { TemplatesPage } from "./routes/templates";
+import { ProgramTemplatesPage } from "./routes/templates-programs";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speaker-letter";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
         path: "/settings/templates/speaker-letter",
         element: <SpeakerLetterTemplatePage />,
       },
+      { path: "/settings/templates/programs", element: <ProgramTemplatesPage /> },
       {
         path: "/week/:date/speaker/:speakerId/prepare",
         element: <PrepareInvitationPage />,

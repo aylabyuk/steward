@@ -3,8 +3,7 @@ import { cn } from "@/lib/cn";
 import { EditPreviewToggle, type LetterViewMode } from "./EditPreviewToggle";
 import { PrintOnlyLetter } from "./PrintOnlyLetter";
 import { ScaledLetterPreview } from "./ScaledLetterPreview";
-import { SpeakerLetterGuide } from "./SpeakerLetterGuide";
-import { EditorSection } from "./SpeakerLetterEditor";
+import { EditorSection } from "./MarkdownEditor";
 import { interpolate } from "./interpolate";
 import type { LetterVars } from "./prepareInvitationVars";
 
@@ -62,8 +61,7 @@ export function PrepareInvitationLetterTab({
               />
             </div>
           )}
-          <div className={cn("flex flex-col gap-4", showPreviewOnMobile && "hidden lg:flex")}>
-            <SpeakerLetterGuide />
+          <div className={cn("flex flex-col gap-8", showPreviewOnMobile && "hidden lg:flex")}>
             <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
             <EditorSection
               label="Footer (scripture)"

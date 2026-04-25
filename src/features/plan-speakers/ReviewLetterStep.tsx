@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
@@ -7,10 +7,13 @@ import { useAuthStore } from "@/stores/authStore";
 import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
-import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
+import { interpolate } from "@/features/templates/interpolate";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
+import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
+import { SpeakerLetterPanel } from "@/features/speaker-letter-template/SpeakerLetterPanel";
 import { PostPrintConfirmStep } from "./PostPrintConfirmStep";
 import { ReviewLetterFooter } from "./ReviewLetterFooter";
+import { useReviewLetterAction } from "./useReviewLetterAction";
 import { useWizardActions } from "./useWizardActions";
 import type { ActionMode } from "./SpeakerActionPicker";
 
@@ -30,7 +33,6 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
   const { data: letterTemplate } = useSpeakerLetterTemplate();
   const { invitation } = useLatestInvitation(wardId, date, speaker.id);
   const actions = useWizardActions();
-  const [postPrint, setPostPrint] = useState(false);
 
   const inviterName =
     me?.data.displayName ?? authUser?.displayName ?? authUser?.email ?? "The bishopric";
@@ -56,42 +58,18 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
     [speaker.data.name, speaker.data.topic, date, wardName, inviterName],
   );
 
-  async function handlePrimary() {
-    if (mode === "send") {
-      await form.persistOverrides();
-      const ok = await actions.sendFresh({
-        wardId,
-        date,
-        speakerId: speaker.id,
-        speakerName: speaker.data.name,
-        ...(speaker.data.topic ? { speakerTopic: speaker.data.topic } : {}),
-        speakerEmail: (speaker.data.email ?? "").trim(),
-        speakerPhone: (speaker.data.phone ?? "").trim(),
-        inviterName,
-        bishopReplyToEmail: authUser?.email ?? "",
-        bodyMarkdown: form.letterBody,
-        footerMarkdown: form.letterFooter,
-      });
-      if (ok) onComplete();
-    } else if (mode === "resend") {
-      if (!invitation) {
-        actions.setError("No prior invitation found to resend.");
-        return;
-      }
-      await form.persistOverrides();
-      const ok = await actions.resend({
-        wardId,
-        invitationId: invitation.invitationId,
-        email: (speaker.data.email ?? "").trim(),
-        phone: (speaker.data.phone ?? "").trim(),
-      });
-      if (ok) onComplete();
-    } else {
-      await form.persistOverrides();
-      window.print();
-      setPostPrint(true);
-    }
-  }
+  const { handle, postPrint } = useReviewLetterAction({
+    wardId,
+    date,
+    speaker,
+    mode,
+    inviterName,
+    bishopEmail: authUser?.email ?? "",
+    invitationId: invitation?.invitationId,
+    form,
+    actions,
+    onComplete,
+  });
 
   if (postPrint) {
     return (
@@ -117,31 +95,41 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
     );
   }
 
+  const renderedBody = interpolate(form.letterBody, vars);
+  const renderedFooter = interpolate(form.letterFooter, vars);
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
-        <div className="px-5 sm:px-8 py-3 lg:h-full lg:flex lg:flex-col">
-          <PrepareInvitationLetterTab
-            key={form.resetKey}
-            body={form.letterBody}
-            footer={form.letterFooter}
-            setBody={form.setLetterBody}
-            setFooter={form.setLetterFooter}
-            vars={vars}
-          />
-          {(form.error || actions.error) && (
-            <p className="font-sans text-[12.5px] text-bordeaux mt-2">
-              {form.error ?? actions.error}
-            </p>
-          )}
-        </div>
-      </div>
-      <ReviewLetterFooter
-        mode={mode}
-        busy={actions.busy}
-        onBack={onBack}
-        onPrimary={handlePrimary}
+      <PrintOnlyLetter
+        wardName={wardName}
+        assignedDate={vars.date}
+        today={vars.today}
+        bodyMarkdown={renderedBody}
+        footerMarkdown={renderedFooter}
       />
+      <SpeakerLetterPanel
+        wardName={wardName}
+        sampleDate={vars.date}
+        sampleToday={vars.today}
+        body={form.letterBody}
+        footer={form.letterFooter}
+        renderedBody={renderedBody}
+        renderedFooter={renderedFooter}
+        canEdit={true}
+        usingDefault={false}
+        resetKey={form.resetKey}
+        onBodyChange={form.setLetterBody}
+        onFooterChange={form.setLetterFooter}
+        description={`Edit the letter for ${speaker.data.name}. Variables resolve at send time.`}
+        namespace="speakerInviteWizard"
+        reserveBottomGap={false}
+      />
+      {(form.error || actions.error) && (
+        <p className="shrink-0 px-5 sm:px-8 pb-2 font-sans text-[12.5px] text-bordeaux">
+          {form.error ?? actions.error}
+        </p>
+      )}
+      <ReviewLetterFooter mode={mode} busy={actions.busy} onBack={onBack} onPrimary={handle} />
     </div>
   );
 }

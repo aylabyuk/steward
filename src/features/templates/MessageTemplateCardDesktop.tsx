@@ -1,4 +1,4 @@
-import { EditorSection } from "./SpeakerLetterEditor";
+import { EditorSection } from "./MarkdownEditor";
 import { TemplateVariableList, type TemplateVariableDoc } from "./TemplateVariableList";
 
 const SMS_SEGMENT = 160;
@@ -67,26 +67,27 @@ export function MessageTemplateCardDesktop({
             disabled={!canEdit}
           />
           {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => void onSave()}
-              disabled={!canEdit || saving}
-              className="font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-            >
-              {saving ? "Saving…" : "Save template"}
-            </button>
-            <button
-              type="button"
-              onClick={onReset}
-              disabled={!canEdit || saving || body === defaultBody}
-              className="font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 disabled:opacity-60"
-            >
-              Reset to default
-            </button>
-          </div>
         </div>
         {previewNode}
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-border lg:border-t-0 lg:pt-0 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onReset}
+          disabled={!canEdit || saving || body === defaultBody}
+          className="font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 disabled:opacity-60"
+        >
+          Reset to default
+        </button>
+        <button
+          type="button"
+          onClick={() => void onSave()}
+          disabled={!canEdit || saving}
+          className="font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        >
+          {saving ? "Saving…" : "Save template"}
+        </button>
       </div>
     </section>
   );
