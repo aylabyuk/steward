@@ -4,9 +4,11 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import {
   $convertFromMarkdownString,
@@ -14,6 +16,7 @@ import {
   TRANSFORMERS,
   type Transformer,
 } from "@lexical/markdown";
+import { FloatingSelectionToolbar } from "@/features/program-templates/FloatingSelectionToolbar";
 import { lexicalTheme } from "@/features/program-templates/lexicalTheme";
 import { ProgramToolbar } from "@/features/program-templates/ProgramToolbar";
 import type { ProgramVariable } from "@/features/program-templates/programVariables";
@@ -33,7 +36,7 @@ interface Props {
   placeholder?: string;
 }
 
-const NODES = [HeadingNode, QuoteNode, ListNode, ListItemNode, VariableChipNode];
+const NODES = [HeadingNode, QuoteNode, ListNode, ListItemNode, LinkNode, VariableChipNode];
 const ALL_TRANSFORMERS: Transformer[] = [VARIABLE_CHIP_MARKDOWN_TRANSFORMER, ...TRANSFORMERS];
 
 /** Canonical markdown editor for the app — Lexical inside, plain
@@ -90,6 +93,8 @@ export function MarkdownEditor({
         </div>
         <HistoryPlugin />
         <ListPlugin />
+        <LinkPlugin />
+        <FloatingSelectionToolbar />
         <MarkdownOnChange onChange={onChange} />
       </LexicalComposer>
     </div>
