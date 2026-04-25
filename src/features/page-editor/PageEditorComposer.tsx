@@ -14,6 +14,8 @@ import { lexicalTheme } from "@/features/program-templates/lexicalTheme";
 import { ImagePlugin } from "./plugins/ImagePlugin";
 import { PageEditorAutoLink } from "./plugins/PageEditorAutoLink";
 import { PageEditorMarkdownShortcuts } from "./plugins/PageEditorMarkdownShortcuts";
+import { SlashCommandPlugin } from "./plugins/SlashCommandPlugin";
+import type { SlashCommand } from "./plugins/SlashCommandRegistry";
 
 interface Props {
   /** Stable namespace — drives editor identity for collaborative state
@@ -45,6 +47,10 @@ interface Props {
    *  `<LetterChrome>` already inside. The composer renders the
    *  contenteditable as its child. */
   page: (contentEditable: React.ReactNode) => React.ReactNode;
+  /** Optional slash-command palette. Each editor surface hands in
+   *  its own commands (letter / program / message-template) — host
+   *  editors that don't want a slash menu omit this. */
+  slashCommands?: ReadonlyArray<SlashCommand>;
 }
 
 /** Wraps `LexicalComposer` with the union of plugins every WYSIWYG
@@ -62,6 +68,7 @@ export function PageEditorComposer({
   ariaLabel,
   pageToolbar,
   page,
+  slashCommands,
 }: Props) {
   const initialConfig = {
     namespace,
@@ -96,6 +103,7 @@ export function PageEditorComposer({
       <PageEditorAutoLink />
       <PageEditorMarkdownShortcuts />
       <ImagePlugin />
+      {slashCommands && <SlashCommandPlugin commands={slashCommands} />}
       <FloatingSelectionToolbar />
       <StateJsonOnChangePlugin onChange={onChange} onInitial={onInitial} />
     </LexicalComposer>
