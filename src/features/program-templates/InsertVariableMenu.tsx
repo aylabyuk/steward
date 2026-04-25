@@ -1,24 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, $isRangeSelection } from "lexical";
-import { GROUP_LABEL, PROGRAM_VARIABLES, type ProgramVariable } from "./programVariables";
+import type { ProgramVariable } from "./programVariables";
 import { $createVariableChipNode } from "./nodes/VariableChipNode";
 
-const GROUPS: ProgramVariable["group"][] = [
-  "meeting",
-  "leadership",
-  "hymns",
-  "speakers",
-  "free-form",
-];
+interface Props {
+  /** Full list of variables the host editor exposes. The menu groups
+   *  them by `variable.group` in the order they first appear. */
+  variables: readonly ProgramVariable[];
+  /** Map from group key → human label shown above each group. */
+  groupLabels: Readonly<Record<string, string>>;
+}
 
-/** Toolbar dropdown that lists every program-template variable
+/** Toolbar dropdown that lists every variable the host editor exposes,
  *  grouped by purpose. Picking one inserts a `VariableChipNode` at
- *  the current selection and closes the menu. */
-export function InsertVariableMenu() {
+ *  the current selection and closes the menu. Generic — works for the
+ *  program template editor and the speaker-letter editor. */
+export function InsertVariableMenu({ variables, groupLabels }: Props) {
   const [editor] = useLexicalComposerContext();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const groupOrder: string[] = [];
+  for (const v of variables) if (!groupOrder.includes(v.group)) groupOrder.push(v.group);
 
   useEffect(() => {
     if (!open) return;
@@ -61,13 +65,13 @@ export function InsertVariableMenu() {
           role="menu"
           className="absolute left-0 top-full mt-1 w-72 max-h-80 overflow-y-auto rounded-lg border border-border bg-chalk shadow-elev-3 z-50 py-1"
         >
-          {GROUPS.map((group) => {
-            const items = PROGRAM_VARIABLES.filter((v) => v.group === group);
+          {groupOrder.map((group) => {
+            const items = variables.filter((v) => v.group === group);
             if (items.length === 0) return null;
             return (
               <div key={group} className="py-0.5">
                 <div className="px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-[0.16em] text-walnut-3">
-                  {GROUP_LABEL[group]}
+                  {groupLabels[group] ?? group}
                 </div>
                 {items.map((v) => (
                   <button
