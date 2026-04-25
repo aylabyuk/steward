@@ -1,10 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProgramTemplateKey } from "@/lib/types";
+import { cn } from "@/lib/cn";
 import { EditorResizeHandle } from "./EditorResizeHandle";
 import { MobileProgramPreviewButton } from "./MobileProgramPreviewButton";
 import { ProgramTemplateEditor } from "./ProgramTemplateEditor";
 import { buildSampleVariables } from "./programTemplateRender";
 import { ScaledProgramPreview } from "./ScaledProgramPreview";
+import { SwapSidesButton } from "./SwapSidesButton";
+import {
+  MIN_EDITOR_WIDTH,
+  MIN_PREVIEW_WIDTH,
+  type PreviewSide,
+  readStoredSide,
+  readStoredWidth,
+  writeStoredSide,
+  writeStoredWidth,
+} from "./panelLayoutStorage";
 
 interface Props {
   activeKey: ProgramTemplateKey;
@@ -16,26 +27,10 @@ interface Props {
   onChange: (json: string) => void;
 }
 
-const STORAGE_KEY = "steward.programTemplates.editorWidth";
-const DEFAULT_EDITOR_WIDTH = 448; // 28rem
-const MIN_EDITOR_WIDTH = 320;
-const MIN_PREVIEW_WIDTH = 360;
-
-function readStoredWidth(): number {
-  if (typeof window === "undefined") return DEFAULT_EDITOR_WIDTH;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const n = raw ? Number.parseInt(raw, 10) : Number.NaN;
-    return Number.isFinite(n) ? n : DEFAULT_EDITOR_WIDTH;
-  } catch {
-    return DEFAULT_EDITOR_WIDTH;
-  }
-}
-
-/** Two-column body of the program-templates page: Lexical editor on
- *  the left, sample-data preview on the right. The split is
- *  user-resizable on desktop via the vertical handle between the
- *  columns; the chosen width persists in localStorage. */
+/** Two-column body of the program-templates page: Lexical editor +
+ *  sample-data preview. Bishop can drag the splitter to widen the
+ *  editor and click the swap button to flip the preview to the other
+ *  side. Both preferences persist in localStorage. */
 export function ProgramTemplatesPanel({
   activeKey,
   description,
@@ -49,26 +44,26 @@ export function ProgramTemplatesPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartWidth = useRef(0);
   const [editorWidth, setEditorWidth] = useState<number>(readStoredWidth);
+  const [previewSide, setPreviewSide] = useState<PreviewSide>(readStoredSide);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, String(editorWidth));
-    } catch {
-      /* localStorage unavailable — preference doesn't persist, fine. */
-    }
-  }, [editorWidth]);
+  useEffect(() => writeStoredWidth(editorWidth), [editorWidth]);
+  useEffect(() => writeStoredSide(previewSide), [previewSide]);
 
   function startDrag() {
     dragStartWidth.current = editorWidth;
   }
-
   function onDrag(dx: number) {
     const container = containerRef.current;
     if (!container) return;
+    // When the editor is on the *right* of the handle, dragging the
+    // handle right makes the editor narrower — invert the delta sign.
+    const signed = previewSide === "left" ? -dx : dx;
     const max = Math.max(MIN_EDITOR_WIDTH, container.clientWidth - MIN_PREVIEW_WIDTH);
-    const next = Math.max(MIN_EDITOR_WIDTH, Math.min(max, dragStartWidth.current + dx));
-    setEditorWidth(next);
+    setEditorWidth(Math.max(MIN_EDITOR_WIDTH, Math.min(max, dragStartWidth.current + signed)));
   }
+
+  const editorOrderClass = previewSide === "left" ? "lg:order-3" : "lg:order-1";
+  const previewOrderClass = previewSide === "left" ? "lg:order-1" : "lg:order-3";
 
   return (
     <div className="flex-1 lg:min-h-0 flex flex-col px-4 sm:px-8 pt-4 pb-24 lg:overflow-hidden">
@@ -86,11 +81,18 @@ export function ProgramTemplatesPanel({
         className="flex flex-col gap-6 lg:flex-row lg:gap-0 lg:flex-1 lg:min-h-0"
       >
         <div
-          className="flex flex-col gap-2 w-full lg:h-full lg:min-h-0 lg:w-(--editor-w) lg:shrink-0"
+          className={cn(
+            "flex flex-col gap-2 w-full lg:h-full lg:min-h-0 lg:w-(--editor-w) lg:shrink-0",
+            editorOrderClass,
+          )}
           style={{ "--editor-w": `${editorWidth}px` } as React.CSSProperties}
         >
-          <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
-            Editor
+          <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium flex items-center justify-between">
+            <span>Editor</span>
+            <SwapSidesButton
+              previewSide={previewSide}
+              onClick={() => setPreviewSide((s) => (s === "left" ? "right" : "left"))}
+            />
           </div>
           <div className="lg:flex-1 lg:min-h-0 flex flex-col">
             <ProgramTemplateEditor
@@ -107,7 +109,12 @@ export function ProgramTemplatesPanel({
           </div>
         </div>
         <EditorResizeHandle onDragStart={startDrag} onDrag={onDrag} />
-        <aside className="hidden lg:flex flex-col gap-2 min-w-0 lg:h-full lg:min-h-0 lg:flex-1">
+        <aside
+          className={cn(
+            "hidden lg:flex flex-col gap-2 min-w-0 lg:h-full lg:min-h-0 lg:flex-1",
+            previewOrderClass,
+          )}
+        >
           <div className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium flex items-baseline justify-between">
             <span>Preview · sample data</span>
             <span className="text-walnut-3">
