@@ -21,10 +21,11 @@ const noop = () => {};
  *  its read-only/locked mode so the modal dimensions stay identical
  *  to step 1 — only the remove button drops out, and the band above
  *  the detail fields swaps between "Prepare invitation" (planned) and
- *  "Already X — open conversation" (non-planned). Declined speakers
- *  are hidden — they have a different re-invite flow. */
+ *  "Already X — open conversation" (non-planned). All speakers are
+ *  shown — including declined ones — so the launcher mirrors the
+ *  full roster the bishop saw in step 1. */
 export function SpeakerInvitationLauncher({ date, speakers }: Props) {
-  const rows = speakers.filter((s) => s.data.status !== "declined");
+  const rows = speakers;
 
   if (rows.length === 0) {
     return (

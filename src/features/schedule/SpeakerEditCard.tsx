@@ -1,9 +1,20 @@
+import type { SpeakerStatus } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { SoftLockedNote } from "./SoftLockedNote";
 import { SpeakerCardHeader } from "./SpeakerCardHeader";
 import { SpeakerEditFields } from "./SpeakerEditFields";
 import type { Draft } from "./speakerDraft";
 import { SpeakerLockedBand } from "./SpeakerLockedBand";
+
+// Card surface tone follows the speaker's status so the bishop can
+// scan the grid by colour. Backgrounds stay light so the soft-lock
+// note + parchment input fields remain legible.
+const STATUS_BG: Record<SpeakerStatus, string> = {
+  planned: "bg-chalk border-border",
+  invited: "bg-parchment-2/40 border-brass-soft",
+  confirmed: "bg-success-soft/30 border-success-soft",
+  declined: "bg-danger-soft/30 border-danger-soft",
+};
 
 interface Props {
   draft: Draft;
@@ -42,12 +53,7 @@ export function SpeakerEditCard({
   const softLocked = !readOnly && draft.status !== "planned";
   const showLockSlot = !readOnly && (softLocked || Boolean(reserveLockSlot));
   return (
-    <div
-      className={cn(
-        "border rounded-lg p-3 flex flex-col",
-        softLocked ? "bg-parchment-2/40 border-brass-soft" : "bg-chalk border-border",
-      )}
-    >
+    <div className={cn("border rounded-lg p-3 flex flex-col", STATUS_BG[draft.status])}>
       <SpeakerCardHeader
         index={index}
         status={draft.status}

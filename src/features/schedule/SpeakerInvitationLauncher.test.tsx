@@ -90,12 +90,12 @@ describe("SpeakerInvitationLauncher", () => {
     expect(screen.getByText(/No speakers yet/i)).toBeInTheDocument();
   });
 
-  it("hides declined speakers from the grid", () => {
+  it("shows declined speakers alongside the rest of the roster (parity with step 1)", () => {
     renderLauncher([
       row("s1", makeSpeaker({ name: "Planned Person" })),
       row("s2", makeSpeaker({ name: "Declined Person", status: "declined" })),
     ]);
     expect(screen.getByDisplayValue("Planned Person")).toBeInTheDocument();
-    expect(screen.queryByDisplayValue("Declined Person")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("Declined Person")).toBeInTheDocument();
   });
 });
