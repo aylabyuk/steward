@@ -7,6 +7,7 @@ import { kindLabel, type KindVariant } from "./kindLabel";
 import { SpeakerEditList, type SpeakerEditListHandle } from "./SpeakerEditList";
 import { SpeakerInvitationLauncher } from "./SpeakerInvitationLauncher";
 import { AssignDialog } from "./AssignDialog";
+import { pendingInviteLabel } from "./pendingInviteLabel";
 import { EditFooter, InviteFooter } from "./AssignDialogFooters";
 import { SundayCardBody } from "./SundayCardBody";
 import { SundayCardCancelled } from "./SundayCardCancelled";
@@ -88,6 +89,7 @@ export function SundayCard({
 
   const title =
     step === "invite" ? `Send invitations — ${formatShortDate(date)}` : formatShortDate(date);
+  const subtitle = pendingInviteLabel(speakers);
 
   return (
     <article className={cn("rounded-lg border border-border shadow-elev-1", CARD_BG[kind.variant])}>
@@ -126,6 +128,7 @@ export function SundayCard({
       <AssignDialog
         open={assignDialogOpen}
         title={title}
+        {...(subtitle ? { subtitle } : {})}
         onClose={() => setAssignDialogOpen(false)}
         footerSlot={
           step === "edit" ? (

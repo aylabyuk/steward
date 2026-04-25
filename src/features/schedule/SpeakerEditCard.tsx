@@ -39,7 +39,11 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove, locked }: Pr
   const readOnly = Boolean(locked);
   return (
     <div className="bg-chalk border border-border rounded-lg p-3 flex flex-col">
-      <SpeakerCardHeader index={index} onRemove={readOnly ? null : onRemove} />
+      <SpeakerCardHeader
+        index={index}
+        status={draft.status}
+        onRemove={readOnly ? null : onRemove}
+      />
 
       <SpeakerLockedBand
         draft={draft}
