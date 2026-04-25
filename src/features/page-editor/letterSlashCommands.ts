@@ -4,16 +4,9 @@ import {
   $isRangeSelection,
   type LexicalEditor,
 } from "lexical";
-import {
-  $createHeadingNode,
-  $createQuoteNode,
-  type HeadingTagType,
-} from "@lexical/rich-text";
+import { $createHeadingNode, $createQuoteNode, type HeadingTagType } from "@lexical/rich-text";
 import { $setBlocksType } from "@lexical/selection";
-import {
-  INSERT_ORDERED_LIST_COMMAND,
-  INSERT_UNORDERED_LIST_COMMAND,
-} from "@lexical/list";
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/react/LexicalHorizontalRuleNode";
 import { INSERT_IMAGE_COMMAND } from "./plugins/ImagePlugin";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
@@ -38,7 +31,8 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
     description: "Large section heading",
     keywords: "h1, title",
     icon: "H1",
-    onSelect: (editor) => setBlock(editor, () => $createHeadingNode("h1" as HeadingTagType) as never),
+    onSelect: (editor) =>
+      setBlock(editor, () => $createHeadingNode("h1" as HeadingTagType) as never),
   },
   {
     id: "heading-2",
@@ -46,7 +40,8 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
     description: "Medium section heading",
     keywords: "h2",
     icon: "H2",
-    onSelect: (editor) => setBlock(editor, () => $createHeadingNode("h2" as HeadingTagType) as never),
+    onSelect: (editor) =>
+      setBlock(editor, () => $createHeadingNode("h2" as HeadingTagType) as never),
   },
   {
     id: "heading-3",
@@ -54,7 +49,8 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
     description: "Small section heading",
     keywords: "h3",
     icon: "H3",
-    onSelect: (editor) => setBlock(editor, () => $createHeadingNode("h3" as HeadingTagType) as never),
+    onSelect: (editor) =>
+      setBlock(editor, () => $createHeadingNode("h3" as HeadingTagType) as never),
   },
   {
     id: "bullet-list",
