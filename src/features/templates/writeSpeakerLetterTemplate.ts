@@ -25,8 +25,18 @@ export async function writeSpeakerLetterTemplate(
 ): Promise<void> {
   reportSaving();
   try {
+    console.log("[wysiwyg-writer] entering", {
+      wardId,
+      jsonLen: input.editorStateJson.length,
+      jsonHead: input.editorStateJson.slice(0, 60),
+      pageStyle: input.pageStyle,
+    });
     const state = JSON.parse(input.editorStateJson);
     const { bodyMarkdown, footerMarkdown } = legacyFieldsFromState(state);
+    console.log("[wysiwyg-writer] derived legacy fields", {
+      bodyLen: bodyMarkdown.length,
+      footerLen: footerMarkdown.length,
+    });
     await setDoc(doc(db, "wards", wardId, "templates", "speakerLetter"), {
       editorStateJson: input.editorStateJson,
       pageStyle: input.pageStyle ?? null,
@@ -34,8 +44,10 @@ export async function writeSpeakerLetterTemplate(
       footerMarkdown,
       updatedAt: serverTimestamp(),
     });
+    console.log("[wysiwyg-writer] setDoc resolved");
     reportSaved();
   } catch (e) {
+    console.error("[wysiwyg-writer] failed", e);
     reportSaveError(e);
     throw e;
   }

@@ -44,6 +44,13 @@ export function useSpeakerLetterTemplateEditor() {
 
   useEffect(() => {
     if (loading || seeded) return;
+    console.log("[wysiwyg-seed] from snapshot", {
+      hasTemplate: !!template,
+      hasInitialJson: !!initialJson,
+      initialJsonLen: initialJson?.length ?? 0,
+      initialJsonHead: initialJson?.slice(0, 60),
+      initialPageStyle,
+    });
     setSavedJson(initialJson);
     setStateJson(initialJson);
     setSavedPageStyle(initialPageStyle);
@@ -57,7 +64,18 @@ export function useSpeakerLetterTemplateEditor() {
     JSON.stringify(pageStyle) !== JSON.stringify(savedPageStyle);
 
   async function save() {
-    if (!wardId || !stateJson) return;
+    console.log("[wysiwyg-save] called", {
+      wardId,
+      stateJsonLen: stateJson?.length ?? 0,
+      stateJsonHead: stateJson?.slice(0, 60),
+      savedJsonLen: savedJson?.length ?? 0,
+      pageStyle,
+      dirty,
+    });
+    if (!wardId || !stateJson) {
+      console.warn("[wysiwyg-save] aborted — missing wardId or stateJson", { wardId, hasStateJson: !!stateJson });
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -65,11 +83,13 @@ export function useSpeakerLetterTemplateEditor() {
         editorStateJson: stateJson,
         pageStyle: pageStyle ?? undefined,
       });
+      console.log("[wysiwyg-save] wrote successfully");
       setSavedJson(stateJson);
       setSavedPageStyle(pageStyle);
       setUsingDefault(false);
       setSavedAt(nowLabel());
     } catch (e) {
+      console.error("[wysiwyg-save] write threw", e);
       setError(friendlyWriteError(e));
     } finally {
       setSaving(false);
@@ -88,6 +108,10 @@ export function useSpeakerLetterTemplateEditor() {
    *  false and `save()` always has content to write — even when the
    *  bishop only edits page-style. */
   function captureInitial(json: string) {
+    console.log("[wysiwyg-capture] initial state from editor", {
+      jsonLen: json.length,
+      jsonHead: json.slice(0, 60),
+    });
     setStateJson(json);
     setSavedJson(json);
   }
