@@ -62,15 +62,14 @@ export function PrepareInvitationLetterTab({
               />
             </div>
           )}
-          <div
-            className={cn(
-              "flex flex-col gap-4",
-              showPreviewOnMobile && "hidden lg:flex",
-            )}
-          >
+          <div className={cn("flex flex-col gap-4", showPreviewOnMobile && "hidden lg:flex")}>
             <SpeakerLetterGuide />
             <EditorSection label="Letter body" initialMarkdown={body} onChange={setBody} />
-            <EditorSection label="Footer (scripture)" initialMarkdown={footer} onChange={setFooter} />
+            <EditorSection
+              label="Footer (scripture)"
+              initialMarkdown={footer}
+              onChange={setFooter}
+            />
           </div>
         </div>
         <aside className="hidden lg:flex flex-col gap-2 min-w-0 lg:h-full lg:min-h-0">
