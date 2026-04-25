@@ -75,6 +75,7 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
             initialMarkdown={editor.initialMarkdown}
             pageStyle={editor.initialPageStyle ?? undefined}
             onChange={editor.setStateJson}
+            onInitial={editor.captureInitial}
             onPageStyleChange={canEdit ? editor.setPageStyle : undefined}
             ariaLabel="Speaker invitation letter"
             editorDisabled={!canEdit}

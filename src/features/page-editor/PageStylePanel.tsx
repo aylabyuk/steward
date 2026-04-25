@@ -43,7 +43,18 @@ export function PageStylePanel({ value, onChange, disabled }: Props) {
   const style = value ?? DEFAULT_STYLE;
 
   function patch(partial: Partial<LetterPageStyle>) {
-    onChange({ ...style, ...partial });
+    const next = { ...style, ...partial };
+    // Auto-couple color & width so the bishop never sets a color
+    // they can't see (and never sets a width without a color).
+    if ("borderColor" in partial) {
+      if (next.borderColor !== "none" && next.borderWidth < 1) next.borderWidth = 2;
+      if (next.borderColor === "none") next.borderWidth = 0;
+    }
+    if ("borderWidth" in partial) {
+      if (next.borderWidth === 0) next.borderColor = "none";
+      else if (next.borderColor === "none") next.borderColor = "walnut";
+    }
+    onChange(next);
   }
 
   return (

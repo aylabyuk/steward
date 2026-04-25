@@ -27,6 +27,12 @@ interface Props {
   /** Fires on every user edit with the editor state serialised as
    *  Lexical JSON. The host owns dirty-tracking + persistence. */
   onChange: (stateJson: string) => void;
+  /** Fires once after hydration with the initial editor state. The
+   *  host should use this to seed *both* the working state and the
+   *  saved baseline so dirty-tracking starts clean — without it the
+   *  bishop's pageStyle-only edits couldn't be saved (the editor's
+   *  current content was never available to the writer). */
+  onInitial?: (stateJson: string) => void;
   /** Aria-label for the contenteditable surface. */
   ariaLabel: string;
   /** Optional content slot for the page-level toolbar (block-type +
@@ -51,6 +57,7 @@ export function PageEditorComposer({
   nodes,
   initialState,
   onChange,
+  onInitial,
   ariaLabel,
   pageToolbar,
   page,
@@ -88,32 +95,44 @@ export function PageEditorComposer({
       <PageEditorAutoLink />
       <PageEditorMarkdownShortcuts />
       <FloatingSelectionToolbar />
-      <StateJsonOnChangePlugin onChange={onChange} />
+      <StateJsonOnChangePlugin onChange={onChange} onInitial={onInitial} />
     </LexicalComposer>
   );
 }
 
-/** Surfaces the editor state as Lexical JSON. Skips the initial
- *  hydration so the parent doesn't get its own `initialState` echoed
- *  back. Pulled out of the composer so the file stays under the
- *  150-LOC cap. */
-function StateJsonOnChangePlugin({ onChange }: { onChange: (json: string) => void }): null {
+interface StatePluginProps {
+  onChange: (json: string) => void;
+  onInitial?: (json: string) => void;
+}
+
+/** Surfaces the editor state as Lexical JSON. The very first update
+ *  (the hydration tick) goes to `onInitial` so the host can seed
+ *  both its working state and saved baseline; subsequent dirty
+ *  updates flow to `onChange`. Pulled out of the composer so the
+ *  file stays under the 150-LOC cap. */
+function StateJsonOnChangePlugin({ onChange, onInitial }: StatePluginProps): null {
   const [editor] = useLexicalComposerContext();
   const onChangeRef = useRef(onChange);
-  const skipFirst = useRef(true);
+  const onInitialRef = useRef(onInitial);
+  const seenFirst = useRef(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+  useEffect(() => {
+    onInitialRef.current = onInitial;
+  }, [onInitial]);
 
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState, dirtyElements, dirtyLeaves }) => {
-      if (skipFirst.current) {
-        skipFirst.current = false;
+      const json = JSON.stringify(editorState.toJSON());
+      if (!seenFirst.current) {
+        seenFirst.current = true;
+        onInitialRef.current?.(json);
         return;
       }
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-      onChangeRef.current(JSON.stringify(editorState.toJSON()));
+      onChangeRef.current(json);
     });
   }, [editor]);
   return null;
