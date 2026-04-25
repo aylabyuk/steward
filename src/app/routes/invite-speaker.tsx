@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router";
+import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { SpeakerInvitationChat } from "@/features/invitations/SpeakerInvitationChat";
 import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
 import { useConversationUnread } from "@/features/invitations/useConversationUnread";
@@ -24,6 +25,7 @@ import { ExpiredState, NonReadyState, PrintToolbar, SessionGate } from "./invite
  * same browser stays untouched.
  */
 export function SpeakerInvitationLandingPage(): React.ReactElement {
+  useFullViewportLayout();
   const { wardId, invitationId, token } = useParams<{
     wardId: string;
     invitationId: string;
