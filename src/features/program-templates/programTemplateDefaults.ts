@@ -1,76 +1,5 @@
 import type { ProgramTemplateKey } from "@/lib/types";
-
-/* -------------------------------------------------------------- */
-/* Tiny serialised-Lexical-node builders                          */
-/* -------------------------------------------------------------- */
-/*  We write the default templates by composing little JSON-like  */
-/*  objects rather than hand-typing the whole SerializedEditorState  */
-/*  blob — keeps the source readable and lets us add new templates  */
-/*  later without copy-pasting `version: 1` everywhere.            */
-
-interface JsonNode {
-  type: string;
-  version: number;
-  [key: string]: unknown;
-}
-
-const COMMON = { format: "", indent: 0, direction: null } as const;
-const TEXT_BASE = { format: 0, mode: "normal", style: "", detail: 0 } as const;
-
-const text = (value: string, format: 0 | 1 | 2 | 3 = 0): JsonNode => ({
-  type: "text",
-  version: 1,
-  ...TEXT_BASE,
-  text: value,
-  format,
-});
-const bold = (value: string) => text(value, 1);
-const italic = (value: string) => text(value, 2);
-const chip = (token: string): JsonNode => ({ type: "variable-chip", version: 1, token });
-const p = (...children: JsonNode[]): JsonNode => ({
-  type: "paragraph",
-  version: 1,
-  ...COMMON,
-  children,
-});
-const h = (level: 1 | 2 | 3, ...children: JsonNode[]): JsonNode => ({
-  type: "heading",
-  version: 1,
-  ...COMMON,
-  tag: `h${level}`,
-  children,
-});
-const quote = (...children: JsonNode[]): JsonNode => ({
-  type: "quote",
-  version: 1,
-  ...COMMON,
-  children,
-});
-const li = (...children: JsonNode[]): JsonNode => ({
-  type: "listitem",
-  version: 1,
-  ...COMMON,
-  value: 1,
-  children,
-});
-const ul = (...items: JsonNode[]): JsonNode => ({
-  type: "list",
-  version: 1,
-  ...COMMON,
-  listType: "bullet",
-  start: 1,
-  tag: "ul",
-  children: items,
-});
-
-const stringify = (children: JsonNode[]): string =>
-  JSON.stringify({
-    root: { type: "root", version: 1, ...COMMON, children },
-  });
-
-/* -------------------------------------------------------------- */
-/* Defaults                                                       */
-/* -------------------------------------------------------------- */
+import { bold, chip, h, italic, li, p, quote, stringify, text, ul } from "./lexicalNodeBuilders";
 
 const conducting = stringify([
   h(1, text("Conductor's copy")),
@@ -121,7 +50,13 @@ const conducting = stringify([
   ),
 
   h(3, text("Speakers")),
-  p(chip("speakersSequence")),
+  ul(
+    li(p(bold("Speaker 1: "), chip("speaker1"))),
+    li(p(bold("Speaker 2: "), chip("speaker2"))),
+    li(p(bold("Mid-meeting interlude: "), chip("midMeetingInterlude"))),
+    li(p(bold("Speaker 3: "), chip("speaker3"))),
+    li(p(bold("Speaker 4: "), chip("speaker4"))),
+  ),
 
   quote(
     italic("Thank earlier participants. Introduce "),
@@ -160,7 +95,13 @@ const congregation = stringify([
   ul(li(p(bold("Sacrament hymn: "), chip("sacramentHymn")))),
 
   h(3, text("Speakers & music")),
-  p(chip("speakersSequence")),
+  ul(
+    li(p(bold("Speaker 1: "), chip("speaker1"))),
+    li(p(bold("Speaker 2: "), chip("speaker2"))),
+    li(p(bold("Mid-meeting interlude: "), chip("midMeetingInterlude"))),
+    li(p(bold("Speaker 3: "), chip("speaker3"))),
+    li(p(bold("Speaker 4: "), chip("speaker4"))),
+  ),
 
   h(3, text("Closing")),
   ul(
