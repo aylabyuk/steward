@@ -4,10 +4,13 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
+import { FloatingSelectionToolbar } from "./FloatingSelectionToolbar";
 import { lexicalTheme } from "./lexicalTheme";
 import { ProgramToolbar } from "./ProgramToolbar";
 import { GROUP_LABEL, PROGRAM_VARIABLES } from "./programVariables";
@@ -25,7 +28,7 @@ interface Props {
   ariaLabel: string;
 }
 
-const NODES = [HeadingNode, QuoteNode, ListNode, ListItemNode, VariableChipNode];
+const NODES = [HeadingNode, QuoteNode, ListNode, ListItemNode, LinkNode, VariableChipNode];
 
 /** Headless Lexical editor pre-wired for program templates: rich-text
  *  + lists + history + variable chips. Wrap-and-go — the host page
@@ -67,6 +70,8 @@ export function ProgramTemplateEditor({ initialStateJson, onChange, ariaLabel }:
         </div>
         <HistoryPlugin />
         <ListPlugin />
+        <LinkPlugin />
+        <FloatingSelectionToolbar />
         <StateJsonOnChangePlugin onChange={onChange} />
       </LexicalComposer>
     </div>
