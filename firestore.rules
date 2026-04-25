@@ -32,12 +32,12 @@ service cloud.firestore {
     function isActiveMember(wardId) {
       return isSignedIn()
         && memberExists(wardId, request.auth.uid)
-        && getMember(wardId, request.auth.uid).active == true;
+        && getMember(wardId, request.auth.uid).get('active', false) == true;
     }
 
     function isActiveBishopric(wardId) {
       return isActiveMember(wardId)
-        && getMember(wardId, request.auth.uid).role == 'bishopric';
+        && getMember(wardId, request.auth.uid).get('role', '') == 'bishopric';
     }
 
     // Status may stay the same, flip to 'draft' (the edit-invalidates-approvals
@@ -55,13 +55,19 @@ service cloud.firestore {
     // `invalidated` flipping false → true (the edit-invalidates-approvals
     // path). Firestore rules don't support list comprehensions, so we
     // unroll positionally for the bounded list length (max 2 approvals).
+    //
+    // Reads use `.get(field, default)` so historical approval entries
+    // that pre-date a given field (e.g. early approvals written without
+    // `invalidated: false`) don't throw an evaluation error here — the
+    // rule should refuse the write or accept it, never crash.
     function approvalEntryPreserved(o, n) {
+      let oInvalid = o.get('invalidated', false);
+      let nInvalid = n.get('invalidated', false);
       return n.uid == o.uid
-        && n.email == o.email
-        && n.displayName == o.displayName
-        && n.approvedVersionHash == o.approvedVersionHash
-        && (n.invalidated == o.invalidated
-            || (o.invalidated == false && n.invalidated == true));
+        && n.get('email', '') == o.get('email', '')
+        && n.get('displayName', '') == o.get('displayName', '')
+        && n.get('approvedVersionHash', '') == o.get('approvedVersionHash', '')
+        && (nInvalid == oInvalid || (oInvalid == false && nInvalid == true));
     }
 
     // Invite-driven member creation: the newly-created member doc must
