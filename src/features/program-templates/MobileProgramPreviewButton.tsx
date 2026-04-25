@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
-import type { ProgramTemplateKey } from "@/lib/types";
+import type { ProgramMargins, ProgramTemplateKey } from "@/lib/types";
 import { ScaledProgramPreview } from "./ScaledProgramPreview";
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
   /** Lexical EditorState JSON, or `null` for an empty editor. */
   json: string | null;
   variables: Record<string, string>;
+  margins?: ProgramMargins;
 }
 
 /** Mobile-only FAB that opens the 8.5 × 11 program preview as a
@@ -15,7 +16,7 @@ interface Props {
  *  bishop can flip to the preview without losing the Save chrome at
  *  the bottom of the page. Walnut tone (not bordeaux) so it doesn't
  *  compete with the Save button as a primary CTA. */
-export function MobileProgramPreviewButton({ variant, json, variables }: Props) {
+export function MobileProgramPreviewButton({ variant, json, variables, margins }: Props) {
   const [open, setOpen] = useState(false);
   useLockBodyScroll(open);
 
@@ -54,7 +55,12 @@ export function MobileProgramPreviewButton({ variant, json, variables }: Props) 
           </div>
           <div className="flex-1 min-h-0 p-3 flex">
             {json ? (
-              <ScaledProgramPreview variant={variant} json={json} variables={variables} />
+              <ScaledProgramPreview
+                variant={variant}
+                json={json}
+                variables={variables}
+                margins={margins}
+              />
             ) : (
               <div className="m-auto rounded-lg border border-border bg-chalk px-6 py-4 max-w-xs text-center">
                 <p className="font-serif italic text-walnut-3 text-[13.5px]">

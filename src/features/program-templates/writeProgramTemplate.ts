@@ -1,6 +1,6 @@
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { ProgramTemplateKey } from "@/lib/types";
+import type { ProgramMargins, ProgramTemplateKey } from "@/lib/types";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 
 /** Write the conducting / congregation program template for a ward.
@@ -11,11 +11,13 @@ export async function writeProgramTemplate(
   wardId: string,
   key: ProgramTemplateKey,
   editorStateJson: string,
+  margins: ProgramMargins,
 ): Promise<void> {
   reportSaving();
   try {
     await setDoc(doc(db, "wards", wardId, "templates", key), {
       editorStateJson,
+      margins,
       updatedAt: serverTimestamp(),
     });
     reportSaved();
