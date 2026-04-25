@@ -25,6 +25,10 @@ export const useAuthStore = create<AuthState>(() => ({
   status: "loading",
   signIn: async () => {
     const provider = new GoogleAuthProvider();
+    // Force the Google account chooser so users can switch accounts after
+    // signing out. Without this, Google silently reuses the existing
+    // browser session and re-authenticates the previous account.
+    provider.setCustomParameters({ prompt: "select_account" });
     await signInWithPopup(auth, provider);
   },
   signInWithEmail: async (email, password) => {
