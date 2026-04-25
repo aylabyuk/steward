@@ -70,7 +70,13 @@ export function PageSetupPopover({ value, onChange }: Props) {
       {pop.open && (
         <div
           className="tb-popover tb-popover--page"
-          style={{ position: "absolute", top: 38, right: 0 }}
+          style={{
+            position: "absolute",
+            top: 38,
+            right: 0,
+            maxHeight: 420,
+            overflowY: "auto",
+          }}
         >
           <div className="tb-page-group">
             <div className="tb-page-group__label">Page size</div>

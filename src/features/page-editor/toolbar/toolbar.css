@@ -329,25 +329,27 @@
   );
 }
 
-/* Page setup popover */
+/* Page setup popover — paddings match the Insert popover so the
+ * dropdowns feel like one family. Outer 4px shell (inherited from
+ * .tb-popover), 8px 10px on each option/segmented button, tight
+ * 6px dividers between groups. */
 .tb-popover--page {
-  padding: 16px !important;
-  width: 320px;
+  width: 240px;
   display: flex;
   flex-direction: column;
 }
 .tb-page-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 .tb-page-group__label {
   font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-brass-deep);
-  padding: 0 4px;
+  padding: 8px 10px 4px;
 }
 .tb-page-group__list {
   display: flex;
@@ -357,7 +359,7 @@
 .tb-page-group__divider {
   height: 1px;
   background: var(--color-border);
-  margin: 14px 0;
+  margin: 6px 0;
 }
 
 .tb-page-option {
@@ -390,17 +392,18 @@
 .tb-page-segmented {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 4px;
+  padding: 0 4px 4px;
 }
 .tb-page-segmented--3 {
   grid-template-columns: repeat(3, 1fr);
 }
 .tb-page-segmented__btn {
   font-family: var(--font-sans);
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 500;
-  padding: 12px 10px;
-  border-radius: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
   border: 1px solid var(--color-border-strong);
   background: var(--color-chalk);
   color: var(--color-walnut);
@@ -423,10 +426,11 @@
 }
 
 .tb-page-current {
-  margin-top: 14px;
-  padding: 0 4px;
+  margin-top: 6px;
+  padding: 6px 10px 4px;
+  border-top: 1px solid var(--color-border);
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 10.5px;
   letter-spacing: 0.04em;
   color: var(--color-walnut-3);
 }
