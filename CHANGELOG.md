@@ -7,6 +7,18 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-04-25
+
+### Fixed
+
+- **Google sign-in now prompts for account choice after sign-out**
+  (#128). Signing out of Firebase doesn't end the underlying Google
+  browser session, so `signInWithPopup` was silently
+  re-authenticating the previously selected account — making it
+  impossible to switch Google accounts from the login page. The
+  provider now sets `prompt=select_account` so the chooser appears
+  on every sign-in.
+
 ## [0.10.0] — 2026-04-25
 
 The big invitation-flow polish release: profile avatars + read
@@ -1331,7 +1343,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.10.1...HEAD
+[0.10.1]: https://github.com/aylabyuk/steward/releases/tag/v0.10.1
 [0.10.0]: https://github.com/aylabyuk/steward/releases/tag/v0.10.0
 [0.9.13]: https://github.com/aylabyuk/steward/releases/tag/v0.9.13
 [0.9.12]: https://github.com/aylabyuk/steward/releases/tag/v0.9.12
