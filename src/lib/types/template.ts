@@ -3,19 +3,35 @@ import { z } from "zod";
 /**
  * Ward-level editable template for the speaker invitation letter.
  *
- * The letter renders with a fixed chrome (ornament / eyebrow / title /
- * subtitle / rule / date / callout / signature line / footer rule)
- * around two Markdown blocks authored by the bishopric or clerks:
+ * Shipping migration: the WYSIWYG editor stores the letter as a single
+ * Lexical EditorState JSON in `editorStateJson` (greeting + body +
+ * callout + signature + closing scripture all flow as one document).
+ * The legacy `bodyMarkdown` / `footerMarkdown` pair is dual-written
+ * for ~30 days so older readers (Cloud Functions, receipt-email
+ * payloads, the print path while in flight) keep working. Once the
+ * read-side is fully JSON-aware we'll drop the markdown fields in a
+ * follow-up cleanup.
  *
- * - `bodyMarkdown` sits between the date and the "With gratitude,"
- *   signature — the greeting + letter body.
- * - `footerMarkdown` is the single-line scripture at the bottom.
- *
- * Variables in Markdown (`{{speakerName}}`, `{{topic}}`, `{{date}}`,
- * `{{wardName}}`, `{{inviterName}}`, `{{today}}`) are interpolated at
- * render time — see `src/features/templates/interpolate.ts`.
+ * Variables in either representation use the same `{{token}}` syntax
+ * (`{{speakerName}}`, `{{topic}}`, `{{date}}`, `{{wardName}}`,
+ * `{{inviterName}}`, `{{today}}`) — interpolation happens at render
+ * time. See `src/features/templates/interpolate.ts`.
  */
+export const letterPageStyleSchema = z.object({
+  borderColor: z.enum(["none", "walnut", "brass-deep", "bordeaux"]).default("none"),
+  borderWidth: z.number().min(0).max(4).default(0),
+  borderStyle: z.enum(["solid", "double", "rule-and-ornament"]).default("solid"),
+  paper: z.enum(["chalk", "parchment", "parchment-2"]).default("chalk"),
+});
+export type LetterPageStyle = z.infer<typeof letterPageStyleSchema>;
+
 export const speakerLetterTemplateSchema = z.object({
+  /** Lexical EditorState as a JSON string. New WYSIWYG storage. */
+  editorStateJson: z.string().optional(),
+  /** Optional page-frame style (border + paper) — applied on the
+   *  PageCanvas wrapper, not as Lexical content. */
+  pageStyle: letterPageStyleSchema.nullable().optional(),
+  /** Legacy fields, kept readable + dual-written for ~30 days. */
   bodyMarkdown: z.string(),
   footerMarkdown: z.string(),
   updatedAt: z.any().optional(),

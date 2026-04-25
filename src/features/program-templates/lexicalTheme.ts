@@ -21,5 +21,10 @@ export const lexicalTheme: EditorThemeClasses = {
     bold: "font-semibold",
     italic: "italic",
     underline: "underline",
+    strikethrough: "line-through",
+    underlineStrikethrough: "underline line-through",
+    subscript: "align-sub text-[0.75em]",
+    superscript: "align-super text-[0.75em]",
+    code: "font-mono text-[0.92em] bg-parchment-2 px-1 py-px rounded",
   },
 };
