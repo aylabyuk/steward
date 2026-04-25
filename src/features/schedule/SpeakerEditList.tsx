@@ -86,12 +86,21 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
           await deleteSpeaker(wardId, date, id);
         }
         let plannedCount = 0;
+        // Build the post-save draft list as we go so that going back
+        // to step 1 (which keeps SpeakerEditList mounted) sees freshly
+        // created speakers as already-persisted. Without this, the
+        // draft retains `id: null` and a second Save fires another
+        // createSpeaker — duplicating the row.
+        const nextDrafts: Draft[] = [];
         for (const d of drafts) {
           const name = d.name.trim();
-          if (!name) continue;
+          if (!name) {
+            nextDrafts.push(d);
+            continue;
+          }
           if (d.status === "planned") plannedCount += 1;
           if (d.id === null) {
-            await createSpeaker({
+            const newId = await createSpeaker({
               wardId,
               date,
               nonMeetingSundays,
@@ -101,9 +110,15 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
               topic: d.topic.trim() || undefined,
               role: d.role,
             });
+            const persisted: Draft = { ...d, id: newId };
+            originalsRef.current.set(d.tempId, { ...persisted });
+            nextDrafts.push(persisted);
           } else {
             const original = originalsRef.current.get(d.tempId) ?? null;
-            if (!isDirty(d, original)) continue;
+            if (!isDirty(d, original)) {
+              nextDrafts.push(d);
+              continue;
+            }
             await updateSpeaker(wardId, date, d.id, {
               name,
               email: d.email.trim(),
@@ -112,9 +127,12 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
               role: d.role,
               status: d.status,
             });
+            originalsRef.current.set(d.tempId, { ...d });
+            nextDrafts.push(d);
           }
         }
         setDeletedIds([]);
+        setDrafts(nextDrafts);
         return plannedCount;
       },
     }),
