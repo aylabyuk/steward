@@ -1,10 +1,11 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { createSpeaker, deleteSpeaker, updateSpeaker } from "@/features/speakers/speakerActions";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { useSpeakers } from "@/hooks/useMeeting";
 import type { NonMeetingSunday } from "@/lib/types";
 import { AddSpeakerCard } from "./AddSpeakerCard";
+import { persistDrafts } from "./persistDrafts";
 import { SpeakerEditCard } from "./SpeakerEditCard";
-import { emptyDraft, fromSpeaker, isDirty, syncStatusFromLive, type Draft } from "./speakerDraft";
+import { emptyDraft, fromSpeaker, syncStatusFromLive, type Draft } from "./speakerDraft";
 
 interface Props {
   date: string;
@@ -31,10 +32,30 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   ref,
 ) {
   const speakers = useSpeakers(date);
+  const [, setSearchParams] = useSearchParams();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const originalsRef = useRef<Map<string, Draft>>(new Map());
   const seededRef = useRef(false);
+
+  // Routes the "Already X — open conversation" action up to the URL
+  // so the schedule's SpeakerRow auto-opens its chat dialog above
+  // the Assign modal — same hand-off the prior step-2 launcher
+  // used. `chatSpeaker` works for any persisted speaker; the
+  // dialog handles the no-invitation-yet case on its own.
+  const openChatForSpeaker = useCallback(
+    (speakerId: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("chatSpeaker", speakerId);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   useEffect(() => {
     if (speakers.loading) return;
@@ -86,59 +107,14 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
     ref,
     () => ({
       async save() {
-        // Speaker mutations each internally call writeMeetingPatch to
-        // recompute the meeting content hash, so run them serially — parallel
-        // saves would each read a stale speakers snapshot and the final
-        // hash would not reflect the final speaker set.
-        for (const id of deletedIds) {
-          await deleteSpeaker(wardId, date, id);
-        }
-        let plannedCount = 0;
-        // Build the post-save draft list as we go so that going back
-        // to step 1 (which keeps SpeakerEditList mounted) sees freshly
-        // created speakers as already-persisted. Without this, the
-        // draft retains `id: null` and a second Save fires another
-        // createSpeaker — duplicating the row.
-        const nextDrafts: Draft[] = [];
-        for (const d of drafts) {
-          const name = d.name.trim();
-          if (!name) {
-            nextDrafts.push(d);
-            continue;
-          }
-          if (d.status === "planned") plannedCount += 1;
-          if (d.id === null) {
-            const newId = await createSpeaker({
-              wardId,
-              date,
-              nonMeetingSundays,
-              name,
-              email: d.email.trim() || undefined,
-              phone: d.phone.trim() || undefined,
-              topic: d.topic.trim() || undefined,
-              role: d.role,
-            });
-            const persisted: Draft = { ...d, id: newId };
-            originalsRef.current.set(d.tempId, { ...persisted });
-            nextDrafts.push(persisted);
-          } else {
-            const original = originalsRef.current.get(d.tempId) ?? null;
-            if (!isDirty(d, original)) {
-              nextDrafts.push(d);
-              continue;
-            }
-            await updateSpeaker(wardId, date, d.id, {
-              name,
-              email: d.email.trim(),
-              phone: d.phone.trim(),
-              topic: d.topic.trim(),
-              role: d.role,
-              status: d.status,
-            });
-            originalsRef.current.set(d.tempId, { ...d });
-            nextDrafts.push(d);
-          }
-        }
+        const { nextDrafts, plannedCount } = await persistDrafts({
+          drafts,
+          deletedIds,
+          wardId,
+          date,
+          nonMeetingSundays,
+          originals: originalsRef.current,
+        });
         setDeletedIds([]);
         setDrafts(nextDrafts);
         return plannedCount;
@@ -159,8 +135,8 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
   return (
     <div className="flex flex-col gap-3">
       <p className="font-serif text-[13.5px] text-walnut-2">
-        Add or edit speakers for this Sunday. Save when you're ready, then we'll walk through
-        sending each invitation in the next step.
+        Add or edit speakers for this Sunday. Each card has its own Prepare-invitation and
+        open-conversation actions — Save persists name/email/phone/topic/role changes.
       </p>
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
         {drafts.map((d, i) => (
@@ -168,8 +144,10 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
             key={d.tempId}
             draft={d}
             index={i}
+            date={date}
             onChange={(partial) => updateDraft(d.tempId, partial)}
             onRemove={() => removeDraft(d.tempId)}
+            {...(d.id ? { onOpenChat: () => openChatForSpeaker(d.id!) } : {})}
             reserveLockSlot={anyNonPlanned}
           />
         ))}

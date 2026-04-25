@@ -1,19 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel, type KindVariant } from "./kindLabel";
 import { SpeakerEditList, type SpeakerEditListHandle } from "./SpeakerEditList";
-import { SpeakerInvitationLauncher } from "./SpeakerInvitationLauncher";
 import { AssignDialog } from "./AssignDialog";
-import { pendingInviteLabel } from "./pendingInviteLabel";
-import { EditFooter, InviteFooter } from "./AssignDialogFooters";
+import { EditFooter } from "./AssignDialogFooters";
 import { SundayCardBody } from "./SundayCardBody";
 import { SundayCardCancelled } from "./SundayCardCancelled";
 import { SundayCardHeader } from "./SundayCardHeader";
 import { SundayCardSpecial } from "./SundayCardSpecial";
 import { formatShortDate } from "./dateFormat";
+import { pendingInviteLabel } from "./pendingInviteLabel";
 import { leadTimeSeverity } from "@/features/speakers/leadTime";
 
 const SEVERITY_TEXT: Record<"warn" | "urgent", string> = {
@@ -27,8 +26,6 @@ const CARD_BG: Record<KindVariant, string> = {
   stake: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
   general: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
 };
-
-type Step = "edit" | "invite";
 
 interface Props {
   date: string;
@@ -51,18 +48,10 @@ export function SundayCard({
   const cancelled = Boolean(meeting?.cancellation?.cancelled);
   const { data: speakers } = useSpeakers(date);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [step, setStep] = useState<Step>("edit");
   const [saving, setSaving] = useState(false);
   const editListRef = useRef<SpeakerEditListHandle>(null);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
-
-  // Always start on step 1 whenever the dialog opens. Response review
-  // + apply now live on the per-speaker chat icon on the Sunday card,
-  // not inside step 2, so there's no reason to skip the editor.
-  useEffect(() => {
-    if (assignDialogOpen) setStep("edit");
-  }, [assignDialogOpen]);
 
   if (cancelled) {
     return (
@@ -77,18 +66,13 @@ export function SundayCard({
     if (!editListRef.current) return;
     setSaving(true);
     try {
-      const plannedCount = await editListRef.current.save();
-      // If nobody's left in "planned", there's nothing to invite —
-      // close the modal entirely. Otherwise advance to step 2.
-      if (plannedCount === 0) setAssignDialogOpen(false);
-      else setStep("invite");
+      await editListRef.current.save();
+      setAssignDialogOpen(false);
     } finally {
       setSaving(false);
     }
   }
 
-  const title =
-    step === "invite" ? `Send invitations — ${formatShortDate(date)}` : formatShortDate(date);
   const subtitle = pendingInviteLabel(speakers);
 
   return (
@@ -127,40 +111,23 @@ export function SundayCard({
 
       <AssignDialog
         open={assignDialogOpen}
-        title={title}
+        title={formatShortDate(date)}
         {...(subtitle ? { subtitle } : {})}
         onClose={() => setAssignDialogOpen(false)}
         footerSlot={
-          step === "edit" ? (
-            <EditFooter
-              saving={saving}
-              onCancel={() => setAssignDialogOpen(false)}
-              onSave={handleSave}
-            />
-          ) : (
-            <InviteFooter
-              onBack={() => setStep("edit")}
-              onDone={() => setAssignDialogOpen(false)}
-            />
-          )
+          <EditFooter
+            saving={saving}
+            onCancel={() => setAssignDialogOpen(false)}
+            onSave={handleSave}
+          />
         }
       >
-        {/* Both step subtrees stay mounted so the back-to-edit
-         *  transition doesn't re-seed SpeakerEditList's drafts from
-         *  scratch — hitting Back used to blank the card grid for
-         *  a frame while `useSpeakers()` re-hydrated. `hidden` keeps
-         *  the DOM present but removes layout + interactivity. */}
-        <div className={step === "edit" ? "" : "hidden"} aria-hidden={step !== "edit"}>
-          <SpeakerEditList
-            ref={editListRef}
-            date={date}
-            wardId={wardId}
-            nonMeetingSundays={nonMeetingSundays}
-          />
-        </div>
-        <div className={step === "invite" ? "" : "hidden"} aria-hidden={step !== "invite"}>
-          <SpeakerInvitationLauncher date={date} speakers={speakers} />
-        </div>
+        <SpeakerEditList
+          ref={editListRef}
+          date={date}
+          wardId={wardId}
+          nonMeetingSundays={nonMeetingSundays}
+        />
       </AssignDialog>
     </article>
   );

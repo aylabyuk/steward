@@ -19,20 +19,17 @@ const STATUS_BG: Record<SpeakerStatus, string> = {
 interface Props {
   draft: Draft;
   index: number;
+  /** Meeting date (ISO `YYYY-MM-DD`). Threaded down to the action
+   *  band, which builds the per-speaker prepare-invitation URL from
+   *  it. */
+  date: string;
   onChange: (partial: Partial<Draft>) => void;
   onRemove: () => void;
-  /** Step-2 read-only mode: disables all inputs, hides the remove
-   *  button, and shows the Prepare-invitation / open-conversation
-   *  action band. Same card shell renders in both modes so the
-   *  modal's dimensions stay stable across steps. `invitationId` +
-   *  `onOpenChat` drive the non-planned "open conversation" button;
-   *  the parent is responsible for closing the Assign modal before
-   *  the chat dialog opens. */
-  locked?: {
-    date: string;
-    invitationId?: string | null;
-    onOpenChat?: (invitationId: string) => void;
-  };
+  /** Called when the bishop hits the non-planned card's "Already X
+   *  — open conversation" action. Parent typically sets a URL search
+   *  param so the schedule's SpeakerRow auto-opens its chat dialog
+   *  above the Assign modal. Omit for unsaved drafts (no chat yet). */
+  onOpenChat?: () => void;
   /** When true the card reserves vertical space for the soft-lock
    *  caption even if this particular card is still planned, so all
    *  cards in the parent grid share a uniform field-row alignment.
@@ -44,38 +41,23 @@ interface Props {
 export function SpeakerEditCard({
   draft,
   index,
+  date,
   onChange,
   onRemove,
-  locked,
+  onOpenChat,
   reserveLockSlot,
 }: Props) {
-  const readOnly = Boolean(locked);
-  const softLocked = !readOnly && draft.status !== "planned";
-  const showLockSlot = !readOnly && (softLocked || Boolean(reserveLockSlot));
+  const softLocked = draft.status !== "planned";
+  const showLockSlot = softLocked || Boolean(reserveLockSlot);
   return (
     <div className={cn("border rounded-lg p-3 flex flex-col", STATUS_BG[draft.status])}>
-      <SpeakerCardHeader
-        index={index}
-        status={draft.status}
-        onRemove={readOnly ? null : onRemove}
-      />
+      <SpeakerCardHeader index={index} status={draft.status} onRemove={onRemove} />
 
       {showLockSlot && <SoftLockedNote hidden={!softLocked} />}
 
-      <SpeakerLockedBand
-        draft={draft}
-        date={locked?.date ?? ""}
-        step={locked ? "invite" : "edit"}
-        invitationId={locked?.invitationId ?? null}
-        {...(locked?.onOpenChat ? { onOpenChat: locked.onOpenChat } : {})}
-      />
+      <SpeakerLockedBand draft={draft} date={date} {...(onOpenChat ? { onOpenChat } : {})} />
 
-      <SpeakerEditFields
-        draft={draft}
-        readOnly={readOnly}
-        softLocked={softLocked}
-        onChange={onChange}
-      />
+      <SpeakerEditFields draft={draft} softLocked={softLocked} onChange={onChange} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
-/** Two step-specific footer rows for the Assign Speakers modal. The
- *  edit step has Cancel + Save; the invite step has Back + Done. Each
- *  is dumb — just wiring buttons to callbacks the parent already owns. */
+/** Footer row for the Assign Speakers modal — Cancel + Save. The
+ *  modal has a single step now (the per-card "Prepare invitation"
+ *  and "Open conversation" actions live inside each card), so this
+ *  is the only footer the dialog needs. */
 
 export function EditFooter({
   saving,
@@ -24,26 +25,7 @@ export function EditFooter({
         disabled={saving}
         className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
       >
-        {saving ? "Saving…" : "Continue →"}
-      </button>
-    </>
-  );
-}
-
-export function InviteFooter({ onBack, onDone }: { onBack: () => void; onDone: () => void }) {
-  return (
-    <>
-      <button
-        onClick={onBack}
-        className="mr-auto font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
-      >
-        ← Back to edit
-      </button>
-      <button
-        onClick={onDone}
-        className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors"
-      >
-        Done
+        {saving ? "Saving…" : "Save"}
       </button>
     </>
   );
