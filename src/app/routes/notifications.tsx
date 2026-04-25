@@ -1,47 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { IdentitySection } from "@/features/profile/IdentitySection";
-import { PageRail } from "@/components/ui/PageRail";
+import { NotificationsSection } from "@/features/profile/NotificationsSection";
 import { SaveBar } from "@/components/ui/SaveBar";
-import { SessionSection } from "@/features/profile/SessionSection";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { db } from "@/lib/firebase";
-import { useAuthStore } from "@/stores/authStore";
+import type { NotificationPrefs } from "@/lib/types";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-
-interface Draft {
-  displayName: string;
-}
-
-const RAIL_ITEMS = [
-  { id: "sec-identity", label: "Profile" },
-  { id: "sec-session", label: "Session" },
-];
-
-const RAIL_ELSEWHERE = [
-  { to: "/settings/notifications", label: "Notifications" },
-  { to: "/settings/ward", label: "Ward settings" },
-];
+import { withDefaults } from "@/features/settings/notificationPrefs";
 
 function nowLabel(): string {
   return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-/** Profile page — identity + session. Notifications moved to their own
- *  page (`/settings/notifications`) so the device toggle and quiet
- *  hours have a dedicated surface from the user menu. */
-export function ProfilePage(): React.ReactElement {
+/** Standalone Notifications page — moved out of Profile so the
+ *  device toggle and quiet-hours controls have a dedicated surface
+ *  reachable directly from the user menu. The savebar tracks the
+ *  notificationPrefs draft only; subscribe / unsubscribe and device
+ *  removal stay imperative inside NotificationsSection. */
+export function NotificationsPage(): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
-  const authUser = useAuthStore((s) => s.user);
   const me = useCurrentMember();
 
-  const source = useMemo<Draft | null>(() => {
+  const source = useMemo<NotificationPrefs | null>(() => {
     if (!me) return null;
-    return { displayName: me.data.displayName };
+    return withDefaults(me.data.notificationPrefs);
   }, [me]);
 
-  const [draft, setDraft] = useState<Draft | null>(source);
+  const [draft, setDraft] = useState<NotificationPrefs | null>(source);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -50,15 +36,15 @@ export function ProfilePage(): React.ReactElement {
     setDraft(source);
   }, [source]);
 
-  if (!wardId || !authUser || !me || !draft || !source) {
+  if (!wardId || !me || !draft || !source) {
     return (
       <main className="pb-24">
-        <p className="font-serif italic text-[14px] text-walnut-2">Loading your profile…</p>
+        <p className="font-serif italic text-[14px] text-walnut-2">Loading notifications…</p>
       </main>
     );
   }
 
-  const dirty = draft.displayName !== source.displayName;
+  const dirty = JSON.stringify(draft) !== JSON.stringify(source);
 
   async function save() {
     if (!draft || !me || !wardId) return;
@@ -66,7 +52,7 @@ export function ProfilePage(): React.ReactElement {
     setError(null);
     try {
       await updateDoc(doc(db, "wards", wardId, "members", me.id), {
-        displayName: draft.displayName.trim() || me.data.displayName,
+        notificationPrefs: draft,
         updatedAt: serverTimestamp(),
       });
       setSavedAt(nowLabel());
@@ -75,11 +61,6 @@ export function ProfilePage(): React.ReactElement {
     } finally {
       setSaving(false);
     }
-  }
-
-  function discard() {
-    setDraft(source);
-    setError(null);
   }
 
   return (
@@ -94,34 +75,30 @@ export function ProfilePage(): React.ReactElement {
           Your account
         </div>
         <h1 className="font-display text-[2.25rem] font-semibold text-walnut leading-tight">
-          Profile
+          Notifications
         </h1>
         <p className="font-serif italic text-[16px] text-walnut-2 mt-1">
-          Your name and how you appear to other bishopric members.
+          Choose what you want to be notified about, and how Steward reaches you.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-8 items-start">
-        <div>
-          <IdentitySection
-            uid={authUser.uid}
-            email={authUser.email ?? ""}
-            displayName={draft.displayName}
-            photoURL={authUser.photoURL ?? me.data.photoURL ?? null}
-            onDisplayNameChange={(displayName) => setDraft({ ...draft, displayName })}
-          />
-          <SessionSection />
-        </div>
-
-        <PageRail items={RAIL_ITEMS} elsewhere={RAIL_ELSEWHERE} />
-      </div>
+      <NotificationsSection
+        wardId={wardId}
+        uid={me.id}
+        tokens={me.data.fcmTokens}
+        prefs={draft}
+        onPrefsChange={setDraft}
+      />
 
       <SaveBar
         dirty={dirty}
         saving={saving}
         savedAt={savedAt}
         error={error}
-        onDiscard={discard}
+        onDiscard={() => {
+          setDraft(source);
+          setError(null);
+        }}
         onSave={() => void save()}
       />
     </main>

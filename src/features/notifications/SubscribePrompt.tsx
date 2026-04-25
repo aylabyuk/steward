@@ -14,7 +14,6 @@ export function SubscribePrompt() {
   const me = useCurrentMember();
   const promptDismissed = useNotificationsStore((s) => s.promptDismissed);
   const iosNudgeDismissed = useNotificationsStore((s) => s.iosNudgeDismissed);
-  const dismissPrompt = useNotificationsStore((s) => s.dismissPrompt);
   const dismissIosNudge = useNotificationsStore((s) => s.dismissIosNudge);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,14 +82,7 @@ export function SubscribePrompt() {
         Push notifications cover comments, change alerts, and finalization nudges.
       </p>
       {error && <p className="mt-2 text-xs text-bordeaux">{error}</p>}
-      <div className="mt-3 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={dismissPrompt}
-          className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-transparent text-walnut-2 hover:bg-parchment-2 hover:text-walnut transition-colors"
-        >
-          Not now
-        </button>
+      <div className="mt-3 flex items-center justify-end">
         <button
           type="button"
           onClick={() => void subscribe()}

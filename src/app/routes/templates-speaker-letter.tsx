@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { interpolate } from "@/features/templates/interpolate";
@@ -28,6 +29,7 @@ const PREVIEW_VARS = {
  *  from the Templates page because the 8.5×11 preview needs the full
  *  viewport. */
 export function SpeakerLetterTemplatePage(): React.ReactElement {
+  useFullViewportLayout();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const ward = useWardSettings();
   const me = useCurrentMember();
