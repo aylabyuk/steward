@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
+import { SaveBar } from "@/components/ui/SaveBar";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
-import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { interpolate } from "@/features/templates/interpolate";
 import {
   DEFAULT_SPEAKER_LETTER_BODY,
@@ -9,13 +10,11 @@ import {
 } from "@/features/templates/speakerLetterDefaults";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { writeSpeakerLetterTemplate } from "@/features/templates/writeSpeakerLetterTemplate";
-import { WardTemplateToolbar } from "@/features/templates/WardTemplateToolbar";
+import { SpeakerLetterPanel } from "@/features/speaker-letter-template/SpeakerLetterPanel";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import { SpeakerLetterTemplateEditorColumn } from "./SpeakerLetterTemplateEditorColumn";
-import { SpeakerLetterTemplateHeader } from "./SpeakerLetterTemplateHeader";
 
 const PREVIEW_VARS = {
   speakerName: "Sebastian Tan",
@@ -25,9 +24,15 @@ const PREVIEW_VARS = {
   inviterName: "Bishop Paul",
 };
 
-/** Standalone speaker-letter template editor. Opened in its own tab
- *  from the Templates page because the 8.5×11 preview needs the full
- *  viewport. */
+function nowLabel(): string {
+  return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+/** Standalone speaker-letter template editor — Lexical-powered, in
+ *  parity with the sacrament-meeting program template page. Loads the
+ *  ward template; falls back to the system defaults so a brand-new
+ *  ward sees a sensible printed letter. SaveBar handles persist /
+ *  discard / status. */
 export function SpeakerLetterTemplatePage(): React.ReactElement {
   useFullViewportLayout();
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -37,16 +42,23 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
 
   const [body, setBody] = useState(DEFAULT_SPEAKER_LETTER_BODY);
   const [footer, setFooter] = useState(DEFAULT_SPEAKER_LETTER_FOOTER);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [savedBody, setSavedBody] = useState(DEFAULT_SPEAKER_LETTER_BODY);
+  const [savedFooter, setSavedFooter] = useState(DEFAULT_SPEAKER_LETTER_FOOTER);
+  const [usingDefault, setUsingDefault] = useState(true);
   const [seeded, setSeeded] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading || seeded) return;
     if (template) {
       setBody(template.bodyMarkdown);
       setFooter(template.footerMarkdown);
+      setSavedBody(template.bodyMarkdown);
+      setSavedFooter(template.footerMarkdown);
+      setUsingDefault(false);
     }
     setSeeded(true);
   }, [loading, seeded, template]);
@@ -63,12 +75,18 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
     [footer, wardName],
   );
 
-  async function handleSave() {
+  const dirty = body !== savedBody || footer !== savedFooter;
+
+  async function save() {
     if (!wardId) return;
     setSaving(true);
     setError(null);
     try {
       await writeSpeakerLetterTemplate(wardId, { bodyMarkdown: body, footerMarkdown: footer });
+      setSavedBody(body);
+      setSavedFooter(footer);
+      setUsingDefault(false);
+      setSavedAt(nowLabel());
     } catch (e) {
       setError(friendlyWriteError(e));
     } finally {
@@ -76,19 +94,12 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
     }
   }
 
-  function resetToDefaults() {
-    setBody(DEFAULT_SPEAKER_LETTER_BODY);
-    setFooter(DEFAULT_SPEAKER_LETTER_FOOTER);
+  function discard() {
+    setBody(savedBody);
+    setFooter(savedFooter);
     setResetKey((k) => k + 1);
+    setError(null);
   }
-
-  const toolbarProps = {
-    canEdit,
-    busy: saving || !seeded,
-    saving,
-    onSave: () => void handleSave(),
-    onReset: resetToDefaults,
-  };
 
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
@@ -99,45 +110,50 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
       />
-      <SpeakerLetterTemplateHeader {...toolbarProps} onClose={() => window.close()} />
-
-      <div className="flex-1 min-h-0 lg:overflow-hidden px-4 sm:px-8 pt-5 pb-4">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] items-start">
-          <SpeakerLetterTemplateEditorColumn
-            resetKey={resetKey}
-            body={body}
-            footer={footer}
-            setBody={setBody}
-            setFooter={setFooter}
-            canEdit={canEdit}
-            seeded={seeded}
-            error={error}
-            wardName={wardName}
-            sampleDate={PREVIEW_VARS.date}
-            sampleToday={PREVIEW_VARS.today}
-            renderedBody={renderedBody}
-            renderedFooter={renderedFooter}
-          />
-          <aside className="hidden lg:flex flex-col gap-2 min-w-0">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-              Preview — 8.5 × 11 in · sample data
-            </div>
-            <div className="relative">
-              <ScaledLetterPreview
-                wardName={wardName}
-                assignedDate={PREVIEW_VARS.date}
-                today={PREVIEW_VARS.today}
-                bodyMarkdown={renderedBody}
-                footerMarkdown={renderedFooter}
-                height="calc(100dvh - 14rem)"
-              />
-              <div className="absolute top-3 right-3 z-10">
-                <WardTemplateToolbar {...toolbarProps} />
-              </div>
-            </div>
-          </aside>
+      <header className="shrink-0 border-b border-border bg-chalk px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-1 min-w-0">
+          <Link
+            to="/schedule"
+            className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep hover:text-walnut"
+          >
+            ← Schedule
+          </Link>
+          <h1 className="font-display text-[22px] sm:text-[26px] font-semibold text-walnut leading-tight">
+            Speaker invitation letter
+          </h1>
         </div>
-      </div>
+        <button
+          type="button"
+          onClick={() => window.close()}
+          className="shrink-0 rounded-md border border-border-strong bg-chalk px-3 py-1.5 font-sans text-[12.5px] font-semibold text-walnut-2 hover:bg-parchment-2"
+        >
+          Close
+        </button>
+      </header>
+
+      <SpeakerLetterPanel
+        wardName={wardName}
+        sampleDate={PREVIEW_VARS.date}
+        sampleToday={PREVIEW_VARS.today}
+        body={body}
+        footer={footer}
+        renderedBody={renderedBody}
+        renderedFooter={renderedFooter}
+        canEdit={canEdit}
+        usingDefault={usingDefault}
+        resetKey={resetKey}
+        onBodyChange={setBody}
+        onFooterChange={setFooter}
+      />
+
+      <SaveBar
+        dirty={dirty && canEdit}
+        saving={saving}
+        savedAt={savedAt}
+        error={error}
+        onDiscard={discard}
+        onSave={() => void save()}
+      />
     </main>
   );
 }

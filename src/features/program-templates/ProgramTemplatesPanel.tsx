@@ -43,11 +43,13 @@ export function ProgramTemplatesPanel({
   const previewVars = useMemo(() => buildSampleVariables(), []);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartWidth = useRef(0);
-  const [editorWidth, setEditorWidth] = useState<number>(readStoredWidth);
-  const [previewSide, setPreviewSide] = useState<PreviewSide>(readStoredSide);
+  const [editorWidth, setEditorWidth] = useState<number>(() => readStoredWidth("programTemplates"));
+  const [previewSide, setPreviewSide] = useState<PreviewSide>(() =>
+    readStoredSide("programTemplates"),
+  );
 
-  useEffect(() => writeStoredWidth(editorWidth), [editorWidth]);
-  useEffect(() => writeStoredSide(previewSide), [previewSide]);
+  useEffect(() => writeStoredWidth("programTemplates", editorWidth), [editorWidth]);
+  useEffect(() => writeStoredSide("programTemplates", previewSide), [previewSide]);
 
   function startDrag() {
     dragStartWidth.current = editorWidth;

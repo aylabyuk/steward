@@ -1,9 +1,7 @@
-/* localStorage helpers for the program-templates panel layout —
- * editor width + which side the preview sits on. Centralised here so
- * the panel component stays under the 150-LOC cap. */
-
-const WIDTH_KEY = "steward.programTemplates.editorWidth";
-const SIDE_KEY = "steward.programTemplates.previewSide";
+/* localStorage helpers for the editor / preview panel layout —
+ * editor width + which side the preview sits on. Generic over a
+ * namespace so each editor page (program templates, speaker letter,
+ * future others) keeps its own preferences. */
 
 export const DEFAULT_EDITOR_WIDTH = 448;
 export const MIN_EDITOR_WIDTH = 320;
@@ -11,10 +9,13 @@ export const MIN_PREVIEW_WIDTH = 360;
 
 export type PreviewSide = "left" | "right";
 
-export function readStoredWidth(): number {
+const widthKey = (ns: string) => `steward.${ns}.editorWidth`;
+const sideKey = (ns: string) => `steward.${ns}.previewSide`;
+
+export function readStoredWidth(namespace: string): number {
   if (typeof window === "undefined") return DEFAULT_EDITOR_WIDTH;
   try {
-    const raw = window.localStorage.getItem(WIDTH_KEY);
+    const raw = window.localStorage.getItem(widthKey(namespace));
     const n = raw ? Number.parseInt(raw, 10) : Number.NaN;
     return Number.isFinite(n) ? n : DEFAULT_EDITOR_WIDTH;
   } catch {
@@ -22,29 +23,29 @@ export function readStoredWidth(): number {
   }
 }
 
-export function writeStoredWidth(value: number): void {
+export function writeStoredWidth(namespace: string, value: number): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(WIDTH_KEY, String(value));
+    window.localStorage.setItem(widthKey(namespace), String(value));
   } catch {
     /* localStorage unavailable — preference doesn't persist, fine. */
   }
 }
 
-export function readStoredSide(): PreviewSide {
+export function readStoredSide(namespace: string): PreviewSide {
   if (typeof window === "undefined") return "right";
   try {
-    const raw = window.localStorage.getItem(SIDE_KEY);
+    const raw = window.localStorage.getItem(sideKey(namespace));
     return raw === "left" ? "left" : "right";
   } catch {
     return "right";
   }
 }
 
-export function writeStoredSide(value: PreviewSide): void {
+export function writeStoredSide(namespace: string, value: PreviewSide): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(SIDE_KEY, value);
+    window.localStorage.setItem(sideKey(namespace), value);
   } catch {
     /* localStorage unavailable — preference doesn't persist, fine. */
   }

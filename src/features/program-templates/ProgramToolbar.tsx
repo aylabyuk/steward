@@ -18,10 +18,16 @@ import { $setBlocksType } from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
 import { InsertVariableMenu } from "./InsertVariableMenu";
 import { ProgramToolbarButton, ToolbarSep } from "./ProgramToolbarButton";
+import type { ProgramVariable } from "./programVariables";
 
 type BlockKind = "p" | "h1" | "h2" | "h3" | "quote";
 
-export function ProgramToolbar() {
+interface Props {
+  variables: readonly ProgramVariable[];
+  groupLabels: Readonly<Record<string, string>>;
+}
+
+export function ProgramToolbar({ variables, groupLabels }: Props) {
   const [editor] = useLexicalComposerContext();
   const [bold, setBold] = useState(false);
   const [italic, setItalic] = useState(false);
@@ -135,7 +141,7 @@ export function ProgramToolbar() {
         onClick={() => fmt("underline")}
       />
       <ToolbarSep />
-      <InsertVariableMenu />
+      <InsertVariableMenu variables={variables} groupLabels={groupLabels} />
     </div>
   );
 }
