@@ -4,6 +4,10 @@ import { cn } from "@/lib/cn";
 interface Props {
   open: boolean;
   title: string;
+  /** Optional caption that appears beside the date in the header
+   *  — used for the "X of N speakers haven't been invited yet"
+   *  status line. Wraps under the title on narrow screens. */
+  subtitle?: React.ReactNode;
   onClose: () => void;
   /** Pinned bottom band rendered as-is. When omitted, the dialog has
    *  no footer — step bodies that own their own terminal actions can
@@ -12,7 +16,7 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export function AssignDialog({ open, title, onClose, footerSlot, children }: Props) {
+export function AssignDialog({ open, title, subtitle, onClose, footerSlot, children }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,8 +62,13 @@ export function AssignDialog({ open, title, onClose, footerSlot, children }: Pro
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
               Assign speakers
             </div>
-            <div className="font-display text-2xl font-semibold text-walnut tracking-[-0.01em] leading-tight mt-0.5">
-              {title}
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 mt-0.5">
+              <span className="font-display text-2xl font-semibold text-walnut tracking-[-0.01em] leading-tight">
+                {title}
+              </span>
+              {subtitle && (
+                <span className="font-serif italic text-[13px] text-walnut-3">{subtitle}</span>
+              )}
             </div>
           </div>
           <button

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { SPEAKER_STATUSES, type SpeakerStatus } from "@/lib/types";
+import type { SubState } from "@/hooks/_sub";
+import { SPEAKER_STATUSES, type Member, type SpeakerStatus, type WithId } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import type { StatusSource } from "@/lib/types/meeting";
+import { computeConfirmCopy } from "./speakerStatusConfirmCopy";
 
 const STATE_LABELS: Record<SpeakerStatus, string> = {
   planned: "Planned",
@@ -17,53 +20,57 @@ const STATE_ACTIVE: Record<SpeakerStatus, string> = {
   declined: "bg-danger-soft text-bordeaux",
 };
 
-type NonPlannedStatus = Exclude<SpeakerStatus, "planned">;
-
-/** Each non-planned state is a one-way-ish commitment: once the
- *  speaker is marked as invited/confirmed/declined, the Prepare
- *  Invitation flow is gated off. The confirm dialog spells out both
- *  the semantic (what this status means) and the consequence (need
- *  to switch back to Planned to send from the app). */
-const CONFIRM_COPY: Record<
-  NonPlannedStatus,
-  { title: string; body: string; confirmLabel: string }
-> = {
-  invited: {
-    title: "Mark as Invited?",
-    body: "Use this when you've already reached out through another channel — email, SMS, or a hallway conversation. You won't be able to send an in-app invitation for this speaker unless you switch them back to Planned.",
-    confirmLabel: "Mark as Invited",
-  },
-  confirmed: {
-    title: "Mark as Confirmed?",
-    body: "Use this once the speaker has accepted the invitation. You won't be able to send further invitations unless you switch them back to Planned.",
-    confirmLabel: "Mark as Confirmed",
-  },
-  declined: {
-    title: "Mark as Declined?",
-    body: "We'll keep the speaker on file until you add a replacement. You won't be able to send further invitations unless you switch them back to Planned.",
-    confirmLabel: "Mark as Declined",
-  },
-};
-
 interface Props {
   status: SpeakerStatus;
   onChange: (status: SpeakerStatus) => void;
+  /** Provenance context used to tailor the confirm-dialog body. When
+   *  omitted the dialog falls back to the vanilla copy (useful for
+   *  callsites where provenance isn't readily available). */
+  currentStatusSource?: StatusSource;
+  currentStatusSetBy?: string;
+  members?: SubState<WithId<Member>[]>;
+  currentUserUid?: string | undefined;
 }
 
-/** Segmented-control row of speaker statuses. Clicking any non-planned
- *  pill pops a confirm dialog explaining what the status means and
- *  the consequence (no in-app invitation while in that state). */
-export function SpeakerStatusPills({ status, onChange }: Props) {
-  const [pending, setPending] = useState<NonPlannedStatus | null>(null);
+/** Segmented-control row of speaker statuses. Every transition pops a
+ *  confirm dialog with provenance-aware copy — forward moves (→
+ *  invited / confirmed / declined) explain the consequence; rollbacks
+ *  out of a terminal state (confirmed/declined → planned/invited) add
+ *  friction so a misclick doesn't silently erase a real commitment. */
+export function SpeakerStatusPills({
+  status,
+  onChange,
+  currentStatusSource,
+  currentStatusSetBy,
+  members,
+  currentUserUid,
+}: Props) {
+  const [pending, setPending] = useState<SpeakerStatus | null>(null);
 
   function requestChange(next: SpeakerStatus) {
     if (next === status) return;
-    if (next === "planned") {
+    // Invited → Planned stays frictionless (no real commitment to
+    // erase). Terminal → any non-terminal goes through the heavier
+    // rollback dialog; forward moves go through the base forward
+    // dialog. Both paths handled by computeConfirmCopy.
+    const isTerminal = status === "confirmed" || status === "declined";
+    if (!isTerminal && next === "planned") {
       onChange(next);
       return;
     }
     setPending(next);
   }
+
+  const copy = pending
+    ? computeConfirmCopy({
+        current: status,
+        next: pending,
+        currentStatusSource,
+        currentStatusSetBy,
+        members,
+        currentUserUid,
+      })
+    : null;
 
   return (
     <>
@@ -88,13 +95,13 @@ export function SpeakerStatusPills({ status, onChange }: Props) {
           </button>
         ))}
       </div>
-      {pending && (
+      {pending && copy && (
         <ConfirmDialog
           open
-          title={CONFIRM_COPY[pending].title}
-          body={CONFIRM_COPY[pending].body}
-          confirmLabel={CONFIRM_COPY[pending].confirmLabel}
-          danger={pending === "declined"}
+          title={copy.title}
+          body={copy.body}
+          confirmLabel={copy.confirmLabel}
+          danger={copy.danger}
           onCancel={() => setPending(null)}
           onConfirm={() => {
             onChange(pending);

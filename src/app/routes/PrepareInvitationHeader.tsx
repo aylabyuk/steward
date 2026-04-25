@@ -3,6 +3,8 @@ import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitati
 
 interface Props {
   speakerName: string;
+  speakerEmail: string;
+  speakerPhone: string;
   email: string;
   hasEmail: boolean;
   busy: boolean;
@@ -15,8 +17,8 @@ interface Props {
   onRevert: () => void;
   onMarkInvited: () => void;
   onPrint: () => void;
-  onSend: () => void;
-  onSendSms: () => void;
+  onSend: (email: string) => void;
+  onSendSms: (phone: string) => void;
 }
 
 /** Sticky page header for the Prepare Invitation page: title block on
@@ -55,6 +57,8 @@ export function PrepareInvitationHeader(props: Props) {
           canSmsReason={props.canSmsReason}
           hasOverride={props.hasOverride}
           speakerName={props.speakerName}
+          speakerEmail={props.speakerEmail}
+          speakerPhone={props.speakerPhone}
           onRevert={props.onRevert}
           onMarkInvited={props.onMarkInvited}
           onPrint={props.onPrint}

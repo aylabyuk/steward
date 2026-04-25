@@ -7,6 +7,7 @@ import { kindLabel, type KindVariant } from "./kindLabel";
 import { SpeakerEditList, type SpeakerEditListHandle } from "./SpeakerEditList";
 import { SpeakerInvitationLauncher } from "./SpeakerInvitationLauncher";
 import { AssignDialog } from "./AssignDialog";
+import { pendingInviteLabel } from "./pendingInviteLabel";
 import { EditFooter, InviteFooter } from "./AssignDialogFooters";
 import { SundayCardBody } from "./SundayCardBody";
 import { SundayCardCancelled } from "./SundayCardCancelled";
@@ -88,6 +89,7 @@ export function SundayCard({
 
   const title =
     step === "invite" ? `Send invitations — ${formatShortDate(date)}` : formatShortDate(date);
+  const subtitle = pendingInviteLabel(speakers);
 
   return (
     <article className={cn("rounded-lg border border-border shadow-elev-1", CARD_BG[kind.variant])}>
@@ -126,6 +128,7 @@ export function SundayCard({
       <AssignDialog
         open={assignDialogOpen}
         title={title}
+        {...(subtitle ? { subtitle } : {})}
         onClose={() => setAssignDialogOpen(false)}
         footerSlot={
           step === "edit" ? (
@@ -142,16 +145,22 @@ export function SundayCard({
           )
         }
       >
-        {step === "edit" ? (
+        {/* Both step subtrees stay mounted so the back-to-edit
+         *  transition doesn't re-seed SpeakerEditList's drafts from
+         *  scratch — hitting Back used to blank the card grid for
+         *  a frame while `useSpeakers()` re-hydrated. `hidden` keeps
+         *  the DOM present but removes layout + interactivity. */}
+        <div className={step === "edit" ? "" : "hidden"} aria-hidden={step !== "edit"}>
           <SpeakerEditList
             ref={editListRef}
             date={date}
             wardId={wardId}
             nonMeetingSundays={nonMeetingSundays}
           />
-        ) : (
+        </div>
+        <div className={step === "invite" ? "" : "hidden"} aria-hidden={step !== "invite"}>
           <SpeakerInvitationLauncher date={date} speakers={speakers} />
-        )}
+        </div>
       </AssignDialog>
     </article>
   );

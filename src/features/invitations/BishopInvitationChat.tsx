@@ -9,6 +9,8 @@ import { InvitationStatusBanner } from "./InvitationStatusBanner";
 import { TypingIndicator } from "./TypingIndicator";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { callIssueSpeakerSession } from "./invitationsCallable";
+import { removeMessage, updateMessageBody } from "./messageMutations";
+import { noteBishopStatusChange } from "./statusChangeNotice";
 import { useBishopAuthors } from "./useBishopAuthors";
 import { useConversation } from "./useConversation";
 import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
@@ -65,6 +67,13 @@ export function BishopInvitationChat({
     setApplyError(null);
     try {
       await updateSpeaker(wardId, date, speakerId, { status: next });
+      await noteBishopStatusChange({
+        wardId,
+        invitationId,
+        meetingDate: date,
+        status: next,
+        conversation,
+      });
     } catch (err) {
       setApplyError((err as Error).message);
     }
@@ -99,6 +108,14 @@ export function BishopInvitationChat({
     setApplyError(null);
     try {
       await applyResponseToSpeaker({ wardId, invitationId, bishopUid: user.uid });
+      const applied = invitation.response?.answer === "yes" ? "confirmed" : "declined";
+      await noteBishopStatusChange({
+        wardId,
+        invitationId,
+        meetingDate: date,
+        status: applied,
+        conversation,
+      });
     } catch (err) {
       setApplyError((err as Error).message);
     } finally {
@@ -116,6 +133,7 @@ export function BishopInvitationChat({
         applying={applying}
         applyError={applyError}
         onStatusChange={onStatusChange}
+        currentUserUid={user?.uid}
       />
 
       <ConversationThread
@@ -126,6 +144,8 @@ export function BishopInvitationChat({
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
         fillHeight
+        onDeleteMessage={(sid) => removeMessage(conversation, sid)}
+        onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
