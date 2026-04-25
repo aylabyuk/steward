@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { PageRail } from "@/components/ui/PageRail";
+import { ProgramTemplatesSection } from "@/features/program-templates/ProgramTemplatesSection";
 import { BishopReplyEmailSection } from "@/features/templates/BishopReplyEmailSection";
 import { BishopReplySmsSection } from "@/features/templates/BishopReplySmsSection";
 import { BishopricResponseReceiptSection } from "@/features/templates/BishopricResponseReceiptSection";
@@ -11,6 +12,7 @@ import { SpeakerResponseDeclinedSection } from "@/features/templates/SpeakerResp
 import { WardInviteSection } from "@/features/templates/WardInviteSection";
 
 const RAIL_ITEMS = [
+  { id: "sec-program-templates", label: "Program", group: "Sacrament meeting" },
   { id: "sec-speaker-letter", label: "Letter", group: "Speaker invitation" },
   { id: "sec-speaker-email", label: "Email", group: "Speaker invitation" },
   { id: "sec-initial-sms", label: "SMS", group: "Speaker invitation" },
@@ -54,6 +56,7 @@ export function TemplatesPage(): React.ReactElement {
 
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_220px] gap-8 items-start">
         <div>
+          <ProgramTemplatesSection />
           <SpeakerLetterSection />
           <SpeakerEmailSection />
           <InitialSmsSection />

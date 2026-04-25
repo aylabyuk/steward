@@ -86,3 +86,21 @@ export const MESSAGE_TEMPLATE_KEYS = [
   "bishopReplyEmail",
 ] as const;
 export type MessageTemplateKey = (typeof MESSAGE_TEMPLATE_KEYS)[number];
+
+/**
+ * Ward-level editable template for the printed sacrament-meeting
+ * program (conducting copy + congregation copy). Stored as a Lexical
+ * EditorState JSON string instead of markdown so the rich custom
+ * nodes the editor introduces (variable chips today; hymn / script /
+ * leadership blocks tomorrow) round-trip with full fidelity. The
+ * print pages walk this state and render each node, resolving
+ * variable chips against the meeting + ward + speaker data.
+ */
+export const programTemplateSchema = z.object({
+  editorStateJson: z.string(),
+  updatedAt: z.any().optional(),
+});
+export type ProgramTemplate = z.infer<typeof programTemplateSchema>;
+
+export const PROGRAM_TEMPLATE_KEYS = ["conductingProgram", "congregationProgram"] as const;
+export type ProgramTemplateKey = (typeof PROGRAM_TEMPLATE_KEYS)[number];
