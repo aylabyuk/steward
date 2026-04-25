@@ -1,4 +1,4 @@
-import { EditorSection } from "./SpeakerLetterEditor";
+import { EditorSection } from "./MarkdownEditor";
 import { TemplateVariableList, type TemplateVariableDoc } from "./TemplateVariableList";
 
 const SMS_SEGMENT = 160;

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
-import { SpeakerLetterMarkdownEditor } from "./SpeakerLetterMarkdownEditor";
+import { MarkdownEditor } from "@/features/templates/MarkdownEditor";
+import { SPEAKER_LETTER_GROUP_LABEL, SPEAKER_LETTER_VARIABLES } from "./speakerLetterVariables";
 
 interface Props {
   className?: string;
@@ -37,11 +38,14 @@ export function SpeakerLetterEditorColumn({
         Letter body
       </div>
       <div className="lg:flex-1 lg:min-h-0 flex flex-col">
-        <SpeakerLetterMarkdownEditor
+        <MarkdownEditor
           key={resetKey}
           ariaLabel="Letter body"
           initialMarkdown={body}
           onChange={onBodyChange}
+          variables={SPEAKER_LETTER_VARIABLES}
+          groupLabels={SPEAKER_LETTER_GROUP_LABEL}
+          placeholder="Write the letter — text, lists, scripture, variables…"
         />
       </div>
       <div className="shrink-0 mt-2 flex flex-col gap-1">
