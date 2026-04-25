@@ -1,21 +1,22 @@
 import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
-  TRANSFORMERS,
   type Transformer,
 } from "@lexical/markdown";
 import { $createParagraphNode, $createTextNode, $getRoot, type LexicalEditor } from "lexical";
-import { VARIABLE_CHIP_MARKDOWN_TRANSFORMER } from "@/features/program-templates/nodes/variableChipMarkdown";
 import { $createAssignedSundayCalloutNode } from "./nodes/AssignedSundayCalloutNode";
 import { $createSignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { PAGE_EDITOR_BASE_NODES } from "./pageEditorNodes";
+import { PAGE_EDITOR_MARKDOWN_TRANSFORMERS } from "./plugins/PageEditorMarkdownShortcuts";
 
 export const LETTER_EDITOR_NODES = PAGE_EDITOR_BASE_NODES;
 
-export const LETTER_MARKDOWN_TRANSFORMERS: Transformer[] = [
-  VARIABLE_CHIP_MARKDOWN_TRANSFORMER,
-  ...TRANSFORMERS,
-];
+/** Transformer list used for hydrating legacy `bodyMarkdown` /
+ *  `footerMarkdown` into the editor (and serializing back to markdown
+ *  during the dual-write window). Reuses the curated set from the
+ *  shortcut plugin so hydration can't reference nodes the editor
+ *  doesn't register. */
+export const LETTER_MARKDOWN_TRANSFORMERS: Transformer[] = PAGE_EDITOR_MARKDOWN_TRANSFORMERS;
 
 interface BuildOpts {
   bodyMarkdown: string;
