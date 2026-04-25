@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
+import { updateSpeaker } from "@/features/speakers/speakerActions";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
-import type { SpeakerInvitation } from "@/lib/types";
+import type { Speaker, SpeakerInvitation, SpeakerStatus } from "@/lib/types";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
-import { ResponseStrip } from "./ResponseStrip";
+import { InvitationStatusBanner } from "./InvitationStatusBanner";
 import { TypingIndicator } from "./TypingIndicator";
 import { applyResponseToSpeaker } from "./invitationActions";
 import { callIssueSpeakerSession } from "./invitationsCallable";
+import { removeMessage, updateMessageBody } from "./messageMutations";
+import { noteBishopStatusChange } from "./statusChangeNotice";
 import { useBishopAuthors } from "./useBishopAuthors";
 import { useConversation } from "./useConversation";
 import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
@@ -19,6 +22,12 @@ interface Props {
   wardId: string;
   invitationId: string;
   invitation: SpeakerInvitation;
+  /** Owner speaker doc for this invitation. Threaded through so the
+   *  status banner can surface the ward-set status + audit
+   *  provenance without re-deriving from invitation shape alone. */
+  speaker: Speaker;
+  date: string;
+  speakerId: string;
 }
 
 /** Bishop-side conversation pane rendered on the Prepare Invitation
@@ -30,6 +39,9 @@ export function BishopInvitationChat({
   wardId,
   invitationId,
   invitation,
+  speaker,
+  date,
+  speakerId,
 }: Props): React.ReactElement {
   const user = useAuthStore((s) => s.user);
   const members = useWardMembers();
@@ -50,6 +62,22 @@ export function BishopInvitationChat({
     user,
     authors,
   });
+
+  async function onStatusChange(next: SpeakerStatus) {
+    setApplyError(null);
+    try {
+      await updateSpeaker(wardId, date, speakerId, { status: next });
+      await noteBishopStatusChange({
+        wardId,
+        invitationId,
+        meetingDate: date,
+        status: next,
+        conversation,
+      });
+    } catch (err) {
+      setApplyError((err as Error).message);
+    }
+  }
 
   useEffect(() => {
     if (twilio.status === "idle") void twilio.connect({ wardId });
@@ -80,6 +108,14 @@ export function BishopInvitationChat({
     setApplyError(null);
     try {
       await applyResponseToSpeaker({ wardId, invitationId, bishopUid: user.uid });
+      const applied = invitation.response?.answer === "yes" ? "confirmed" : "declined";
+      await noteBishopStatusChange({
+        wardId,
+        invitationId,
+        meetingDate: date,
+        status: applied,
+        conversation,
+      });
     } catch (err) {
       setApplyError((err as Error).message);
     } finally {
@@ -87,20 +123,18 @@ export function BishopInvitationChat({
     }
   }
 
-  const response = invitation.response;
-  const needsApply = Boolean(response && !response.acknowledgedAt);
-
   return (
     <section className="bg-chalk flex-1 flex flex-col min-h-0 overflow-hidden">
-      {response && (
-        <ResponseStrip
-          response={response}
-          needsApply={needsApply}
-          applying={applying}
-          onApply={onApply}
-          error={applyError}
-        />
-      )}
+      <InvitationStatusBanner
+        speaker={speaker}
+        invitation={invitation}
+        members={members}
+        onApply={onApply}
+        applying={applying}
+        applyError={applyError}
+        onStatusChange={onStatusChange}
+        currentUserUid={user?.uid}
+      />
 
       <ConversationThread
         messages={messages}
@@ -110,6 +144,8 @@ export function BishopInvitationChat({
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
         fillHeight
+        onDeleteMessage={(sid) => removeMessage(conversation, sid)}
+        onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />

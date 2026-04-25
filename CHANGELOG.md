@@ -7,6 +7,133 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-04-25
+
+The big invitation-flow polish release: profile avatars + read
+receipts in chat, a redesigned plain-English status pane, edit +
+delete on chat bubbles via long-press, status-change events as
+centred system notices, rollback-aware status changes, plain-English
+meeting dates everywhere, and dozens of smaller polish moves across
+the Assign-Speakers and Prepare-Invitation flows. Plus a fix for a
+duplicate-speaker bug surfaced by stepping back-and-forth in the
+Assign modal.
+
+### Added
+
+- **Profile avatars in speaker-invitation chat** (#122). Bishopric
+  peers now render with their Google `photoURL` on both the
+  speaker-side and bishop-side chat panes — initials fallback only
+  when no photo is on file.
+
+- **Plain-English status banner with clickable pills** (#123). The
+  bishop-side chat opens with a sentence-shaped status line
+  ("Awaiting reply from Sister Reeves", "Reeves accepted on Mar 2…")
+  rather than a raw status pill. Each status word is itself a
+  clickable pill that opens the status switcher. The thread also
+  renders a "Read" receipt under the speaker's most recently
+  read-by-other bubble.
+
+- **Resend-SMS / Resend-email confirm modal** (#124). Re-firing an
+  invitation now goes through a confirm dialog so a misclick
+  doesn't accidentally re-send the original SMS or email body.
+
+- **Long-press to edit / delete chat bubbles** (#125). Holding a
+  message bubble for 500 ms surfaces an Edit + Delete menu — the
+  bubble shrinks slightly + grows a brass halo during the press so
+  the gesture is discoverable. Speakers can edit/delete only their
+  own; bishopric can delete any bishopric peer's message.
+  Affordance is gated by a 5-message recency window AND a 30-minute
+  cutoff so older context stays stable. Edited messages render an
+  "Edited" tag.
+
+- **Status-change events render as centred system notices** (#125).
+  When a bishop confirms or declines an invitation, the
+  conversation shows a single centred italic line ("Assignment
+  confirmed — thank you for speaking on Sun May 4.") with a
+  coloured rule on each side, rather than an authored bubble. The
+  speaker's banner pivots automatically.
+
+- **Rollback-aware confirm dialog on status flips** (#125). Moving
+  from Confirmed or Declined back to Planned/Invited goes through a
+  friction dialog ("Clear confirmed status?" / "Undo decline?") so
+  a misclick doesn't silently erase a real commitment. Forward
+  moves stay direct. Honours the project rule that nothing is ever
+  hard-locked.
+
+- **Plain-English meeting dates** (#125). Speaker-facing chat copy
+  + status banner now read "Sun May 4" instead of the ambiguous
+  "this Sunday".
+
+- **Per-row chat launcher in the week view** (#125). Every speaker
+  row in the week-meeting program (`/week/:date`) now hosts the
+  same chat icon that already lives on the schedule view, so a
+  bishop can jump straight into a single speaker's conversation.
+  Powered by a new shared `SpeakerChatLauncher` component used by
+  both views.
+
+- **Per-card status pill in the Assign-Speakers dialog** (#125).
+  Each speaker card inside the modal now shows its current status
+  pill (planned / invited / confirmed / declined) in the card
+  header, so a bishop can scan invitation state without reading
+  each card.
+
+- **Pending-invitations caption in the Assign-Speakers header**
+  (#125). Beside the date, e.g. "1 of 2 speakers has not been
+  invited yet" — singular/plural agreement covered for the empty,
+  none-invited, partial, and all-invited cases.
+
+- **NoInvitationPlaceholder polish bundle** (#125). Status-aware
+  copy, always-shown status switcher, always-enabled
+  Send-Email/Send-SMS buttons backed by an inline contact-edit
+  dialog that persists changes to the speaker doc, and an
+  "Already X — open conversation" affordance for non-planned
+  speakers.
+
+- **X-icon cancel on the bubble edit form** (#125). Replaces a
+  low-contrast text Cancel button with a small close icon at the
+  textarea's top-right that's always visible.
+
+### Fixed
+
+- **Duplicate speaker bug in the Assign-Speakers modal** (#125).
+  Add → Save → Next → Back → Save would create a duplicate row,
+  because the local draft kept `id: null` after the first
+  `createSpeaker` call. `createSpeaker` now returns the new doc id
+  and `SpeakerEditList` patches the draft + originals snapshot
+  inline so subsequent saves see the speaker as already persisted.
+
+- **`useTwilioChat` provider missing in the week view** (#125).
+  Adding the per-row chat launcher exposed the gap — only
+  `ScheduleView` had established `TwilioChatProvider`. `WeekEditor`
+  now wraps its body the same way (with `TwilioAutoConnect`), so
+  unread badges populate without the bishop having to open the
+  dialog first.
+
+- **Hide the "Already X — open edit mode" band on Step 1** (#125).
+
+- **Open Prepare-Invitation page in a new tab** (#125) so the
+  Cancel button on that page can still close the tab cleanly.
+
+- **Keep the Assign modal open when opening a chat from Step 2**
+  (#125), so a bishop flipping between conversation threads doesn't
+  lose the speaker-overview context behind them.
+
+### Changed
+
+- **Drop the Manage-speakers link in the week view** (#125). The
+  link duplicated an entry point already on the schedule's Sunday
+  card. Speakers are now added / edited from the schedule, and
+  each row in the week view hosts its own chat icon.
+
+- **Replace the kebab menu on chat bubbles with long-press** (#125).
+  The kebab was hover-only — invisible on mobile. Long-press is
+  always-available and discoverable via the press animation.
+
+- **Move the status gradient from Sunday card pill → status strip
+  background** (#125), so the active gradient sits behind the
+  whole status row in `NoInvitationPlaceholder` rather than on a
+  single pill.
+
 ## [0.9.13] — 2026-04-24
 
 ### Added
@@ -1204,7 +1331,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.9.13...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/aylabyuk/steward/releases/tag/v0.10.0
 [0.9.13]: https://github.com/aylabyuk/steward/releases/tag/v0.9.13
 [0.9.12]: https://github.com/aylabyuk/steward/releases/tag/v0.9.12
 [0.9.11]: https://github.com/aylabyuk/steward/releases/tag/v0.9.11

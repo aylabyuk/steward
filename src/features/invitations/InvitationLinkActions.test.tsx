@@ -67,7 +67,24 @@ describe("InvitationLinkActions", () => {
     expect(screen.queryByRole("menuitem", { name: /Resend/ })).toBeNull();
   });
 
-  it("surfaces a delivery-failed message when every delivery failed", async () => {
+  it("selecting Resend opens a confirmation dialog instead of firing immediately", () => {
+    render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" }));
+    expect(screen.getByRole("dialog", { name: "Resend invitation link?" })).toBeTruthy();
+    expect(mockFn).not.toHaveBeenCalled();
+  });
+
+  it("Cancel on the confirm dialog does not fire the callable", () => {
+    render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(mockFn).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("surfaces a delivery-failed message when every delivery failed (after confirm)", async () => {
     mockFn.mockResolvedValue({
       mode: "rotate",
       deliveryRecord: [{ channel: "sms", status: "failed", error: "twilio: 21610", at: "now" }],
@@ -76,10 +93,11 @@ describe("InvitationLinkActions", () => {
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={inv} />);
     openMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Resend via SMS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resend via SMS" }));
     await waitFor(() => expect(screen.getByText("Delivery failed.")).toBeTruthy());
   });
 
-  it("reports the channels that actually sent on success", async () => {
+  it("reports the channels that actually sent on success (after confirm)", async () => {
     mockFn.mockResolvedValue({
       mode: "rotate",
       deliveryRecord: [
@@ -90,6 +108,7 @@ describe("InvitationLinkActions", () => {
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
     openMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resend via EMAIL + SMS" }));
     await waitFor(() => expect(screen.getByText("Sent via SMS")).toBeTruthy());
   });
 });

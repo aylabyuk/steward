@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useMinuteTick } from "@/hooks/useMinuteTick";
 import { cn } from "@/lib/cn";
 import { ConversationGroup } from "./ConversationGroup";
 import { JumpToLatest } from "./JumpToLatest";
+import { SystemNotice } from "./SystemNotice";
 import { DayDivider, UnreadDivider } from "./ThreadDividers";
+import { buildMessagePermissions, findLastMineIndex } from "./messageActions";
 import { buildThreadItems } from "./threadItems";
 import type { AuthorMap, ChatMessage } from "./useConversation";
 
@@ -24,6 +28,11 @@ interface Props {
    *  is capped at 60vh — right for the speaker landing page where the
    *  thread sits inside a naturally-stacking scroll column. */
   fillHeight?: boolean;
+  /** Per-message action handlers. When omitted, edit/delete UI is
+   *  hidden even if permissions would otherwise allow it (the
+   *  action isn't wired into the embedding chat). */
+  onEditMessage?: (sid: string, nextBody: string) => Promise<void> | void;
+  onDeleteMessage?: (sid: string) => Promise<void> | void;
 }
 
 /** Bubble list styled after Messenger. Consecutive messages by the
@@ -38,11 +47,23 @@ export function ConversationThread({
   firstUnreadIndex,
   readHorizonIndex,
   fillHeight,
+  onEditMessage,
+  onDeleteMessage,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [unseenCount, setUnseenCount] = useState(0);
+  const [pendingDeleteSid, setPendingDeleteSid] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const lastSeenIndexRef = useRef<number | null>(null);
+  // Drives the 30-min edit/delete cutoff — the long-press menu must
+  // disappear once a message expires, even if no new traffic arrives.
+  const nowMinute = useMinuteTick();
+
+  const permissions = useMemo(
+    () => buildMessagePermissions(currentIdentity, messages, nowMinute * 60_000),
+    [currentIdentity, messages, nowMinute],
+  );
 
   const items = useMemo(
     () =>
@@ -72,6 +93,17 @@ export function ConversationThread({
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!pendingDeleteSid || !onDeleteMessage) return;
+    setDeleting(true);
+    try {
+      await onDeleteMessage(pendingDeleteSid);
+      setPendingDeleteSid(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (loading) {
@@ -112,6 +144,8 @@ export function ConversationThread({
         {items.map((item) => {
           if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
           if (item.kind === "unread") return <UnreadDivider key={item.key} />;
+          if (item.kind === "system")
+            return <SystemNotice key={item.key} body={item.body} status={item.status} />;
           return (
             <ConversationGroup
               key={item.key}
@@ -121,22 +155,24 @@ export function ConversationThread({
                 readByOtherAt !== null &&
                 item.group.messages.some((m) => m.index === readByOtherAt)
               }
+              permissions={permissions}
+              {...(onEditMessage ? { onEditMessage } : {})}
+              {...(onDeleteMessage ? { onRequestDelete: setPendingDeleteSid } : {})}
             />
           );
         })}
       </div>
       {!atBottom && <JumpToLatest unseenCount={unseenCount} onJump={jumpToBottom} />}
+      <ConfirmDialog
+        open={pendingDeleteSid !== null}
+        title="Delete this message?"
+        body="The message will be removed for everyone in this conversation. This can't be undone."
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setPendingDeleteSid(null)}
+      />
     </div>
   );
-}
-
-function findLastMineIndex(
-  messages: readonly ChatMessage[],
-  currentIdentity: string | null,
-): number | null {
-  if (!currentIdentity) return null;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i]!.author === currentIdentity) return messages[i]!.index;
-  }
-  return null;
 }
