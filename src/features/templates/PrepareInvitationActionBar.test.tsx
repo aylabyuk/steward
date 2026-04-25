@@ -15,6 +15,8 @@ const baseProps = {
   canSmsReason: null,
   hasOverride: false,
   speakerName: "Sister Reeves",
+  speakerEmail: "",
+  speakerPhone: "",
   onRevert: noop,
   onMarkInvited: noop,
   onPrint: noop,
@@ -23,43 +25,50 @@ const baseProps = {
 };
 
 describe("PrepareInvitationActionBar — SMS", () => {
-  it("disables Send SMS when no phone on file", () => {
-    render(<PrepareInvitationActionBar {...baseProps} canSms={false} />);
-    const smsBtn = screen.getByRole("button", { name: "Send SMS" });
-    expect(smsBtn).toBeDisabled();
-  });
-
-  it("enables Send SMS when a plausible phone is on file", () => {
-    render(<PrepareInvitationActionBar {...baseProps} canSms={true} />);
+  it("Send SMS is always enabled now — clicking opens the input dialog", () => {
+    render(<PrepareInvitationActionBar {...baseProps} canSms={false} speakerPhone="" />);
     const smsBtn = screen.getByRole("button", { name: "Send SMS" });
     expect(smsBtn).not.toBeDisabled();
   });
 
-  it("shows confirm modal before firing onSendSms", async () => {
+  it("clicking Send SMS opens the channel dialog prefilled with the phone on file", async () => {
     const onSendSms = vi.fn();
-    render(<PrepareInvitationActionBar {...baseProps} canSms={true} onSendSms={onSendSms} />);
+    render(
+      <PrepareInvitationActionBar
+        {...baseProps}
+        canSms
+        speakerPhone="+14165551234"
+        onSendSms={onSendSms}
+      />,
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "Send SMS" }));
-    // Confirm modal opens with speaker-specific copy
     expect(screen.getByText(/Text invitation to Sister Reeves/i)).toBeInTheDocument();
-    // onSendSms doesn't fire until the primary confirm button is clicked
+    const input = screen.getByDisplayValue("+14165551234");
+    expect(input).toBeInTheDocument();
     expect(onSendSms).not.toHaveBeenCalled();
 
-    // The SMS confirm dialog's primary button is also labeled "Send SMS".
-    // There are now two such buttons (the toolbar icon + the dialog primary);
-    // pick the last, which is the one rendered inside the dialog.
+    // Dialog's primary "Send SMS" is the second button with that label
+    // (the toolbar icon is the first).
     const sendSmsButtons = screen.getAllByRole("button", { name: /Send SMS/i });
     await userEvent.click(sendSmsButtons.at(-1)!);
     expect(onSendSms).toHaveBeenCalledTimes(1);
+    expect(onSendSms).toHaveBeenCalledWith("+14165551234");
   });
 
-  it("cancel closes the confirm without firing onSendSms", async () => {
+  it("cancel closes the dialog without firing onSendSms", async () => {
     const onSendSms = vi.fn();
-    render(<PrepareInvitationActionBar {...baseProps} canSms={true} onSendSms={onSendSms} />);
+    render(
+      <PrepareInvitationActionBar
+        {...baseProps}
+        canSms
+        speakerPhone="+14165551234"
+        onSendSms={onSendSms}
+      />,
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "Send SMS" }));
     const cancelBtns = screen.getAllByRole("button", { name: /^Cancel$/i });
-    // Modal's Cancel button is inside the dialog (the last one rendered)
     await userEvent.click(cancelBtns[cancelBtns.length - 1]!);
     expect(onSendSms).not.toHaveBeenCalled();
   });

@@ -1,4 +1,7 @@
+import { useSearchParams } from "react-router";
+import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
 import type { WithId } from "@/hooks/_sub";
+import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { Speaker } from "@/lib/types";
 import { SpeakerEditCard } from "./SpeakerEditCard";
 import { fromSpeaker } from "./speakerDraft";
@@ -16,10 +19,10 @@ const noop = () => {};
 
 /** Step 2 of the Assign Speakers modal. Reuses <SpeakerEditCard> in
  *  its read-only/locked mode so the modal dimensions stay identical
- *  to step 1 — only the status pills and remove button swap out for a
- *  "Prepare invitation" action (planned) or an "already handled"
- *  note (invited / confirmed). Declined speakers are hidden — they
- *  have a different re-invite flow. */
+ *  to step 1 — only the remove button drops out, and the band above
+ *  the detail fields swaps between "Prepare invitation" (planned) and
+ *  "Already X — open conversation" (non-planned). Declined speakers
+ *  are hidden — they have a different re-invite flow. */
 export function SpeakerInvitationLauncher({ date, speakers }: Props) {
   const rows = speakers.filter((s) => s.data.status !== "declined");
 
@@ -31,17 +34,6 @@ export function SpeakerInvitationLauncher({ date, speakers }: Props) {
     );
   }
 
-  const drafts = rows.map((s) =>
-    fromSpeaker(s.id, {
-      name: s.data.name,
-      email: s.data.email,
-      phone: s.data.phone,
-      topic: s.data.topic,
-      status: s.data.status,
-      role: s.data.role,
-    }),
-  );
-
   return (
     <div className="flex flex-col gap-3">
       <p className="font-serif text-[13.5px] text-walnut-2">
@@ -49,17 +41,61 @@ export function SpeakerInvitationLauncher({ date, speakers }: Props) {
         conversation thread per speaker.
       </p>
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2.5 lg:gap-3.5">
-        {drafts.map((d, i) => (
-          <SpeakerEditCard
-            key={d.tempId}
-            draft={d}
-            index={i}
-            onChange={noop}
-            onRemove={noop}
-            locked={{ date }}
-          />
+        {rows.map((s, i) => (
+          <LauncherRow key={s.id} speaker={s} date={date} index={i} />
         ))}
       </div>
     </div>
+  );
+}
+
+interface LauncherRowProps {
+  speaker: WithId<Speaker>;
+  date: string;
+  index: number;
+}
+
+/** One speaker card in Step 2. Subscribes to the speaker's latest
+ *  invitation so the non-planned "open conversation" button knows
+ *  which chat to route to — SpeakerRow on the schedule auto-opens
+ *  its dialog when `?chat=<invitationId>` or `?chatSpeaker=<id>`
+ *  matches. Deliberately keeps the Assign modal open underneath so
+ *  the bishop can flip between conversation threads without losing
+ *  the speaker-overview context. */
+function LauncherRow({ speaker, date, index }: LauncherRowProps): React.ReactElement {
+  const wardId = useCurrentWardStore((s) => s.wardId);
+  const latest = useLatestInvitation(wardId, date, speaker.id);
+  const invitationId = latest.invitation?.invitationId ?? null;
+  const [, setSearchParams] = useSearchParams();
+
+  const draft = fromSpeaker(speaker.id, {
+    name: speaker.data.name,
+    email: speaker.data.email,
+    phone: speaker.data.phone,
+    topic: speaker.data.topic,
+    status: speaker.data.status,
+    role: speaker.data.role,
+  });
+
+  function onOpenChat(id: string | null) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (id) next.set("chat", id);
+        else next.set("chatSpeaker", speaker.id);
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
+  return (
+    <SpeakerEditCard
+      draft={draft}
+      index={index}
+      onChange={noop}
+      onRemove={noop}
+      locked={{ date, invitationId, onOpenChat }}
+    />
   );
 }

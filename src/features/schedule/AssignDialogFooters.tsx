@@ -24,7 +24,7 @@ export function EditFooter({
         disabled={saving}
         className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
       >
-        {saving ? "Saving…" : "Save"}
+        {saving ? "Saving…" : "Continue →"}
       </button>
     </>
   );

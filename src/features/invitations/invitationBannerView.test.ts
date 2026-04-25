@@ -61,7 +61,10 @@ describe("deriveBannerView", () => {
   });
 
   it("unacknowledged yes reply surfaces Apply button with Confirm label", () => {
-    const view = deriveBannerView(speakerWith("invited"), invitationWith({ responseAnswer: "yes" }));
+    const view = deriveBannerView(
+      speakerWith("invited"),
+      invitationWith({ responseAnswer: "yes" }),
+    );
     expect(view.message).toMatch(/accepted.*confirm first/);
     expect(view.showApply).toBe(true);
     expect(view.applyLabel).toBe("Confirm");

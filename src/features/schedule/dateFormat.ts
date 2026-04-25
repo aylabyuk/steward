@@ -7,6 +7,20 @@ export function formatShortDate(iso: string): string {
   });
 }
 
+/** Short weekday + date — e.g. "Sun May 20". Used in speaker-facing
+ *  chat copy ("Can you speak on Sun May 20?", confirmation system
+ *  notices) where the ambiguous "this Sunday" could land 0–6 days
+ *  out. Falls back to the raw ISO string if parsing fails. */
+export function formatShortSunday(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export function formatCountdown(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;

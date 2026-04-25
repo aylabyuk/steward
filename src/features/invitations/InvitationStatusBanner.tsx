@@ -21,6 +21,10 @@ interface Props {
    *  to `updateSpeaker({ status })` which stamps
    *  `statusSource=manual` + `statusSetBy` + `statusSetAt`. */
   onStatusChange: (status: SpeakerStatus) => void;
+  /** Current signed-in user's uid. Used by the pills' confirm dialog
+   *  to suppress the "someone else set this" context line when the
+   *  same user is overriding their own earlier choice. */
+  currentUserUid?: string | undefined;
 }
 
 /** Bishop-side banner above the invitation chat thread. Replaces the
@@ -36,6 +40,7 @@ export function InvitationStatusBanner({
   applying,
   applyError,
   onStatusChange,
+  currentUserUid,
 }: Props) {
   const view = deriveBannerView(speaker, invitation);
   const lastSeen = formatLastSeen(invitation.speakerLastSeenAt);
@@ -72,7 +77,14 @@ export function InvitationStatusBanner({
       </div>
       {applyError && <p className="font-sans text-[11.5px] text-bordeaux mt-2">{applyError}</p>}
       <div className="mt-3">
-        <SpeakerStatusPills status={speaker.status ?? "planned"} onChange={onStatusChange} />
+        <SpeakerStatusPills
+          status={speaker.status ?? "planned"}
+          onChange={onStatusChange}
+          currentStatusSource={speaker.statusSource}
+          currentStatusSetBy={speaker.statusSetBy}
+          members={members}
+          currentUserUid={currentUserUid}
+        />
         {provenance && (
           <p className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-walnut-3 -mt-1">
             {provenance}

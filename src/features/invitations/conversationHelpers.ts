@@ -11,6 +11,7 @@ export function toChatMessage(m: Message): ChatMessage {
     author: m.author ?? "",
     body: m.body ?? "",
     dateCreated: m.dateCreated ?? null,
+    dateUpdated: m.dateUpdated ?? null,
     attributes,
   };
 }

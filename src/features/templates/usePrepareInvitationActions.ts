@@ -68,15 +68,34 @@ export function usePrepareInvitationActions(args: Args) {
     }
   }
 
-  async function sendVia(channels: ("email" | "sms")[]): Promise<void> {
+  async function sendVia(
+    channels: ("email" | "sms")[],
+    contactOverride?: { email?: string; phone?: string },
+  ): Promise<void> {
+    // Persist a changed contact value before the send so the speaker
+    // doc stays the single source of truth. The callable receives the
+    // resolved (override ?? current) value directly to avoid racing
+    // against the Firestore subscription re-snapshotting our props.
+    const resolvedEmail = (contactOverride?.email ?? args.speakerEmail).trim();
+    const resolvedPhone = (contactOverride?.phone ?? args.speakerPhone).trim();
+    const contactPatch: { email?: string; phone?: string } = {};
+    if (contactOverride?.email && resolvedEmail !== args.speakerEmail.trim()) {
+      contactPatch.email = resolvedEmail;
+    }
+    if (contactOverride?.phone && resolvedPhone !== args.speakerPhone.trim()) {
+      contactPatch.phone = resolvedPhone;
+    }
+    if (contactPatch.email || contactPatch.phone) {
+      await updateSpeaker(args.wardId, args.date, args.speakerId, contactPatch);
+    }
     const res = await sendSpeakerInvitation({
       wardId: args.wardId,
       meetingDate: args.date,
       speakerId: args.speakerId,
       speakerName: args.speakerName,
       ...(args.speakerTopic.trim() ? { speakerTopic: args.speakerTopic.trim() } : {}),
-      speakerEmail: args.speakerEmail,
-      speakerPhone: args.speakerPhone,
+      speakerEmail: resolvedEmail,
+      speakerPhone: resolvedPhone,
       inviterName: args.inviterName,
       bishopReplyToEmail: bishopEmail,
       bodyMarkdown: form.letterBody,
@@ -97,7 +116,9 @@ export function usePrepareInvitationActions(args: Args) {
       void runAction(() =>
         updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" }),
       ),
-    send: () => void runAction(() => sendVia(["email"])),
-    sendSms: () => void runAction(() => sendVia(["sms"])),
+    send: (email?: string) =>
+      void runAction(() => sendVia(["email"], email ? { email } : undefined)),
+    sendSms: (phone?: string) =>
+      void runAction(() => sendVia(["sms"], phone ? { phone } : undefined)),
   };
 }

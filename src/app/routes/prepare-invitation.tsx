@@ -105,6 +105,8 @@ export function PrepareInvitationPage() {
     canSmsReason,
     hasOverride: form.letterHasOverride,
     speakerName: speaker.data.name,
+    speakerEmail: speaker.data.email ?? "",
+    speakerPhone: speaker.data.phone ?? "",
     onRevert: () => void form.clearLetterOverride(),
     onMarkInvited: actions.markInvited,
     // Global `@media print` rules pin the preview's LetterCanvas to

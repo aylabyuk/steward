@@ -122,6 +122,9 @@ function InviteLandingContent({
               speakerName={invitation.speakerName}
               bishopricParticipants={invitation.bishopricParticipants}
               hasResponse={!!invitation.response}
+              meetingDate={invitation.speakerRef.meetingDate}
+              responseAnswer={invitation.response?.answer ?? null}
+              currentStatus={invitation.currentSpeakerStatus ?? null}
               onClose={() => setChatOpen(false)}
               fillHeight
             />

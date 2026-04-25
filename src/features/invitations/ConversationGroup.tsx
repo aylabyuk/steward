@@ -1,6 +1,7 @@
 import { cn } from "@/lib/cn";
 import { ConversationAvatar } from "./ConversationAvatar";
 import { ConversationBubble, bubblePositionOf } from "./ConversationBubble";
+import type { Permissions } from "./messageActions";
 import type { MessageGroup } from "./threadItems";
 
 interface Props {
@@ -8,13 +9,29 @@ interface Props {
   /** When true, the last mine=true bubble in the group is the latest
    *  message the other side has marked as read — show "Read" under it. */
   readByOther?: boolean;
+  /** Per-message delete/edit permissions computed by the thread.
+   *  When omitted, bubble actions stay hidden regardless of handlers. */
+  permissions?: Permissions;
+  /** Opens the thread-level delete-confirm dialog for the given
+   *  message sid. Thread owns the dialog so one shared instance
+   *  covers every bubble. */
+  onRequestDelete?: (sid: string) => void;
+  /** Called when a bubble's inline edit form saves. The thread
+   *  forwards to Twilio `Message.updateBody`. */
+  onEditMessage?: (sid: string, nextBody: string) => Promise<void> | void;
 }
 
 /** Renders one author's run of consecutive messages as a connected
  *  stack with a single avatar + trailing timestamp. Read receipt is
  *  a small "Read" label under the last bubble on mine=true groups
  *  when the other participant has read up to that index. */
-export function ConversationGroup({ group, readByOther }: Props): React.ReactElement {
+export function ConversationGroup({
+  group,
+  readByOther,
+  permissions,
+  onRequestDelete,
+  onEditMessage,
+}: Props): React.ReactElement {
   const last = group.messages.at(-1)!;
   const timestamp = last.dateCreated?.toLocaleTimeString(undefined, {
     hour: "numeric",
@@ -48,14 +65,26 @@ export function ConversationGroup({ group, readByOther }: Props): React.ReactEle
         <div
           className={cn("flex flex-col gap-0.5 min-w-0", group.mine ? "items-end" : "items-start")}
         >
-          {group.messages.map((m, i) => (
-            <ConversationBubble
-              key={m.sid}
-              message={m}
-              mine={group.mine}
-              position={bubblePositionOf(i, group.messages.length)}
-            />
-          ))}
+          {group.messages.map((m, i) => {
+            const canEdit = Boolean(permissions?.canEdit(m) && onEditMessage);
+            const canDelete = Boolean(permissions?.canDelete(m) && onRequestDelete);
+            return (
+              <ConversationBubble
+                key={m.sid}
+                message={m}
+                mine={group.mine}
+                position={bubblePositionOf(i, group.messages.length)}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                {...(canEdit && onEditMessage
+                  ? { onEdit: (nextBody: string) => onEditMessage(m.sid, nextBody) }
+                  : {})}
+                {...(canDelete && onRequestDelete
+                  ? { onDelete: () => onRequestDelete(m.sid) }
+                  : {})}
+              />
+            );
+          })}
         </div>
       </div>
       {timestamp && (

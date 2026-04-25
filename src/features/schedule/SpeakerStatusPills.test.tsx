@@ -17,7 +17,7 @@ describe("SpeakerStatusPills", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("applies the change directly when switching back to Planned", async () => {
+  it("Invited → Planned is frictionless (no commitment to erase)", async () => {
     const onChange = vi.fn();
     render(<SpeakerStatusPills status="invited" onChange={onChange} />);
 
@@ -25,6 +25,32 @@ describe("SpeakerStatusPills", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(onChange).toHaveBeenCalledWith("planned");
+  });
+
+  it("Confirmed → Planned surfaces the rollback dialog and requires confirm", async () => {
+    const onChange = vi.fn();
+    render(<SpeakerStatusPills status="confirmed" onChange={onChange} />);
+
+    await userEvent.click(screen.getByRole("radio", { name: /Planned/i }));
+
+    expect(screen.getByText(/Clear confirmed status\?/i)).toBeInTheDocument();
+    expect(screen.getByText(/Rolling back to Planned clears that commitment/i)).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: /Clear confirmation/i }));
+    expect(onChange).toHaveBeenCalledWith("planned");
+  });
+
+  it("Declined → Invited surfaces the Undo-decline rollback dialog", async () => {
+    const onChange = vi.fn();
+    render(<SpeakerStatusPills status="declined" onChange={onChange} />);
+
+    await userEvent.click(screen.getByRole("radio", { name: /Invited/i }));
+
+    expect(screen.getByText(/Undo decline\?/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Undo decline/i }));
+    expect(onChange).toHaveBeenCalledWith("invited");
   });
 
   it("opens a confirmation dialog when switching to Invited", async () => {
