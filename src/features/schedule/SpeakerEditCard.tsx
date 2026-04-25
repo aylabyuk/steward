@@ -22,11 +22,25 @@ interface Props {
     invitationId?: string | null;
     onOpenChat?: (invitationId: string) => void;
   };
+  /** When true the card reserves vertical space for the soft-lock
+   *  caption even if this particular card is still planned, so all
+   *  cards in the parent grid share a uniform field-row alignment.
+   *  Set by the parent list when at least one sibling card is
+   *  non-planned. */
+  reserveLockSlot?: boolean;
 }
 
-export function SpeakerEditCard({ draft, index, onChange, onRemove, locked }: Props) {
+export function SpeakerEditCard({
+  draft,
+  index,
+  onChange,
+  onRemove,
+  locked,
+  reserveLockSlot,
+}: Props) {
   const readOnly = Boolean(locked);
   const softLocked = !readOnly && draft.status !== "planned";
+  const showLockSlot = !readOnly && (softLocked || Boolean(reserveLockSlot));
   return (
     <div
       className={cn(
@@ -40,7 +54,7 @@ export function SpeakerEditCard({ draft, index, onChange, onRemove, locked }: Pr
         onRemove={readOnly ? null : onRemove}
       />
 
-      {softLocked && <SoftLockedNote />}
+      {showLockSlot && <SoftLockedNote hidden={!softLocked} />}
 
       <SpeakerLockedBand
         draft={draft}

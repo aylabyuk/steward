@@ -143,6 +143,11 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
     return <p className="text-sm text-walnut-2">Loading…</p>;
   }
 
+  // When at least one card is past "planned", every sibling card
+  // reserves vertical space for the soft-lock caption — keeps the
+  // input rows aligned across the grid.
+  const anyNonPlanned = drafts.some((d) => d.status !== "planned");
+
   return (
     <div className="flex flex-col gap-3">
       <p className="font-serif text-[13.5px] text-walnut-2">
@@ -157,6 +162,7 @@ export const SpeakerEditList = forwardRef<SpeakerEditListHandle, Props>(function
             index={i}
             onChange={(partial) => updateDraft(d.tempId, partial)}
             onRemove={() => removeDraft(d.tempId)}
+            reserveLockSlot={anyNonPlanned}
           />
         ))}
         <AddSpeakerCard
