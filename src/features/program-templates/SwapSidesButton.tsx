@@ -16,7 +16,7 @@ export function SwapSidesButton({ previewSide, onClick }: Props) {
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="hidden lg:inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-walnut-3 hover:bg-parchment-2 hover:text-walnut transition-colors"
+      className="hidden lg:inline-flex items-center gap-1.5 rounded-md border border-border-strong bg-chalk px-2.5 py-1 font-sans text-[12px] font-semibold text-walnut hover:bg-parchment-2 hover:border-walnut-3 transition-colors normal-case tracking-normal"
     >
       <svg
         width="14"
@@ -24,7 +24,7 @@ export function SwapSidesButton({ previewSide, onClick }: Props) {
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden
@@ -32,6 +32,7 @@ export function SwapSidesButton({ previewSide, onClick }: Props) {
         <path d="M7 7h13M7 7l3-3M7 7l3 3" />
         <path d="M17 17H4M17 17l-3 3M17 17l-3-3" />
       </svg>
+      Swap sides
     </button>
   );
 }
