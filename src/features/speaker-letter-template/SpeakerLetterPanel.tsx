@@ -15,7 +15,9 @@ import { MobileLetterPreviewButton } from "@/features/templates/MobileLetterPrev
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { SpeakerLetterEditorColumn } from "./SpeakerLetterEditorColumn";
 
-const NAMESPACE = "speakerLetterTemplate";
+const DEFAULT_NAMESPACE = "speakerLetterTemplate";
+const DEFAULT_DESCRIPTION =
+  "The body + footer of the printed invitation. Variables resolve at send time so each speaker sees their own name, topic, and Sunday.";
 
 interface Props {
   wardName: string;
@@ -32,6 +34,16 @@ interface Props {
   resetKey: number;
   onBodyChange: (md: string) => void;
   onFooterChange: (md: string) => void;
+  /** Override the description copy under the panel header. */
+  description?: React.ReactNode;
+  /** localStorage namespace for editor width + preview side. Each
+   *  context (template page vs wizard) keeps its own preference. */
+  namespace?: string;
+  /** When true (default), reserve `pb-24` so a fixed SaveBar can't
+   *  cover the preview's zoom toolbar. Set false when the panel is a
+   *  flex sibling of a non-fixed footer (e.g. the wizard's
+   *  ReviewLetterFooter), since the gap would just waste space. */
+  reserveBottomGap?: boolean;
 }
 
 /** Editor + preview body for the speaker-letter template page.
@@ -53,14 +65,17 @@ export function SpeakerLetterPanel({
   resetKey,
   onBodyChange,
   onFooterChange,
+  description = DEFAULT_DESCRIPTION,
+  namespace = DEFAULT_NAMESPACE,
+  reserveBottomGap = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartWidth = useRef(0);
-  const [editorWidth, setEditorWidth] = useState(() => readStoredWidth(NAMESPACE));
-  const [previewSide, setPreviewSide] = useState<PreviewSide>(() => readStoredSide(NAMESPACE));
+  const [editorWidth, setEditorWidth] = useState(() => readStoredWidth(namespace));
+  const [previewSide, setPreviewSide] = useState<PreviewSide>(() => readStoredSide(namespace));
 
-  useEffect(() => writeStoredWidth(NAMESPACE, editorWidth), [editorWidth]);
-  useEffect(() => writeStoredSide(NAMESPACE, previewSide), [previewSide]);
+  useEffect(() => writeStoredWidth(namespace, editorWidth), [namespace, editorWidth]);
+  useEffect(() => writeStoredSide(namespace, previewSide), [namespace, previewSide]);
 
   function startDrag() {
     dragStartWidth.current = editorWidth;
@@ -77,12 +92,16 @@ export function SpeakerLetterPanel({
   const previewOrderClass = previewSide === "left" ? "lg:order-1" : "lg:order-3";
 
   return (
-    <div className="flex-1 lg:min-h-0 flex flex-col px-4 sm:px-8 pt-4 pb-24 lg:overflow-hidden">
+    <div
+      className={cn(
+        "flex-1 lg:min-h-0 flex flex-col px-4 sm:px-8 pt-4 lg:overflow-hidden",
+        reserveBottomGap ? "pb-24" : "pb-4",
+      )}
+    >
       <div className="shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
-        <p className="font-serif italic text-[14px] text-walnut-2 min-w-0 flex-1">
-          The body + footer of the printed invitation. Variables resolve at send time so each
-          speaker sees their own name, topic, and Sunday.
-        </p>
+        <div className="font-serif italic text-[14px] text-walnut-2 min-w-0 flex-1">
+          {description}
+        </div>
         <div className="flex items-center gap-2 shrink-0">
           {usingDefault && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-brass-soft bg-brass-soft/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep">
