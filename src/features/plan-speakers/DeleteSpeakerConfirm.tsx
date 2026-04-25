@@ -61,7 +61,10 @@ export function DeleteSpeakerConfirm({
       }}
     >
       <div className="w-full max-w-md rounded-[14px] border border-border-strong bg-chalk p-6 shadow-elev-3">
-        <h2 id="delete-speaker-title" className="font-display text-[19px] font-semibold text-walnut mb-1.5">
+        <h2
+          id="delete-speaker-title"
+          className="font-display text-[19px] font-semibold text-walnut mb-1.5"
+        >
           Delete {speakerName}?
         </h2>
         <p className="font-serif text-[14px] text-walnut-2 leading-relaxed mb-4">
