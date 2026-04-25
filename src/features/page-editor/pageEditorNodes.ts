@@ -1,6 +1,6 @@
 import type { Klass, LexicalNode } from "lexical";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { LinkNode } from "@lexical/link";
+import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { VariableChipNode } from "@/features/program-templates/nodes/VariableChipNode";
@@ -17,6 +17,7 @@ export const PAGE_EDITOR_BASE_NODES: ReadonlyArray<Klass<LexicalNode>> = [
   ListNode,
   ListItemNode,
   LinkNode,
+  AutoLinkNode,
   HorizontalRuleNode,
   VariableChipNode,
   SignatureBlockNode,
