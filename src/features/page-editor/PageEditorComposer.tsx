@@ -129,20 +129,10 @@ function StateJsonOnChangePlugin({ onChange, onInitial }: StatePluginProps): nul
 
   useEffect(() => {
     const initialJson = JSON.stringify(editor.getEditorState().toJSON());
-    console.log("[wysiwyg-plugin] capture-initial", {
-      jsonLen: initialJson.length,
-      jsonHead: initialJson.slice(0, 60),
-    });
     onInitialRef.current?.(initialJson);
     return editor.registerUpdateListener(({ editorState, dirtyElements, dirtyLeaves }) => {
       if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
-      const json = JSON.stringify(editorState.toJSON());
-      console.log("[wysiwyg-plugin] dirty update", {
-        jsonLen: json.length,
-        dirtyElements: dirtyElements.size,
-        dirtyLeaves: dirtyLeaves.size,
-      });
-      onChangeRef.current(json);
+      onChangeRef.current(JSON.stringify(editorState.toJSON()));
     });
   }, [editor]);
   return null;
