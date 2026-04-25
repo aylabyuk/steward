@@ -4,7 +4,7 @@ import { EditPreviewToggle, type LetterViewMode } from "./EditPreviewToggle";
 import { PrintOnlyLetter } from "./PrintOnlyLetter";
 import { ScaledLetterPreview } from "./ScaledLetterPreview";
 import { SpeakerLetterGuide } from "./SpeakerLetterGuide";
-import { EditorSection } from "./SpeakerLetterEditor";
+import { EditorSection } from "./MarkdownEditor";
 import { interpolate } from "./interpolate";
 import type { LetterVars } from "./prepareInvitationVars";
 

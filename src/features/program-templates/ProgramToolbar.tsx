@@ -23,8 +23,11 @@ import type { ProgramVariable } from "./programVariables";
 type BlockKind = "p" | "h1" | "h2" | "h3" | "quote";
 
 interface Props {
-  variables: readonly ProgramVariable[];
-  groupLabels: Readonly<Record<string, string>>;
+  /** Optional Insert-variable surface. Omit both to hide the menu —
+   *  consumers without a variable surface (plain message bodies, etc.)
+   *  get the same toolbar minus that one slot. */
+  variables?: readonly ProgramVariable[];
+  groupLabels?: Readonly<Record<string, string>>;
 }
 
 export function ProgramToolbar({ variables, groupLabels }: Props) {
@@ -140,8 +143,12 @@ export function ProgramToolbar({ variables, groupLabels }: Props) {
         label="U"
         onClick={() => fmt("underline")}
       />
-      <ToolbarSep />
-      <InsertVariableMenu variables={variables} groupLabels={groupLabels} />
+      {variables && groupLabels && (
+        <>
+          <ToolbarSep />
+          <InsertVariableMenu variables={variables} groupLabels={groupLabels} />
+        </>
+      )}
     </div>
   );
 }
