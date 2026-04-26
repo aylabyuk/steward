@@ -6,6 +6,7 @@ import {
   callSendSpeakerInvitation,
   type FreshInvitationResponse,
 } from "@/features/invitations/invitationsCallable";
+import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { interpolate } from "./interpolate";
 import { formatAssignedDate, formatToday } from "./letterDates";
 
@@ -68,13 +69,20 @@ export async function sendSpeakerInvitation(
 
     const bodyMarkdown = interpolate(input.bodyMarkdown, vars);
     const footerMarkdown = interpolate(input.footerMarkdown, vars);
-    // Run the same {{token}} → value substitution over the JSON string
-    // so the snapshot is fully resolved — the renderer doesn't need a
-    // per-speaker context, and chip nodes inside saved props (e.g. an
-    // eyebrow saying "Sacrament Meeting · {{wardName}}") render with
-    // the right values.
+    // Two-pass resolution on the editor state JSON before it lands on
+    // the snapshot:
+    //   1. interpolate() handles {{token}} STRINGS embedded in custom
+    //      node props (e.g. Letterhead.eyebrow = "Sacrament Meeting ·
+    //      {{wardName}}"), and any text nodes that still carry literal
+    //      {{token}} text from the markdown-hydration path.
+    //   2. resolveChipsInState() walks the parsed tree and replaces
+    //      every VariableChipNode with a plain text node carrying the
+    //      resolved value — chips don't store {{...}} braces in their
+    //      JSON shape so interpolate() alone misses them.
+    // Net effect: the snapshot stores a fully-baked editor state. The
+    // speaker page just renders text.
     const editorStateJson = input.editorStateJson
-      ? interpolate(input.editorStateJson, vars)
+      ? resolveChipsInState(interpolate(input.editorStateJson, vars), vars)
       : undefined;
     const expiresAtMillis = computeExpiresAt(input.meetingDate);
 

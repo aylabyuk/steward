@@ -1,5 +1,58 @@
 import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 
+/** Walks an editor-state JSON string and replaces every
+ *  variable-chip node with a plain text node carrying the resolved
+ *  value from `vars`. Used at send-time so the invitation snapshot
+ *  arrives with chips already baked into text — the speaker landing
+ *  page's renderer doesn't need to know about chip resolution
+ *  (renderText handles plain text just fine).
+ *
+ *  Chips whose token isn't in `vars` are left as `{{token}}` literal
+ *  text so the speaker can at least see what was supposed to fill in,
+ *  rather than a phantom empty span. */
+export function resolveChipsInState(
+  stateJson: string,
+  vars: Readonly<Record<string, string>>,
+): string {
+  let parsed: SerializedEditorState;
+  try {
+    parsed = JSON.parse(stateJson) as SerializedEditorState;
+  } catch {
+    return stateJson;
+  }
+  const root = parsed.root as SerializedLexicalNode & {
+    children?: SerializedLexicalNode[];
+  };
+  walk(root, vars);
+  return JSON.stringify(parsed);
+}
+
+function walk(
+  node: SerializedLexicalNode & { children?: SerializedLexicalNode[] },
+  vars: Readonly<Record<string, string>>,
+): void {
+  if (!Array.isArray(node.children)) return;
+  for (let i = 0; i < node.children.length; i++) {
+    const child = node.children[i]!;
+    if (child.type === "variable-chip") {
+      const c = child as unknown as { token?: string; format?: number; style?: string };
+      const token = c.token ?? "";
+      const value = Object.hasOwn(vars, token) ? vars[token]! : `{{${token}}}`;
+      node.children[i] = {
+        type: "text",
+        version: 1,
+        format: c.format ?? 0,
+        mode: "normal",
+        style: c.style ?? "",
+        detail: 0,
+        text: value,
+      } as unknown as SerializedLexicalNode;
+    } else {
+      walk(child as SerializedLexicalNode & { children?: SerializedLexicalNode[] }, vars);
+    }
+  }
+}
+
 interface SerializedTextNode extends SerializedLexicalNode {
   text: string;
   format?: number;
@@ -163,13 +216,30 @@ function serializeInlineNode(node: SerializedLexicalNode): string {
   switch (node.type) {
     case "text": {
       const t = node as SerializedTextNode;
-      let s = t.text;
+      const s = t.text;
       const fmt = t.format ?? 0;
-      if (fmt & FORMAT_CODE) s = `\`${s}\``;
-      if (fmt & FORMAT_BOLD) s = `**${s}**`;
-      if (fmt & FORMAT_ITALIC) s = `*${s}*`;
-      if (fmt & FORMAT_UNDERLINE) s = `<u>${s}</u>`;
-      return s;
+      // Markdown emphasis markers can't have whitespace immediately
+      // inside them — `* foo *` is a literal "* foo *", not italic
+      // "foo". When a hydrated paragraph carries an italic-formatted
+      // text node like `" "` or " text " (common when the bishop's
+      // markdown was `: *{{topic}}*` and `{{topic}}` was a chip with
+      // surrounding italic spaces), wrapping the whole thing in
+      // `*…*` produced broken markdown that rendered as visible
+      // asterisks on the speaker page (see screenshot the user
+      // posted with "remarks:* *Faith of our Fathers"). Splitting
+      // leading + trailing whitespace out of the format-wrapper
+      // hugs the markers around real characters.
+      const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s);
+      const lead = m?.[1] ?? "";
+      const inner = m?.[2] ?? "";
+      const trail = m?.[3] ?? "";
+      if (inner.length === 0) return s;
+      let wrapped = inner;
+      if (fmt & FORMAT_CODE) wrapped = `\`${wrapped}\``;
+      if (fmt & FORMAT_BOLD) wrapped = `**${wrapped}**`;
+      if (fmt & FORMAT_ITALIC) wrapped = `*${wrapped}*`;
+      if (fmt & FORMAT_UNDERLINE) wrapped = `<u>${wrapped}</u>`;
+      return lead + wrapped + trail;
     }
     case "linebreak":
       return "\n";

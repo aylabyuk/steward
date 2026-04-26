@@ -1,6 +1,10 @@
 import type { SerializedEditorState } from "lexical";
 import { describe, expect, it } from "vitest";
-import { legacyFieldsFromState, serializeForInterpolation } from "./serializeForInterpolation";
+import {
+  legacyFieldsFromState,
+  resolveChipsInState,
+  serializeForInterpolation,
+} from "./serializeForInterpolation";
 
 function state(children: object[]): SerializedEditorState {
   return {
@@ -89,6 +93,96 @@ describe("serializeForInterpolation", () => {
   it("omits image with empty src so a placeholder doesn't leak into the email", () => {
     const s = state([image("", "alt"), paragraph(text("Body"))]);
     expect(serializeForInterpolation(s)).toBe("Body");
+  });
+
+  it("hugs format markers around real content — whitespace in italic text doesn't leak as literal asterisks (regression)", () => {
+    // The user reported the speaker page rendered "remarks:* *Faith
+    // of our Fathers" with visible asterisks because an italic-
+    // formatted text node carried surrounding spaces ("  topic  "
+    // wrapped as "*  topic  *" — broken markdown). This test asserts
+    // leading + trailing whitespace stays outside the format markers.
+    const s = state([paragraph(text("a "), text("topic", 2), text(" b"))]);
+    expect(serializeForInterpolation(s)).toBe("a *topic* b");
+
+    const s2 = state([paragraph(text("a"), text("  topic  ", 2), text("b"))]);
+    expect(serializeForInterpolation(s2)).toBe("a  *topic*  b");
+
+    const s3 = state([paragraph(text("a"), text("   ", 2), text("b"))]);
+    expect(serializeForInterpolation(s3)).toBe("a   b");
+  });
+});
+
+describe("resolveChipsInState", () => {
+  function s(children: object[]): string {
+    return JSON.stringify(state(children));
+  }
+
+  it("replaces chip nodes inline with text containing the resolved value", () => {
+    const out = resolveChipsInState(s([paragraph(text("Dear "), chip("speakerName"), text(","))]), {
+      speakerName: "Sister Reeves",
+    });
+    const parsed = JSON.parse(out);
+    const para = parsed.root.children[0];
+    expect(para.children).toHaveLength(3);
+    expect(para.children[1]).toMatchObject({
+      type: "text",
+      text: "Sister Reeves",
+    });
+  });
+
+  it("falls back to {{token}} text when the var isn't in the bag", () => {
+    const out = resolveChipsInState(s([paragraph(chip("missing"))]), { other: "x" });
+    const parsed = JSON.parse(out);
+    expect(parsed.root.children[0].children[0]).toMatchObject({
+      type: "text",
+      text: "{{missing}}",
+    });
+  });
+
+  it("preserves the chip's format + style on the replacement text", () => {
+    const stateJson = JSON.stringify(
+      state([
+        paragraph({
+          type: "variable-chip",
+          version: 3,
+          token: "wardName",
+          format: 1,
+          style: "color: red;",
+        }),
+      ]),
+    );
+    const out = resolveChipsInState(stateJson, { wardName: "Test Ward" });
+    const parsed = JSON.parse(out);
+    expect(parsed.root.children[0].children[0]).toMatchObject({
+      type: "text",
+      text: "Test Ward",
+      format: 1,
+      style: "color: red;",
+    });
+  });
+
+  it("recurses into nested element nodes (lists, quotes, etc)", () => {
+    const stateJson = s([
+      {
+        type: "list",
+        version: 1,
+        listType: "bullet",
+        children: [
+          {
+            type: "listitem",
+            version: 1,
+            children: [paragraph(text("• "), chip("speakerName"))],
+          },
+        ],
+      },
+    ]);
+    const out = resolveChipsInState(stateJson, { speakerName: "Brother Tan" });
+    expect(out).toContain("Brother Tan");
+    expect(out).not.toContain("variable-chip");
+  });
+
+  it("returns the input unchanged when JSON parsing fails", () => {
+    expect(resolveChipsInState("not json", {})).toBe("not json");
   });
 });
 
