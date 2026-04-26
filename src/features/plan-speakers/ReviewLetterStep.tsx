@@ -113,6 +113,7 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
           assignedDate={vars.date}
           initialJson={form.initialJson}
           initialMarkdown={form.initialMarkdown}
+          vars={vars}
           onChange={form.setLetterStateJson}
           onInitial={form.captureInitial}
           ariaLabel={`Letter for ${speaker.data.name}`}
