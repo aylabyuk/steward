@@ -79,7 +79,11 @@ export function LetterPageEditor({
         ? fits.fitPage
         : zoomMode.value;
   return (
-    <LetterRenderContextProvider assignedDate={assignedDate} vars={vars ?? LETTER_VARIABLE_SAMPLES}>
+    <LetterRenderContextProvider
+      assignedDate={assignedDate}
+      vars={vars ?? LETTER_VARIABLE_SAMPLES}
+      liveValues={vars !== undefined}
+    >
       <VariableRegistryProvider
         variables={LETTER_VARIABLES}
         groupLabels={LETTER_VARIABLE_GROUP_LABEL}

@@ -13,7 +13,7 @@ import {
   type TextFormatType,
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useLetterVars } from "@/features/page-editor/letterRenderContext";
+import { useLetterVars, useLiveValues } from "@/features/page-editor/letterRenderContext";
 import { useVariableMeta, useVariableRegistry } from "@/features/page-editor/variableRegistry";
 
 export type SerializedVariableChipNode = Spread<
@@ -230,12 +230,13 @@ function ChipView({ nodeKey, token, format, style }: ChipViewProps) {
   const meta = useVariableMeta(token);
   const { variables, groupLabels } = useVariableRegistry();
   const liveVars = useLetterVars();
+  const isLive = useLiveValues();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
   // Resolution order: the live vars bag set by `LetterRenderContextProvider`
-  // (so the "Preview as: <member>" switcher swaps every chip on the page),
-  // then the static sample from the variable registry, then the variable's
-  // human label, then the raw token.
+  // (so per-speaker editors render real values), then the static sample
+  // from the variable registry, then the variable's human label, then
+  // the raw token.
   const display = liveVars[token] ?? meta?.sample ?? meta?.label ?? token;
 
   // Click-outside dismiss. Without this, opening a second chip leaves
@@ -319,7 +320,13 @@ function ChipView({ nodeKey, token, format, style }: ChipViewProps) {
           contentEditable={false}
           className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-7 z-40 whitespace-nowrap rounded-md bg-walnut text-parchment px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] opacity-0 group-hover/chip:opacity-100 transition-opacity duration-100"
         >
-          Preview · <span className="text-brass-soft">{`{{${token}}}`}</span>
+          {isLive ? (
+            <span className="text-brass-soft">{`{{${token}}}`}</span>
+          ) : (
+            <>
+              Preview · <span className="text-brass-soft">{`{{${token}}}`}</span>
+            </>
+          )}
         </span>
       )}
       {open && (
