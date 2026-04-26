@@ -6,6 +6,7 @@ import {
   LETTER_SLASH_COMMANDS,
   buildInitialLetterState,
 } from "./letterEditorConfig";
+import { LETTER_VARIABLES, LETTER_VARIABLE_GROUP_LABEL } from "./letterVariables";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
 import { useFitZoom } from "./useFitZoom";
@@ -74,6 +75,8 @@ export function LetterPageEditor({
           pageToolbar={
             <PageToolbar
               slashCommands={LETTER_SLASH_COMMANDS}
+              variables={LETTER_VARIABLES}
+              variableGroupLabels={LETTER_VARIABLE_GROUP_LABEL}
               pageStyle={pageStyle}
               zoom={zoom}
               zoomMode={zoomMode}

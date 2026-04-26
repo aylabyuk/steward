@@ -9,6 +9,13 @@ interface Options {
   /** Usable height (CSS px) of the page content area — the page sheet
    *  height minus its top + bottom margin paddings. */
   pageContentH: number;
+  /** Distance (CSS px) from the offset-parent's top edge to the
+   *  contenteditable's first natural content row. Used to normalise
+   *  every measured `offsetTop` so pagination math runs in
+   *  content-relative Y rather than raw stage Y — without this the
+   *  pushed blocks would land in the page's top margin instead of its
+   *  content top. */
+  padTopPx: number;
   /** Ref to the container that holds the contenteditable. Reads its
    *  first `[contenteditable=true]` descendant on every paginate tick
    *  so it works regardless of the wrapping markup. */
@@ -26,7 +33,7 @@ interface Options {
  *  pasted 30-paragraph quote) won't paginate — it overflows past its
  *  page bottom. The bishop can split it manually or insert a hard
  *  page break. */
-export function usePagination({ pageStride, pageContentH, contentRef }: Options) {
+export function usePagination({ pageStride, pageContentH, padTopPx, contentRef }: Options) {
   const [editor] = useLexicalComposerContext();
   const [pages, setPages] = useState(1);
 
@@ -54,10 +61,13 @@ export function usePagination({ pageStride, pageContentH, contentRef }: Options)
       }
       void editable.offsetHeight; // force reflow before measuring
 
-      // Step 2: walk and inject. Since each push re-flows everything
-      // below it, we re-read offsetTop after each injection.
+      // Step 2: walk and inject. Each block's normalized Y is
+      // (offsetTop − padTopPx) so Y=0 is the first page's content
+      // top, which makes `Math.floor(top / pageStride)` directly
+      // correspond to the page index. Push amount is in normalized
+      // coords too; `marginTop` accepts the same delta in stage px.
       for (const b of blocks) {
-        const top = b.offsetTop;
+        const top = b.offsetTop - padTopPx;
         const bottom = top + b.offsetHeight;
         const pageIdx = Math.floor(top / pageStride);
         const pageContentBottom = pageIdx * pageStride + pageContentH;
@@ -70,7 +80,7 @@ export function usePagination({ pageStride, pageContentH, contentRef }: Options)
       }
 
       const last = blocks[blocks.length - 1]!;
-      const lastBottom = last.offsetTop + last.offsetHeight;
+      const lastBottom = last.offsetTop - padTopPx + last.offsetHeight;
       setPages(Math.max(1, Math.floor(lastBottom / pageStride) + 1));
     }
 
@@ -87,7 +97,7 @@ export function usePagination({ pageStride, pageContentH, contentRef }: Options)
       window.removeEventListener("resize", schedule);
       cancelAnimationFrame(raf);
     };
-  }, [editor, pageStride, pageContentH, contentRef]);
+  }, [editor, pageStride, pageContentH, padTopPx, contentRef]);
 
   return pages;
 }
