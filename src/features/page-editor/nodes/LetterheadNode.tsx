@@ -18,44 +18,51 @@ import { useLetterVars } from "../letterRenderContext";
 import { LETTER_VARIABLES } from "../letterVariables";
 
 export type SerializedLetterheadNode = Spread<
-  { title: string; subtitle: string; meta: string },
+  {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    /** Legacy fields from the previous masthead-style letterhead;
+     *  kept on the serialized type so old saves round-trip during
+     *  migration. importJSON folds them into the new slots. */
+    meta?: string;
+  },
   SerializedLexicalNode
 >;
 
-const DEFAULT_TITLE = "Ward Name";
-const DEFAULT_SUBTITLE = "The Bishopric";
-const DEFAULT_META = "";
+const DEFAULT_EYEBROW = "Sacrament Meeting · {{wardName}}";
+const DEFAULT_TITLE = "Invitation to Speak";
+const DEFAULT_SUBTITLE = "From the Bishopric";
 
-/** Masthead-style letterhead block — a formal top-of-letter
- *  identification panel. Renders as a brass double-rule sandwich
- *  around a wide-letter-spaced display title, an ornament-flanked
- *  mono subtitle, and an optional centered meta line for date or
- *  contact info. Visually distinct from the existing centered
- *  "✦ / eyebrow / title / sub-eyebrow / date" stack so a bishop can
- *  pick whichever opener matches the letter's tone. */
+/** Letter-opening header — circled brass ornament, mono eyebrow,
+ *  italic display title, mono sub-eyebrow, finished with a single
+ *  divider rule. Three click-to-edit text fields; the ornament is
+ *  decoration-only. {{token}} interpolation runs through every
+ *  field so the bishop can author "Sacrament Meeting ·
+ *  {{wardName}}" once and have it resolve per-render. */
 export class LetterheadNode extends DecoratorNode<React.ReactElement> {
+  __eyebrow: string;
   __title: string;
   __subtitle: string;
-  __meta: string;
 
   static getType(): string {
     return "letterhead";
   }
 
   static clone(node: LetterheadNode): LetterheadNode {
-    return new LetterheadNode(node.__title, node.__subtitle, node.__meta, node.__key);
+    return new LetterheadNode(node.__eyebrow, node.__title, node.__subtitle, node.__key);
   }
 
   constructor(
+    eyebrow = DEFAULT_EYEBROW,
     title = DEFAULT_TITLE,
     subtitle = DEFAULT_SUBTITLE,
-    meta = DEFAULT_META,
     key?: NodeKey,
   ) {
     super(key);
+    this.__eyebrow = eyebrow;
     this.__title = title;
     this.__subtitle = subtitle;
-    this.__meta = meta;
   }
 
   isInline(): boolean {
@@ -65,14 +72,14 @@ export class LetterheadNode extends DecoratorNode<React.ReactElement> {
     return true;
   }
 
-  setTitle(title: string): void {
-    this.getWritable().__title = title;
+  setEyebrow(v: string): void {
+    this.getWritable().__eyebrow = v;
   }
-  setSubtitle(subtitle: string): void {
-    this.getWritable().__subtitle = subtitle;
+  setTitle(v: string): void {
+    this.getWritable().__title = v;
   }
-  setMeta(meta: string): void {
-    this.getWritable().__meta = meta;
+  setSubtitle(v: string): void {
+    this.getWritable().__subtitle = v;
   }
 
   createDOM(_config: EditorConfig): HTMLElement {
@@ -87,9 +94,9 @@ export class LetterheadNode extends DecoratorNode<React.ReactElement> {
   exportDOM(): DOMExportOutput {
     const div = document.createElement("div");
     div.setAttribute("data-letterhead", "true");
+    div.setAttribute("data-eyebrow", this.__eyebrow);
     div.setAttribute("data-title", this.__title);
     div.setAttribute("data-subtitle", this.__subtitle);
-    div.setAttribute("data-meta", this.__meta);
     return { element: div };
   }
 
@@ -100,9 +107,9 @@ export class LetterheadNode extends DecoratorNode<React.ReactElement> {
         return {
           conversion: () => ({
             node: $createLetterheadNode(
+              el.getAttribute("data-eyebrow") ?? DEFAULT_EYEBROW,
               el.getAttribute("data-title") ?? DEFAULT_TITLE,
               el.getAttribute("data-subtitle") ?? DEFAULT_SUBTITLE,
-              el.getAttribute("data-meta") ?? DEFAULT_META,
             ),
           }),
           priority: 1,
@@ -114,28 +121,31 @@ export class LetterheadNode extends DecoratorNode<React.ReactElement> {
   exportJSON(): SerializedLetterheadNode {
     return {
       type: LetterheadNode.getType(),
-      version: 1,
+      version: 2,
+      eyebrow: this.__eyebrow,
       title: this.__title,
       subtitle: this.__subtitle,
-      meta: this.__meta,
     };
   }
 
   static importJSON(json: SerializedLetterheadNode): LetterheadNode {
-    return $createLetterheadNode(
-      json.title ?? DEFAULT_TITLE,
-      json.subtitle ?? DEFAULT_SUBTITLE,
-      json.meta ?? DEFAULT_META,
-    );
+    // Soft migration from v1 schema (title / subtitle / meta layout):
+    // v1.title was the masthead caps (mapped to v2.eyebrow), v1.subtitle
+    // was the brass-flanked line (mapped to v2.subtitle), v1.meta
+    // dropped because v2 has no fourth slot.
+    const eyebrow = json.eyebrow ?? DEFAULT_EYEBROW;
+    const title = json.title ?? DEFAULT_TITLE;
+    const subtitle = json.subtitle ?? DEFAULT_SUBTITLE;
+    return $createLetterheadNode(eyebrow, title, subtitle);
   }
 
   decorate(): React.ReactElement {
     return (
       <LetterheadView
         nodeKey={this.__key}
+        eyebrow={this.__eyebrow}
         title={this.__title}
         subtitle={this.__subtitle}
-        meta={this.__meta}
       />
     );
   }
@@ -143,68 +153,77 @@ export class LetterheadNode extends DecoratorNode<React.ReactElement> {
 
 function LetterheadView({
   nodeKey,
+  eyebrow,
   title,
   subtitle,
-  meta,
 }: {
   nodeKey: NodeKey;
+  eyebrow: string;
   title: string;
   subtitle: string;
-  meta: string;
 }) {
   const [editor] = useLexicalComposerContext();
   const vars = useLetterVars();
-  const [editing, setEditing] = useState<"title" | "subtitle" | "meta" | null>(null);
+  const [editing, setEditing] = useState<"eyebrow" | "title" | "subtitle" | null>(null);
 
   function save(next: string) {
     editor.update(() => {
       const node = $getNodeByKey(nodeKey);
       if (!(node instanceof LetterheadNode)) return;
-      if (editing === "title") node.setTitle(next.trim() || DEFAULT_TITLE);
+      if (editing === "eyebrow") node.setEyebrow(next.trim() || DEFAULT_EYEBROW);
+      else if (editing === "title") node.setTitle(next.trim() || DEFAULT_TITLE);
       else if (editing === "subtitle") node.setSubtitle(next.trim() || DEFAULT_SUBTITLE);
-      else if (editing === "meta") node.setMeta(next.trim());
     });
     setEditing(null);
   }
 
   const titles = {
-    title: "Edit letterhead title",
-    subtitle: "Edit subtitle",
-    meta: "Edit meta line (leave empty to hide)",
+    eyebrow: "Edit eyebrow",
+    title: "Edit title",
+    subtitle: "Edit sub-eyebrow",
   } as const;
+  const initials = { eyebrow, title, subtitle };
 
   return (
     <>
-      <div contentEditable={false} className="select-none my-3 text-center">
+      <div
+        contentEditable={false}
+        className="select-none text-center pb-5 border-b border-border mb-8"
+      >
+        <div className="flex items-center justify-center gap-3.5 mb-3.5">
+          <span
+            aria-hidden
+            className="w-9 h-9 border border-brass-soft rounded-full inline-flex items-center justify-center text-brass-deep text-lg"
+          >
+            ✦
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditing("eyebrow")}
+          className="block w-full font-mono text-[11px] tracking-[0.3em] uppercase text-walnut-3 mb-2 hover:underline focus:outline-none"
+        >
+          {interpolate(eyebrow, vars)}
+        </button>
         <button
           type="button"
           onClick={() => setEditing("title")}
-          className="block w-full font-display text-[17px] tracking-[0.24em] uppercase text-walnut hover:underline focus:outline-none"
+          className="block w-full font-display text-[28px] italic text-walnut tracking-[-0.01em] hover:underline focus:outline-none"
         >
           {interpolate(title, vars)}
         </button>
-        <div className="mt-1 inline-flex items-center gap-2 font-mono text-[9.5px] tracking-[0.18em] uppercase text-walnut-3">
-          <button
-            type="button"
-            onClick={() => setEditing("subtitle")}
-            className="hover:underline focus:outline-none"
-          >
-            {interpolate(subtitle, vars)}
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditing("meta")}
-            className="hover:underline focus:outline-none text-walnut-3/80"
-          >
-            {meta ? `· ${interpolate(meta, vars)}` : "· + meta"}
-          </button>
-        </div>
-        <div className="mt-2 mx-auto h-px w-12 bg-brass/60" />
+        <button
+          type="button"
+          onClick={() => setEditing("subtitle")}
+          className="block w-full mt-2.5 font-mono text-[10px] tracking-[0.22em] uppercase text-walnut-3 hover:underline focus:outline-none"
+        >
+          {interpolate(subtitle, vars)}
+        </button>
       </div>
       <EditPropModal
         open={editing !== null}
         title={editing ? titles[editing] : ""}
-        initial={editing === "title" ? title : editing === "subtitle" ? subtitle : meta}
+        initial={editing ? initials[editing] : ""}
         variables={LETTER_VARIABLES}
         onSave={save}
         onCancel={() => setEditing(null)}
@@ -214,11 +233,11 @@ function LetterheadView({
 }
 
 export function $createLetterheadNode(
+  eyebrow?: string,
   title?: string,
   subtitle?: string,
-  meta?: string,
 ): LetterheadNode {
-  return $applyNodeReplacement(new LetterheadNode(title, subtitle, meta));
+  return $applyNodeReplacement(new LetterheadNode(eyebrow, title, subtitle));
 }
 
 export function $isLetterheadNode(node: LexicalNode | null | undefined): node is LetterheadNode {
