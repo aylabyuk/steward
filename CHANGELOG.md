@@ -7,6 +7,151 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-04-26
+
+The big WYSIWYG release: the speaker-letter and program-template
+editors are rebuilt as Word-style WYSIWYG canvases on top of Lexical.
+The bishop now authors **on the page** — letterhead, callout,
+signature, image, and `{{variable}}` chips are first-class blocks they
+can insert, drag, restyle, and click to edit. The conducting +
+congregation print outputs are now driven by the bishop's customized
+program template (#23) instead of hardcoded JSX, closing the loop:
+editing the template **is** editing the printed program.
+
+### Added
+
+- **WYSIWYG speaker-letter editor**. The split-pane "editor on the
+  left, paper preview on the right" pattern is gone; a single
+  Word-style canvas renders the letter at print fidelity while the
+  bishop edits it. Includes a sticky page-level toolbar with
+  block-type, lists, alignment, link, history, page setup, insert
+  menu, and zoom; a floating selection toolbar with bold / italic /
+  underline / strike / link / colour / font / size; slash-command
+  palette (`/`); markdown shortcuts; auto-link detection; design-token
+  colour + font swatches.
+
+- **Insertable letter blocks**. Letterhead (eyebrow + display title +
+  sub-eyebrow), Callout (eyebrow + body band), Signature (closing line
+  + walnut underline + signed-by), Image (with alt + caption + width).
+  Each is a Lexical decorator the bishop can click to edit through an
+  in-app modal — no native prompts anywhere in the editor.
+
+- **`{{variable}}` chips that render as live values**. Authoring shows
+  the resolved value (e.g. `Brother Park` instead of `{{speakerName}}`)
+  with a hover tooltip surfacing the underlying token. Chips are
+  formattable like text — bold / italic / colour / highlight / font /
+  size all apply through the same toolbar selection — and click-to-
+  change opens a picker grouped by variable category.
+
+- **"Preview as" switcher in the template editor**. Rotate through
+  upcoming Sundays to see how the letter resolves with each speaker's
+  real values, replacing the static sample-value preview.
+
+- **WYSIWYG program-template editor (Phases 3 + 4)**. Conducting +
+  congregation programs author on the same page-editor framework with
+  a custom node set (hymn block, speaker block, leadership row, etc.)
+  and continuous-flow pagination — the conducting copy paginates
+  visually as content overflows, including a manual page-break node.
+  The print path (`ConductingProgram` / `CongregationProgram`) now
+  consumes the saved template JSON so customizations land on the
+  printed program (#23).
+
+- **Page setup panel**. Page size (Letter / A4 / Legal / Statement /
+  A3 / Pageless), orientation (portrait / landscape), margins
+  (narrow / normal / wide), border colour + width + style, and paper
+  colour. Settings persist on the template document and apply to the
+  on-screen canvas + print output.
+
+- **Slash-command palette + image insert**. `/` at start-of-line opens
+  a typeahead palette for inserting blocks; an `INSERT_IMAGE_COMMAND`
+  feeds it. The brass-ornament SVG ships as a built-in preset.
+
+- **Page-size override on the wizard's review-letter step**. The
+  bishop can switch a single speaker's letter to A4 / Statement / etc.
+  without touching the template default.
+
+### Changed
+
+- **Speaker landing page renders the bishop's WYSIWYG template**, not
+  the legacy hardcoded chrome + flat markdown body. Letterhead,
+  callouts, signature blocks, images — everything the bishop authored
+  appears on the speaker's page exactly as designed.
+
+- **Letter footer editor removed**. The split body / footer markdown
+  pair collapses into a single continuous editor state; the signature
+  is now a draggable Lexical block (`SignatureBlockNode`) instead of
+  fixed page chrome.
+
+- **Conductor's-copy default redesigned for readability**:
+  announcements first, two speakers with an interlude between them
+  (instead of four speakers), officers paired on a single row, and
+  ward business listed before the sacrament hymn.
+
+- **Letterhead style**. Replaces the masthead-style header with a
+  compact, single-hairline-rule layout featuring a circled brass
+  ornament.
+
+- **MDXEditor dropped** in favour of Lexical. Every markdown surface
+  in the app now flows through the same editor framework.
+
+### Fixed
+
+- **Print preview matches editor typography 1:1**. Inline `<em>`,
+  colour, and weight inherited the editor's prose rules but printed
+  unstyled — the print sheet now mirrors the editor wrapper exactly,
+  with `print-color-adjust: exact` so colour survives the PDF
+  pipeline.
+
+- **Speaker chips re-resolve against live vars in the print path**.
+  Editing a speaker's topic on the roster step and returning to Print
+  now reflects the new value; previously the print preview cached the
+  old chip text.
+
+- **Send-time chip resolution**. `{{variable}}` chips are now baked
+  into the snapshot at send-time so the speaker page renders the
+  bishop's chosen styling (colour / italic / font / size) end-to-end,
+  even when the chip lives only in the JSON tree (not in inline text).
+
+- **Letterhead doubling on the chrome+markdown fallback path**. The
+  legacy markdown serializer was emitting the letterhead twice when
+  the snapshot had no `editorStateJson` — chrome already paints the
+  masthead, so the walker now skips letterhead / signature /
+  assigned-Sunday-callout nodes when synthesising legacy markdown.
+
+- **Per-speaker editors render real values, not sample values**. The
+  inline letter editor in the wizard's review step + the prepare-
+  invitation page now resolve chips against the live speaker, just
+  like the bishop's preview-as switcher.
+
+- **Pagination preserves natural top margin** of the first block on
+  each new page (was getting clipped).
+
+- **Defensive field reads in approval + isActiveMember rule chains**
+  to avoid spurious `permission-denied` when expected fields are
+  missing.
+
+- **Firestore subscription state**: hooks now report `loading=true`
+  on first mount and stay loading until every path segment is ready,
+  preventing brief render-with-empty-data flashes.
+
+### Infrastructure
+
+- **`src/features/page-editor/`** new shared module: `PageEditor`,
+  `PageCanvas`, `PageStage`, slash-command + drag-handle + pagination
+  + image plugins, and the decorator-node set used by both editors.
+
+- **`resolveChipsInState`** + **`serializeForInterpolation`** bridge
+  the JSON editor state to the email/SMS plain-text interpolation
+  pipeline so chips round-trip cleanly.
+
+- **`src/features/page-editor/renderLetterState`** — read-only walker
+  used by the speaker landing page + receipt emails to render the
+  authored JSON tree.
+
+- 13 legacy components retired (the split-pane editor, mobile preview
+  FAB, swap-sides button, panel-layout storage, etc.) once the
+  WYSIWYG framework reached parity.
+
 ## [0.11.0] — 2026-04-25
 
 The big plan-speakers release: the per-Sunday "Assign speakers" modal
@@ -1406,7 +1551,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/aylabyuk/steward/releases/tag/v0.12.0
 [0.11.0]: https://github.com/aylabyuk/steward/releases/tag/v0.11.0
 [0.10.1]: https://github.com/aylabyuk/steward/releases/tag/v0.10.1
 [0.10.0]: https://github.com/aylabyuk/steward/releases/tag/v0.10.0
