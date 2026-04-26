@@ -11,6 +11,7 @@ import { interpolate } from "@/features/templates/interpolate";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
+import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { PostPrintConfirmStep } from "./PostPrintConfirmStep";
 import { ReviewLetterFooter } from "./ReviewLetterFooter";
 import { useReviewLetterAction } from "./useReviewLetterAction";
@@ -97,6 +98,15 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
 
   const renderedBody = interpolate(form.letterBody, vars);
   const renderedFooter = interpolate(form.letterFooter, vars);
+  // Bake the live editor state for the print path: chips resolve to
+  // real speaker / ward values, {{token}} strings in chrome props
+  // get interpolated. Without this, the OS print dialog falls
+  // through to the legacy chrome+markdown render — which can't carry
+  // chip color, chip italic, the bishop's authored signatory, or
+  // any custom letterhead, and ends up duplicating sections.
+  const printEditorStateJson = form.letterStateJson
+    ? resolveChipsInState(interpolate(form.letterStateJson, vars), vars)
+    : undefined;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -106,6 +116,7 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
         today={vars.today}
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
+        {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
       />
       <div className="flex-1 min-h-0">
         <LetterPageEditor
