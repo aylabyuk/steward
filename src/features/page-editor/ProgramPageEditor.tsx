@@ -36,7 +36,7 @@ export function ProgramPageEditor({
 }: Props) {
   const canvasVariant = variant === "conductingProgram" ? "conducting" : "congregation";
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [zoomMode, setZoomMode] = useState<ZoomMode>({ kind: "fit-width" });
+  const [zoomMode, setZoomMode] = useState<ZoomMode>({ kind: "fit-page" });
   const fits = useFitZoom(scrollRef, pageStyle ?? null);
   const zoom =
     zoomMode.kind === "fit-width"
