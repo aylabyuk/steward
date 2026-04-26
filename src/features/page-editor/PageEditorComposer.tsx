@@ -44,6 +44,11 @@ interface Props {
    *  editor surfaces formatting only via the floating selection
    *  toolbar. */
   pageToolbar?: React.ReactNode;
+  /** Optional strip rendered immediately below the toolbar — the
+   *  speaker-letter template uses it for the "Preview — sample
+   *  values" notice so the bishop sees the disclaimer right at
+   *  eye-line above the canvas. */
+  noticeBar?: React.ReactNode;
   /** The chrome-wrapped page surface — typically `<PageCanvas>` with
    *  `<LetterChrome>` already inside. The composer renders the
    *  contenteditable as its child. */
@@ -68,6 +73,7 @@ export function PageEditorComposer({
   onInitial,
   ariaLabel,
   pageToolbar,
+  noticeBar,
   page,
   slashCommands,
 }: Props) {
@@ -85,6 +91,7 @@ export function PageEditorComposer({
   return (
     <LexicalComposer initialConfig={initialConfig}>
       {pageToolbar}
+      {noticeBar}
       {page(
         <RichTextPlugin
           contentEditable={

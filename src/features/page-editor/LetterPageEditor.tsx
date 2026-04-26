@@ -31,11 +31,11 @@ interface Props {
   initialMarkdown: { bodyMarkdown: string; footerMarkdown: string };
   /** Optional page-frame styling (border + paper / size / orientation). */
   pageStyle?: LetterPageStyle;
-  /** Override for the variable bag chips resolve against. Lets the
-   *  template editor's "Preview as: <member>" switcher swap in real
-   *  ward-member values so the bishop sees substitution happen.
-   *  Falls back to LETTER_VARIABLE_SAMPLES when omitted. */
-  previewVars?: Readonly<Record<string, string>>;
+  /** When true, render the bordeaux "Preview — sample values shown"
+   *  banner below the toolbar. Template-editor surface turns it on;
+   *  per-speaker editors leave it off because chips there already
+   *  resolve to the real speaker's values. */
+  showSampleNotice?: boolean;
   onChange: (stateJson: string) => void;
   onInitial?: (stateJson: string) => void;
   onPageStyleChange?: (next: LetterPageStyle) => void;
@@ -53,7 +53,7 @@ export function LetterPageEditor({
   initialJson,
   initialMarkdown,
   pageStyle,
-  previewVars,
+  showSampleNotice,
   onChange,
   onInitial,
   onPageStyleChange,
@@ -71,10 +71,7 @@ export function LetterPageEditor({
         ? fits.fitPage
         : zoomMode.value;
   return (
-    <LetterRenderContextProvider
-      assignedDate={previewVars?.["date"] ?? assignedDate}
-      vars={previewVars ?? LETTER_VARIABLE_SAMPLES}
-    >
+    <LetterRenderContextProvider assignedDate={assignedDate} vars={LETTER_VARIABLE_SAMPLES}>
       <VariableRegistryProvider
         variables={LETTER_VARIABLES}
         groupLabels={LETTER_VARIABLE_GROUP_LABEL}
@@ -101,6 +98,14 @@ export function LetterPageEditor({
                 onZoomMode={setZoomMode}
                 {...(onPageStyleChange ? { onPageStyleChange } : {})}
               />
+            }
+            noticeBar={
+              showSampleNotice ? (
+                <div className="w-full bg-bordeaux text-chalk text-center font-mono text-[11px] uppercase tracking-[0.16em] py-2 px-4">
+                  Preview — variable chips show sample values. Actual speaker / ward values fill in
+                  when sent.
+                </div>
+              ) : undefined
             }
             page={(contentEditable) => (
               <div className="flex-1 min-h-0">
