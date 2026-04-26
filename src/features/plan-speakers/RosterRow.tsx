@@ -11,7 +11,6 @@ const LABEL_CLS = "font-mono text-[10px] uppercase tracking-[0.14em] text-brass-
 interface Props {
   draft: RosterDraft;
   index: number;
-  canRemove: boolean;
   onChange: (patch: Partial<RosterDraft>) => void;
   /** Called once the user has either confirmed via the type-to-confirm
    *  dialog (for persisted speakers) or directly removed an unsaved
@@ -19,7 +18,12 @@ interface Props {
   onConfirmedRemove: () => Promise<void> | void;
 }
 
-export function RosterRow({ draft, index, canRemove, onChange, onConfirmedRemove }: Props) {
+// Delete is always available — even when this is the last speaker —
+// so the bishop can clear the slot without first adding a placeholder.
+// Persisted speakers still go through DeleteSpeakerConfirm (which
+// pops the type-to-confirm dialog plus a status-aware warning for
+// invited / confirmed); unsaved drafts delete inline.
+export function RosterRow({ draft, index, onChange, onConfirmedRemove }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const persisted = draft.id !== null;
@@ -51,29 +55,27 @@ export function RosterRow({ draft, index, canRemove, onChange, onConfirmedRemove
           </span>
           {persisted && <SpeakerStatusChip status={draft.status} />}
         </div>
-        {canRemove && (
-          <button
-            type="button"
-            onClick={handleDeleteClick}
-            className="inline-flex items-center gap-1 rounded-md border border-border-strong bg-chalk px-2.5 py-1 font-sans text-[12px] font-semibold text-bordeaux hover:bg-bordeaux/5 hover:border-bordeaux"
+        <button
+          type="button"
+          onClick={handleDeleteClick}
+          className="inline-flex items-center gap-1 rounded-md border border-border-strong bg-chalk px-2.5 py-1 font-sans text-[12px] font-semibold text-bordeaux hover:bg-bordeaux/5 hover:border-bordeaux"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-              <path d="M10 11v6M14 11v6" />
-            </svg>
-            Delete
-          </button>
-        )}
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            <path d="M10 11v6M14 11v6" />
+          </svg>
+          Delete
+        </button>
       </div>
       <div className="flex flex-col gap-3">
         <label className="flex flex-col gap-1">

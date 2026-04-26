@@ -107,7 +107,6 @@ export function RosterStep({ wardId, date, nonMeetingSundays, onContinue }: Prop
                 key={d.tempId}
                 draft={d}
                 index={i}
-                canRemove={drafts.length > 1}
                 onChange={(patch) => update(d.tempId, patch)}
                 onConfirmedRemove={() => remove(d.tempId)}
               />
