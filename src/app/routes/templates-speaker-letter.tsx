@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { SaveBar } from "@/components/ui/SaveBar";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
+import { PreviewAsSwitcher, type PreviewVars } from "@/features/page-editor/PreviewAsSwitcher";
 import { useSpeakerLetterTemplateEditor } from "@/features/page-editor/useSpeakerLetterTemplateEditor";
+import { useAuthStore } from "@/stores/authStore";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 
@@ -22,9 +25,13 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
   useFullViewportLayout();
   const ward = useWardSettings();
   const me = useCurrentMember();
+  const authUser = useAuthStore((s) => s.user);
   const editor = useSpeakerLetterTemplateEditor();
   const canEdit = Boolean(me?.data.active);
   const wardName = ward.data?.name ?? "";
+  const inviterName =
+    me?.data.displayName ?? authUser?.displayName ?? authUser?.email ?? "Bishop Reeves";
+  const [previewVars, setPreviewVars] = useState<PreviewVars | null>(null);
 
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
@@ -47,10 +54,16 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
             Speaker invitation letter
           </h1>
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            Sample values shown — actual speaker / ward values are filled in when sent.
+            Preview — variable chips show sample values. Actual speaker / ward values fill in when
+            sent.
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <PreviewAsSwitcher
+            wardName={wardName}
+            inviterName={inviterName}
+            onChange={setPreviewVars}
+          />
           {editor.usingDefault && (
             <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-brass-soft bg-brass-soft/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep">
               <span aria-hidden>★</span>
@@ -75,6 +88,7 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
             initialJson={editor.initialJson}
             initialMarkdown={editor.initialMarkdown}
             pageStyle={editor.initialPageStyle ?? undefined}
+            previewVars={previewVars ?? undefined}
             onChange={editor.setStateJson}
             onInitial={editor.captureInitial}
             onPageStyleChange={canEdit ? editor.setPageStyle : undefined}
