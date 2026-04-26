@@ -8,6 +8,8 @@ import { $createHeadingNode, $createQuoteNode, type HeadingTagType } from "@lexi
 import { $setBlocksType } from "@lexical/selection";
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/react/LexicalHorizontalRuleNode";
+import { $createCalloutNode } from "./nodes/CalloutNode";
+import { $createSignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { INSERT_IMAGE_COMMAND } from "./plugins/ImagePlugin";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
 
@@ -107,5 +109,39 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
         alt: "Brass ornament",
         widthPct: 8,
       }),
+  },
+  {
+    id: "callout",
+    label: "Callout",
+    description: "Eyebrow label + body band (e.g. Topic, Note)",
+    keywords: "block, note, reminder, callout, band",
+    icon: "▢",
+    onSelect: (editor) => {
+      const label = window.prompt("Eyebrow label", "Note");
+      if (label === null) return;
+      const body = window.prompt("Body", "") ?? "";
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel))
+          sel.insertNodes([$createCalloutNode(label.trim() || "Note", body)]);
+      });
+    },
+  },
+  {
+    id: "signature",
+    label: "Signature",
+    description: "Closing phrase + signing line",
+    keywords: "sign, gratitude, bishopric, sincerely",
+    icon: "✎",
+    onSelect: (editor) => {
+      const closing = window.prompt("Closing phrase", "With gratitude,");
+      if (closing === null) return;
+      const signatory = window.prompt("Signed by", "The Bishopric") ?? "";
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel))
+          sel.insertNodes([$createSignatureBlockNode(closing, signatory)]);
+      });
+    },
   },
 ];
