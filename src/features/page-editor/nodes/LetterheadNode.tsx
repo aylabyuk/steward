@@ -175,36 +175,31 @@ function LetterheadView({
 
   return (
     <>
-      <div contentEditable={false} className="select-none my-6 text-center">
-        <div className="border-t-2 border-double border-brass-deep/70" />
+      <div contentEditable={false} className="select-none my-3 text-center">
         <button
           type="button"
           onClick={() => setEditing("title")}
-          className="block w-full font-display text-[28px] tracking-[0.32em] uppercase text-walnut hover:underline focus:outline-none mt-3"
+          className="block w-full font-display text-[17px] tracking-[0.24em] uppercase text-walnut hover:underline focus:outline-none"
         >
           {interpolate(title, vars)}
         </button>
-        <button
-          type="button"
-          onClick={() => setEditing("subtitle")}
-          className="inline-flex items-center gap-3 font-mono text-[10.5px] tracking-[0.22em] uppercase text-brass-deep mt-1.5 hover:underline focus:outline-none"
-        >
-          <span aria-hidden className="text-brass">
-            ✦
-          </span>
-          <span>{interpolate(subtitle, vars)}</span>
-          <span aria-hidden className="text-brass">
-            ✦
-          </span>
-        </button>
-        <div className="border-b border-walnut-3/60 mt-3" />
-        <button
-          type="button"
-          onClick={() => setEditing("meta")}
-          className="inline-block font-mono text-[10px] tracking-[0.16em] uppercase text-walnut-3 mt-2 hover:underline focus:outline-none"
-        >
-          {meta ? interpolate(meta, vars) : "+ add meta"}
-        </button>
+        <div className="mt-1 inline-flex items-center gap-2 font-mono text-[9.5px] tracking-[0.18em] uppercase text-walnut-3">
+          <button
+            type="button"
+            onClick={() => setEditing("subtitle")}
+            className="hover:underline focus:outline-none"
+          >
+            {interpolate(subtitle, vars)}
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditing("meta")}
+            className="hover:underline focus:outline-none text-walnut-3/80"
+          >
+            {meta ? `· ${interpolate(meta, vars)}` : "· + meta"}
+          </button>
+        </div>
+        <div className="mt-2 mx-auto h-px w-12 bg-brass/60" />
       </div>
       <EditPropModal
         open={editing !== null}
