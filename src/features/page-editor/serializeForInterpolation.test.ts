@@ -133,11 +133,15 @@ describe("legacyFieldsFromState", () => {
     });
   });
 
-  it("preserves letterhead + generic callout in the body — they are content, not chrome (regression)", () => {
-    // Repro for the bug where the bishop's saved template (with a
-    // LetterheadNode masthead + Callout block) was sent to speakers
-    // missing both nodes — the serializer's default-case dropped them
-    // silently, leaving the email with only paragraphs.
+  it("strips letterhead from the body — chrome paints its own masthead (regression)", () => {
+    // Repro for the speaker-page duplication bug: legacy
+    // chrome+markdown rendering paints LetterCanvas's hardcoded
+    // LetterHeader at the top, so emitting the bishop's letterhead
+    // text into the body markdown rendered "Sacrament Meeting · …"
+    // a second time as a paragraph + an h1 "Invitation to Speak"
+    // below the chrome. Strip lets the chrome stay the single source.
+    // Generic callouts (bishop-authored "Topic" bands etc) are still
+    // content and survive — chrome doesn't reproduce those.
     const s = state([
       letterhead("Sacrament Meeting · {{wardName}}", "Invitation to Speak", "From the Bishopric"),
       paragraph(text("Dear "), chip("speakerName"), text(",")),
@@ -146,8 +150,9 @@ describe("legacyFieldsFromState", () => {
       paragraph(text("Scripture")),
     ]);
     const { bodyMarkdown, footerMarkdown } = legacyFieldsFromState(s);
-    expect(bodyMarkdown).toContain("Invitation to Speak");
-    expect(bodyMarkdown).toContain("Sacrament Meeting · {{wardName}}");
+    expect(bodyMarkdown).not.toContain("Invitation to Speak");
+    expect(bodyMarkdown).not.toContain("Sacrament Meeting · {{wardName}}");
+    expect(bodyMarkdown).not.toContain("From the Bishopric");
     expect(bodyMarkdown).toContain("**Topic**");
     expect(bodyMarkdown).toContain("Dear {{speakerName}},");
     expect(footerMarkdown).toBe("Scripture");

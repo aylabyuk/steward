@@ -67,11 +67,24 @@ export function legacyFieldsFromState(state: SerializedEditorState): {
   };
 }
 
-/** Variant of {@link serializeBlock} that omits the assigned-Sunday
- *  callout + signature block. The legacy print path renders both as
- *  page chrome, so emitting them as content would double them up. */
+/** Variant of {@link serializeBlock} that omits node types the
+ *  legacy LetterCanvas chrome already paints: `letterhead` (chrome's
+ *  hardcoded LetterHeader has the same masthead), `signature-block`
+ *  (chrome's hardcoded LetterSignature), and `assigned-sunday-callout`
+ *  (chrome's hardcoded gradient band fed by the `assignedDate` prop).
+ *  Emitting any of those as markdown would render the same band twice
+ *  on the speaker page when the snapshot lacks an editorStateJson and
+ *  falls through to the chrome+markdown path.
+ *
+ *  Generic CalloutNode (`callout`) is still emitted because chrome
+ *  doesn't reproduce custom callouts the bishop authors. */
 function serializeBlockForLegacy(node: SerializedLexicalNode): string {
-  if (node.type === "assigned-sunday-callout" || node.type === "signature-block") return "";
+  if (
+    node.type === "assigned-sunday-callout" ||
+    node.type === "signature-block" ||
+    node.type === "letterhead"
+  )
+    return "";
   return serializeBlock(node);
 }
 
