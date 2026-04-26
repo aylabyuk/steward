@@ -13,6 +13,7 @@ import {
   type TextFormatType,
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useLetterVars } from "@/features/page-editor/letterRenderContext";
 import { useVariableMeta, useVariableRegistry } from "@/features/page-editor/variableRegistry";
 
 export type SerializedVariableChipNode = Spread<
@@ -228,9 +229,14 @@ function ChipView({ nodeKey, token, format, style }: ChipViewProps) {
   const [editor] = useLexicalComposerContext();
   const meta = useVariableMeta(token);
   const { variables, groupLabels } = useVariableRegistry();
+  const liveVars = useLetterVars();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
-  const display = meta?.sample ?? meta?.label ?? token;
+  // Resolution order: the live vars bag set by `LetterRenderContextProvider`
+  // (so the "Preview as: <member>" switcher swaps every chip on the page),
+  // then the static sample from the variable registry, then the variable's
+  // human label, then the raw token.
+  const display = liveVars[token] ?? meta?.sample ?? meta?.label ?? token;
 
   // Click-outside dismiss. Without this, opening a second chip leaves
   // the first one's picker mounted and you end up with overlapping
