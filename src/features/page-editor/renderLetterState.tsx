@@ -121,8 +121,13 @@ function parseStyle(s: string | undefined): React.CSSProperties | null {
 
 function renderParagraph(el: SerializedElementNode, key: string) {
   const align = elementFormatToTextAlign(el.format);
+  // Color + size inherit from LetterCanvas's wrapper so paragraphs
+  // match the contenteditable's typography (text-walnut, 16.5px,
+  // 1.65 leading). Hardcoding text-walnut-2 here drifted away from
+  // the editor's text-walnut, which made the print sheet read a
+  // shade lighter than the on-screen view.
   return (
-    <p key={key} className={`my-2 leading-[1.65] text-walnut-2 ${align}`}>
+    <p key={key} className={`my-3 ${align}`}>
       {(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`))}
     </p>
   );

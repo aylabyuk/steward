@@ -49,7 +49,15 @@ export function LetterCanvas({
   return (
     <div
       className={cn(
-        "bg-chalk text-walnut font-serif relative",
+        // Typography rules mirror the editor's contenteditable
+        // (`prose prose-sm font-serif text-[16.5px] leading-[1.65]
+        // [&_em]:text-bordeaux [&_strong]:text-walnut`) so an italic
+        // chip stays bordeaux + a bold span stays walnut on the
+        // printed sheet — the bishop sees the same colours that
+        // were on screen. Without this the print path rendered
+        // italic in default walnut and lost the visual rhythm.
+        "bg-chalk text-walnut font-serif text-[16.5px] leading-[1.65] relative",
+        "[&_em]:text-bordeaux [&_em]:italic [&_strong]:font-semibold [&_strong]:text-walnut",
         compact
           ? "w-full max-w-[680px] px-8 py-10 rounded-md shadow-elev-3"
           : "w-[8.5in] min-h-[11in] px-[0.75in] pt-[0.85in] pb-[0.6in] shadow-[0_12px_40px_rgba(58,37,25,0.18)]",
