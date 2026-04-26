@@ -26,6 +26,11 @@ function assertChannelsDelivered(
 interface FormState {
   letterBody: string;
   letterFooter: string;
+  /** WYSIWYG state JSON, when the bishop has authored a Lexical
+   *  template. Forwarded to the snapshot so the speaker landing page
+   *  can render the bishop's exact letterhead / signature / callouts
+   *  instead of the legacy chrome + flat markdown. */
+  letterStateJson: string | null;
   persistOverrides: () => Promise<void>;
   setBusy: (b: boolean) => void;
   setError: (e: string | null) => void;
@@ -100,6 +105,7 @@ export function usePrepareInvitationActions(args: Args) {
       bishopReplyToEmail: bishopEmail,
       bodyMarkdown: form.letterBody,
       footerMarkdown: form.letterFooter,
+      ...(form.letterStateJson ? { editorStateJson: form.letterStateJson } : {}),
       channels,
     });
     // The callable returns 200 even when one or more delivery channels

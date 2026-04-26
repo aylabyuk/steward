@@ -82,6 +82,12 @@ export const speakerInvitationSchema = z.object({
   bodyMarkdown: z.string(),
   /** Scripture footer post-interpolation. */
   footerMarkdown: z.string(),
+  /** Lexical EditorState as a JSON string, post-interpolation — the
+   *  WYSIWYG-authored letter the bishop saw on screen. Optional during
+   *  the migration window: invitations created before the WYSIWYG
+   *  renderer rolled out won't have it, and the speaker landing page
+   *  falls back to rendering `bodyMarkdown` + hardcoded chrome. */
+  editorStateJson: z.string().optional(),
   createdAt: z.any().optional(),
 
   /** Snapshotted at send time so Firestore rules + Cloud Functions can

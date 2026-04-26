@@ -25,6 +25,11 @@ export interface SendSpeakerInvitationInput {
    *  `{{today}}` that we resolve here at send time). */
   bodyMarkdown: string;
   footerMarkdown: string;
+  /** Lexical EditorState JSON the bishop authored. Pre-interpolation
+   *  — token-replacement happens here so the snapshot stores a
+   *  ready-to-render JSON string. Optional: callers without a
+   *  WYSIWYG-authored template (legacy markdown only) omit it. */
+  editorStateJson?: string | undefined;
   /** Which channels to deliver on. Driven by the bishop's button
    *  choice (Send / Send SMS) in the Prepare Invitation UI. */
   channels: ("email" | "sms")[];
@@ -63,6 +68,14 @@ export async function sendSpeakerInvitation(
 
     const bodyMarkdown = interpolate(input.bodyMarkdown, vars);
     const footerMarkdown = interpolate(input.footerMarkdown, vars);
+    // Run the same {{token}} → value substitution over the JSON string
+    // so the snapshot is fully resolved — the renderer doesn't need a
+    // per-speaker context, and chip nodes inside saved props (e.g. an
+    // eyebrow saying "Sacrament Meeting · {{wardName}}") render with
+    // the right values.
+    const editorStateJson = input.editorStateJson
+      ? interpolate(input.editorStateJson, vars)
+      : undefined;
     const expiresAtMillis = computeExpiresAt(input.meetingDate);
 
     const res = await callSendSpeakerInvitation({
@@ -78,6 +91,7 @@ export async function sendSpeakerInvitation(
       sentOn: vars.today,
       bodyMarkdown,
       footerMarkdown,
+      ...(editorStateJson ? { editorStateJson } : {}),
       ...(input.speakerEmail.trim() ? { speakerEmail: input.speakerEmail.trim() } : {}),
       ...(input.speakerPhone.trim() ? { speakerPhone: input.speakerPhone.trim() } : {}),
       bishopReplyToEmail: input.bishopReplyToEmail,
