@@ -14,7 +14,7 @@ import { InsertMenu } from "./InsertMenu";
 import { PageSetupPopover } from "./PageSetupPopover";
 import { ToolbarButton, ToolbarSep } from "./ToolbarButton";
 import { useToolbarState } from "./useToolbarState";
-import { ZoomControls } from "./ZoomControls";
+import { ZoomMenu, type ZoomMode } from "./ZoomMenu";
 import type { SlashCommand } from "../plugins/SlashCommandRegistry";
 
 interface Props {
@@ -22,7 +22,8 @@ interface Props {
   pageStyle?: LetterPageStyle | null;
   onPageStyleChange?: (next: LetterPageStyle) => void;
   zoom?: number;
-  onZoomChange?: (next: number) => void;
+  zoomMode?: ZoomMode;
+  onZoomMode?: (next: ZoomMode) => void;
 }
 
 /** Page-level toolbar — pixel-faithful port of the bishopric-pwa
@@ -35,7 +36,8 @@ export function PageToolbar({
   pageStyle,
   onPageStyleChange,
   zoom,
-  onZoomChange,
+  zoomMode,
+  onZoomMode,
 }: Props) {
   const [editor] = useLexicalComposerContext();
   const s = useToolbarState(editor);
@@ -127,7 +129,9 @@ export function PageToolbar({
       <AlignmentDropdown editor={editor} current={s.align} />
       <ToolbarSep />
 
-      {zoom !== undefined && onZoomChange && <ZoomControls zoom={zoom} onChange={onZoomChange} />}
+      {zoom !== undefined && zoomMode && onZoomMode && (
+        <ZoomMenu zoom={zoom} mode={zoomMode} onMode={onZoomMode} />
+      )}
       {onPageStyleChange && <PageSetupPopover value={pageStyle} onChange={onPageStyleChange} />}
       <ToolbarButton label="Print" onClick={() => window.print()}>
         <Icon name="printer" sw={1.6} />
