@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import type { Speaker } from "@/lib/types";
+import { useMemo, useState } from "react";
+import type { LetterPageStyle, Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
@@ -38,6 +38,14 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
   const inviterName =
     me?.data.displayName ?? authUser?.displayName ?? authUser?.email ?? "The bishopric";
   const wardName = ward.data?.name ?? "";
+
+  // Per-session page-style override. Defaults to the ward template's
+  // saved page style so changing here only diverges this session's
+  // preview + print — not persisted on the speaker doc. Bishops who
+  // want to lock a different size for everyone do that on
+  // /settings/templates/speaker-letter.
+  const [pageStyle, setPageStyle] = useState<LetterPageStyle | null>(null);
+  const effectivePageStyle = pageStyle ?? letterTemplate?.pageStyle ?? null;
 
   const form = usePrepareInvitation({
     wardId,
@@ -124,6 +132,8 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
           assignedDate={vars.date}
           initialJson={form.initialJson}
           initialMarkdown={form.initialMarkdown}
+          {...(effectivePageStyle ? { pageStyle: effectivePageStyle } : {})}
+          onPageStyleChange={setPageStyle}
           vars={vars}
           onChange={form.setLetterStateJson}
           onInitial={form.captureInitial}
