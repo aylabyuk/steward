@@ -16,7 +16,7 @@ function mkInvitation(overrides: Partial<SpeakerInvitation> = {}): SpeakerInvita
     speakerRef: { meetingDate: "2026-05-03", speakerId: "sp1" },
     assignedDate: "Sunday, May 3, 2026",
     sentOn: "April 22, 2026",
-    wardName: "Elk River Ward",
+    wardName: "Eglinton Ward",
     speakerName: "Sister Jones",
     inviterName: "Bishop Smith",
     bodyMarkdown: "body",

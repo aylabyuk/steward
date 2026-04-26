@@ -9,6 +9,7 @@ import {
   type SerializedLexicalNode,
   type Spread,
 } from "lexical";
+import { ImageView } from "./ImageView";
 
 export type SerializedImageNode = Spread<
   { src: string; alt: string; widthPct: number; caption?: string },
@@ -25,7 +26,8 @@ interface ImageOpts {
 /** Inline-image block. Renders an `<img>` with an optional caption,
  *  centered on the page at a percentage of the canvas width. Phase 1
  *  ships data-URL + remote-URL sources only — Firebase Storage upload
- *  glue lands in Phase 5 polish. */
+ *  glue lands in Phase 5 polish. Click any field (image / alt /
+ *  width / caption) to edit through the in-app modal. */
 export class ImageNode extends DecoratorNode<React.ReactElement> {
   __src: string;
   __alt: string;
@@ -57,6 +59,19 @@ export class ImageNode extends DecoratorNode<React.ReactElement> {
 
   isKeyboardSelectable(): boolean {
     return true;
+  }
+
+  setSrc(src: string): void {
+    this.getWritable().__src = src;
+  }
+  setAlt(alt: string): void {
+    this.getWritable().__alt = alt;
+  }
+  setWidthPct(pct: number): void {
+    this.getWritable().__widthPct = pct;
+  }
+  setCaption(caption: string): void {
+    this.getWritable().__caption = caption || undefined;
   }
 
   createDOM(_config: EditorConfig): HTMLElement {
@@ -121,18 +136,13 @@ export class ImageNode extends DecoratorNode<React.ReactElement> {
 
   decorate(): React.ReactElement {
     return (
-      <figure
-        contentEditable={false}
-        className="select-none my-4 mx-auto flex flex-col items-center"
-        style={{ width: `${this.__widthPct}%` }}
-      >
-        <img src={this.__src} alt={this.__alt} className="max-w-full block" />
-        {this.__caption && (
-          <figcaption className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
-            {this.__caption}
-          </figcaption>
-        )}
-      </figure>
+      <ImageView
+        nodeKey={this.__key}
+        src={this.__src}
+        alt={this.__alt}
+        widthPct={this.__widthPct}
+        caption={this.__caption ?? ""}
+      />
     );
   }
 }

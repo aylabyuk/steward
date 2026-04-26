@@ -48,7 +48,7 @@ export function WardInviteSection(): React.ReactElement {
     () =>
       renderWardInviteMessage(
         {
-          inviteeName: "Brother Lloyd Flores",
+          inviteeName: "Brother Dan Joe",
           wardName: wardName || "Your Ward",
           inviterName: me?.data.displayName ?? "Bishop",
           calling: "executive_secretary",

@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import type { LetterPageStyle } from "@/lib/types/template";
 import { LetterRenderContextProvider } from "./letterRenderContext";
 import {
@@ -5,16 +6,19 @@ import {
   LETTER_SLASH_COMMANDS,
   buildInitialLetterState,
 } from "./letterEditorConfig";
-import { PageCanvas } from "./PageCanvas";
+import {
+  LETTER_VARIABLE_GROUP_LABEL,
+  LETTER_VARIABLE_SAMPLES,
+  LETTER_VARIABLES,
+} from "./letterVariables";
 import { PageEditorComposer } from "./PageEditorComposer";
-import { PageStylePanel } from "./PageStylePanel";
-import { LetterChrome } from "./chrome/LetterChrome";
+import { PaginatedPageStage } from "./PaginatedPageStage";
+import { useFitZoom } from "./useFitZoom";
+import { VariableRegistryProvider } from "./variableRegistry";
+import { PageToolbar } from "./toolbar/PageToolbar";
+import type { ZoomMode } from "./toolbar/ZoomMenu";
 
 interface Props {
-  /** Ward name for the chrome eyebrow ("Sacrament Meeting · Ward Name"). */
-  wardName: string;
-  /** Today's date label, e.g. "April 21, 2026". */
-  today: string;
   /** Sample assigned-Sunday date for the AssignedSundayCalloutNode in
    *  authoring view. Per-speaker contexts (wizard, send) override this. */
   assignedDate: string;
@@ -25,36 +29,39 @@ interface Props {
    *  transformers and splices in the assigned-Sunday callout +
    *  signature block + footer scripture paragraph. */
   initialMarkdown: { bodyMarkdown: string; footerMarkdown: string };
-  /** Optional page-frame styling (border + paper). */
+  /** Optional page-frame styling (border + paper / size / orientation). */
   pageStyle?: LetterPageStyle;
-  /** Fires on every user edit with the editor state serialised as
-   *  Lexical JSON. */
+  /** When true, render the bordeaux "Preview — sample values shown"
+   *  banner below the toolbar. Template-editor surface turns it on;
+   *  per-speaker editors leave it off because chips there already
+   *  resolve to the real speaker's values. */
+  showSampleNotice?: boolean;
+  /** Variable bag the chips + Callout / Letterhead / Signature props
+   *  resolve against. Per-speaker editors (wizard, prepare-invite)
+   *  pass the real speaker / ward values so chips render
+   *  "Sister Park" instead of the static "Brother Park" sample.
+   *  Template editor omits this — falls back to LETTER_VARIABLE_SAMPLES
+   *  and the bordeaux banner explains why. */
+  vars?: Readonly<Record<string, string>>;
   onChange: (stateJson: string) => void;
-  /** Fires once after hydration with the initial editor state — the
-   *  host should seed both working + saved baselines so dirty starts
-   *  clean. Without this, pageStyle-only edits couldn't be saved. */
   onInitial?: (stateJson: string) => void;
-  /** Fires when the bishop edits the page style. Omit to hide the
-   *  page-style panel (e.g. read-only contexts, the wizard's per-
-   *  speaker preview). */
   onPageStyleChange?: (next: LetterPageStyle) => void;
   ariaLabel: string;
-  /** When true, the editor is read-only (e.g. the user lacks edit
-   *  permission). */
   editorDisabled?: boolean;
 }
 
-/** Composes the WYSIWYG speaker-letter editor: page canvas with the
- *  letter chrome (ornament, eyebrow, title, date) wrapping a single
- *  Lexical contenteditable that owns greeting + body + assigned-Sunday
- *  callout + signature + closing scripture as one continuous flow. */
+/** WYSIWYG speaker-letter editor — Word-style layout: full-width
+ *  sticky toolbar at top, then a paginated zoomable stage that
+ *  centers the paper. Header chrome (ornament, eyebrow, title, etc.)
+ *  is part of the editor's content (see `buildInitialLetterState`),
+ *  so every text on the printed letter is editable. */
 export function LetterPageEditor({
-  wardName,
-  today,
   assignedDate,
   initialJson,
   initialMarkdown,
   pageStyle,
+  showSampleNotice,
+  vars,
   onChange,
   onInitial,
   onPageStyleChange,
@@ -62,39 +69,74 @@ export function LetterPageEditor({
   editorDisabled,
 }: Props) {
   const initialState = initialJson ?? buildInitialLetterState(initialMarkdown);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [zoomMode, setZoomMode] = useState<ZoomMode>({ kind: "fit-page" });
+  const fits = useFitZoom(scrollRef, pageStyle);
+  const zoom =
+    zoomMode.kind === "fit-width"
+      ? fits.fitWidth
+      : zoomMode.kind === "fit-page"
+        ? fits.fitPage
+        : zoomMode.value;
   return (
-    <LetterRenderContextProvider assignedDate={assignedDate}>
-      <div
-        className={`relative max-w-[8.5in] mx-auto ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
+    <LetterRenderContextProvider
+      assignedDate={assignedDate}
+      vars={vars ?? LETTER_VARIABLE_SAMPLES}
+      liveValues={vars !== undefined}
+    >
+      <VariableRegistryProvider
+        variables={LETTER_VARIABLES}
+        groupLabels={LETTER_VARIABLE_GROUP_LABEL}
       >
-        {onPageStyleChange && (
-          <PageStylePanel
-            value={pageStyle}
-            onChange={onPageStyleChange}
-            disabled={editorDisabled}
-          />
-        )}
-        <PageEditorComposer
-          namespace="LetterPageEditor"
-          nodes={LETTER_EDITOR_NODES}
-          initialState={initialState}
-          onChange={onChange}
-          onInitial={onInitial}
-          ariaLabel={ariaLabel}
-          slashCommands={LETTER_SLASH_COMMANDS}
-          page={(contentEditable) => (
-            <PageCanvas
-              variant="letter"
-              pageStyle={pageStyle}
-              chrome={<LetterChrome wardName={wardName} today={today} />}
-            >
-              <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
-                {contentEditable}
+        <div
+          className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
+        >
+          <PageEditorComposer
+            namespace="LetterPageEditor"
+            nodes={LETTER_EDITOR_NODES}
+            initialState={initialState}
+            onChange={onChange}
+            onInitial={onInitial}
+            ariaLabel={ariaLabel}
+            slashCommands={LETTER_SLASH_COMMANDS}
+            pageToolbar={
+              <PageToolbar
+                slashCommands={LETTER_SLASH_COMMANDS}
+                variables={LETTER_VARIABLES}
+                variableGroupLabels={LETTER_VARIABLE_GROUP_LABEL}
+                pageStyle={pageStyle}
+                zoom={zoom}
+                zoomMode={zoomMode}
+                onZoomMode={setZoomMode}
+                {...(onPageStyleChange ? { onPageStyleChange } : {})}
+              />
+            }
+            noticeBar={
+              showSampleNotice ? (
+                <div className="w-full bg-bordeaux text-chalk text-center font-mono text-[11px] uppercase tracking-[0.16em] py-2 px-4">
+                  Preview — variable chips show sample values. Actual speaker / ward values fill in
+                  when sent.
+                </div>
+              ) : undefined
+            }
+            page={(contentEditable) => (
+              <div className="flex-1 min-h-0">
+                <PaginatedPageStage
+                  variant="letter"
+                  pageStyle={pageStyle}
+                  zoom={zoom}
+                  onZoomChange={(v) => setZoomMode({ kind: "manual", value: v })}
+                  scrollRef={scrollRef}
+                >
+                  <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
+                    {contentEditable}
+                  </div>
+                </PaginatedPageStage>
               </div>
-            </PageCanvas>
-          )}
-        />
-      </div>
+            )}
+          />
+        </div>
+      </VariableRegistryProvider>
     </LetterRenderContextProvider>
   );
 }

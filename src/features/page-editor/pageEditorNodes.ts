@@ -6,7 +6,9 @@ import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { VariableChipNode } from "@/features/program-templates/nodes/VariableChipNode";
 import { SignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { AssignedSundayCalloutNode } from "./nodes/AssignedSundayCalloutNode";
+import { CalloutNode } from "./nodes/CalloutNode";
 import { ImageNode } from "./nodes/ImageNode";
+import { LetterheadNode } from "./nodes/LetterheadNode";
 
 /** Union of every node the WYSIWYG page editor knows about. Each
  *  host editor (letter, conducting program, congregation program)
@@ -23,5 +25,7 @@ export const PAGE_EDITOR_BASE_NODES: ReadonlyArray<Klass<LexicalNode>> = [
   VariableChipNode,
   SignatureBlockNode,
   AssignedSundayCalloutNode,
+  CalloutNode,
   ImageNode,
+  LetterheadNode,
 ];

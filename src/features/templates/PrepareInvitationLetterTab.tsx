@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
+import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { PrintOnlyLetter } from "./PrintOnlyLetter";
 import { interpolate } from "./interpolate";
 import type { LetterVars } from "./prepareInvitationVars";
@@ -7,6 +8,12 @@ import type { LetterVars } from "./prepareInvitationVars";
 interface Props {
   initialJson: string | null;
   initialMarkdown: { bodyMarkdown: string; footerMarkdown: string };
+  /** Live editor JSON — reflects the current canvas as the bishop
+   *  edits. Used to bake an interpolated + chip-resolved state for
+   *  the OS print path so the print preview matches what's on
+   *  screen (chip color, italic, signatory, letterhead). null when
+   *  the parent doesn't own a live JSON yet. */
+  liveStateJson?: string | null;
   body: string;
   footer: string;
   onChange: (json: string) => void;
@@ -27,6 +34,7 @@ interface Props {
 export function PrepareInvitationLetterTab({
   initialJson,
   initialMarkdown,
+  liveStateJson,
   body,
   footer,
   onChange,
@@ -37,6 +45,11 @@ export function PrepareInvitationLetterTab({
 }: Props) {
   const renderedBody = useMemo(() => interpolate(body, vars), [body, vars]);
   const renderedFooter = useMemo(() => interpolate(footer, vars), [footer, vars]);
+  const printEditorStateJson = useMemo(() => {
+    const src = liveStateJson ?? initialJson;
+    if (!src) return undefined;
+    return resolveChipsInState(interpolate(src, vars), vars);
+  }, [liveStateJson, initialJson, vars]);
 
   return (
     <>
@@ -46,16 +59,16 @@ export function PrepareInvitationLetterTab({
         today={vars.today}
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
+        {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
       />
-      <div className="relative h-full overflow-y-auto bg-parchment py-6 px-2 sm:px-4">
+      <div className="relative h-full">
         {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
         <LetterPageEditor
           key={resetKey}
-          wardName={vars.wardName}
-          today={vars.today}
           assignedDate={vars.date}
           initialJson={initialJson}
           initialMarkdown={initialMarkdown}
+          vars={vars}
           onChange={onChange}
           onInitial={onInitial}
           ariaLabel={`Letter for ${vars.speakerName}`}

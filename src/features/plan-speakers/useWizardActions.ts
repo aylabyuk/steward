@@ -21,6 +21,9 @@ interface FreshArgs {
   bishopReplyToEmail: string;
   bodyMarkdown: string;
   footerMarkdown: string;
+  /** WYSIWYG-authored Lexical state. Optional fallback to the derived
+   *  markdown for legacy templates that have only the markdown fields. */
+  editorStateJson?: string | undefined;
 }
 
 /** Wraps the three terminal wizard actions: fresh send, rotate (resend),
@@ -64,6 +67,7 @@ export function useWizardActions() {
         bishopReplyToEmail: a.bishopReplyToEmail,
         bodyMarkdown: a.bodyMarkdown,
         footerMarkdown: a.footerMarkdown,
+        ...(a.editorStateJson ? { editorStateJson: a.editorStateJson } : {}),
         channels,
       });
       assertDelivered(res.deliveryRecord, channels);

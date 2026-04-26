@@ -6,6 +6,7 @@ import {
   callSendSpeakerInvitation,
   type FreshInvitationResponse,
 } from "@/features/invitations/invitationsCallable";
+import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { interpolate } from "./interpolate";
 import { formatAssignedDate, formatToday } from "./letterDates";
 
@@ -25,6 +26,11 @@ export interface SendSpeakerInvitationInput {
    *  `{{today}}` that we resolve here at send time). */
   bodyMarkdown: string;
   footerMarkdown: string;
+  /** Lexical EditorState JSON the bishop authored. Pre-interpolation
+   *  — token-replacement happens here so the snapshot stores a
+   *  ready-to-render JSON string. Optional: callers without a
+   *  WYSIWYG-authored template (legacy markdown only) omit it. */
+  editorStateJson?: string | undefined;
   /** Which channels to deliver on. Driven by the bishop's button
    *  choice (Send / Send SMS) in the Prepare Invitation UI. */
   channels: ("email" | "sms")[];
@@ -63,6 +69,21 @@ export async function sendSpeakerInvitation(
 
     const bodyMarkdown = interpolate(input.bodyMarkdown, vars);
     const footerMarkdown = interpolate(input.footerMarkdown, vars);
+    // Two-pass resolution on the editor state JSON before it lands on
+    // the snapshot:
+    //   1. interpolate() handles {{token}} STRINGS embedded in custom
+    //      node props (e.g. Letterhead.eyebrow = "Sacrament Meeting ·
+    //      {{wardName}}"), and any text nodes that still carry literal
+    //      {{token}} text from the markdown-hydration path.
+    //   2. resolveChipsInState() walks the parsed tree and replaces
+    //      every VariableChipNode with a plain text node carrying the
+    //      resolved value — chips don't store {{...}} braces in their
+    //      JSON shape so interpolate() alone misses them.
+    // Net effect: the snapshot stores a fully-baked editor state. The
+    // speaker page just renders text.
+    const editorStateJson = input.editorStateJson
+      ? resolveChipsInState(interpolate(input.editorStateJson, vars), vars)
+      : undefined;
     const expiresAtMillis = computeExpiresAt(input.meetingDate);
 
     const res = await callSendSpeakerInvitation({
@@ -78,6 +99,7 @@ export async function sendSpeakerInvitation(
       sentOn: vars.today,
       bodyMarkdown,
       footerMarkdown,
+      ...(editorStateJson ? { editorStateJson } : {}),
       ...(input.speakerEmail.trim() ? { speakerEmail: input.speakerEmail.trim() } : {}),
       ...(input.speakerPhone.trim() ? { speakerPhone: input.speakerPhone.trim() } : {}),
       bishopReplyToEmail: input.bishopReplyToEmail,

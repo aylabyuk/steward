@@ -8,50 +8,106 @@ import {
   type NodeKey,
   type SerializedLexicalNode,
   type Spread,
+  type TextFormatType,
 } from "lexical";
-import { VARIABLE_BY_TOKEN } from "../programVariables";
+import { parseStyleString, stringifyStyle, variableChipFormatBit } from "./chipStyle";
+import { VariableChipView } from "./VariableChipView";
 
-export type SerializedVariableChipNode = Spread<{ token: string }, SerializedLexicalNode>;
+export { variableChipFormatBit } from "./chipStyle";
 
-/** Inline decorator node: a "chip" that represents a `{{token}}`
- *  reference inside the program template. Stored as a structured
- *  node (not as plain text), so it can't be partially typed-into,
- *  drag-deletes as a single unit, and renders with a custom React
- *  component the bishopric can recognise at a glance. */
+export type SerializedVariableChipNode = Spread<
+  { token: string; format?: number; style?: string },
+  SerializedLexicalNode
+>;
+
+/** Inline decorator node: a "chip" representing a `{{token}}`
+ *  reference in the editor. Renders as the resolved sample value
+ *  (e.g. `Brother Park` instead of `{{speakerName}}`) so the bishop
+ *  sees what the letter would actually look like. Visually
+ *  indistinguishable from authored text by default; a soft brass
+ *  hover treatment surfaces the "this is dynamic" hint and clicking
+ *  opens a picker to swap the variable.
+ *
+ *  Carries a Lexical-style format bitmask so toolbar formatting
+ *  (bold / italic / underline / etc) round-trips through the chip
+ *  via the companion VariableChipFormatPlugin. */
 export class VariableChipNode extends DecoratorNode<React.ReactElement> {
   __token: string;
+  __format: number;
+  __style: string;
 
   static getType(): string {
     return "variable-chip";
   }
 
   static clone(node: VariableChipNode): VariableChipNode {
-    return new VariableChipNode(node.__token, node.__key);
+    return new VariableChipNode(node.__token, node.__format, node.__style, node.__key);
   }
 
-  constructor(token: string, key?: NodeKey) {
+  constructor(token: string, format = 0, style = "", key?: NodeKey) {
     super(key);
     this.__token = token;
+    this.__format = format;
+    this.__style = style;
   }
 
   getToken(): string {
     return this.__token;
   }
+  setToken(token: string): void {
+    this.getWritable().__token = token;
+  }
+
+  getFormat(): number {
+    return this.getLatest().__format;
+  }
+  setFormat(format: number): void {
+    this.getWritable().__format = format;
+  }
+  hasFormat(type: TextFormatType): boolean {
+    const bit = variableChipFormatBit(type);
+    return bit !== 0 && (this.getFormat() & bit) !== 0;
+  }
+  toggleFormat(type: TextFormatType): void {
+    const bit = variableChipFormatBit(type);
+    if (bit === 0) return;
+    this.setFormat(this.getFormat() ^ bit);
+  }
+
+  getStyle(): string {
+    return this.getLatest().__style;
+  }
+  setStyle(style: string): void {
+    this.getWritable().__style = style;
+  }
+  /** Read a single CSS property value out of `__style`. Returns ""
+   *  when the property isn't set so callers can use a falsy check. */
+  getCSSProperty(property: string): string {
+    return parseStyleString(this.getStyle())[property] ?? "";
+  }
+  /** Mirror of `$patchStyleText`'s per-property update for a single
+   *  chip. Pass `null` as the value to remove the property. */
+  patchStyle(patch: Record<string, string | null>): void {
+    const next = { ...parseStyleString(this.getStyle()) };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === null) delete next[k];
+      else next[k] = v;
+    }
+    this.setStyle(stringifyStyle(next));
+  }
 
   isInline(): boolean {
     return true;
   }
-
   isKeyboardSelectable(): boolean {
     return true;
   }
 
   createDOM(_config: EditorConfig): HTMLElement {
     const span = document.createElement("span");
-    span.style.display = "inline-block";
+    span.style.display = "inline";
     return span;
   }
-
   updateDOM(): false {
     return false;
   }
@@ -79,36 +135,31 @@ export class VariableChipNode extends DecoratorNode<React.ReactElement> {
   exportJSON(): SerializedVariableChipNode {
     return {
       type: VariableChipNode.getType(),
-      version: 1,
+      version: 3,
       token: this.__token,
+      format: this.__format,
+      style: this.__style,
     };
   }
 
   static importJSON(json: SerializedVariableChipNode): VariableChipNode {
-    return $createVariableChipNode(json.token);
+    return $createVariableChipNode(json.token, json.format ?? 0, json.style ?? "");
   }
 
-  /** What to render in place of this node inside the editor. */
   decorate(): React.ReactElement {
-    const meta = VARIABLE_BY_TOKEN.get(this.__token);
-    const label = meta?.label ?? this.__token;
-    const sample = meta?.sample ?? "";
     return (
-      <span
-        contentEditable={false}
-        title={sample ? `Renders as: ${sample}` : undefined}
-        className="inline-flex items-center gap-1 align-baseline rounded-full border border-bordeaux/40 bg-bordeaux/10 px-2 py-0.5 font-mono text-[11px] text-bordeaux-deep select-none"
-      >
-        <span className="opacity-60">{"{{"}</span>
-        <span>{label}</span>
-        <span className="opacity-60">{"}}"}</span>
-      </span>
+      <VariableChipView
+        nodeKey={this.__key}
+        token={this.__token}
+        format={this.__format}
+        style={this.__style}
+      />
     );
   }
 }
 
-export function $createVariableChipNode(token: string): VariableChipNode {
-  return $applyNodeReplacement(new VariableChipNode(token));
+export function $createVariableChipNode(token: string, format = 0, style = ""): VariableChipNode {
+  return $applyNodeReplacement(new VariableChipNode(token, format, style));
 }
 
 export function $isVariableChipNode(

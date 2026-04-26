@@ -15,6 +15,7 @@ import { ImagePlugin } from "./plugins/ImagePlugin";
 import { PageEditorAutoLink } from "./plugins/PageEditorAutoLink";
 import { PageEditorMarkdownShortcuts } from "./plugins/PageEditorMarkdownShortcuts";
 import { SlashCommandPlugin } from "./plugins/SlashCommandPlugin";
+import { VariableChipFormatPlugin } from "./plugins/VariableChipFormatPlugin";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
 
 interface Props {
@@ -43,6 +44,11 @@ interface Props {
    *  editor surfaces formatting only via the floating selection
    *  toolbar. */
   pageToolbar?: React.ReactNode;
+  /** Optional strip rendered immediately below the toolbar — the
+   *  speaker-letter template uses it for the "Preview — sample
+   *  values" notice so the bishop sees the disclaimer right at
+   *  eye-line above the canvas. */
+  noticeBar?: React.ReactNode;
   /** The chrome-wrapped page surface — typically `<PageCanvas>` with
    *  `<LetterChrome>` already inside. The composer renders the
    *  contenteditable as its child. */
@@ -67,6 +73,7 @@ export function PageEditorComposer({
   onInitial,
   ariaLabel,
   pageToolbar,
+  noticeBar,
   page,
   slashCommands,
 }: Props) {
@@ -84,6 +91,7 @@ export function PageEditorComposer({
   return (
     <LexicalComposer initialConfig={initialConfig}>
       {pageToolbar}
+      {noticeBar}
       {page(
         <RichTextPlugin
           contentEditable={
@@ -103,6 +111,7 @@ export function PageEditorComposer({
       <PageEditorAutoLink />
       <PageEditorMarkdownShortcuts />
       <ImagePlugin />
+      <VariableChipFormatPlugin />
       {slashCommands && <SlashCommandPlugin commands={slashCommands} />}
       <FloatingSelectionToolbar />
       <StateJsonOnChangePlugin onChange={onChange} onInitial={onInitial} />

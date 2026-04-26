@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import type { Speaker } from "@/lib/types";
+import { useMemo, useState } from "react";
+import type { LetterPageStyle, Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
@@ -11,6 +11,7 @@ import { interpolate } from "@/features/templates/interpolate";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
+import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { PostPrintConfirmStep } from "./PostPrintConfirmStep";
 import { ReviewLetterFooter } from "./ReviewLetterFooter";
 import { useReviewLetterAction } from "./useReviewLetterAction";
@@ -37,6 +38,14 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
   const inviterName =
     me?.data.displayName ?? authUser?.displayName ?? authUser?.email ?? "The bishopric";
   const wardName = ward.data?.name ?? "";
+
+  // Per-session page-style override. Defaults to the ward template's
+  // saved page style so changing here only diverges this session's
+  // preview + print — not persisted on the speaker doc. Bishops who
+  // want to lock a different size for everyone do that on
+  // /settings/templates/speaker-letter.
+  const [pageStyle, setPageStyle] = useState<LetterPageStyle | null>(null);
+  const effectivePageStyle = pageStyle ?? letterTemplate?.pageStyle ?? null;
 
   const form = usePrepareInvitation({
     wardId,
@@ -97,6 +106,15 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
 
   const renderedBody = interpolate(form.letterBody, vars);
   const renderedFooter = interpolate(form.letterFooter, vars);
+  // Bake the live editor state for the print path: chips resolve to
+  // real speaker / ward values, {{token}} strings in chrome props
+  // get interpolated. Without this, the OS print dialog falls
+  // through to the legacy chrome+markdown render — which can't carry
+  // chip color, chip italic, the bishop's authored signatory, or
+  // any custom letterhead, and ends up duplicating sections.
+  const printEditorStateJson = form.letterStateJson
+    ? resolveChipsInState(interpolate(form.letterStateJson, vars), vars)
+    : undefined;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -106,15 +124,17 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
         today={vars.today}
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
+        {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
       />
-      <div className="flex-1 min-h-0 overflow-y-auto bg-parchment py-6 px-4 sm:px-8 pb-4">
+      <div className="flex-1 min-h-0">
         <LetterPageEditor
           key={form.resetKey}
-          wardName={wardName}
-          today={vars.today}
           assignedDate={vars.date}
           initialJson={form.initialJson}
           initialMarkdown={form.initialMarkdown}
+          {...(effectivePageStyle ? { pageStyle: effectivePageStyle } : {})}
+          onPageStyleChange={setPageStyle}
+          vars={vars}
           onChange={form.setLetterStateJson}
           onInitial={form.captureInitial}
           ariaLabel={`Letter for ${speaker.data.name}`}

@@ -1,5 +1,7 @@
 import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 
+export { resolveChipsInState } from "./resolveChipsInState";
+
 interface SerializedTextNode extends SerializedLexicalNode {
   text: string;
   format?: number;
@@ -67,11 +69,24 @@ export function legacyFieldsFromState(state: SerializedEditorState): {
   };
 }
 
-/** Variant of {@link serializeBlock} that omits the assigned-Sunday
- *  callout + signature block. The legacy print path renders both as
- *  page chrome, so emitting them as content would double them up. */
+/** Variant of {@link serializeBlock} that omits node types the
+ *  legacy LetterCanvas chrome already paints: `letterhead` (chrome's
+ *  hardcoded LetterHeader has the same masthead), `signature-block`
+ *  (chrome's hardcoded LetterSignature), and `assigned-sunday-callout`
+ *  (chrome's hardcoded gradient band fed by the `assignedDate` prop).
+ *  Emitting any of those as markdown would render the same band twice
+ *  on the speaker page when the snapshot lacks an editorStateJson and
+ *  falls through to the chrome+markdown path.
+ *
+ *  Generic CalloutNode (`callout`) is still emitted because chrome
+ *  doesn't reproduce custom callouts the bishop authors. */
 function serializeBlockForLegacy(node: SerializedLexicalNode): string {
-  if (node.type === "assigned-sunday-callout" || node.type === "signature-block") return "";
+  if (
+    node.type === "assigned-sunday-callout" ||
+    node.type === "signature-block" ||
+    node.type === "letterhead"
+  )
+    return "";
   return serializeBlock(node);
 }
 
@@ -111,6 +126,32 @@ function serializeBlock(node: SerializedLexicalNode): string {
       const signatory = (node as unknown as { signatory?: string }).signatory ?? "The Bishopric";
       return `${closing}\n\n${signatory}`;
     }
+    case "letterhead": {
+      // Letterhead carries the formal masthead the bishop sees at the
+      // top of the editor — eyebrow / title / sub-eyebrow. The email
+      // can't render the circled brass ornament + typography, so we
+      // collapse to plain text: title as h1, then the two flanking
+      // mono lines as paragraphs. {{tokens}} (e.g. {{wardName}})
+      // pass through for the existing interpolation pipeline.
+      const eyebrow = (node as unknown as { eyebrow?: string }).eyebrow ?? "";
+      const title = (node as unknown as { title?: string }).title ?? "";
+      const subtitle = (node as unknown as { subtitle?: string }).subtitle ?? "";
+      return [eyebrow, title ? `# ${title}` : "", subtitle].filter(Boolean).join("\n\n");
+    }
+    case "callout": {
+      // Generic eyebrow + body band. Plain-text equivalent: bold
+      // label, blank line, body. Empty bodies collapse to just the
+      // label so a "Note" without text doesn't drop a stray blank.
+      const label = (node as unknown as { label?: string }).label ?? "";
+      const body = (node as unknown as { body?: string }).body ?? "";
+      if (!label && !body) return "";
+      return body ? `**${label}**\n\n${body}` : `**${label}**`;
+    }
+    case "image": {
+      const src = (node as unknown as { src?: string }).src ?? "";
+      const alt = (node as unknown as { alt?: string }).alt ?? "";
+      return src ? `![${alt}](${src})` : "";
+    }
     default:
       return "";
   }
@@ -124,13 +165,30 @@ function serializeInlineNode(node: SerializedLexicalNode): string {
   switch (node.type) {
     case "text": {
       const t = node as SerializedTextNode;
-      let s = t.text;
+      const s = t.text;
       const fmt = t.format ?? 0;
-      if (fmt & FORMAT_CODE) s = `\`${s}\``;
-      if (fmt & FORMAT_BOLD) s = `**${s}**`;
-      if (fmt & FORMAT_ITALIC) s = `*${s}*`;
-      if (fmt & FORMAT_UNDERLINE) s = `<u>${s}</u>`;
-      return s;
+      // Markdown emphasis markers can't have whitespace immediately
+      // inside them — `* foo *` is a literal "* foo *", not italic
+      // "foo". When a hydrated paragraph carries an italic-formatted
+      // text node like `" "` or " text " (common when the bishop's
+      // markdown was `: *{{topic}}*` and `{{topic}}` was a chip with
+      // surrounding italic spaces), wrapping the whole thing in
+      // `*…*` produced broken markdown that rendered as visible
+      // asterisks on the speaker page (see screenshot the user
+      // posted with "remarks:* *Faith of our Fathers"). Splitting
+      // leading + trailing whitespace out of the format-wrapper
+      // hugs the markers around real characters.
+      const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s);
+      const lead = m?.[1] ?? "";
+      const inner = m?.[2] ?? "";
+      const trail = m?.[3] ?? "";
+      if (inner.length === 0) return s;
+      let wrapped = inner;
+      if (fmt & FORMAT_CODE) wrapped = `\`${wrapped}\``;
+      if (fmt & FORMAT_BOLD) wrapped = `**${wrapped}**`;
+      if (fmt & FORMAT_ITALIC) wrapped = `*${wrapped}*`;
+      if (fmt & FORMAT_UNDERLINE) wrapped = `<u>${wrapped}</u>`;
+      return lead + wrapped + trail;
     }
     case "linebreak":
       return "\n";

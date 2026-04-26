@@ -300,7 +300,18 @@
   }
 
   /* The letter itself: drop the screen shadow, pin width. Height
-     stays natural so long letters can legitimately flow to page 2. */
+     stays natural so long letters can legitimately flow to page 2.
+     Force the print engine to honour the bishop's authored colours
+     (chip text colour, brass headers, signature underline) — Chrome
+     and Safari otherwise mute saturated text colours and skip
+     gradients / box-shadows when "Background graphics" is the only
+     print-dialog option offered. The standard property + the
+     vendor-prefixed alias both ship for full coverage. */
+  [data-print-only-letter],
+  [data-print-only-letter] * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
   [data-print-only-letter] > * {
     box-shadow: none !important;
     margin: 0 !important;

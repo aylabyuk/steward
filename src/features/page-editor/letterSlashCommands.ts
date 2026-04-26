@@ -8,6 +8,9 @@ import { $createHeadingNode, $createQuoteNode, type HeadingTagType } from "@lexi
 import { $setBlocksType } from "@lexical/selection";
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/react/LexicalHorizontalRuleNode";
+import { $createCalloutNode } from "./nodes/CalloutNode";
+import { $createLetterheadNode } from "./nodes/LetterheadNode";
+import { $createSignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { INSERT_IMAGE_COMMAND } from "./plugins/ImagePlugin";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
 
@@ -85,15 +88,10 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
   {
     id: "image",
     label: "Image",
-    description: "Insert an image by URL",
+    description: "Insert an image (click to set URL)",
     keywords: "img, picture, photo",
     icon: "🖼",
-    onSelect: (editor) => {
-      const src = window.prompt("Image URL");
-      if (!src) return;
-      const alt = window.prompt("Alt text", "") ?? "";
-      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src, alt });
-    },
+    onSelect: (editor) => editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: "", alt: "" }),
   },
   {
     id: "ornament",
@@ -107,5 +105,44 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
         alt: "Brass ornament",
         widthPct: 8,
       }),
+  },
+  {
+    id: "letterhead",
+    label: "Letterhead",
+    description: "Masthead with title, subtitle, and meta line",
+    keywords: "header, masthead, top, ward, formal",
+    icon: "≡",
+    onSelect: (editor) => {
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel)) sel.insertNodes([$createLetterheadNode()]);
+      });
+    },
+  },
+  {
+    id: "callout",
+    label: "Callout",
+    description: "Eyebrow label + body band (e.g. Topic, Note)",
+    keywords: "block, note, reminder, callout, band",
+    icon: "▢",
+    onSelect: (editor) => {
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel)) sel.insertNodes([$createCalloutNode("Note", "")]);
+      });
+    },
+  },
+  {
+    id: "signature",
+    label: "Signature",
+    description: "Closing phrase + signing line",
+    keywords: "sign, gratitude, bishopric, sincerely",
+    icon: "✎",
+    onSelect: (editor) => {
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel)) sel.insertNodes([$createSignatureBlockNode()]);
+      });
+    },
   },
 ];
