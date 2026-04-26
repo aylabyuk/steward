@@ -131,10 +131,14 @@ test.describe("speaker-letter snapshot — editorStateJson reaches Firestore", (
     );
     // Pull the editorStateJson literal value out — Firestore REST
     // wraps it in `{stringValue: "..."}` with escaped JSON inside.
-    const editorStateMatch = raw.match(/"editorStateJson":\s*\{\s*"stringValue":\s*"((?:[^"\\]|\\.)*)"/);
+    const editorStateMatch = raw.match(
+      /"editorStateJson":\s*\{\s*"stringValue":\s*"((?:[^"\\]|\\.)*)"/,
+    );
     expect(editorStateMatch?.[1], "editorStateJson stringValue must be readable").toBeTruthy();
     const editorJson = JSON.parse(`"${editorStateMatch![1]}"`);
-    expect(editorJson, "JSON must mention the letterhead node type").toContain('"type":"letterhead"');
+    expect(editorJson, "JSON must mention the letterhead node type").toContain(
+      '"type":"letterhead"',
+    );
     expect(editorJson, "JSON must carry the bishop's marker text").toContain(TITLE_MARKER);
   });
 });

@@ -9,6 +9,11 @@ export interface VariableEntry {
   /** Group key — used to render group headers in the popover. The
    *  human-readable name comes from `groupLabels[group]`. */
   group: string;
+  /** Sample-value preview shown beside the row in the dropdown so
+   *  the bishop can see what the chip would resolve to (e.g.
+   *  `Brother Park`, `Sunday, May 31, 2026`). Optional — rows
+   *  without a sample fall back to the bare `{{token}}` line. */
+  sample?: string;
 }
 
 interface Props {
@@ -67,15 +72,34 @@ export function VariableMenu({ editor, variables, groupLabels }: Props) {
                   className="tb-popover__item"
                   onClick={() => insert(v.token)}
                   onMouseDown={(e) => e.preventDefault()}
+                  title={`Inserts {{${v.token}}}`}
                 >
-                  <span style={{ flex: 1, minWidth: 0 }}>{v.label}</span>
                   <span
                     style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 10.5,
-                      color: "var(--color-walnut-3)",
+                      flex: 1,
+                      minWidth: 0,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
                     }}
-                  >{`{{${v.token}}}`}</span>
+                  >
+                    <span>{v.label}</span>
+                    {v.sample && (
+                      <span
+                        style={{
+                          fontFamily: "var(--font-serif)",
+                          fontStyle: "italic",
+                          fontSize: 11.5,
+                          color: "var(--color-walnut-3)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {v.sample}
+                      </span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>
