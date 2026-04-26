@@ -1,6 +1,6 @@
-import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
-import { $patchStyleText } from "@lexical/selection";
+import type { LexicalEditor } from "lexical";
 import { Icon } from "./Icon";
+import { patchSelectionStyle } from "./patchStyleWithChips";
 import { usePopover } from "./usePopover";
 
 const FONT_FAMILIES = [
@@ -21,10 +21,7 @@ interface Props {
 export function FontFamilyDropdown({ editor, current }: Props) {
   const pop = usePopover();
   function apply(family: string) {
-    editor.update(() => {
-      const sel = $getSelection();
-      if ($isRangeSelection(sel)) $patchStyleText(sel, { "font-family": family });
-    });
+    patchSelectionStyle(editor, { "font-family": family });
     pop.setOpen(false);
   }
   return (

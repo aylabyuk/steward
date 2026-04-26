@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
-import { $patchStyleText } from "@lexical/selection";
+import type { LexicalEditor } from "lexical";
 import { Icon } from "./Icon";
+import { patchSelectionStyle } from "./patchStyleWithChips";
 
 interface Props {
   editor: LexicalEditor;
@@ -15,10 +15,7 @@ export function FontSizeStepper({ editor, current }: Props) {
   function commit(next: number) {
     const clamped = Math.max(8, Math.min(96, Math.round(next)));
     setDraft(String(clamped));
-    editor.update(() => {
-      const sel = $getSelection();
-      if ($isRangeSelection(sel)) $patchStyleText(sel, { "font-size": `${clamped}px` });
-    });
+    patchSelectionStyle(editor, { "font-size": `${clamped}px` });
   }
 
   return (

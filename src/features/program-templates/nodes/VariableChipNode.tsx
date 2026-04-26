@@ -16,7 +16,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { useVariableMeta, useVariableRegistry } from "@/features/page-editor/variableRegistry";
 
 export type SerializedVariableChipNode = Spread<
-  { token: string; format?: number },
+  { token: string; format?: number; style?: string },
   SerializedLexicalNode
 >;
 
@@ -65,19 +65,21 @@ export function variableChipFormatBit(type: TextFormatType): number {
 export class VariableChipNode extends DecoratorNode<React.ReactElement> {
   __token: string;
   __format: number;
+  __style: string;
 
   static getType(): string {
     return "variable-chip";
   }
 
   static clone(node: VariableChipNode): VariableChipNode {
-    return new VariableChipNode(node.__token, node.__format, node.__key);
+    return new VariableChipNode(node.__token, node.__format, node.__style, node.__key);
   }
 
-  constructor(token: string, format = 0, key?: NodeKey) {
+  constructor(token: string, format = 0, style = "", key?: NodeKey) {
     super(key);
     this.__token = token;
     this.__format = format;
+    this.__style = style;
   }
 
   getToken(): string {
@@ -101,6 +103,28 @@ export class VariableChipNode extends DecoratorNode<React.ReactElement> {
     const bit = variableChipFormatBit(type);
     if (bit === 0) return;
     this.setFormat(this.getFormat() ^ bit);
+  }
+
+  getStyle(): string {
+    return this.getLatest().__style;
+  }
+  setStyle(style: string): void {
+    this.getWritable().__style = style;
+  }
+  /** Read a single CSS property value out of `__style`. Returns ""
+   *  when the property isn't set so callers can use a falsy check. */
+  getCSSProperty(property: string): string {
+    return parseStyleString(this.getStyle())[property] ?? "";
+  }
+  /** Mirror of `$patchStyleText`'s per-property update for a single
+   *  chip. Pass `null` as the value to remove the property. */
+  patchStyle(patch: Record<string, string | null>): void {
+    const next = { ...parseStyleString(this.getStyle()) };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === null) delete next[k];
+      else next[k] = v;
+    }
+    this.setStyle(stringifyStyle(next));
   }
 
   isInline(): boolean {
@@ -142,28 +166,65 @@ export class VariableChipNode extends DecoratorNode<React.ReactElement> {
   exportJSON(): SerializedVariableChipNode {
     return {
       type: VariableChipNode.getType(),
-      version: 2,
+      version: 3,
       token: this.__token,
       format: this.__format,
+      style: this.__style,
     };
   }
 
   static importJSON(json: SerializedVariableChipNode): VariableChipNode {
-    return $createVariableChipNode(json.token, json.format ?? 0);
+    return $createVariableChipNode(json.token, json.format ?? 0, json.style ?? "");
   }
 
   decorate(): React.ReactElement {
-    return <ChipView nodeKey={this.__key} token={this.__token} format={this.__format} />;
+    return (
+      <ChipView
+        nodeKey={this.__key}
+        token={this.__token}
+        format={this.__format}
+        style={this.__style}
+      />
+    );
   }
+}
+
+function parseStyleString(s: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const decl of s.split(";")) {
+    const idx = decl.indexOf(":");
+    if (idx < 0) continue;
+    const k = decl.slice(0, idx).trim();
+    const v = decl.slice(idx + 1).trim();
+    if (k && v) out[k] = v;
+  }
+  return out;
+}
+
+function stringifyStyle(obj: Record<string, string>): string {
+  return Object.entries(obj)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join("; ");
+}
+
+function styleStringToReact(s: string): React.CSSProperties {
+  const obj = parseStyleString(s);
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const camel = k.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+    out[camel] = v;
+  }
+  return out as React.CSSProperties;
 }
 
 interface ChipViewProps {
   nodeKey: NodeKey;
   token: string;
   format: number;
+  style: string;
 }
 
-function ChipView({ nodeKey, token, format }: ChipViewProps) {
+function ChipView({ nodeKey, token, format, style }: ChipViewProps) {
   const [editor] = useLexicalComposerContext();
   const meta = useVariableMeta(token);
   const { variables, groupLabels } = useVariableRegistry();
@@ -232,6 +293,13 @@ function ChipView({ nodeKey, token, format }: ChipViewProps) {
             ? `${meta.label} — click to change variable`
             : `${token} — unknown variable, click to pick`
         }
+        // Inline style applies the chip's color / background-color /
+        // font-family / font-size patches the toolbar wrote via
+        // $patchStyleWithChips, mirroring exactly what TextNode would
+        // surface from its own __style. Tailwind classes set defaults
+        // (font-serif, text-inherit) — inline style overrides them
+        // when the user picks something else.
+        style={styleStringToReact(style)}
         className="inline align-baseline px-0 py-0 m-0 bg-transparent border-0 font-serif text-inherit cursor-pointer focus:outline-none rounded-sm hover:bg-brass-soft/25 hover:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-brass-soft)_30%,transparent)]"
       >
         {formatted}
@@ -338,8 +406,8 @@ function ChipView({ nodeKey, token, format }: ChipViewProps) {
   );
 }
 
-export function $createVariableChipNode(token: string, format = 0): VariableChipNode {
-  return $applyNodeReplacement(new VariableChipNode(token, format));
+export function $createVariableChipNode(token: string, format = 0, style = ""): VariableChipNode {
+  return $applyNodeReplacement(new VariableChipNode(token, format, style));
 }
 
 export function $isVariableChipNode(
