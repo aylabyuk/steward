@@ -5,6 +5,7 @@ import { PAGE_EDITOR_BASE_NODES } from "./pageEditorNodes";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
 import { useFitZoom } from "./useFitZoom";
+import { VariableRegistryProvider } from "./variableRegistry";
 import { PROGRAM_SLASH_COMMANDS } from "./programSlashCommands";
 import { PageToolbar } from "./toolbar/PageToolbar";
 import type { ZoomMode } from "./toolbar/ZoomMenu";
@@ -45,45 +46,47 @@ export function ProgramPageEditor({
         ? fits.fitPage
         : zoomMode.value;
   return (
-    <div
-      className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
-    >
-      <PageEditorComposer
-        namespace={`ProgramPageEditor:${variant}`}
-        nodes={PAGE_EDITOR_BASE_NODES}
-        initialState={initialJson}
-        onChange={onChange}
-        onInitial={onInitial}
-        ariaLabel={ariaLabel}
-        slashCommands={PROGRAM_SLASH_COMMANDS}
-        pageToolbar={
-          <PageToolbar
-            slashCommands={PROGRAM_SLASH_COMMANDS}
-            variables={PROGRAM_VARIABLES}
-            variableGroupLabels={GROUP_LABEL}
-            pageStyle={pageStyle}
-            zoom={zoom}
-            zoomMode={zoomMode}
-            onZoomMode={setZoomMode}
-            {...(onPageStyleChange ? { onPageStyleChange } : {})}
-          />
-        }
-        page={(contentEditable) => (
-          <div className="flex-1 min-h-0">
-            <PaginatedPageStage
-              variant={canvasVariant}
-              pageStyle={pageStyle ?? undefined}
+    <VariableRegistryProvider variables={PROGRAM_VARIABLES} groupLabels={GROUP_LABEL}>
+      <div
+        className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
+      >
+        <PageEditorComposer
+          namespace={`ProgramPageEditor:${variant}`}
+          nodes={PAGE_EDITOR_BASE_NODES}
+          initialState={initialJson}
+          onChange={onChange}
+          onInitial={onInitial}
+          ariaLabel={ariaLabel}
+          slashCommands={PROGRAM_SLASH_COMMANDS}
+          pageToolbar={
+            <PageToolbar
+              slashCommands={PROGRAM_SLASH_COMMANDS}
+              variables={PROGRAM_VARIABLES}
+              variableGroupLabels={GROUP_LABEL}
+              pageStyle={pageStyle}
               zoom={zoom}
-              onZoomChange={(v) => setZoomMode({ kind: "manual", value: v })}
-              scrollRef={scrollRef}
-            >
-              <div className="font-serif text-[15px] leading-[1.6] text-walnut">
-                {contentEditable}
-              </div>
-            </PaginatedPageStage>
-          </div>
-        )}
-      />
-    </div>
+              zoomMode={zoomMode}
+              onZoomMode={setZoomMode}
+              {...(onPageStyleChange ? { onPageStyleChange } : {})}
+            />
+          }
+          page={(contentEditable) => (
+            <div className="flex-1 min-h-0">
+              <PaginatedPageStage
+                variant={canvasVariant}
+                pageStyle={pageStyle ?? undefined}
+                zoom={zoom}
+                onZoomChange={(v) => setZoomMode({ kind: "manual", value: v })}
+                scrollRef={scrollRef}
+              >
+                <div className="font-serif text-[15px] leading-[1.6] text-walnut">
+                  {contentEditable}
+                </div>
+              </PaginatedPageStage>
+            </div>
+          )}
+        />
+      </div>
+    </VariableRegistryProvider>
   );
 }

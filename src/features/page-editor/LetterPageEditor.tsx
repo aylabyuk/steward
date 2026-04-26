@@ -14,6 +14,7 @@ import {
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
 import { useFitZoom } from "./useFitZoom";
+import { VariableRegistryProvider } from "./variableRegistry";
 import { PageToolbar } from "./toolbar/PageToolbar";
 import type { ZoomMode } from "./toolbar/ZoomMenu";
 
@@ -65,46 +66,51 @@ export function LetterPageEditor({
         : zoomMode.value;
   return (
     <LetterRenderContextProvider assignedDate={assignedDate} vars={LETTER_VARIABLE_SAMPLES}>
-      <div
-        className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
+      <VariableRegistryProvider
+        variables={LETTER_VARIABLES}
+        groupLabels={LETTER_VARIABLE_GROUP_LABEL}
       >
-        <PageEditorComposer
-          namespace="LetterPageEditor"
-          nodes={LETTER_EDITOR_NODES}
-          initialState={initialState}
-          onChange={onChange}
-          onInitial={onInitial}
-          ariaLabel={ariaLabel}
-          slashCommands={LETTER_SLASH_COMMANDS}
-          pageToolbar={
-            <PageToolbar
-              slashCommands={LETTER_SLASH_COMMANDS}
-              variables={LETTER_VARIABLES}
-              variableGroupLabels={LETTER_VARIABLE_GROUP_LABEL}
-              pageStyle={pageStyle}
-              zoom={zoom}
-              zoomMode={zoomMode}
-              onZoomMode={setZoomMode}
-              {...(onPageStyleChange ? { onPageStyleChange } : {})}
-            />
-          }
-          page={(contentEditable) => (
-            <div className="flex-1 min-h-0">
-              <PaginatedPageStage
-                variant="letter"
+        <div
+          className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
+        >
+          <PageEditorComposer
+            namespace="LetterPageEditor"
+            nodes={LETTER_EDITOR_NODES}
+            initialState={initialState}
+            onChange={onChange}
+            onInitial={onInitial}
+            ariaLabel={ariaLabel}
+            slashCommands={LETTER_SLASH_COMMANDS}
+            pageToolbar={
+              <PageToolbar
+                slashCommands={LETTER_SLASH_COMMANDS}
+                variables={LETTER_VARIABLES}
+                variableGroupLabels={LETTER_VARIABLE_GROUP_LABEL}
                 pageStyle={pageStyle}
                 zoom={zoom}
-                onZoomChange={(v) => setZoomMode({ kind: "manual", value: v })}
-                scrollRef={scrollRef}
-              >
-                <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
-                  {contentEditable}
-                </div>
-              </PaginatedPageStage>
-            </div>
-          )}
-        />
-      </div>
+                zoomMode={zoomMode}
+                onZoomMode={setZoomMode}
+                {...(onPageStyleChange ? { onPageStyleChange } : {})}
+              />
+            }
+            page={(contentEditable) => (
+              <div className="flex-1 min-h-0">
+                <PaginatedPageStage
+                  variant="letter"
+                  pageStyle={pageStyle}
+                  zoom={zoom}
+                  onZoomChange={(v) => setZoomMode({ kind: "manual", value: v })}
+                  scrollRef={scrollRef}
+                >
+                  <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
+                    {contentEditable}
+                  </div>
+                </PaginatedPageStage>
+              </div>
+            )}
+          />
+        </div>
+      </VariableRegistryProvider>
     </LetterRenderContextProvider>
   );
 }
