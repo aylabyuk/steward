@@ -148,9 +148,6 @@ export function PageToolbar({
         <ZoomMenu zoom={zoom} mode={zoomMode} onMode={onZoomMode} />
       )}
       {onPageStyleChange && <PageSetupPopover value={pageStyle} onChange={onPageStyleChange} />}
-      <ToolbarButton label="Print" onClick={() => window.print()}>
-        <Icon name="printer" sw={1.6} />
-      </ToolbarButton>
     </div>
   );
 }
