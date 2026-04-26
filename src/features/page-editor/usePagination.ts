@@ -64,8 +64,14 @@ export function usePagination({ pageStride, pageContentH, padTopPx, contentRef }
       // Step 2: walk and inject. Each block's normalized Y is
       // (offsetTop − padTopPx) so Y=0 is the first page's content
       // top, which makes `Math.floor(top / pageStride)` directly
-      // correspond to the page index. Push amount is in normalized
-      // coords too; `marginTop` accepts the same delta in stage px.
+      // correspond to the page index.
+      //
+      // Subtle: setting `style.marginTop` REPLACES the block's natural
+      // margin (headings / quote / list inherit margin-top from
+      // `.prose`). So to move a block visually by `delta`, we have to
+      // set `naturalMt + delta`, otherwise headings push as if their
+      // natural 2em margin never existed and they land that much
+      // *above* the next page's content top — inside the top margin.
       for (const b of blocks) {
         const top = b.offsetTop - padTopPx;
         const bottom = top + b.offsetHeight;
@@ -73,7 +79,8 @@ export function usePagination({ pageStride, pageContentH, padTopPx, contentRef }
         const pageContentBottom = pageIdx * pageStride + pageContentH;
         if (bottom > pageContentBottom && b.offsetHeight <= pageContentH) {
           const nextTop = (pageIdx + 1) * pageStride;
-          b.style.marginTop = `${nextTop - top}px`;
+          const naturalMt = parseFloat(getComputedStyle(b).marginTop) || 0;
+          b.style.marginTop = `${nextTop - top + naturalMt}px`;
           b.dataset.pgInjected = "1";
           void editable.offsetHeight;
         }
