@@ -81,12 +81,12 @@ const conducting = stringify([
   // smaller italic rows directly under the agenda line they belong to
   p(styledText("Order of meeting", SECTION_STYLE)),
 
-  agendaRow("1", "Opening hymn", "openingHymn"),
-  subRow("Invocation", "openingPrayer"),
-
-  agendaRow("2", "Ward business", "wardBusiness"),
+  agendaRow("1", "Announcements", "announcements"),
+  subRow("Ward business", "wardBusiness"),
   subRow("Stake business", "stakeBusiness"),
-  subRow("Announcements", "announcements"),
+
+  agendaRow("2", "Opening hymn", "openingHymn"),
+  subRow("Invocation", "openingPrayer"),
 
   agendaRow("3", "Sacrament hymn", "sacramentHymn"),
   cueRow("Administration of the sacrament — pause for reverence before introducing speakers."),
