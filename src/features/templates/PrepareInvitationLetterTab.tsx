@@ -54,6 +54,7 @@ export function PrepareInvitationLetterTab({
           assignedDate={vars.date}
           initialJson={initialJson}
           initialMarkdown={initialMarkdown}
+          vars={vars}
           onChange={onChange}
           onInitial={onInitial}
           ariaLabel={`Letter for ${vars.speakerName}`}

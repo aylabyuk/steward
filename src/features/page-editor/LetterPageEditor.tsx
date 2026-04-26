@@ -36,6 +36,13 @@ interface Props {
    *  per-speaker editors leave it off because chips there already
    *  resolve to the real speaker's values. */
   showSampleNotice?: boolean;
+  /** Variable bag the chips + Callout / Letterhead / Signature props
+   *  resolve against. Per-speaker editors (wizard, prepare-invite)
+   *  pass the real speaker / ward values so chips render
+   *  "Sister Park" instead of the static "Brother Park" sample.
+   *  Template editor omits this — falls back to LETTER_VARIABLE_SAMPLES
+   *  and the bordeaux banner explains why. */
+  vars?: Readonly<Record<string, string>>;
   onChange: (stateJson: string) => void;
   onInitial?: (stateJson: string) => void;
   onPageStyleChange?: (next: LetterPageStyle) => void;
@@ -54,6 +61,7 @@ export function LetterPageEditor({
   initialMarkdown,
   pageStyle,
   showSampleNotice,
+  vars,
   onChange,
   onInitial,
   onPageStyleChange,
@@ -71,7 +79,7 @@ export function LetterPageEditor({
         ? fits.fitPage
         : zoomMode.value;
   return (
-    <LetterRenderContextProvider assignedDate={assignedDate} vars={LETTER_VARIABLE_SAMPLES}>
+    <LetterRenderContextProvider assignedDate={assignedDate} vars={vars ?? LETTER_VARIABLE_SAMPLES}>
       <VariableRegistryProvider
         variables={LETTER_VARIABLES}
         groupLabels={LETTER_VARIABLE_GROUP_LABEL}
