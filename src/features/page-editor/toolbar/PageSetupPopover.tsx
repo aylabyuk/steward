@@ -21,7 +21,7 @@ const DEFAULT: LetterPageStyle = {
   paper: "chalk",
   pageSize: "letter",
   orientation: "portrait",
-  margins: "normal",
+  margins: "narrow",
 };
 
 const SIZE_LABELS: Record<PageSize, { label: string; meta: string | null }> = {

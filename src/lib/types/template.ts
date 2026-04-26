@@ -78,7 +78,7 @@ export const letterPageStyleSchema = z.object({
   paper: z.enum(["chalk", "parchment", "parchment-2"]).default("chalk"),
   pageSize: pageSizeSchema.default("letter"),
   orientation: orientationSchema.default("portrait"),
-  margins: marginPresetSchema.default("normal"),
+  margins: marginPresetSchema.default("narrow"),
 });
 export type LetterPageStyle = z.infer<typeof letterPageStyleSchema>;
 

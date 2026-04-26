@@ -51,7 +51,7 @@ export function LetterPageEditor({
 }: Props) {
   const initialState = initialJson ?? buildInitialLetterState(initialMarkdown);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const [zoomMode, setZoomMode] = useState<ZoomMode>({ kind: "fit-width" });
+  const [zoomMode, setZoomMode] = useState<ZoomMode>({ kind: "fit-page" });
   const fits = useFitZoom(scrollRef, pageStyle);
   const zoom =
     zoomMode.kind === "fit-width"
