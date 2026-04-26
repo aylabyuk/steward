@@ -10,55 +10,111 @@ import {
   type NodeKey,
   type SerializedLexicalNode,
   type Spread,
+  type TextFormatType,
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useVariableMeta, useVariableRegistry } from "@/features/page-editor/variableRegistry";
 
-export type SerializedVariableChipNode = Spread<{ token: string }, SerializedLexicalNode>;
+export type SerializedVariableChipNode = Spread<
+  { token: string; format?: number },
+  SerializedLexicalNode
+>;
+
+// Lexical's text-format bitmask constants — kept inline so the chip
+// can mirror what FORMAT_TEXT_COMMAND would do to a TextNode.
+const FORMAT_BOLD = 1;
+const FORMAT_ITALIC = 2;
+const FORMAT_STRIKE = 4;
+const FORMAT_UNDERLINE = 8;
+const FORMAT_CODE = 16;
+const FORMAT_SUBSCRIPT = 32;
+const FORMAT_SUPERSCRIPT = 64;
+
+export function variableChipFormatBit(type: TextFormatType): number {
+  switch (type) {
+    case "bold":
+      return FORMAT_BOLD;
+    case "italic":
+      return FORMAT_ITALIC;
+    case "strikethrough":
+      return FORMAT_STRIKE;
+    case "underline":
+      return FORMAT_UNDERLINE;
+    case "code":
+      return FORMAT_CODE;
+    case "subscript":
+      return FORMAT_SUBSCRIPT;
+    case "superscript":
+      return FORMAT_SUPERSCRIPT;
+    default:
+      return 0;
+  }
+}
 
 /** Inline decorator node: a "chip" representing a `{{token}}`
- *  reference in the editor. Renders inline as the resolved sample
- *  value (e.g. `Brother Park` instead of `{{speakerName}}`) so the
- *  bishop sees what the letter would actually look like. Click to
- *  swap which variable the chip points to via a small popover. */
+ *  reference in the editor. Renders as the resolved sample value
+ *  (e.g. `Brother Park` instead of `{{speakerName}}`) so the bishop
+ *  sees what the letter would actually look like. Visually
+ *  indistinguishable from authored text by default; a soft brass
+ *  hover treatment surfaces the "this is dynamic" hint and clicking
+ *  opens a picker to swap the variable.
+ *
+ *  Carries a Lexical-style format bitmask so toolbar formatting
+ *  (bold / italic / underline / etc) round-trips through the chip
+ *  via the companion VariableChipFormatPlugin. */
 export class VariableChipNode extends DecoratorNode<React.ReactElement> {
   __token: string;
+  __format: number;
 
   static getType(): string {
     return "variable-chip";
   }
 
   static clone(node: VariableChipNode): VariableChipNode {
-    return new VariableChipNode(node.__token, node.__key);
+    return new VariableChipNode(node.__token, node.__format, node.__key);
   }
 
-  constructor(token: string, key?: NodeKey) {
+  constructor(token: string, format = 0, key?: NodeKey) {
     super(key);
     this.__token = token;
+    this.__format = format;
   }
 
   getToken(): string {
     return this.__token;
   }
-
   setToken(token: string): void {
     this.getWritable().__token = token;
+  }
+
+  getFormat(): number {
+    return this.getLatest().__format;
+  }
+  setFormat(format: number): void {
+    this.getWritable().__format = format;
+  }
+  hasFormat(type: TextFormatType): boolean {
+    const bit = variableChipFormatBit(type);
+    return bit !== 0 && (this.getFormat() & bit) !== 0;
+  }
+  toggleFormat(type: TextFormatType): void {
+    const bit = variableChipFormatBit(type);
+    if (bit === 0) return;
+    this.setFormat(this.getFormat() ^ bit);
   }
 
   isInline(): boolean {
     return true;
   }
-
   isKeyboardSelectable(): boolean {
     return true;
   }
 
   createDOM(_config: EditorConfig): HTMLElement {
     const span = document.createElement("span");
-    span.style.display = "inline-block";
+    span.style.display = "inline";
     return span;
   }
-
   updateDOM(): false {
     return false;
   }
@@ -86,21 +142,28 @@ export class VariableChipNode extends DecoratorNode<React.ReactElement> {
   exportJSON(): SerializedVariableChipNode {
     return {
       type: VariableChipNode.getType(),
-      version: 1,
+      version: 2,
       token: this.__token,
+      format: this.__format,
     };
   }
 
   static importJSON(json: SerializedVariableChipNode): VariableChipNode {
-    return $createVariableChipNode(json.token);
+    return $createVariableChipNode(json.token, json.format ?? 0);
   }
 
   decorate(): React.ReactElement {
-    return <ChipView nodeKey={this.__key} token={this.__token} />;
+    return <ChipView nodeKey={this.__key} token={this.__token} format={this.__format} />;
   }
 }
 
-function ChipView({ nodeKey, token }: { nodeKey: NodeKey; token: string }) {
+interface ChipViewProps {
+  nodeKey: NodeKey;
+  token: string;
+  format: number;
+}
+
+function ChipView({ nodeKey, token, format }: ChipViewProps) {
   const [editor] = useLexicalComposerContext();
   const meta = useVariableMeta(token);
   const { variables, groupLabels } = useVariableRegistry();
@@ -108,11 +171,11 @@ function ChipView({ nodeKey, token }: { nodeKey: NodeKey; token: string }) {
   const wrapRef = useRef<HTMLSpanElement>(null);
   const display = meta?.sample ?? meta?.label ?? token;
 
-  // Click-outside / focus-out → dismiss. Without this, opening a
-  // second chip leaves the first one's picker mounted and you end
-  // up with overlapping menus competing for clicks. Mousedown beats
-  // click ordering so a click that lands inside another chip's
-  // wrapper closes this one before that one opens.
+  // Click-outside dismiss. Without this, opening a second chip leaves
+  // the first one's picker mounted and you end up with overlapping
+  // menus competing for clicks. Mousedown beats click ordering so a
+  // click that lands inside another chip's wrapper closes this one
+  // before that one opens.
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
@@ -140,6 +203,20 @@ function ChipView({ nodeKey, token }: { nodeKey: NodeKey; token: string }) {
     else groups.push([g, [v]]);
   }
 
+  // Wrap the display value in <strong>/<em>/<u>/<s>/<code> per the
+  // chip's stored format bits, the same layered strategy renderText
+  // uses on the speaker landing page so the print + email paths
+  // see the formatting too.
+  let formatted: React.ReactNode = display;
+  if (format & FORMAT_CODE)
+    formatted = (
+      <code className="font-mono text-[0.92em] bg-parchment-2 px-1 rounded">{formatted}</code>
+    );
+  if (format & FORMAT_BOLD) formatted = <strong>{formatted}</strong>;
+  if (format & FORMAT_ITALIC) formatted = <em>{formatted}</em>;
+  if (format & FORMAT_UNDERLINE) formatted = <u>{formatted}</u>;
+  if (format & FORMAT_STRIKE) formatted = <s>{formatted}</s>;
+
   return (
     <span ref={wrapRef} style={{ position: "relative", display: "inline-block" }}>
       <button
@@ -155,9 +232,9 @@ function ChipView({ nodeKey, token }: { nodeKey: NodeKey; token: string }) {
             ? `${meta.label} — click to change variable`
             : `${token} — unknown variable, click to pick`
         }
-        className="inline-flex items-center align-baseline rounded-sm bg-brass-soft/25 px-1 font-serif text-walnut underline decoration-dotted decoration-brass-deep/60 underline-offset-2 hover:bg-brass-soft/40 focus:outline-none cursor-pointer"
+        className="inline align-baseline px-0 py-0 m-0 bg-transparent border-0 font-serif text-inherit cursor-pointer focus:outline-none rounded-sm hover:bg-brass-soft/25 hover:[box-shadow:0_0_0_2px_color-mix(in_srgb,var(--color-brass-soft)_30%,transparent)]"
       >
-        {display}
+        {formatted}
       </button>
       {open && (
         <span
@@ -261,8 +338,8 @@ function ChipView({ nodeKey, token }: { nodeKey: NodeKey; token: string }) {
   );
 }
 
-export function $createVariableChipNode(token: string): VariableChipNode {
-  return $applyNodeReplacement(new VariableChipNode(token));
+export function $createVariableChipNode(token: string, format = 0): VariableChipNode {
+  return $applyNodeReplacement(new VariableChipNode(token, format));
 }
 
 export function $isVariableChipNode(

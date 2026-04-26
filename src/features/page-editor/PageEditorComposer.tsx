@@ -15,6 +15,7 @@ import { ImagePlugin } from "./plugins/ImagePlugin";
 import { PageEditorAutoLink } from "./plugins/PageEditorAutoLink";
 import { PageEditorMarkdownShortcuts } from "./plugins/PageEditorMarkdownShortcuts";
 import { SlashCommandPlugin } from "./plugins/SlashCommandPlugin";
+import { VariableChipFormatPlugin } from "./plugins/VariableChipFormatPlugin";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
 
 interface Props {
@@ -103,6 +104,7 @@ export function PageEditorComposer({
       <PageEditorAutoLink />
       <PageEditorMarkdownShortcuts />
       <ImagePlugin />
+      <VariableChipFormatPlugin />
       {slashCommands && <SlashCommandPlugin commands={slashCommands} />}
       <FloatingSelectionToolbar />
       <StateJsonOnChangePlugin onChange={onChange} onInitial={onInitial} />
