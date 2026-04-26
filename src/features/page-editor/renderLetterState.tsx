@@ -180,13 +180,24 @@ function renderLink(node: { url?: string; children?: SerializedLexicalNode[] }, 
   );
 }
 
-function renderChip(node: { token?: string }, key: string) {
-  return (
-    <span
-      key={key}
-      className="rounded-full bg-parchment-2 border border-border px-1.5 font-mono text-[11px] text-walnut-3"
-    >{`{{${node.token ?? ""}}}`}</span>
-  );
+function renderChip(node: { token?: string; format?: number }, key: string) {
+  // Snapshots store the chip's token + the toolbar-applied format
+  // bits. We don't have a vars bag on the speaker page yet, so the
+  // raw `{{token}}` falls through here; format still applies so the
+  // bishop's bold/italic survives the round trip.
+  let element: React.ReactNode = `{{${node.token ?? ""}}}`;
+  const f = node.format ?? 0;
+  if (f & FORMAT_CODE)
+    element = (
+      <code key={key} className="font-mono text-[0.92em] bg-parchment-2 px-1 rounded">
+        {element}
+      </code>
+    );
+  if (f & FORMAT_BOLD) element = <strong key={key}>{element}</strong>;
+  if (f & FORMAT_ITALIC) element = <em key={key}>{element}</em>;
+  if (f & FORMAT_UNDERLINE) element = <u key={key}>{element}</u>;
+  if (f & FORMAT_STRIKE) element = <s key={key}>{element}</s>;
+  return <span key={key}>{element}</span>;
 }
 
 function renderLetterhead(
