@@ -88,15 +88,10 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
   {
     id: "image",
     label: "Image",
-    description: "Insert an image by URL",
+    description: "Insert an image (click to set URL)",
     keywords: "img, picture, photo",
     icon: "🖼",
-    onSelect: (editor) => {
-      const src = window.prompt("Image URL");
-      if (!src) return;
-      const alt = window.prompt("Alt text", "") ?? "";
-      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src, alt });
-    },
+    onSelect: (editor) => editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: "", alt: "" }),
   },
   {
     id: "ornament",
@@ -118,14 +113,9 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
     keywords: "header, masthead, top, ward, formal",
     icon: "≡",
     onSelect: (editor) => {
-      const title = window.prompt("Letterhead title", "Test Ward");
-      if (title === null) return;
-      const subtitle = window.prompt("Subtitle", "The Bishopric") ?? "";
-      const meta = window.prompt("Meta (date, address — optional)", "") ?? "";
       editor.update(() => {
         const sel = $getSelection();
-        if ($isRangeSelection(sel))
-          sel.insertNodes([$createLetterheadNode(title.trim() || "Test Ward", subtitle, meta)]);
+        if ($isRangeSelection(sel)) sel.insertNodes([$createLetterheadNode()]);
       });
     },
   },
@@ -136,13 +126,9 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
     keywords: "block, note, reminder, callout, band",
     icon: "▢",
     onSelect: (editor) => {
-      const label = window.prompt("Eyebrow label", "Note");
-      if (label === null) return;
-      const body = window.prompt("Body", "") ?? "";
       editor.update(() => {
         const sel = $getSelection();
-        if ($isRangeSelection(sel))
-          sel.insertNodes([$createCalloutNode(label.trim() || "Note", body)]);
+        if ($isRangeSelection(sel)) sel.insertNodes([$createCalloutNode("Note", "")]);
       });
     },
   },
@@ -153,13 +139,9 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
     keywords: "sign, gratitude, bishopric, sincerely",
     icon: "✎",
     onSelect: (editor) => {
-      const closing = window.prompt("Closing phrase", "With gratitude,");
-      if (closing === null) return;
-      const signatory = window.prompt("Signed by", "The Bishopric") ?? "";
       editor.update(() => {
         const sel = $getSelection();
-        if ($isRangeSelection(sel))
-          sel.insertNodes([$createSignatureBlockNode(closing, signatory)]);
+        if ($isRangeSelection(sel)) sel.insertNodes([$createSignatureBlockNode()]);
       });
     },
   },
