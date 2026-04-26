@@ -14,11 +14,17 @@ import { InsertMenu } from "./InsertMenu";
 import { PageSetupPopover } from "./PageSetupPopover";
 import { ToolbarButton, ToolbarSep } from "./ToolbarButton";
 import { useToolbarState } from "./useToolbarState";
+import { VariableMenu, type VariableEntry } from "./VariableMenu";
 import { ZoomMenu, type ZoomMode } from "./ZoomMenu";
 import type { SlashCommand } from "../plugins/SlashCommandRegistry";
 
 interface Props {
   slashCommands: ReadonlyArray<SlashCommand>;
+  /** Optional palette of `{{token}}` variables. When provided, the
+   *  toolbar surfaces a Variables dropdown next to Insert; the editor's
+   *  Insert / slash menu stays free of token rows. */
+  variables?: ReadonlyArray<VariableEntry>;
+  variableGroupLabels?: Record<string, string>;
   pageStyle?: LetterPageStyle | null;
   onPageStyleChange?: (next: LetterPageStyle) => void;
   zoom?: number;
@@ -33,6 +39,8 @@ interface Props {
  *  Zoom · Page setup · Print. */
 export function PageToolbar({
   slashCommands,
+  variables,
+  variableGroupLabels,
   pageStyle,
   onPageStyleChange,
   zoom,
@@ -123,6 +131,13 @@ export function PageToolbar({
       <ToolbarSep />
 
       <InsertMenu editor={editor} commands={slashCommands} />
+      {variables && variables.length > 0 && (
+        <VariableMenu
+          editor={editor}
+          variables={variables}
+          groupLabels={variableGroupLabels ?? {}}
+        />
+      )}
 
       <span className="tb-spacer" />
 

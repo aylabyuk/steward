@@ -8,8 +8,6 @@ import { $createHeadingNode, $createQuoteNode, type HeadingTagType } from "@lexi
 import { $setBlocksType } from "@lexical/selection";
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/react/LexicalHorizontalRuleNode";
-import { $createVariableChipNode } from "@/features/program-templates/nodes/VariableChipNode";
-import { PROGRAM_VARIABLES } from "@/features/program-templates/programVariables";
 import { INSERT_IMAGE_COMMAND } from "./plugins/ImagePlugin";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
 
@@ -20,6 +18,11 @@ function setBlock(editor: LexicalEditor, factory: () => ReturnType<typeof $creat
   });
 }
 
+/** Slash-command palette for the conducting + congregation program
+ *  template editors. Mounted by `ProgramPageEditor` via
+ *  `PageEditorComposer`. Bishops type `/` at the start of a paragraph
+ *  to open the menu. Variables live in their own toolbar dropdown,
+ *  not here — see `PROGRAM_VARIABLES` + `VariableMenu`. */
 const STRUCTURAL_COMMANDS: SlashCommand[] = [
   {
     id: "heading-1",
@@ -86,25 +89,4 @@ const STRUCTURAL_COMMANDS: SlashCommand[] = [
   },
 ];
 
-const VARIABLE_COMMANDS: SlashCommand[] = PROGRAM_VARIABLES.map((v) => ({
-  id: `var-${v.token}`,
-  label: v.label,
-  description: `Variable · ${v.group}`,
-  keywords: `variable, ${v.token}, ${v.group}`,
-  icon: "{{",
-  onSelect: (e) => {
-    e.update(() => {
-      const sel = $getSelection();
-      if ($isRangeSelection(sel)) sel.insertNodes([$createVariableChipNode(v.token)]);
-    });
-  },
-}));
-
-/** Slash-command palette for the conducting + congregation program
- *  template editors. Mirrors the letter palette's structural commands
- *  and adds an entry for every program variable so the bishop can
- *  insert a chip without remembering the exact token. */
-export const PROGRAM_SLASH_COMMANDS: readonly SlashCommand[] = [
-  ...STRUCTURAL_COMMANDS,
-  ...VARIABLE_COMMANDS,
-];
+export const PROGRAM_SLASH_COMMANDS: readonly SlashCommand[] = STRUCTURAL_COMMANDS;

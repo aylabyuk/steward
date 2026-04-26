@@ -45,6 +45,7 @@ const NAME_MAP: Record<string, keyof typeof Lucide> = {
   printer: "Printer",
   close: "X",
   arrowLeft: "ArrowLeft",
+  braces: "Braces",
 };
 
 interface Props {

@@ -52,7 +52,7 @@ export function PageSheet({ pageStyle, top, widthIn, heightIn, index, total }: P
     >
       <div className="pointer-events-none absolute inset-4 sm:inset-6 border border-brass-soft/40" />
       {total > 1 && (
-        <div className="pointer-events-none absolute bottom-2 right-3 font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
+        <div className="pointer-events-none absolute bottom-3 left-0 right-0 text-center font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
           Page {index + 1} of {total}
         </div>
       )}

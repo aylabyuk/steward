@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { LetterPageStyle, ProgramTemplateKey } from "@/lib/types";
+import { GROUP_LABEL, PROGRAM_VARIABLES } from "@/features/program-templates/programVariables";
 import { PAGE_EDITOR_BASE_NODES } from "./pageEditorNodes";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
@@ -58,6 +59,8 @@ export function ProgramPageEditor({
         pageToolbar={
           <PageToolbar
             slashCommands={PROGRAM_SLASH_COMMANDS}
+            variables={PROGRAM_VARIABLES}
+            variableGroupLabels={GROUP_LABEL}
             pageStyle={pageStyle}
             zoom={zoom}
             zoomMode={zoomMode}

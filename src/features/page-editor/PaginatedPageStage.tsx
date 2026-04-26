@@ -49,9 +49,10 @@ export function PaginatedPageStage({
 
   const pageH = heightIn * DPI;
   const pageStride = pageH + PAGE_GAP_PX;
+  const padTopPx = padTopIn * DPI;
   const pageContentH = (heightIn - padTopIn - padBottomIn) * DPI;
 
-  const pages = usePagination({ pageStride, pageContentH, contentRef });
+  const pages = usePagination({ pageStride, pageContentH, padTopPx, contentRef });
 
   useEffect(() => {
     if (!onZoomChange) return;
@@ -101,6 +102,7 @@ export function PaginatedPageStage({
               paddingTop: `${padTopIn}in`,
               paddingLeft: `${padHIn}in`,
               paddingRight: `${padHIn}in`,
+              paddingBottom: `${padBottomIn}in`,
               zIndex: 1,
             }}
           >
