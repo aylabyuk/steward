@@ -4,9 +4,9 @@ import {
   type Transformer,
 } from "@lexical/markdown";
 import { $createParagraphNode, $createTextNode, $getRoot, type LexicalEditor } from "lexical";
-import { $createHeadingNode } from "@lexical/rich-text";
 import { $createVariableChipNode } from "@/features/program-templates/nodes/VariableChipNode";
 import { $createAssignedSundayCalloutNode } from "./nodes/AssignedSundayCalloutNode";
+import { $createLetterheadNode } from "./nodes/LetterheadNode";
 import { $createSignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { PAGE_EDITOR_BASE_NODES } from "./pageEditorNodes";
 import { PAGE_EDITOR_MARKDOWN_TRANSFORMERS } from "./plugins/PageEditorMarkdownShortcuts";
@@ -54,28 +54,20 @@ export function buildInitialLetterState({ bodyMarkdown, footerMarkdown }: BuildO
     const bodyChildren = [...root.getChildren()];
     root.clear();
 
-    // Header chrome (now content): ornament, eyebrow, title, sub-eyebrow, date.
-    const ornament = $createParagraphNode();
-    ornament.setFormat("center");
-    ornament.append($createTextNode("✦"));
-    root.append(ornament);
+    // Header is now a single LetterheadNode (circled brass ornament,
+    // eyebrow with {{wardName}}, italic title, sub-eyebrow). Replaces
+    // the previous five-paragraph chrome stack — one node, three
+    // click-to-edit fields, identical typography.
+    root.append(
+      $createLetterheadNode(
+        "Sacrament Meeting · {{wardName}}",
+        "Invitation to Speak",
+        "From the Bishopric",
+      ),
+    );
 
-    const eyebrow = $createParagraphNode();
-    eyebrow.setFormat("center");
-    eyebrow.append($createTextNode("Sacrament Meeting · "));
-    eyebrow.append($createVariableChipNode("wardName"));
-    root.append(eyebrow);
-
-    const title = $createHeadingNode("h1");
-    title.setFormat("center");
-    title.append($createTextNode("Invitation to Speak"));
-    root.append(title);
-
-    const subEyebrow = $createParagraphNode();
-    subEyebrow.setFormat("center");
-    subEyebrow.append($createTextNode("From the Bishopric"));
-    root.append(subEyebrow);
-
+    // Date line stays as its own paragraph below the letterhead so
+    // the formal letter format (heading on top, date below) survives.
     const dateLine = $createParagraphNode();
     dateLine.append($createVariableChipNode("today"));
     root.append(dateLine);
