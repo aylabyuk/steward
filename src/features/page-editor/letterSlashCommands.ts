@@ -9,6 +9,7 @@ import { $setBlocksType } from "@lexical/selection";
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/react/LexicalHorizontalRuleNode";
 import { $createCalloutNode } from "./nodes/CalloutNode";
+import { $createLetterheadNode } from "./nodes/LetterheadNode";
 import { $createSignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { INSERT_IMAGE_COMMAND } from "./plugins/ImagePlugin";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
@@ -109,6 +110,24 @@ export const LETTER_SLASH_COMMANDS: readonly SlashCommand[] = [
         alt: "Brass ornament",
         widthPct: 8,
       }),
+  },
+  {
+    id: "letterhead",
+    label: "Letterhead",
+    description: "Masthead with title, subtitle, and meta line",
+    keywords: "header, masthead, top, ward, formal",
+    icon: "≡",
+    onSelect: (editor) => {
+      const title = window.prompt("Letterhead title", "Test Ward");
+      if (title === null) return;
+      const subtitle = window.prompt("Subtitle", "The Bishopric") ?? "";
+      const meta = window.prompt("Meta (date, address — optional)", "") ?? "";
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel))
+          sel.insertNodes([$createLetterheadNode(title.trim() || "Test Ward", subtitle, meta)]);
+      });
+    },
   },
   {
     id: "callout",
