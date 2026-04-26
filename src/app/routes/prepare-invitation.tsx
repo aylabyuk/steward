@@ -129,6 +129,7 @@ export function PrepareInvitationPage() {
           <PrepareInvitationLetterTab
             initialJson={form.initialJson}
             initialMarkdown={form.initialMarkdown}
+            liveStateJson={form.letterStateJson}
             body={form.letterBody}
             footer={form.letterFooter}
             onChange={form.setLetterStateJson}
