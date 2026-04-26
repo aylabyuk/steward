@@ -1,6 +1,6 @@
-import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
-import { $patchStyleText } from "@lexical/selection";
+import type { LexicalEditor } from "lexical";
 import { Icon } from "./Icon";
+import { patchSelectionStyle } from "./patchStyleWithChips";
 import { usePopover } from "./usePopover";
 
 const FONT_COLORS = [
@@ -43,10 +43,7 @@ interface Props {
 }
 
 function patch(editor: LexicalEditor, style: Record<string, string | null>) {
-  editor.update(() => {
-    const sel = $getSelection();
-    if ($isRangeSelection(sel)) $patchStyleText(sel, style);
-  });
+  patchSelectionStyle(editor, style);
 }
 
 export function FontColorPicker({ editor, current }: Props) {
