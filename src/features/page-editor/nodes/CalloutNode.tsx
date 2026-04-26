@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   $applyNodeReplacement,
   $getNodeByKey,
@@ -11,6 +12,10 @@ import {
   type Spread,
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { interpolate } from "@/features/templates/interpolate";
+import { EditPropModal } from "../EditPropModal";
+import { useLetterVars } from "../letterRenderContext";
+import { LETTER_VARIABLES } from "../letterVariables";
 
 export type SerializedCalloutNode = Spread<{ label: string; body: string }, SerializedLexicalNode>;
 
@@ -110,42 +115,50 @@ export class CalloutNode extends DecoratorNode<React.ReactElement> {
 
 function CalloutView({ nodeKey, label, body }: { nodeKey: NodeKey; label: string; body: string }) {
   const [editor] = useLexicalComposerContext();
-  function editLabel() {
-    const next = window.prompt("Eyebrow label", label);
-    if (next === null) return;
+  const vars = useLetterVars();
+  const [editing, setEditing] = useState<"label" | "body" | null>(null);
+
+  function save(next: string) {
     editor.update(() => {
       const node = $getNodeByKey(nodeKey);
-      if (node instanceof CalloutNode) node.setLabel(next.trim() || DEFAULT_LABEL);
+      if (!(node instanceof CalloutNode)) return;
+      if (editing === "label") node.setLabel(next.trim() || DEFAULT_LABEL);
+      else if (editing === "body") node.setBody(next);
     });
+    setEditing(null);
   }
-  function editBody() {
-    const next = window.prompt("Callout body", body);
-    if (next === null) return;
-    editor.update(() => {
-      const node = $getNodeByKey(nodeKey);
-      if (node instanceof CalloutNode) node.setBody(next);
-    });
-  }
+
   return (
-    <div
-      contentEditable={false}
-      className="select-none my-5 px-6 py-4 bg-linear-to-b from-brass-soft/15 to-brass-soft/5 border-l-2 border-brass rounded-r-md"
-    >
-      <button
-        type="button"
-        onClick={editLabel}
-        className="font-mono text-[9.5px] tracking-[0.22em] uppercase text-brass-deep mb-2 hover:underline focus:outline-none"
+    <>
+      <div
+        contentEditable={false}
+        className="select-none my-5 px-6 py-4 bg-linear-to-b from-brass-soft/15 to-brass-soft/5 border-l-2 border-brass rounded-r-md"
       >
-        {label}
-      </button>
-      <button
-        type="button"
-        onClick={editBody}
-        className="block font-display text-[22px] italic text-walnut text-left w-full hover:underline focus:outline-none"
-      >
-        {body || "Click to set body"}
-      </button>
-    </div>
+        <button
+          type="button"
+          onClick={() => setEditing("label")}
+          className="font-mono text-[9.5px] tracking-[0.22em] uppercase text-brass-deep mb-2 hover:underline focus:outline-none"
+        >
+          {interpolate(label, vars)}
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditing("body")}
+          className="block font-display text-[22px] italic text-walnut text-left w-full hover:underline focus:outline-none"
+        >
+          {body ? interpolate(body, vars) : "Click to set body"}
+        </button>
+      </div>
+      <EditPropModal
+        open={editing !== null}
+        title={editing === "body" ? "Edit callout body" : "Edit eyebrow label"}
+        initial={editing === "body" ? body : label}
+        variables={LETTER_VARIABLES}
+        multiline={editing === "body"}
+        onSave={save}
+        onCancel={() => setEditing(null)}
+      />
+    </>
   );
 }
 
