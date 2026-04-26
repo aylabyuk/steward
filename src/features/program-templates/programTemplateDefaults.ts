@@ -99,9 +99,6 @@ const conducting = stringify([
   agendaRow("6", "Speaker", "speaker2"),
   cueRow("Thank the previous speaker; mention the closing hymn that follows."),
 
-  subRow("Speaker 3", "speaker3"),
-  subRow("Speaker 4", "speaker4"),
-
   agendaRow("7", "Closing hymn", "closingHymn"),
   subRow("Benediction", "benediction"),
 ]);
