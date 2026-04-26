@@ -114,6 +114,10 @@ export type SacramentMeeting = z.infer<typeof sacramentMeetingSchema>;
 // resolved at send time so `{{today}}` etc. stay current. Absent
 // override means "use the ward default template".
 export const speakerLetterOverrideSchema = z.object({
+  /** Lexical EditorState JSON — new WYSIWYG storage for per-speaker
+   *  overrides. Optional during the dual-write window so existing
+   *  overrides written before the migration keep parsing. */
+  editorStateJson: z.string().optional(),
   bodyMarkdown: z.string(),
   footerMarkdown: z.string(),
   updatedAt: z.any().optional(),

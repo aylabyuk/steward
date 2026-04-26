@@ -24,7 +24,7 @@ export function BishopReplySmsSection(): React.ReactElement {
         { name: "inviteUrl", hint: "Fresh invite-page link (rotated at send time)" },
       ]}
       sampleVars={{
-        wardName: "Elk River Ward",
+        wardName: "Eglinton Ward",
         preview: "Thanks for agreeing to speak! Any topic in mind yet?",
         inviteUrl: SAMPLE_INVITE_URL,
       }}

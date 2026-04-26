@@ -53,6 +53,7 @@ export async function createFreshInvitation(
     inviterName: input.inviterName,
     bodyMarkdown: input.bodyMarkdown,
     footerMarkdown: input.footerMarkdown,
+    ...(input.editorStateJson ? { editorStateJson: input.editorStateJson } : {}),
     ...(input.speakerEmail ? { speakerEmail: input.speakerEmail } : {}),
     ...(input.speakerPhone ? { speakerPhone: input.speakerPhone } : {}),
     expiresAt,

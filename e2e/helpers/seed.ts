@@ -4,7 +4,13 @@
 // Assumes both emulators are running on their default ports (Auth :9099 and
 // Firestore :8080) under project id 'demo-steward'.
 
-const PROJECT = "demo-steward";
+// Project ID defaults to `demo-steward` to match the firebase
+// emulators:exec wrapper in `pnpm test:e2e:emulators`. When a developer
+// already has emulators running under a different project ID (e.g.
+// the dev server's `steward-dev-…` project), they can override via
+// `FIREBASE_PROJECT=…` so seeding targets the live emulator instead
+// of starting a fresh one.
+const PROJECT = process.env.FIREBASE_PROJECT ?? "demo-steward";
 const AUTH_HOST = "127.0.0.1:9099";
 const FIRESTORE_HOST = "127.0.0.1:8080";
 const FAKE_API_KEY = "fake-api-key";
@@ -43,9 +49,31 @@ async function signUpUser(email: string, password: string): Promise<SeededUser> 
       body: JSON.stringify({ email, password, returnSecureToken: true }),
     },
   );
-  if (!resp.ok) throw new Error(`signUp failed: ${resp.status} ${await resp.text()}`);
-  const data = (await resp.json()) as { localId: string; idToken: string };
-  return { uid: data.localId, email, password, idToken: data.idToken };
+  if (resp.ok) {
+    const data = (await resp.json()) as { localId: string; idToken: string };
+    return { uid: data.localId, email, password, idToken: data.idToken };
+  }
+  // Idempotent fallback: if the seed user already exists from a prior
+  // emulator session whose data persisted (`clearAuth` silently no-ops
+  // when the project IDs disagree), sign in instead so the e2e suite
+  // can keep running against existing state.
+  if (resp.status === 400 && (await resp.clone().text()).includes("EMAIL_EXISTS")) {
+    const signIn = await fetch(
+      `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FAKE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      },
+    );
+    if (!signIn.ok)
+      throw new Error(
+        `signIn (after EMAIL_EXISTS) failed: ${signIn.status} ${await signIn.text()}`,
+      );
+    const data = (await signIn.json()) as { localId: string; idToken: string };
+    return { uid: data.localId, email, password, idToken: data.idToken };
+  }
+  throw new Error(`signUp failed: ${resp.status} ${await resp.text()}`);
 }
 
 function fsValue(v: unknown): unknown {
@@ -66,9 +94,13 @@ async function writeDoc(path: string, data: Record<string, unknown>): Promise<vo
   const fields: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(data)) fields[k] = fsValue(v);
   const url = `http://${FIRESTORE_HOST}/v1/projects/${PROJECT}/databases/(default)/documents/${path}`;
+  // The `owner` bearer token bypasses Firestore security rules in the
+  // emulator — required so seeding can create bootstrap docs that the
+  // deployed rules forbid creating from the client. Same trick the
+  // firebase-tools CLI uses internally.
   const resp = await fetch(url, {
     method: "PATCH",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", authorization: "Bearer owner" },
     body: JSON.stringify({ fields }),
   });
   if (!resp.ok) throw new Error(`writeDoc ${path} failed: ${resp.status} ${await resp.text()}`);

@@ -24,21 +24,34 @@ export function useDocSnapshot<T>(
 ): DocSubState<T> {
   const authStatus = useAuthStore((s) => s.status);
   const signedIn = authStatus === "signed_in";
-  const authLoading = authStatus === "loading";
   const ready =
     signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
+  // Always start in `loading: true` — the very first React commit
+  // happens *before* any effect can subscribe, so callers can't be
+  // allowed to treat that pre-subscription frame as "loaded with no
+  // data". (Earlier code used `ready || authLoading` here, which
+  // surfaced loading=false in the brief window where auth had
+  // resolved but `wardId` was still being hydrated from the
+  // current-ward store. The speaker-letter editor read that as "no
+  // template exists, seed defaults" and locked seeded=true before
+  // the real onSnapshot fired.)
   const [state, setState] = useState<DocSubState<T>>({
     data: null,
-    loading: ready || authLoading,
+    loading: true,
     error: null,
   });
 
   useEffect(() => {
     if (!key) {
-      // Treat the auth-loading window as "still loading" so callers don't
-      // briefly render empty states while the sign-in handshake resolves.
-      setState({ data: null, loading: authLoading, error: null });
+      // Stay in `loading: true` until every path segment is ready —
+      // including async-resolving ones like `wardId` from the current-
+      // ward store. Without this, the brief window where auth has
+      // resolved but `wardId` hasn't would surface a transient
+      // `loading: false, data: null` and let consumers (e.g. the
+      // speaker-letter editor) seed defaults before the real
+      // subscription even starts.
+      setState({ data: null, loading: true, error: null });
       return;
     }
     setState({ data: null, loading: true, error: null });
@@ -46,6 +59,17 @@ export function useDocSnapshot<T>(
     return onSnapshot(
       ref,
       (snap) => {
+        // Firestore fires onSnapshot up to twice on first subscribe:
+        // once with `metadata.fromCache: true` (local cache) before
+        // the server response arrives, and again with `fromCache:
+        // false` once it does. When the cache is empty (first visit
+        // OR right after a write that hasn't propagated to the local
+        // listener yet) the cache-miss fire reports `snap.exists() ===
+        // false` even though the server has the doc — handing the
+        // caller a transient "no data" state that races against the
+        // authoritative result. Skip those fires so callers only see
+        // a single, authoritative resolution.
+        if (snap.metadata.fromCache && !snap.exists()) return;
         if (!snap.exists()) {
           setState({ data: null, loading: false, error: null });
           return;
@@ -59,7 +83,7 @@ export function useDocSnapshot<T>(
       },
       (error) => setState({ data: null, loading: false, error }),
     );
-  }, [key, schema, authLoading]);
+  }, [key, schema]);
 
   return state;
 }
@@ -75,19 +99,22 @@ export function useCollectionSnapshot<T>(
 ): SubState<WithId<T>[]> {
   const authStatus = useAuthStore((s) => s.status);
   const signedIn = authStatus === "signed_in";
-  const authLoading = authStatus === "loading";
   const ready =
     signedIn && segments.every((s): s is string => typeof s === "string" && s.length > 0);
   const key = ready ? segments.join(JOIN) : null;
+  // Same rationale as useDocSnapshot — always start loading=true so
+  // callers don't read the pre-subscription frame as "loaded empty".
   const [state, setState] = useState<SubState<WithId<T>[]>>({
     data: [],
-    loading: ready || authLoading,
+    loading: true,
     error: null,
   });
 
   useEffect(() => {
     if (!key) {
-      setState({ data: [], loading: authLoading, error: null });
+      // Match useDocSnapshot — stay loading until every path segment
+      // is ready, including async-resolving wardId etc.
+      setState({ data: [], loading: true, error: null });
       return;
     }
     setState({ data: [], loading: true, error: null });
@@ -109,7 +136,7 @@ export function useCollectionSnapshot<T>(
       },
       (error) => setState({ data: [], loading: false, error }),
     );
-  }, [key, schema, authLoading]);
+  }, [key, schema]);
 
   return state;
 }

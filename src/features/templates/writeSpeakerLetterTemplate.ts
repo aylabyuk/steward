@@ -1,10 +1,17 @@
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
+import type { LetterPageStyle } from "@/lib/types/template";
+import { legacyFieldsFromState } from "@/features/page-editor/serializeForInterpolation";
 
 export interface SpeakerLetterTemplateInput {
-  bodyMarkdown: string;
-  footerMarkdown: string;
+  /** Lexical EditorState as a JSON string — the new source of truth.
+   *  The writer derives `bodyMarkdown`/`footerMarkdown` from this so
+   *  legacy readers (Cloud Functions, receipt emails) keep working
+   *  during the ~30-day dual-write window. */
+  editorStateJson: string;
+  /** Optional page-frame styling (border + paper). Cleared when null. */
+  pageStyle?: LetterPageStyle | null;
 }
 
 /**
@@ -18,9 +25,13 @@ export async function writeSpeakerLetterTemplate(
 ): Promise<void> {
   reportSaving();
   try {
+    const state = JSON.parse(input.editorStateJson);
+    const { bodyMarkdown, footerMarkdown } = legacyFieldsFromState(state);
     await setDoc(doc(db, "wards", wardId, "templates", "speakerLetter"), {
-      bodyMarkdown: input.bodyMarkdown,
-      footerMarkdown: input.footerMarkdown,
+      editorStateJson: input.editorStateJson,
+      pageStyle: input.pageStyle ?? null,
+      bodyMarkdown,
+      footerMarkdown,
       updatedAt: serverTimestamp(),
     });
     reportSaved();

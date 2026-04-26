@@ -8,6 +8,7 @@ interface Props {
   today: string;
   bodyMarkdown: string;
   footerMarkdown: string;
+  editorStateJson?: string;
 }
 
 /** Portals a print-only `<LetterCanvas>` into `document.body` so the

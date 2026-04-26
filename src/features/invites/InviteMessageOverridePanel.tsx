@@ -1,4 +1,4 @@
-import { SpeakerLetterEditor } from "@/features/templates/SpeakerLetterEditor";
+import { MarkdownEditor } from "@/features/templates/MarkdownEditor";
 
 interface Props {
   open: boolean;
@@ -11,8 +11,8 @@ interface Props {
 /**
  * Collapsible "Customize message" panel for the Invite Member dialog.
  * Closed by default — bishops who don't need to tweak per-invite copy
- * never see the editor. Reuses `SpeakerLetterEditor` (MDXEditor wrapper)
- * so the ward-invite and speaker-letter authoring UX match.
+ * never see the editor. Uses the shared `MarkdownEditor` so the
+ * ward-invite and speaker-letter authoring UX match.
  */
 export function InviteMessageOverridePanel({
   open,
@@ -36,7 +36,7 @@ export function InviteMessageOverridePanel({
           <div className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-brass-deep mb-1.5">
             Message (greeting above the accept button)
           </div>
-          <SpeakerLetterEditor
+          <MarkdownEditor
             initialMarkdown={initialBody}
             onChange={onChange}
             ariaLabel="Invite message override"

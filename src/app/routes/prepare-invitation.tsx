@@ -127,11 +127,14 @@ export function PrepareInvitationPage() {
       <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
         {form.hydrated ? (
           <PrepareInvitationLetterTab
-            key={form.resetKey}
+            initialJson={form.initialJson}
+            initialMarkdown={form.initialMarkdown}
+            liveStateJson={form.letterStateJson}
             body={form.letterBody}
             footer={form.letterFooter}
-            setBody={form.setLetterBody}
-            setFooter={form.setLetterFooter}
+            onChange={form.setLetterStateJson}
+            onInitial={form.captureInitial}
+            resetKey={form.resetKey}
             vars={vars}
             previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
           />
