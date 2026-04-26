@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { LexicalEditor } from "lexical";
-import { $getSelection, $isRangeSelection } from "lexical";
-import { $patchStyleText } from "@lexical/selection";
+import { patchSelectionStyle } from "@/features/page-editor/toolbar/patchStyleWithChips";
 import { cn } from "@/lib/cn";
 
 interface ColorToken {
@@ -55,10 +54,7 @@ interface Props {
  *  "A" trigger so it doesn't crowd the always-visible buttons. */
 export function StyleSwatchesPopover({ editor }: Props) {
   function applyStyle(patch: Record<string, string | null>) {
-    editor.update(() => {
-      const sel = $getSelection();
-      if ($isRangeSelection(sel)) $patchStyleText(sel, patch);
-    });
+    patchSelectionStyle(editor, patch);
   }
 
   return (

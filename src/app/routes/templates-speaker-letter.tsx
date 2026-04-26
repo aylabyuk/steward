@@ -1,9 +1,13 @@
 import { Link } from "react-router";
 import { SaveBar } from "@/components/ui/SaveBar";
+import { useMemo } from "react";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
+import { LETTER_VARIABLE_SAMPLES } from "@/features/page-editor/letterVariables";
+import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { useSpeakerLetterTemplateEditor } from "@/features/page-editor/useSpeakerLetterTemplateEditor";
+import { interpolate } from "@/features/templates/interpolate";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 
@@ -26,6 +30,23 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
   const canEdit = Boolean(me?.data.active);
   const wardName = ward.data?.name ?? "";
 
+  // Live editor JSON, baked against sample vars (chip resolution +
+  // {{token}} interpolation) so the OS print dialog renders the
+  // same JSON-rendered view the bishop sees on screen — including
+  // chip color, italic on the topic, the bishop's authored signatory,
+  // and the letterhead text (instead of falling through to the
+  // legacy chrome+markdown path which can't carry inline styling
+  // through plain markdown).
+  const printEditorStateJson = useMemo(() => {
+    const liveJson = editor.stateJson ?? editor.initialJson;
+    if (!liveJson) return undefined;
+    const liveVars = {
+      ...LETTER_VARIABLE_SAMPLES,
+      wardName: wardName || LETTER_VARIABLE_SAMPLES.wardName,
+    };
+    return resolveChipsInState(interpolate(liveJson, liveVars), liveVars);
+  }, [editor.stateJson, editor.initialJson, wardName]);
+
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
       <PrintOnlyLetter
@@ -34,6 +55,7 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
         today={SAMPLE.today}
         bodyMarkdown={editor.initialMarkdown.bodyMarkdown}
         footerMarkdown={editor.initialMarkdown.footerMarkdown}
+        {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
       />
       <header className="shrink-0 border-b border-border bg-chalk px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1 min-w-0">
@@ -64,16 +86,15 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
         </div>
       </header>
 
-      <div className="flex-1 lg:min-h-0 overflow-y-auto bg-parchment py-8 px-4 sm:px-8 pb-24">
+      <div className="flex-1 min-h-0 pb-16">
         {editor.seeded && (
           <LetterPageEditor
             key={editor.editorKey}
-            wardName={wardName}
-            today={SAMPLE.today}
             assignedDate={SAMPLE.date}
             initialJson={editor.initialJson}
             initialMarkdown={editor.initialMarkdown}
             pageStyle={editor.initialPageStyle ?? undefined}
+            showSampleNotice
             onChange={editor.setStateJson}
             onInitial={editor.captureInitial}
             onPageStyleChange={canEdit ? editor.setPageStyle : undefined}

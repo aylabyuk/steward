@@ -26,7 +26,7 @@ export function BishopReplyEmailSection(): React.ReactElement {
         inviterName: "Bishop Paul",
         assignedDate: "Sunday, April 26, 2026",
         preview: "Thanks for agreeing to speak! Any topic in mind yet?",
-        wardName: "Elk River Ward",
+        wardName: "Eglinton Ward",
       }}
     />
   );

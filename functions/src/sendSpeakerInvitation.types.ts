@@ -21,6 +21,15 @@ export interface FreshInvitationRequest {
   sentOn: string;
   bodyMarkdown: string;
   footerMarkdown: string;
+  /** Lexical EditorState as a JSON string — the WYSIWYG-authored
+   *  letter the bishop saw on screen. Stored on the invitation
+   *  snapshot so the speaker landing page can re-render the exact
+   *  letterhead / callout / signature components the bishop chose,
+   *  not just the derived markdown. Optional during the migration
+   *  window — invitations created before this rolled out won't have
+   *  the field, and the renderer falls back to the markdown +
+   *  hardcoded chrome path for those. */
+  editorStateJson?: string;
   speakerEmail?: string;
   /** E.164 format, e.g. `+14165551234`. */
   speakerPhone?: string;

@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/cn";
+import { renderLetterState } from "@/features/page-editor/renderLetterState";
 
 /** Natural width of the full letter-sheet variant, in CSS pixels.
  *  8.5 in × 96 dpi = 816 px. Exported so preview wrappers can compute
@@ -16,6 +17,12 @@ interface Props {
   today: string; // e.g. "April 21, 2026"
   bodyMarkdown: string; // post-interpolation
   footerMarkdown: string; // post-interpolation
+  /** WYSIWYG-authored Lexical state, post-interpolation. When
+   *  present the canvas renders via the Lexical-aware walker — the
+   *  bishop's letterhead / callouts / signature show through
+   *  faithfully. Absent (legacy snapshots) → fall back to the
+   *  hardcoded chrome + markdown path. */
+  editorStateJson?: string;
   /** When true, tighten paddings + shadows for an on-screen preview
    *  inside the settings page. The landing page + PDF paths skip this
    *  so the letter renders at true letter-sheet proportions. */
@@ -35,12 +42,22 @@ export function LetterCanvas({
   today,
   bodyMarkdown,
   footerMarkdown,
+  editorStateJson,
   compact,
 }: Props) {
+  const rendered = editorStateJson ? renderLetterState(editorStateJson) : null;
   return (
     <div
       className={cn(
-        "bg-chalk text-walnut font-serif relative",
+        // Typography rules mirror the editor's contenteditable
+        // (`prose prose-sm font-serif text-[16.5px] leading-[1.65]
+        // [&_em]:text-bordeaux [&_strong]:text-walnut`) so an italic
+        // chip stays bordeaux + a bold span stays walnut on the
+        // printed sheet — the bishop sees the same colours that
+        // were on screen. Without this the print path rendered
+        // italic in default walnut and lost the visual rhythm.
+        "bg-chalk text-walnut font-serif text-[16.5px] leading-[1.65] relative",
+        "[&_em]:text-bordeaux [&_em]:italic [&_strong]:font-semibold [&_strong]:text-walnut",
         compact
           ? "w-full max-w-[680px] px-8 py-10 rounded-md shadow-elev-3"
           : "w-[8.5in] min-h-[11in] px-[0.75in] pt-[0.85in] pb-[0.6in] shadow-[0_12px_40px_rgba(58,37,25,0.18)]",
@@ -51,19 +68,28 @@ export function LetterCanvas({
         className="pointer-events-none absolute inset-4 sm:inset-6 border border-brass-soft/40"
       />
 
-      <LetterHeader wardName={wardName} />
+      {rendered ? (
+        // The Lexical state already carries the bishop's authored
+        // letterhead, callouts, signature, and footer — render it
+        // straight through. No hardcoded chrome to avoid duplication.
+        rendered
+      ) : (
+        <>
+          <LetterHeader wardName={wardName} />
 
-      <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-walnut-3 mb-5">
-        {today}
-      </div>
+          <div className="font-mono text-[11px] tracking-[0.14em] uppercase text-walnut-3 mb-5">
+            {today}
+          </div>
 
-      <LetterBody markdown={bodyMarkdown} assignedDate={assignedDate} />
+          <LetterBody markdown={bodyMarkdown} assignedDate={assignedDate} />
 
-      <LetterSignature />
+          <LetterSignature />
 
-      <div className="mt-9 pt-3 border-t border-border font-mono text-[9.5px] tracking-[0.18em] uppercase text-walnut-3 text-center">
-        ✦ &nbsp; {footerMarkdown} &nbsp; ✦
-      </div>
+          <div className="mt-9 pt-3 border-t border-border font-mono text-[9.5px] tracking-[0.18em] uppercase text-walnut-3 text-center">
+            ✦ &nbsp; {footerMarkdown} &nbsp; ✦
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -4,7 +4,9 @@ import {
   type Transformer,
 } from "@lexical/markdown";
 import { $createParagraphNode, $createTextNode, $getRoot, type LexicalEditor } from "lexical";
+import { $createVariableChipNode } from "@/features/program-templates/nodes/VariableChipNode";
 import { $createAssignedSundayCalloutNode } from "./nodes/AssignedSundayCalloutNode";
+import { $createLetterheadNode } from "./nodes/LetterheadNode";
 import { $createSignatureBlockNode } from "./nodes/SignatureBlockNode";
 import { PAGE_EDITOR_BASE_NODES } from "./pageEditorNodes";
 import { PAGE_EDITOR_MARKDOWN_TRANSFORMERS } from "./plugins/PageEditorMarkdownShortcuts";
@@ -28,38 +30,70 @@ interface BuildOpts {
 const SIGNATURE_CLOSING_PATTERN =
   /^(with gratitude|with appreciation|sincerely|in faith)\s*[,.]?\s*$/i;
 
-/** Builds a Lexical EditorState for a brand-new editor by hydrating
- *  legacy markdown into chips + paragraphs, splicing an
- *  `AssignedSundayCalloutNode` after the greeting, replacing any
- *  trailing "With gratitude,"-style paragraph with a
- *  `SignatureBlockNode`, and finishing with the footer scripture as
- *  a final paragraph. Used for both seed states (brand-new wards)
- *  and migration (existing wards that only have markdown stored).
+/** Builds a Lexical EditorState for a brand-new editor.
  *
- *  When the ward already has `editorStateJson` saved, the route
- *  passes the JSON directly to `LexicalComposer` and this function
- *  isn't invoked. */
+ *  Pre-Phase-6 builds had a render-only `LetterChrome` component
+ *  outside the editor that painted the ornament + eyebrow + title +
+ *  date — all the bishop's eye landed on but couldn't touch. The
+ *  user explicitly asked for *every* text on the letter to be
+ *  100% editable, so the seed now prepends those as actual content
+ *  paragraphs. Page-canvas chrome reduces to the paper frame and
+ *  drop shadow.
+ *
+ *  Migration: when an existing ward has `editorStateJson` saved,
+ *  the route hands the JSON straight to LexicalComposer and this
+ *  function isn't called — those wards keep their authored content
+ *  unchanged. They can hit "Discard" or paste in headers manually.
+ *  When only legacy markdown exists, we hydrate it + prepend the
+ *  chrome content + splice in the assigned-Sunday callout +
+ *  signature block + footer scripture. */
 export function buildInitialLetterState({ bodyMarkdown, footerMarkdown }: BuildOpts) {
   return () => {
     $convertFromMarkdownString(bodyMarkdown, LETTER_MARKDOWN_TRANSFORMERS);
     const root = $getRoot();
-    const children = root.getChildren();
-    // Insert assigned-Sunday callout after the greeting (first paragraph).
-    if (children.length >= 1) {
-      children[0].insertAfter($createAssignedSundayCalloutNode());
+    const bodyChildren = [...root.getChildren()];
+    root.clear();
+
+    // Header is now a single LetterheadNode (circled brass ornament,
+    // eyebrow with {{wardName}}, italic title, sub-eyebrow). Replaces
+    // the previous five-paragraph chrome stack — one node, three
+    // click-to-edit fields, identical typography.
+    root.append(
+      $createLetterheadNode(
+        "Sacrament Meeting · {{wardName}}",
+        "Invitation to Speak",
+        "From the Bishopric",
+      ),
+    );
+
+    // Date line stays as its own paragraph below the letterhead so
+    // the formal letter format (heading on top, date below) survives.
+    const dateLine = $createParagraphNode();
+    dateLine.append($createVariableChipNode("today"));
+    root.append(dateLine);
+
+    // Restore body paragraphs (originally hydrated from markdown).
+    for (const child of bodyChildren) root.append(child);
+
+    // Insert assigned-Sunday callout after the greeting paragraph.
+    const greetingIdx = root
+      .getChildren()
+      .findIndex(
+        (c) => c.getType() === "paragraph" && c.getTextContent().toLowerCase().startsWith("dear"),
+      );
+    const callout = $createAssignedSundayCalloutNode();
+    if (greetingIdx >= 0) {
+      root.getChildren()[greetingIdx]!.insertAfter(callout);
     } else {
-      root.append($createAssignedSundayCalloutNode());
+      root.append(callout);
     }
-    // If the body ended in a "With gratitude,"-style closing paragraph,
-    // remove it — the signature block decorator renders its own closing.
+    // Strip a trailing "With gratitude,"-style paragraph; signature node renders its own closing.
     const last = root.getChildren().at(-1);
-    const lastText = last?.getTextContent().trim() ?? "";
-    if (last && SIGNATURE_CLOSING_PATTERN.test(lastText)) {
-      last.remove();
-    }
+    if (last && SIGNATURE_CLOSING_PATTERN.test(last.getTextContent().trim())) last.remove();
     root.append($createSignatureBlockNode());
     if (footerMarkdown.trim().length > 0) {
       const footerPara = $createParagraphNode();
+      footerPara.setFormat("center");
       footerPara.append($createTextNode(footerMarkdown));
       root.append(footerPara);
     }

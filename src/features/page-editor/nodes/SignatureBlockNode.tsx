@@ -9,14 +9,15 @@ import {
   type SerializedLexicalNode,
   type Spread,
 } from "lexical";
+import { SignatureBlockView } from "./SignatureBlockView";
 
 export type SerializedSignatureBlockNode = Spread<
   { closing: string; signatory: string },
   SerializedLexicalNode
 >;
 
-const DEFAULT_CLOSING = "With gratitude,";
-const DEFAULT_SIGNATORY = "The Bishopric";
+export const DEFAULT_CLOSING = "With gratitude,";
+export const DEFAULT_SIGNATORY = "The Bishopric";
 
 /** Block-level decorator that renders the closing-of-letter signature
  *  line: a soft phrase ("With gratitude,"), a short walnut underline,
@@ -94,15 +95,20 @@ export class SignatureBlockNode extends DecoratorNode<React.ReactElement> {
     return $createSignatureBlockNode(json.closing, json.signatory);
   }
 
+  setClosing(closing: string): void {
+    this.getWritable().__closing = closing;
+  }
+  setSignatory(signatory: string): void {
+    this.getWritable().__signatory = signatory;
+  }
+
   decorate(): React.ReactElement {
     return (
-      <div contentEditable={false} className="select-none mt-7 mb-2 [&_.sig-rule]:border-walnut-3">
-        <div className="font-serif italic text-[16px] text-walnut mb-2">{this.__closing}</div>
-        <div className="sig-rule border-b border-walnut-3 w-[260px] mb-1.5" />
-        <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-walnut-3">
-          {this.__signatory}
-        </div>
-      </div>
+      <SignatureBlockView
+        nodeKey={this.__key}
+        closing={this.__closing}
+        signatory={this.__signatory}
+      />
     );
   }
 }

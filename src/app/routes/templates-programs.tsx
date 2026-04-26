@@ -5,7 +5,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import type { ProgramTemplateKey } from "@/lib/types";
+import type { LetterPageStyle, ProgramTemplateKey } from "@/lib/types";
 import { DEFAULT_MARGINS } from "@/features/program-templates/ProgramCanvas";
 import { defaultProgramTemplate } from "@/features/program-templates/programTemplateDefaults";
 import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
@@ -42,6 +42,9 @@ export function ProgramTemplatesPage(): React.ReactElement {
     conductingProgram: null,
     congregationProgram: null,
   });
+  const [pageStyleDraft, setPageStyleDraft] = useState<
+    Record<ProgramTemplateKey, LetterPageStyle | null>
+  >({ conductingProgram: null, congregationProgram: null });
   const [editorKey, setEditorKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,17 +57,24 @@ export function ProgramTemplatesPage(): React.ReactElement {
   }, [activeKey]);
 
   const editorJson = draft[activeKey] ?? initialJson;
-  const dirty = draft[activeKey] !== null && draft[activeKey] !== initialJson;
+  const activePageStyle = pageStyleDraft[activeKey] ?? activeDoc?.pageStyle ?? null;
+  const jsonDirty = draft[activeKey] !== null && draft[activeKey] !== initialJson;
+  const styleDirty =
+    pageStyleDraft[activeKey] !== null &&
+    JSON.stringify(pageStyleDraft[activeKey]) !== JSON.stringify(activeDoc?.pageStyle ?? null);
+  const dirty = jsonDirty || styleDirty;
 
   async function save() {
     if (!wardId) return;
     const jsonToSave = draft[activeKey] ?? initialJson;
     const margins = activeDoc?.margins ?? DEFAULT_MARGINS[activeKey];
+    const pageStyleToSave = activePageStyle ?? null;
     setSaving(true);
     setError(null);
     try {
-      await writeProgramTemplate(wardId, activeKey, jsonToSave, margins);
+      await writeProgramTemplate(wardId, activeKey, jsonToSave, margins, pageStyleToSave);
       setDraft((d) => ({ ...d, [activeKey]: null }));
+      setPageStyleDraft((d) => ({ ...d, [activeKey]: null }));
       setSavedAt(nowLabel());
     } catch (e) {
       setError(friendlyWriteError(e));
@@ -75,6 +85,7 @@ export function ProgramTemplatesPage(): React.ReactElement {
 
   function discard() {
     setDraft((d) => ({ ...d, [activeKey]: null }));
+    setPageStyleDraft((d) => ({ ...d, [activeKey]: null }));
     setEditorKey((k) => k + 1);
     setError(null);
   }
@@ -127,12 +138,17 @@ export function ProgramTemplatesPage(): React.ReactElement {
         ))}
       </nav>
 
-      <div className="flex-1 lg:min-h-0 overflow-y-auto bg-parchment py-8 px-4 sm:px-8 pb-24">
+      <div className="flex-1 min-h-0 pb-16">
         <ProgramPageEditor
           key={`${activeKey}-${editorKey}`}
           variant={activeKey}
           initialJson={editorJson}
+          pageStyle={activePageStyle}
+          showSampleNotice
           onChange={(json) => setDraft((d) => ({ ...d, [activeKey]: json }))}
+          onPageStyleChange={
+            canEdit ? (next) => setPageStyleDraft((d) => ({ ...d, [activeKey]: next })) : undefined
+          }
           ariaLabel={TABS.find((t) => t.key === activeKey)!.label}
           editorDisabled={!canEdit}
         />

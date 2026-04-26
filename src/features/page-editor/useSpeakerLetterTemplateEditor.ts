@@ -103,6 +103,12 @@ export function useSpeakerLetterTemplateEditor() {
     initialPageStyle: pageStyle,
     initialMarkdown,
     editorKey,
+    /** Live editor JSON — reflects the current canvas content as the
+     *  bishop types. Exposed so the route can pipe it into
+     *  PrintOnlyLetter (so the print preview matches what's on
+     *  screen). null until the editor mounts and captureInitial
+     *  fires. */
+    stateJson,
     setStateJson,
     setPageStyle,
     captureInitial,

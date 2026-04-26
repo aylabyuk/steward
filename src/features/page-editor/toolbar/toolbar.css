@@ -1,0 +1,437 @@
+/* Toolbar primitives — lifted from the bishopric-pwa design kit
+ * (`ui_kits/bishopric-pwa/editor.css`) with token names re-pointed
+ * at our existing `--color-*` palette. Class names match the kit
+ * (`tb-btn`, `tb-select`, `tb-divider`, `tb-fontsize`, …) so the
+ * markup can stay close to the source. Scoped to the page-editor
+ * toolbar; nothing here leaks into other surfaces. */
+
+.tb-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 8px 40px;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-parchment);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-wrap: wrap;
+  min-height: 52px;
+  width: 100%;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-walnut);
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    background 0.12s var(--ease-out),
+    color 0.12s var(--ease-out),
+    border-color 0.12s;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+}
+.tb-btn:hover {
+  background: var(--color-parchment-3);
+}
+.tb-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tb-btn:disabled:hover {
+  background: transparent;
+}
+.tb-btn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-bordeaux) 12%, transparent);
+  color: var(--color-bordeaux-deep);
+  border-color: var(--color-bordeaux-soft);
+}
+.tb-btn .lucide {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.75;
+}
+.tb-btn .caret {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2;
+  opacity: 0.6;
+  margin-left: -2px;
+}
+
+.tb-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--color-border);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+.tb-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-chalk);
+  color: var(--color-walnut);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 0;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.tb-select:hover {
+  background: var(--color-parchment-2);
+  border-color: var(--color-border-strong);
+}
+.tb-select__icon {
+  color: var(--color-brass-deep);
+  display: inline-flex;
+}
+.tb-select__icon .lucide {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.75;
+}
+.tb-select__label {
+  white-space: nowrap;
+}
+.tb-select__caret {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2;
+  opacity: 0.55;
+}
+
+.tb-block-select {
+  min-width: 116px;
+}
+.tb-font-select {
+  min-width: 124px;
+}
+
+.tb-fontsize {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: var(--color-chalk);
+  padding: 0 2px;
+}
+.tb-fontsize__btn {
+  width: 22px;
+  height: 26px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-walnut-2);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tb-fontsize__btn:hover {
+  background: var(--color-parchment-2);
+  color: var(--color-bordeaux);
+}
+.tb-fontsize__btn .lucide {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.25;
+}
+.tb-fontsize__input {
+  width: 36px;
+  height: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-parchment);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-walnut);
+  padding: 0;
+}
+.tb-fontsize__input:focus {
+  outline: 2px solid var(--color-bordeaux);
+  outline-offset: 1px;
+  border-color: var(--color-bordeaux);
+}
+
+.tb-color {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 4px 0 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: 1px solid transparent;
+  background: transparent;
+}
+.tb-color:hover {
+  background: var(--color-parchment-3);
+}
+.tb-color__icon-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.tb-color__icon-wrap .lucide {
+  width: 16px;
+  height: 14px;
+  stroke-width: 1.75;
+}
+.tb-color__swatch {
+  width: 16px;
+  height: 3px;
+  border-radius: 1px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+.tb-color__caret {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2;
+  opacity: 0.55;
+  margin-left: 4px;
+}
+
+.tb-spacer {
+  flex: 1;
+}
+.tb-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 6px;
+}
+.tb-zoom__val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  min-width: 44px;
+  text-align: center;
+  color: var(--color-walnut-2);
+}
+
+/* Popovers */
+.tb-popover {
+  background: var(--color-chalk);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  box-shadow:
+    0 12px 32px rgba(35, 24, 21, 0.18),
+    0 2px 6px rgba(35, 24, 21, 0.08);
+  padding: 4px;
+  z-index: 100;
+  min-width: 180px;
+}
+.tb-popover__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-walnut);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+}
+.tb-popover__item:hover {
+  background: color-mix(in srgb, var(--color-bordeaux) 12%, transparent);
+  color: var(--color-bordeaux-deep);
+}
+.tb-popover__item .lucide {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.75;
+  color: var(--color-brass-deep);
+}
+.tb-popover__item .kbd {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-walnut-3);
+  letter-spacing: 0.06em;
+}
+.tb-popover__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 0;
+}
+.tb-popover__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brass-deep);
+  padding: 8px 10px 4px;
+}
+
+/* Color grid */
+.tb-color-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 22px);
+  gap: 6px;
+  padding: 8px;
+}
+.tb-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
+}
+.tb-color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--color-bordeaux);
+}
+.tb-color-swatch--clear {
+  background: var(--color-chalk);
+  position: relative;
+}
+.tb-color-swatch--clear::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 1px),
+    #b92a2a calc(50% - 0.5px),
+    #b92a2a calc(50% + 0.5px),
+    transparent calc(50% + 1px)
+  );
+}
+
+/* Page setup popover — paddings match the Insert popover so the
+ * dropdowns feel like one family. Outer 4px shell (inherited from
+ * .tb-popover), 8px 10px on each option/segmented button, tight
+ * 6px dividers between groups. */
+.tb-popover--page {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+}
+.tb-page-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tb-page-group__label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brass-deep);
+  padding: 8px 10px 4px;
+}
+.tb-page-group__list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 0 4px;
+}
+.tb-page-group__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 6px 0;
+}
+
+.tb-page-option {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--color-walnut);
+  cursor: pointer;
+  transition: background 0.12s var(--ease-out);
+  user-select: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+}
+.tb-page-option:hover {
+  background: var(--color-parchment-2);
+}
+.tb-page-option--active {
+  background: color-mix(in srgb, var(--color-bordeaux) 12%, transparent);
+  color: var(--color-bordeaux-deep);
+}
+.tb-page-option--active:hover {
+  background: color-mix(in srgb, var(--color-bordeaux) 12%, transparent);
+}
+
+.tb-page-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 0 4px 4px;
+}
+.tb-page-segmented--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.tb-page-segmented__btn {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-chalk);
+  color: var(--color-walnut);
+  cursor: pointer;
+  transition:
+    background 0.12s var(--ease-out),
+    color 0.12s var(--ease-out),
+    border-color 0.12s var(--ease-out);
+}
+.tb-page-segmented__btn:hover {
+  background: var(--color-parchment-2);
+}
+.tb-page-segmented__btn--active {
+  background: #2c201b;
+  color: var(--color-parchment);
+  border-color: #2c201b;
+}
+.tb-page-segmented__btn--active:hover {
+  background: #1f1612;
+}
+
+.tb-page-current {
+  margin-top: 6px;
+  padding: 6px 10px 4px;
+  border-top: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--color-walnut-3);
+}
