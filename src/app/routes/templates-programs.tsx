@@ -103,6 +103,9 @@ export function ProgramTemplatesPage(): React.ReactElement {
           <h1 className="font-display text-[22px] sm:text-[26px] font-semibold text-walnut leading-tight">
             Program templates
           </h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
+            Sample values shown — actual meeting / speaker values are filled in at print time.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {usingDefault && (

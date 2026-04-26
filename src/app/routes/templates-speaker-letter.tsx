@@ -46,6 +46,9 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
           <h1 className="font-display text-[22px] sm:text-[26px] font-semibold text-walnut leading-tight">
             Speaker invitation letter
           </h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
+            Sample values shown — actual speaker / ward values are filled in when sent.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {editor.usingDefault && (
