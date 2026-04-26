@@ -109,4 +109,26 @@ describe("send → snapshot → speaker render — chip styling fidelity", () =>
     const styled = container.querySelector('span[style*="color"]');
     expect(styled?.textContent).toBe("{{topic}}");
   });
+
+  it("re-resolves chips against new vars — topic changes during planning flow into the print path (regression)", () => {
+    // Repro: bishop edits a speaker's topic on the roster step,
+    // returns to review-letter and hits Print. Their reported bug
+    // was that the print preview kept showing the OLD topic. The
+    // fix is the recomputed `printEditorStateJson` deriving from
+    // the live vars; this test pins the contract by running the
+    // full pipeline twice with two different topic values and
+    // asserting both DOM outputs reflect the live value.
+    const authored = chipState(0, "color: red;");
+
+    const oldVars = { topic: "On the still small voice" };
+    const oldPipe = resolveChipsInState(interpolate(authored, oldVars), oldVars);
+    const { container: oldDom } = render(<div>{renderLetterState(oldPipe)}</div>);
+    expect(oldDom.textContent).toContain("On the still small voice");
+
+    const newVars = { topic: "Faith of our Fathers" };
+    const newPipe = resolveChipsInState(interpolate(authored, newVars), newVars);
+    const { container: newDom } = render(<div>{renderLetterState(newPipe)}</div>);
+    expect(newDom.textContent).toContain("Faith of our Fathers");
+    expect(newDom.textContent).not.toContain("On the still small voice");
+  });
 });
