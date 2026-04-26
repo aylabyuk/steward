@@ -89,6 +89,7 @@ function InviteLandingContent({
         today={invitation.sentOn}
         bodyMarkdown={invitation.bodyMarkdown}
         footerMarkdown={invitation.footerMarkdown}
+        {...(invitation.editorStateJson ? { editorStateJson: invitation.editorStateJson } : {})}
       />
       <div className="absolute inset-0">
         <ScaledLetterPreview
@@ -99,6 +100,7 @@ function InviteLandingContent({
           today={invitation.sentOn}
           bodyMarkdown={invitation.bodyMarkdown}
           footerMarkdown={invitation.footerMarkdown}
+          {...(invitation.editorStateJson ? { editorStateJson: invitation.editorStateJson } : {})}
         />
       </div>
 

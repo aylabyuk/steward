@@ -51,6 +51,7 @@ export function useReviewLetterAction(args: Args) {
         bishopReplyToEmail: bishopEmail,
         bodyMarkdown: form.letterBody,
         footerMarkdown: form.letterFooter,
+        ...(form.letterStateJson ? { editorStateJson: form.letterStateJson } : {}),
       });
       if (ok) onComplete();
       return;

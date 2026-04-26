@@ -10,6 +10,7 @@ interface Props {
   today: string;
   bodyMarkdown: string;
   footerMarkdown: string;
+  editorStateJson?: string;
   /** CSS `height` for the outer frame. The pan/zoom wrapper fills
    *  this and clips overflow internally — no scrollbar ever shows. */
   height?: string;
@@ -31,6 +32,7 @@ export function ScaledLetterPreview({
   today,
   bodyMarkdown,
   footerMarkdown,
+  editorStateJson,
   height = "calc(100dvh - 10rem)",
   naked,
 }: Props) {
@@ -75,6 +77,7 @@ export function ScaledLetterPreview({
                   today={today}
                   bodyMarkdown={bodyMarkdown}
                   footerMarkdown={footerMarkdown}
+                  {...(editorStateJson ? { editorStateJson } : {})}
                 />
               </TransformComponent>
               <LetterPreviewZoomControls

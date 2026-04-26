@@ -15,6 +15,9 @@ export interface FreshInvitationRequest {
   sentOn: string;
   bodyMarkdown: string;
   footerMarkdown: string;
+  /** Lexical EditorState JSON, post-interpolation. Optional during
+   *  the WYSIWYG-renderer migration window. */
+  editorStateJson?: string;
   speakerEmail?: string;
   speakerPhone?: string;
   bishopReplyToEmail: string;
