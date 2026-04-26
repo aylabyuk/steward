@@ -67,12 +67,12 @@ const conducting = stringify([
 
   hr(),
 
-  // Officers — compact label + chip rows, no bullets
+  // Officers — paired on the same row to save vertical space.
+  // Wide tabular separator between pairs keeps the chip values
+  // visually grouped without needing an actual table.
   p(styledText("Officers", SECTION_STYLE)),
-  p(bold("Presiding · "), chip("presiding")),
-  p(bold("Conducting · "), chip("conducting")),
-  p(bold("Pianist · "), chip("pianist")),
-  p(bold("Chorister · "), chip("chorister")),
+  p(bold("Presiding · "), chip("presiding"), bold("     ·     Conducting · "), chip("conducting")),
+  p(bold("Pianist · "), chip("pianist"), bold("     ·     Chorister · "), chip("chorister")),
   p(bold("Visitors · "), chip("visitors")),
 
   hr(),
@@ -82,24 +82,25 @@ const conducting = stringify([
   p(styledText("Order of meeting", SECTION_STYLE)),
 
   agendaRow("1", "Announcements", "announcements"),
-  subRow("Ward business", "wardBusiness"),
-  subRow("Stake business", "stakeBusiness"),
 
   agendaRow("2", "Opening hymn", "openingHymn"),
   subRow("Invocation", "openingPrayer"),
 
-  agendaRow("3", "Sacrament hymn", "sacramentHymn"),
+  agendaRow("3", "Ward business", "wardBusiness"),
+  subRow("Stake business", "stakeBusiness"),
+
+  agendaRow("4", "Sacrament hymn", "sacramentHymn"),
   cueRow("Administration of the sacrament — pause for reverence before introducing speakers."),
 
-  agendaRow("4", "Speaker", "speaker1"),
+  agendaRow("5", "Speaker", "speaker1"),
   cueRow("Welcome the congregation; introduce the speaker briefly."),
 
-  agendaRow("5", "Musical interlude", "midMeetingInterlude"),
+  agendaRow("6", "Musical interlude", "midMeetingInterlude"),
 
-  agendaRow("6", "Speaker", "speaker2"),
+  agendaRow("7", "Speaker", "speaker2"),
   cueRow("Thank the previous speaker; mention the closing hymn that follows."),
 
-  agendaRow("7", "Closing hymn", "closingHymn"),
+  agendaRow("8", "Closing hymn", "closingHymn"),
   subRow("Benediction", "benediction"),
 ]);
 
