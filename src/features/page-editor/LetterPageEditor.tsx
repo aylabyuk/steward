@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { LetterPageStyle } from "@/lib/types/template";
 import { LetterRenderContextProvider } from "./letterRenderContext";
 import {
@@ -6,10 +6,11 @@ import {
   LETTER_SLASH_COMMANDS,
   buildInitialLetterState,
 } from "./letterEditorConfig";
-import { PageCanvas } from "./PageCanvas";
 import { PageEditorComposer } from "./PageEditorComposer";
-import { PageStage } from "./PageStage";
+import { PaginatedPageStage } from "./PaginatedPageStage";
+import { useFitZoom } from "./useFitZoom";
 import { PageToolbar } from "./toolbar/PageToolbar";
+import type { ZoomMode } from "./toolbar/ZoomMenu";
 
 interface Props {
   /** Sample assigned-Sunday date for the AssignedSundayCalloutNode in
@@ -32,7 +33,7 @@ interface Props {
 }
 
 /** WYSIWYG speaker-letter editor — Word-style layout: full-width
- *  sticky toolbar at top, then a zoomable scrollable PageStage that
+ *  sticky toolbar at top, then a paginated zoomable stage that
  *  centers the paper. Header chrome (ornament, eyebrow, title, etc.)
  *  is part of the editor's content (see `buildInitialLetterState`),
  *  so every text on the printed letter is editable. */
@@ -48,7 +49,15 @@ export function LetterPageEditor({
   editorDisabled,
 }: Props) {
   const initialState = initialJson ?? buildInitialLetterState(initialMarkdown);
-  const [zoom, setZoom] = useState(1);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [zoomMode, setZoomMode] = useState<ZoomMode>({ kind: "fit-width" });
+  const fits = useFitZoom(scrollRef, pageStyle);
+  const zoom =
+    zoomMode.kind === "fit-width"
+      ? fits.fitWidth
+      : zoomMode.kind === "fit-page"
+        ? fits.fitPage
+        : zoomMode.value;
   return (
     <LetterRenderContextProvider assignedDate={assignedDate}>
       <div
@@ -67,19 +76,24 @@ export function LetterPageEditor({
               slashCommands={LETTER_SLASH_COMMANDS}
               pageStyle={pageStyle}
               zoom={zoom}
-              onZoomChange={setZoom}
+              zoomMode={zoomMode}
+              onZoomMode={setZoomMode}
               {...(onPageStyleChange ? { onPageStyleChange } : {})}
             />
           }
           page={(contentEditable) => (
             <div className="flex-1 min-h-0">
-              <PageStage zoom={zoom} onZoomChange={setZoom}>
-                <PageCanvas variant="letter" pageStyle={pageStyle} chrome={null}>
-                  <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
-                    {contentEditable}
-                  </div>
-                </PageCanvas>
-              </PageStage>
+              <PaginatedPageStage
+                variant="letter"
+                pageStyle={pageStyle}
+                zoom={zoom}
+                onZoomChange={(v) => setZoomMode({ kind: "manual", value: v })}
+                scrollRef={scrollRef}
+              >
+                <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
+                  {contentEditable}
+                </div>
+              </PaginatedPageStage>
             </div>
           )}
         />
