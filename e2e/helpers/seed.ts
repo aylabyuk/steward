@@ -67,7 +67,9 @@ async function signUpUser(email: string, password: string): Promise<SeededUser> 
       },
     );
     if (!signIn.ok)
-      throw new Error(`signIn (after EMAIL_EXISTS) failed: ${signIn.status} ${await signIn.text()}`);
+      throw new Error(
+        `signIn (after EMAIL_EXISTS) failed: ${signIn.status} ${await signIn.text()}`,
+      );
     const data = (await signIn.json()) as { localId: string; idToken: string };
     return { uid: data.localId, email, password, idToken: data.idToken };
   }
