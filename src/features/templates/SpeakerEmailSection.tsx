@@ -50,7 +50,7 @@ export function SpeakerEmailSection(): React.ReactElement {
     () =>
       renderSpeakerEmailBody(
         {
-          speakerName: "Brother Lloyd Flores",
+          speakerName: "Brother Dan Joe",
           date: "Sunday, April 26, 2026",
           wardName: wardName || "Your Ward",
           inviterName: me?.data.displayName ?? "Bishop",

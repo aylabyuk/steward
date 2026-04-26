@@ -26,7 +26,7 @@ export function InitialSmsSection(): React.ReactElement {
       ]}
       sampleVars={{
         inviterName: "Bishop Paul",
-        wardName: "Elk River Ward",
+        wardName: "Eglinton Ward",
         assignedDate: "Sunday, April 26, 2026",
         inviteUrl: SAMPLE_INVITE_URL,
       }}

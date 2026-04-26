@@ -279,7 +279,11 @@ function ChipView({ nodeKey, token, format, style }: ChipViewProps) {
   if (format & FORMAT_STRIKE) formatted = <s>{formatted}</s>;
 
   return (
-    <span ref={wrapRef} style={{ position: "relative", display: "inline-block" }}>
+    <span
+      ref={wrapRef}
+      className="group/chip"
+      style={{ position: "relative", display: "inline-block" }}
+    >
       <button
         type="button"
         contentEditable={false}
@@ -288,11 +292,6 @@ function ChipView({ nodeKey, token, format, style }: ChipViewProps) {
           setOpen((o) => !o);
         }}
         onMouseDown={(e) => e.preventDefault()}
-        title={
-          meta
-            ? `${meta.label} — click to change variable`
-            : `${token} — unknown variable, click to pick`
-        }
         // Inline style applies the chip's color / background-color /
         // font-family / font-size patches the toolbar wrote via
         // $patchStyleWithChips, mirroring exactly what TextNode would
@@ -304,6 +303,19 @@ function ChipView({ nodeKey, token, format, style }: ChipViewProps) {
       >
         {formatted}
       </button>
+      {/* Floating "Preview · token" tooltip — appears on hover so the
+          bishop catches the it's-a-placeholder cue at the exact moment
+          they're wondering about a value. Hidden while the picker
+          popover is open so the two don't visually fight. */}
+      {!open && (
+        <span
+          aria-hidden
+          contentEditable={false}
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-7 z-40 whitespace-nowrap rounded-md bg-walnut text-parchment px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] opacity-0 group-hover/chip:opacity-100 transition-opacity duration-100"
+        >
+          Preview · <span className="text-brass-soft">{`{{${token}}}`}</span>
+        </span>
+      )}
       {open && (
         <span
           contentEditable={false}

@@ -31,6 +31,11 @@ interface Props {
   initialMarkdown: { bodyMarkdown: string; footerMarkdown: string };
   /** Optional page-frame styling (border + paper / size / orientation). */
   pageStyle?: LetterPageStyle;
+  /** Override for the variable bag chips resolve against. Lets the
+   *  template editor's "Preview as: <member>" switcher swap in real
+   *  ward-member values so the bishop sees substitution happen.
+   *  Falls back to LETTER_VARIABLE_SAMPLES when omitted. */
+  previewVars?: Readonly<Record<string, string>>;
   onChange: (stateJson: string) => void;
   onInitial?: (stateJson: string) => void;
   onPageStyleChange?: (next: LetterPageStyle) => void;
@@ -48,6 +53,7 @@ export function LetterPageEditor({
   initialJson,
   initialMarkdown,
   pageStyle,
+  previewVars,
   onChange,
   onInitial,
   onPageStyleChange,
@@ -65,7 +71,10 @@ export function LetterPageEditor({
         ? fits.fitPage
         : zoomMode.value;
   return (
-    <LetterRenderContextProvider assignedDate={assignedDate} vars={LETTER_VARIABLE_SAMPLES}>
+    <LetterRenderContextProvider
+      assignedDate={previewVars?.["date"] ?? assignedDate}
+      vars={previewVars ?? LETTER_VARIABLE_SAMPLES}
+    >
       <VariableRegistryProvider
         variables={LETTER_VARIABLES}
         groupLabels={LETTER_VARIABLE_GROUP_LABEL}
