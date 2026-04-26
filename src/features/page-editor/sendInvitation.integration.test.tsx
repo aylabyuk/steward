@@ -4,6 +4,32 @@ import { renderLetterState } from "./renderLetterState";
 import { resolveChipsInState } from "./serializeForInterpolation";
 import { interpolate } from "@/features/templates/interpolate";
 
+function chipState(format: number, style: string) {
+  return JSON.stringify({
+    root: {
+      type: "root",
+      version: 1,
+      direction: null,
+      format: "",
+      indent: 0,
+      children: [
+        {
+          type: "paragraph",
+          version: 1,
+          direction: null,
+          format: "",
+          indent: 0,
+          children: [
+            { type: "text", version: 1, format: 0, mode: "normal", style: "", text: "Topic: " },
+            { type: "variable-chip", version: 3, token: "topic", format, style },
+            { type: "text", version: 1, format: 0, mode: "normal", style: "", text: "." },
+          ],
+        },
+      ],
+    },
+  });
+}
+
 /** End-to-end simulation of the speaker-letter send → snapshot →
  *  speaker-page chain for a chip the bishop styled (e.g. red color
  *  on the {{topic}} variable):
@@ -24,32 +50,6 @@ import { interpolate } from "@/features/templates/interpolate";
  *  preserved, so the styling that lives ONLY on the chip
  *  round-trips end-to-end. */
 describe("send → snapshot → speaker render — chip styling fidelity", () => {
-  function chipState(format: number, style: string) {
-    return JSON.stringify({
-      root: {
-        type: "root",
-        version: 1,
-        direction: null,
-        format: "",
-        indent: 0,
-        children: [
-          {
-            type: "paragraph",
-            version: 1,
-            direction: null,
-            format: "",
-            indent: 0,
-            children: [
-              { type: "text", version: 1, format: 0, mode: "normal", style: "", text: "Topic: " },
-              { type: "variable-chip", version: 3, token: "topic", format, style },
-              { type: "text", version: 1, format: 0, mode: "normal", style: "", text: "." },
-            ],
-          },
-        ],
-      },
-    });
-  }
-
   it("preserves a chip's color through send → snapshot → render", () => {
     const authored = chipState(0, "color: rgb(220, 38, 38);");
     const vars = { topic: "Faith of our Fathers" };
