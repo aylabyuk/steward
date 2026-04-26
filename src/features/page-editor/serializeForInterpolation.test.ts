@@ -30,6 +30,15 @@ function callout() {
 function signature(closing = "With gratitude,", signatory = "The Bishopric") {
   return { type: "signature-block", version: 1, closing, signatory };
 }
+function letterhead(eyebrow: string, title: string, subtitle: string) {
+  return { type: "letterhead", version: 2, eyebrow, title, subtitle };
+}
+function calloutBlock(label: string, body: string) {
+  return { type: "callout", version: 1, label, body };
+}
+function image(src: string, alt: string) {
+  return { type: "image", version: 1, src, alt, widthPct: 60 };
+}
 
 describe("serializeForInterpolation", () => {
   it("emits paragraphs joined by blank lines", () => {
@@ -50,6 +59,36 @@ describe("serializeForInterpolation", () => {
   it("emits signature block as closing + signatory paragraphs", () => {
     const s = state([paragraph(text("Body")), signature("In faith,", "Bishop Reeves")]);
     expect(serializeForInterpolation(s)).toBe("Body\n\nIn faith,\n\nBishop Reeves");
+  });
+
+  it("emits letterhead as eyebrow / # title / subtitle, preserving {{tokens}}", () => {
+    const s = state([
+      letterhead("Sacrament Meeting · {{wardName}}", "Invitation to Speak", "From the Bishopric"),
+      paragraph(text("After")),
+    ]);
+    expect(serializeForInterpolation(s)).toBe(
+      "Sacrament Meeting · {{wardName}}\n\n# Invitation to Speak\n\nFrom the Bishopric\n\nAfter",
+    );
+  });
+
+  it("emits generic callout as bold label + body", () => {
+    const s = state([calloutBlock("Note", "Bring a recommend"), paragraph(text("After"))]);
+    expect(serializeForInterpolation(s)).toBe("**Note**\n\nBring a recommend\n\nAfter");
+  });
+
+  it("emits callout with empty body as just bold label", () => {
+    const s = state([calloutBlock("Topic", "")]);
+    expect(serializeForInterpolation(s)).toBe("**Topic**");
+  });
+
+  it("emits image as markdown image syntax", () => {
+    const s = state([image("https://example.com/x.png", "alt")]);
+    expect(serializeForInterpolation(s)).toBe("![alt](https://example.com/x.png)");
+  });
+
+  it("omits image with empty src so a placeholder doesn't leak into the email", () => {
+    const s = state([image("", "alt"), paragraph(text("Body"))]);
+    expect(serializeForInterpolation(s)).toBe("Body");
   });
 });
 
@@ -92,6 +131,26 @@ describe("legacyFieldsFromState", () => {
       bodyMarkdown: "A\n\nB",
       footerMarkdown: "",
     });
+  });
+
+  it("preserves letterhead + generic callout in the body — they are content, not chrome (regression)", () => {
+    // Repro for the bug where the bishop's saved template (with a
+    // LetterheadNode masthead + Callout block) was sent to speakers
+    // missing both nodes — the serializer's default-case dropped them
+    // silently, leaving the email with only paragraphs.
+    const s = state([
+      letterhead("Sacrament Meeting · {{wardName}}", "Invitation to Speak", "From the Bishopric"),
+      paragraph(text("Dear "), chip("speakerName"), text(",")),
+      calloutBlock("Topic", "{{topic}}"),
+      signature(),
+      paragraph(text("Scripture")),
+    ]);
+    const { bodyMarkdown, footerMarkdown } = legacyFieldsFromState(s);
+    expect(bodyMarkdown).toContain("Invitation to Speak");
+    expect(bodyMarkdown).toContain("Sacrament Meeting · {{wardName}}");
+    expect(bodyMarkdown).toContain("**Topic**");
+    expect(bodyMarkdown).toContain("Dear {{speakerName}},");
+    expect(footerMarkdown).toBe("Scripture");
   });
 
   it("carries multiple post-signature paragraphs into the body — only the last is the footer", () => {

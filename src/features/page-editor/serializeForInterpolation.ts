@@ -111,6 +111,32 @@ function serializeBlock(node: SerializedLexicalNode): string {
       const signatory = (node as unknown as { signatory?: string }).signatory ?? "The Bishopric";
       return `${closing}\n\n${signatory}`;
     }
+    case "letterhead": {
+      // Letterhead carries the formal masthead the bishop sees at the
+      // top of the editor — eyebrow / title / sub-eyebrow. The email
+      // can't render the circled brass ornament + typography, so we
+      // collapse to plain text: title as h1, then the two flanking
+      // mono lines as paragraphs. {{tokens}} (e.g. {{wardName}})
+      // pass through for the existing interpolation pipeline.
+      const eyebrow = (node as unknown as { eyebrow?: string }).eyebrow ?? "";
+      const title = (node as unknown as { title?: string }).title ?? "";
+      const subtitle = (node as unknown as { subtitle?: string }).subtitle ?? "";
+      return [eyebrow, title ? `# ${title}` : "", subtitle].filter(Boolean).join("\n\n");
+    }
+    case "callout": {
+      // Generic eyebrow + body band. Plain-text equivalent: bold
+      // label, blank line, body. Empty bodies collapse to just the
+      // label so a "Note" without text doesn't drop a stray blank.
+      const label = (node as unknown as { label?: string }).label ?? "";
+      const body = (node as unknown as { body?: string }).body ?? "";
+      if (!label && !body) return "";
+      return body ? `**${label}**\n\n${body}` : `**${label}**`;
+    }
+    case "image": {
+      const src = (node as unknown as { src?: string }).src ?? "";
+      const alt = (node as unknown as { alt?: string }).alt ?? "";
+      return src ? `![${alt}](${src})` : "";
+    }
     default:
       return "";
   }
