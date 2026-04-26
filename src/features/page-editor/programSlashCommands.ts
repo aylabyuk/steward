@@ -77,15 +77,10 @@ const STRUCTURAL_COMMANDS: SlashCommand[] = [
   {
     id: "image",
     label: "Image",
-    description: "Insert an image by URL",
+    description: "Insert an image (click to set URL)",
     keywords: "img, picture",
     icon: "🖼",
-    onSelect: (e) => {
-      const src = window.prompt("Image URL");
-      if (!src) return;
-      const alt = window.prompt("Alt text", "") ?? "";
-      e.dispatchCommand(INSERT_IMAGE_COMMAND, { src, alt });
-    },
+    onSelect: (e) => e.dispatchCommand(INSERT_IMAGE_COMMAND, { src: "", alt: "" }),
   },
 ];
 

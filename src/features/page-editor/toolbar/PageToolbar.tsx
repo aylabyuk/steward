@@ -1,6 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { FORMAT_TEXT_COMMAND, REDO_COMMAND, UNDO_COMMAND } from "lexical";
-import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import type { LetterPageStyle } from "@/lib/types/template";
 import "./toolbar.css";
 import { AlignmentDropdown } from "./AlignmentDropdown";
@@ -11,6 +10,7 @@ import { FontFamilyDropdown } from "./FontFamilyDropdown";
 import { FontSizeStepper } from "./FontSizeStepper";
 import { Icon } from "./Icon";
 import { InsertMenu } from "./InsertMenu";
+import { LinkButton } from "./LinkButton";
 import { PageSetupPopover } from "./PageSetupPopover";
 import { ToolbarButton, ToolbarSep } from "./ToolbarButton";
 import { useToolbarState } from "./useToolbarState";
@@ -109,20 +109,7 @@ export function PageToolbar({
       >
         <Icon name="code" />
       </ToolbarButton>
-      <ToolbarButton
-        label={s.link ? "Remove link" : "Add link"}
-        active={s.link}
-        onClick={() => {
-          if (s.link) {
-            editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-            return;
-          }
-          const url = window.prompt("Enter URL", "https://");
-          if (url) editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
-        }}
-      >
-        <Icon name="link" />
-      </ToolbarButton>
+      <LinkButton editor={editor} active={s.link} />
       <ToolbarSep />
 
       <FontColorPicker editor={editor} current={s.fontColor} />
