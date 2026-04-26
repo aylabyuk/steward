@@ -6,7 +6,11 @@ import {
   LETTER_SLASH_COMMANDS,
   buildInitialLetterState,
 } from "./letterEditorConfig";
-import { LETTER_VARIABLES, LETTER_VARIABLE_GROUP_LABEL } from "./letterVariables";
+import {
+  LETTER_VARIABLE_GROUP_LABEL,
+  LETTER_VARIABLE_SAMPLES,
+  LETTER_VARIABLES,
+} from "./letterVariables";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
 import { useFitZoom } from "./useFitZoom";
@@ -60,7 +64,7 @@ export function LetterPageEditor({
         ? fits.fitPage
         : zoomMode.value;
   return (
-    <LetterRenderContextProvider assignedDate={assignedDate}>
+    <LetterRenderContextProvider assignedDate={assignedDate} vars={LETTER_VARIABLE_SAMPLES}>
       <div
         className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
       >

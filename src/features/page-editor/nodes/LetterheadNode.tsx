@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   $applyNodeReplacement,
   $getNodeByKey,
@@ -11,6 +12,10 @@ import {
   type Spread,
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { interpolate } from "@/features/templates/interpolate";
+import { EditPropModal } from "../EditPropModal";
+import { useLetterVars } from "../letterRenderContext";
+import { LETTER_VARIABLES } from "../letterVariables";
 
 export type SerializedLetterheadNode = Spread<
   { title: string; subtitle: string; meta: string },
@@ -148,51 +153,68 @@ function LetterheadView({
   meta: string;
 }) {
   const [editor] = useLexicalComposerContext();
-  function edit(field: "title" | "subtitle" | "meta", current: string, prompt: string) {
-    const next = window.prompt(prompt, current);
-    if (next === null) return;
+  const vars = useLetterVars();
+  const [editing, setEditing] = useState<"title" | "subtitle" | "meta" | null>(null);
+
+  function save(next: string) {
     editor.update(() => {
       const node = $getNodeByKey(nodeKey);
       if (!(node instanceof LetterheadNode)) return;
-      if (field === "title") node.setTitle(next.trim() || DEFAULT_TITLE);
-      else if (field === "subtitle") node.setSubtitle(next.trim() || DEFAULT_SUBTITLE);
-      else node.setMeta(next.trim());
+      if (editing === "title") node.setTitle(next.trim() || DEFAULT_TITLE);
+      else if (editing === "subtitle") node.setSubtitle(next.trim() || DEFAULT_SUBTITLE);
+      else if (editing === "meta") node.setMeta(next.trim());
     });
+    setEditing(null);
   }
+
+  const titles = {
+    title: "Edit letterhead title",
+    subtitle: "Edit subtitle",
+    meta: "Edit meta line (leave empty to hide)",
+  } as const;
+
   return (
-    <div contentEditable={false} className="select-none my-6 text-center">
-      <div className="border-t-2 border-double border-brass-deep/70" />
-      <button
-        type="button"
-        onClick={() => edit("title", title, "Letterhead title")}
-        className="block w-full font-display text-[28px] tracking-[0.32em] uppercase text-walnut hover:underline focus:outline-none mt-3"
-      >
-        {title}
-      </button>
-      <button
-        type="button"
-        onClick={() => edit("subtitle", subtitle, "Letterhead subtitle")}
-        className="inline-flex items-center gap-3 font-mono text-[10.5px] tracking-[0.22em] uppercase text-brass-deep mt-1.5 hover:underline focus:outline-none"
-      >
-        <span aria-hidden className="text-brass">
-          ✦
-        </span>
-        <span>{subtitle}</span>
-        <span aria-hidden className="text-brass">
-          ✦
-        </span>
-      </button>
-      <div className="border-b border-walnut-3/60 mt-3" />
-      <button
-        type="button"
-        onClick={() =>
-          edit("meta", meta, "Meta line (date, address, contact — leave empty to hide)")
-        }
-        className="inline-block font-mono text-[10px] tracking-[0.16em] uppercase text-walnut-3 mt-2 hover:underline focus:outline-none"
-      >
-        {meta || "+ add meta"}
-      </button>
-    </div>
+    <>
+      <div contentEditable={false} className="select-none my-6 text-center">
+        <div className="border-t-2 border-double border-brass-deep/70" />
+        <button
+          type="button"
+          onClick={() => setEditing("title")}
+          className="block w-full font-display text-[28px] tracking-[0.32em] uppercase text-walnut hover:underline focus:outline-none mt-3"
+        >
+          {interpolate(title, vars)}
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditing("subtitle")}
+          className="inline-flex items-center gap-3 font-mono text-[10.5px] tracking-[0.22em] uppercase text-brass-deep mt-1.5 hover:underline focus:outline-none"
+        >
+          <span aria-hidden className="text-brass">
+            ✦
+          </span>
+          <span>{interpolate(subtitle, vars)}</span>
+          <span aria-hidden className="text-brass">
+            ✦
+          </span>
+        </button>
+        <div className="border-b border-walnut-3/60 mt-3" />
+        <button
+          type="button"
+          onClick={() => setEditing("meta")}
+          className="inline-block font-mono text-[10px] tracking-[0.16em] uppercase text-walnut-3 mt-2 hover:underline focus:outline-none"
+        >
+          {meta ? interpolate(meta, vars) : "+ add meta"}
+        </button>
+      </div>
+      <EditPropModal
+        open={editing !== null}
+        title={editing ? titles[editing] : ""}
+        initial={editing === "title" ? title : editing === "subtitle" ? subtitle : meta}
+        variables={LETTER_VARIABLES}
+        onSave={save}
+        onCancel={() => setEditing(null)}
+      />
+    </>
   );
 }
 
