@@ -40,7 +40,7 @@ export function AssignRow({ label, placeholder, assignment, showStatus = true, o
       : "unconfirmed";
 
   return (
-    <div className="grid grid-cols-[86px_minmax(0,1fr)_30px] items-center gap-3 py-2 border-b border-dashed border-border last:border-b-0">
+    <div className="grid grid-cols-[86px_minmax(0,1fr)_30px] items-center gap-3 py-2 border-b border-dashed border-border last:border-b-0 lg:border-b-0">
       <div className="text-[13.5px] font-sans font-medium text-walnut-2">{label}</div>
       <input
         value={local}
