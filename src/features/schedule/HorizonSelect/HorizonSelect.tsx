@@ -7,8 +7,7 @@ const HORIZON_OPTIONS = [
   { label: "1 month", display: "Next 1 month", weeks: 4 },
   { label: "2 months", display: "Next 2 months", weeks: 9 },
   { label: "3 months", display: "Next 3 months", weeks: 13 },
-  { label: "6 months", display: "Next 6 months", weeks: 26 },
-  { label: "12 months", display: "Next 12 months", weeks: 52 },
+  { label: "4 months", display: "Next 4 months", weeks: 17 },
 ];
 
 interface Props {
