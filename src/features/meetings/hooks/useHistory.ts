@@ -3,7 +3,7 @@ import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestor
 import { db } from "@/lib/firebase";
 import { historyEventSchema, type HistoryEvent } from "@/lib/types";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import type { WithId } from "./_sub";
+import type { WithId } from "@/hooks/_sub";
 
 export interface HistoryState {
   data: WithId<HistoryEvent>[];

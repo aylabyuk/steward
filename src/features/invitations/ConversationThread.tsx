@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useMinuteTick } from "@/hooks/useMinuteTick";
+import { useMinuteTick } from "./hooks/useMinuteTick";
 import { cn } from "@/lib/cn";
 import { ConversationGroup } from "./ConversationGroup";
 import { JumpToLatest } from "./JumpToLatest";

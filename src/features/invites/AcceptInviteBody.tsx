@@ -1,6 +1,6 @@
 import Markdown from "react-markdown";
 import type { PendingInvite } from "@/features/invites/inviteActions";
-import { CALLING_LABELS } from "@/features/settings/callingLabels";
+import { CALLING_LABELS } from "@/lib/callingLabels";
 
 export type AcceptInviteState =
   | { kind: "loading" }
