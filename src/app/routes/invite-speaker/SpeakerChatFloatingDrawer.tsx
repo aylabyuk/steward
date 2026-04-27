@@ -1,6 +1,9 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { cn } from "@/lib/cn";
 import type { CtaVariant } from "./SpeakerChatCTABanner";
+
+const EXIT_MS = 200;
 
 interface Props {
   /** Controlled open state so the parent can auto-open when chat
@@ -29,7 +32,27 @@ export function SpeakerChatFloatingDrawer({
   attention,
   children,
 }: Props): React.ReactElement {
-  useLockBodyScroll(open);
+  // Keep the drawer mounted through its slide-down so dismissal mirrors
+  // the slide-up entrance instead of vanishing instantly.
+  const [mounted, setMounted] = useState(open);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      setExiting(false);
+      return;
+    }
+    if (!mounted) return;
+    setExiting(true);
+    const t = setTimeout(() => {
+      setMounted(false);
+      setExiting(false);
+    }, EXIT_MS);
+    return () => clearTimeout(t);
+  }, [open, mounted]);
+
+  useLockBodyScroll(mounted && !exiting);
 
   useEffect(() => {
     if (!open) return;
@@ -42,7 +65,7 @@ export function SpeakerChatFloatingDrawer({
     return () => document.removeEventListener("keydown", handleEsc, true);
   }, [open, onOpenChange]);
 
-  if (!open) {
+  if (!mounted) {
     const label =
       attention === "reply"
         ? "Reply to the bishopric"
@@ -75,12 +98,22 @@ export function SpeakerChatFloatingDrawer({
       role="dialog"
       aria-modal="true"
       aria-label="Conversation with the bishopric"
-      className="fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)] flex items-end justify-center sm:justify-end sm:p-4 animate-[fade_160ms_ease-out]"
+      className={cn(
+        "fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)] flex items-end justify-center sm:justify-end sm:p-4",
+        exiting ? "animate-[fadeOut_180ms_ease-in]" : "animate-[fade_160ms_ease-out]",
+      )}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOpenChange(false);
       }}
     >
-      <div className="bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)] sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border-b sm:animate-none">
+      <div
+        className={cn(
+          "bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border-b sm:animate-none",
+          exiting
+            ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
+            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)]",
+        )}
+      >
         <button
           type="button"
           aria-label="Close conversation"
