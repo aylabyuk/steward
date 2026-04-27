@@ -23,6 +23,7 @@ PWA for a ward bishopric to plan weekly sacrament meeting programs. Desktop + mo
 - **Eight Cloud Functions, no API server.** The list above is the full surface; expanding it requires a deliberate scope decision. Firestore rules carry the rest of the authorization logic.
 - **Multi-ward from day one.** All data scoped under `wards/{wardId}/`.
 - **No direct pushes to `develop` or `main`.** Every change flows through a PR: feature branch → PR into `develop` (see the [`feature-branch-workflow`](.claude/skills/feature-branch-workflow.md) skill); releases go via PR from `develop` → `main` (see [`release-to-main`](.claude/skills/release-to-main.md)). GitHub's free tier doesn't enforce this — discipline does. No force-pushes to either branch, ever.
+- **No stacked PRs.** Every PR's base must be `develop` (or `main` for a release PR), never another feature branch. Stacked PRs orphan the moment the parent branch is deleted post-merge — finished work strands outside `develop` and won't ship. If a feature splits into multiple PRs, merge the foundation into `develop` first, then branch the next slice off the new `develop`.
 - **Merge-commit is the only enabled merge method** at the repo level (squash + rebase disabled). Keeps `develop` and `main` SHA-aligned and prevents "N ahead / N behind" drift.
 - **Every push to `develop` runs the full CI pipeline.** Lint + format + typecheck + unit + rules + e2e. All must pass; no retries on flakes.
 
