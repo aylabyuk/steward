@@ -9,10 +9,12 @@ import { SundayCardHeader } from "./SundayCardHeader";
 import { SundayCardSpecial } from "./SundayCardSpecial";
 import { leadTimeSeverity } from "@/features/speakers/leadTime";
 
-const SEVERITY_TEXT: Record<"warn" | "urgent", string> = {
-  warn: "Less than 2 weeks notice — consider a later week.",
-  urgent: "Short notice — confirm speakers directly.",
-};
+// Lead-time severity computation stays live (the urgent flag still
+// styles the header's relative-time label in bordeaux); the banner
+// UI is silenced for now. Original copy was:
+//   warn:    "Less than 2 weeks notice — consider a later week."
+//   urgent:  "Short notice — confirm speakers directly."
+// Tracked for re-add — see GH issue.
 
 const CARD_BG: Record<KindVariant, string> = {
   regular: "bg-chalk",
@@ -53,18 +55,8 @@ export function SundayCard({
     );
   }
 
-  const showWarning = !kind.isSpecial && severity !== "none";
-
   return (
     <div className="relative h-full">
-      {showWarning && (
-        <div className="absolute -top-6 left-0 right-0 rounded-t-lg border border-b-0 border-danger-soft bg-danger-soft px-4 pt-1.5 pb-3 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-bordeaux shrink-0" />
-          <span className="text-[12px] text-bordeaux-deep leading-tight">
-            {SEVERITY_TEXT[severity]}
-          </span>
-        </div>
-      )}
       <article
         className={cn(
           "relative flex h-full flex-col rounded-lg border border-border shadow-elev-1",

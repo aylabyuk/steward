@@ -51,16 +51,14 @@ export function PrayerRow({ inlineName, role, date }: Props) {
       <div className="flex-1 min-w-0">
         <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
       </div>
-      {participant && (
-        <div
-          className={cn(
-            "font-mono text-[9.5px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border whitespace-nowrap",
-            STATE_CLS[status],
-          )}
-        >
-          {status}
-        </div>
-      )}
+      <div
+        className={cn(
+          "font-mono text-[9.5px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border whitespace-nowrap",
+          STATE_CLS[status],
+        )}
+      >
+        {status}
+      </div>
       <PrayerChatLauncher
         wardId={wardId}
         date={date}
