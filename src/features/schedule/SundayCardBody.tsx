@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import type { SacramentMeeting, Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
 import { EmptyRosterRow } from "./EmptyRosterRow";

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { useSundayInvitationsSummary } from "@/features/invitations/hooks/useSundayInvitationsSummary";

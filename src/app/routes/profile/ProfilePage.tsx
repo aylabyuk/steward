@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { AppBar } from "@/components/ui/AppBar";
 import { DevModeSection } from "@/features/profile/DevModeSection";
 import { IdentitySection } from "@/features/profile/IdentitySection";
 import { PageRail } from "@/components/ui/PageRail";
@@ -55,9 +55,12 @@ export function ProfilePage(): React.ReactElement {
 
   if (!wardId || !authUser || !me || !draft || !source) {
     return (
-      <main className="pb-24">
-        <p className="font-serif italic text-[14px] text-walnut-2">Loading your profile…</p>
-      </main>
+      <>
+        <AppBar eyebrow="Your account" title="Profile" />
+        <main className="w-full max-w-380 mx-auto px-4 sm:px-8 py-6 pb-24">
+          <p className="font-serif italic text-[14px] text-walnut-2">Loading your profile…</p>
+        </main>
+      </>
     );
   }
 
@@ -86,51 +89,41 @@ export function ProfilePage(): React.ReactElement {
   }
 
   return (
-    <main className="pb-24">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/schedule" className="hover:text-walnut">
-          ← Schedule
-        </Link>
-      </nav>
-      <header className="mb-6">
-        <div className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium mb-1.5">
-          Your account
-        </div>
-        <h1 className="font-display text-[2.25rem] font-semibold text-walnut leading-tight">
-          Profile
-        </h1>
-        <p className="font-serif italic text-[16px] text-walnut-2 mt-1">
-          Your name and how you appear to other bishopric members.
-        </p>
-      </header>
-
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-8 items-start">
-        <div>
-          <IdentitySection
-            uid={authUser.uid}
-            email={authUser.email ?? ""}
-            displayName={draft.displayName}
-            photoURL={authUser.photoURL ?? me.data.photoURL ?? null}
-            onDisplayNameChange={(displayName) => setDraft({ ...draft, displayName })}
-          />
-          <SessionSection />
-          {isDevModeEmail(authUser.email) && <DevModeSection />}
-        </div>
-
-        <PageRail
-          items={isDevModeEmail(authUser.email) ? RAIL_ITEMS_DEV : RAIL_ITEMS}
-          elsewhere={RAIL_ELSEWHERE}
-        />
-      </div>
-
-      <SaveBar
-        dirty={dirty}
-        saving={saving}
-        savedAt={savedAt}
-        error={error}
-        onDiscard={discard}
-        onSave={() => void save()}
+    <>
+      <AppBar
+        eyebrow="Your account"
+        title="Profile"
+        description="Your name and how you appear to other bishopric members."
       />
-    </main>
+      <main className="w-full max-w-380 mx-auto px-4 sm:px-8 py-6 pb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-8 items-start">
+          <div>
+            <IdentitySection
+              uid={authUser.uid}
+              email={authUser.email ?? ""}
+              displayName={draft.displayName}
+              photoURL={authUser.photoURL ?? me.data.photoURL ?? null}
+              onDisplayNameChange={(displayName) => setDraft({ ...draft, displayName })}
+            />
+            <SessionSection />
+            {isDevModeEmail(authUser.email) && <DevModeSection />}
+          </div>
+
+          <PageRail
+            items={isDevModeEmail(authUser.email) ? RAIL_ITEMS_DEV : RAIL_ITEMS}
+            elsewhere={RAIL_ELSEWHERE}
+          />
+        </div>
+
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          savedAt={savedAt}
+          error={error}
+          onDiscard={discard}
+          onSave={() => void save()}
+        />
+      </main>
+    </>
   );
 }

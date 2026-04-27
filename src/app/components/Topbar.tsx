@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { UserMenu } from "./UserMenu";
 
