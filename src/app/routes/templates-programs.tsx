@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { SaveBar } from "@/components/ui/SaveBar";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import type { LetterPageStyle, ProgramTemplateKey } from "@/lib/types";
@@ -10,6 +11,7 @@ import { DEFAULT_MARGINS } from "@/features/program-templates/ProgramCanvas";
 import { defaultProgramTemplate } from "@/features/program-templates/programTemplateDefaults";
 import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
 import { writeProgramTemplate } from "@/features/program-templates/writeProgramTemplate";
+import { DesktopOnlyNotice } from "@/features/page-editor/DesktopOnlyNotice";
 import { ProgramPageEditor } from "@/features/page-editor/ProgramPageEditor";
 
 const TABS: { key: ProgramTemplateKey; label: string }[] = [
@@ -17,16 +19,13 @@ const TABS: { key: ProgramTemplateKey; label: string }[] = [
   { key: "congregationProgram", label: "Congregation copy" },
 ];
 
-function nowLabel(): string {
-  return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
-
 /** /settings/templates/programs — WYSIWYG editor for both program
  *  copies. The editor IS the page; chrome (eyebrow + paper frame)
  *  renders around a single contenteditable. Tab switches between
  *  conducting + congregation copies, each with its own draft state. */
 export function ProgramTemplatesPage(): React.ReactElement {
   useFullViewportLayout();
+  const isMobile = useIsMobile();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
   const canEdit = Boolean(me?.data.active);
@@ -75,7 +74,7 @@ export function ProgramTemplatesPage(): React.ReactElement {
       await writeProgramTemplate(wardId, activeKey, jsonToSave, margins, pageStyleToSave);
       setDraft((d) => ({ ...d, [activeKey]: null }));
       setPageStyleDraft((d) => ({ ...d, [activeKey]: null }));
-      setSavedAt(nowLabel());
+      setSavedAt(new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
     } catch (e) {
       setError(friendlyWriteError(e));
     } finally {
@@ -89,6 +88,8 @@ export function ProgramTemplatesPage(): React.ReactElement {
     setEditorKey((k) => k + 1);
     setError(null);
   }
+
+  if (isMobile) return <DesktopOnlyNotice title="Program templates" />;
 
   return (
     <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
