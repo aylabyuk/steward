@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import { BuiltByCredit } from "@/components/BuiltByCredit";
+import { useNavDirection } from "@/app/hooks/useNavDirection";
 import { useHideOnScroll } from "./hooks/useHideOnScroll";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/cn";
@@ -10,6 +11,7 @@ import { UserSideDrawer } from "./UserSideDrawer";
 export function AppShell() {
   const isMobile = useIsMobile();
   const hidden = useHideOnScroll(isMobile);
+  useNavDirection();
 
   // Mobile: body scrolls. Sticky topbar with auto-hide on scroll. The
   // browser's vertical scrollbar runs full-height — fine on touch
@@ -28,8 +30,8 @@ export function AppShell() {
         <Topbar />
         <OnlineStatusBanner />
       </div>
-      <div className="flex flex-1 flex-col sm:overflow-y-auto sm:overflow-x-clip">
-        <div className="flex flex-1 flex-col w-full max-w-380 mx-auto px-4 sm:px-8 pt-4 sm:pt-7">
+      <div data-app-scroll className="flex flex-1 flex-col sm:overflow-y-auto sm:overflow-x-clip">
+        <div className="shell-content flex flex-1 flex-col w-full max-w-380 mx-auto px-4 sm:px-8 pt-4 sm:pt-7">
           <Outlet />
         </div>
         <footer className="flex justify-center py-3 px-4">

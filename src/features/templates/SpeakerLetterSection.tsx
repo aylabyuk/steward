@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
 /** Templates → Speaker invitation letter section. The letter editor

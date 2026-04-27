@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import type { MeetingType } from "@/lib/types";
 import { TYPE_LABELS } from "../utils/meetingLabels";
 import { cn } from "@/lib/cn";

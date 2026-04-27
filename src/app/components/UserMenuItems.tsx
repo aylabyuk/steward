@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import { cn } from "@/lib/cn";
 
 interface MenuLinkProps {

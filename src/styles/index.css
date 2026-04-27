@@ -301,6 +301,124 @@
 }
 
 /* --------------------------------------------------------------------
+   Native-stack page transitions. The body wrapper inside <AppShell>
+   carries `view-transition-name: shell-content`, so route swaps
+   animate the body alone — the topbar (outside this slot) stays
+   put. Direction is set on `<html data-nav-direction>` synchronously
+   by `@/lib/nav` (forward / replace) and by the popstate listener
+   in useNavDirection (back) before the browser snapshots the old
+   DOM. After the animation runs, the attribute resets to "none".
+   -------------------------------------------------------------------- */
+
+.shell-content {
+  view-transition-name: shell-content;
+  /* Opaque background so the View Transition snapshot isn't see-through.
+     Without this, both old + new snapshots stack transparently during
+     a slide and the off-screen page bleeds through ("ghosting"). The
+     parchment + grain match the AppShell's outer wrapper so the page
+     looks identical when no transition is running. */
+  background-color: var(--color-parchment);
+  background-image:
+    radial-gradient(rgba(139, 46, 42, 0.03) 1px, transparent 1px),
+    radial-gradient(rgba(59, 42, 34, 0.035) 1px, transparent 1px);
+  background-size:
+    3px 3px,
+    7px 7px;
+  background-position:
+    0 0,
+    1px 2px;
+}
+
+@keyframes stack-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes stack-slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes stack-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes stack-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Default: no animation on the named slot — direction selectors
+   below re-enable it for user-initiated navigation. */
+::view-transition-old(shell-content),
+::view-transition-new(shell-content) {
+  animation: none;
+}
+
+/* Kill the browser's default cross-fade on the unnamed root snapshot
+   so the topbar + footer (captured under root) stay visually
+   stationary. Routes that cross out of the shell — where the
+   shell-content slot has no partner on the other side — also fall
+   back to an instant swap thanks to this override. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* Animations are mobile-only — on desktop the default `animation: none`
+   above wins and route swaps stay instant. The native-stack idiom
+   only really lands on phone-class viewports; on desktop a sliding
+   page reads as gimmicky. Breakpoint matches `useIsMobile`. */
+@media (max-width: 767.98px) {
+  html[data-nav-direction="forward"]::view-transition-old(shell-content) {
+    animation: none;
+  }
+  html[data-nav-direction="forward"]::view-transition-new(shell-content) {
+    animation: 260ms cubic-bezier(0.32, 0.72, 0, 1) both stack-slide-in-right;
+    z-index: 2;
+  }
+
+  html[data-nav-direction="back"]::view-transition-old(shell-content) {
+    animation: 240ms cubic-bezier(0.32, 0.72, 0, 1) both stack-slide-out-right;
+    z-index: 2;
+  }
+  html[data-nav-direction="back"]::view-transition-new(shell-content) {
+    animation: none;
+  }
+
+  html[data-nav-direction="replace"]::view-transition-old(shell-content) {
+    animation: 140ms ease-out both stack-fade-out;
+  }
+  html[data-nav-direction="replace"]::view-transition-new(shell-content) {
+    animation: 140ms ease-out both stack-fade-in;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(shell-content),
+  ::view-transition-new(shell-content) {
+    animation: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------
    Speaker-letter print rules. A `<PrintOnlyLetter>` portal mounts a
    copy of the letter at `document.body` level; on screen it stays
    `display: none`, in print it's the only thing that renders. Keeps

@@ -70,11 +70,7 @@ export function BishopInvitationDialog({
     >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-60 bg-[rgba(35,24,21,0.42)]" />
-        <Drawer.Content
-          ref={contentRef}
-          aria-describedby={undefined}
-          className={contentClass}
-        >
+        <Drawer.Content ref={contentRef} aria-describedby={undefined} className={contentClass}>
           {isMobile && (
             <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40" />
           )}

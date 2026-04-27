@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { AppBar } from "@/components/ui/AppBar";
 import { NotificationsSection } from "@/features/profile/NotificationsSection";
 import { SaveBar } from "@/components/ui/SaveBar";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
@@ -38,9 +38,12 @@ export function NotificationsPage(): React.ReactElement {
 
   if (!wardId || !me || !draft || !source) {
     return (
-      <main className="pb-24">
-        <p className="font-serif italic text-[14px] text-walnut-2">Loading notifications…</p>
-      </main>
+      <>
+        <AppBar eyebrow="Your account" title="Notifications" />
+        <main className="w-full max-w-380 mx-auto px-4 sm:px-8 py-6 pb-24">
+          <p className="font-serif italic text-[14px] text-walnut-2">Loading notifications…</p>
+        </main>
+      </>
     );
   }
 
@@ -64,43 +67,33 @@ export function NotificationsPage(): React.ReactElement {
   }
 
   return (
-    <main className="pb-24">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/schedule" className="hover:text-walnut">
-          ← Schedule
-        </Link>
-      </nav>
-      <header className="mb-6">
-        <div className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium mb-1.5">
-          Your account
-        </div>
-        <h1 className="font-display text-[2.25rem] font-semibold text-walnut leading-tight">
-          Notifications
-        </h1>
-        <p className="font-serif italic text-[16px] text-walnut-2 mt-1">
-          Choose what you want to be notified about, and how Steward reaches you.
-        </p>
-      </header>
-
-      <NotificationsSection
-        wardId={wardId}
-        uid={me.id}
-        tokens={me.data.fcmTokens}
-        prefs={draft}
-        onPrefsChange={setDraft}
+    <>
+      <AppBar
+        eyebrow="Your account"
+        title="Notifications"
+        description="Choose what you want to be notified about, and how Steward reaches you."
       />
+      <main className="w-full max-w-380 mx-auto px-4 sm:px-8 py-6 pb-24">
+        <NotificationsSection
+          wardId={wardId}
+          uid={me.id}
+          tokens={me.data.fcmTokens}
+          prefs={draft}
+          onPrefsChange={setDraft}
+        />
 
-      <SaveBar
-        dirty={dirty}
-        saving={saving}
-        savedAt={savedAt}
-        error={error}
-        onDiscard={() => {
-          setDraft(source);
-          setError(null);
-        }}
-        onSave={() => void save()}
-      />
-    </main>
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          savedAt={savedAt}
+          error={error}
+          onDiscard={() => {
+            setDraft(source);
+            setError(null);
+          }}
+          onSave={() => void save()}
+        />
+      </main>
+    </>
   );
 }
