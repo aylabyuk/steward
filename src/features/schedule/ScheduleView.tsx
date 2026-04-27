@@ -33,7 +33,11 @@ export function ScheduleView() {
     if (stored) setHorizon(Number(stored));
   }, []);
 
-  const { weeks: mobileHorizon, sentinelRef } = useInfiniteHorizon(isMobile, {
+  const {
+    weeks: mobileHorizon,
+    loading: loadingMore,
+    sentinelRef,
+  } = useInfiniteHorizon(isMobile, {
     initial: MOBILE_INITIAL_WEEKS,
     step: MOBILE_STEP_WEEKS,
     max: MOBILE_MAX_WEEKS,
@@ -74,7 +78,12 @@ export function ScheduleView() {
               leadTimeDays={leadTimeDays}
               nonMeetingSundays={nonMeeting}
             />
-            <div ref={sentinelRef} aria-hidden className="h-px" />
+            <div
+              ref={sentinelRef}
+              className="text-center py-6 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3"
+            >
+              {loadingMore ? "Loading…" : ""}
+            </div>
           </>
         ) : (
           <div className="mt-8">
