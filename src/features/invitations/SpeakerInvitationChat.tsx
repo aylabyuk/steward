@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
+import { BuiltByCredit } from "@/components/BuiltByCredit";
 import { inviteAuth } from "@/lib/firebase";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
@@ -184,6 +185,10 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         ensureReady={ensureReady}
         placeholder="Reply to the bishopric…"
       />
+
+      <div className="flex justify-center py-2 px-4 border-t border-border">
+        <BuiltByCredit />
+      </div>
     </section>
   );
 }

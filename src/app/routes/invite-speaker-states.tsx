@@ -2,6 +2,7 @@ import type { SpeakerInvitation } from "@/lib/types";
 import type { SpeakerInvitationState } from "@/features/templates/useSpeakerInvitation";
 
 export { SessionGate } from "./invite-speaker-session-gate";
+export { ShareToolbar } from "./invite-speaker-share-toolbar";
 
 /** Non-"ready" sub-states for the invite landing page. Split out so
  *  the main route stays under the 150-LOC ceiling while keeping
@@ -61,40 +62,5 @@ export function ExpiredState({
 function StateFrame({ children }: { children?: React.ReactNode }) {
   return (
     <main className="min-h-dvh bg-[#e6ddc7] flex items-center justify-center p-4">{children}</main>
-  );
-}
-
-export function PrintToolbar(): React.ReactElement {
-  return (
-    <div className="print:hidden flex justify-end">
-      <button
-        type="button"
-        onClick={() => window.print()}
-        title="Print · Save as PDF"
-        aria-label="Print · Save as PDF"
-        className="inline-flex items-center justify-center rounded-md border border-walnut bg-walnut w-9 h-9 text-chalk hover:bg-walnut-2 shadow-elev-2"
-      >
-        <PrinterIcon />
-      </button>
-    </div>
-  );
-}
-
-function PrinterIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M6 9V2h12v7" />
-      <rect x="3" y="9" width="18" height="9" rx="2" />
-      <path d="M6 14h12v7H6z" />
-    </svg>
   );
 }

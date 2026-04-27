@@ -246,6 +246,15 @@
   }
 }
 
+@keyframes drawerSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 /* Soft pulse ring for attention-worthy FABs. Used on the speaker
    invite page to draw the eye to the chat drawer when the speaker
    hasn't responded yet or the bishop has replied. */

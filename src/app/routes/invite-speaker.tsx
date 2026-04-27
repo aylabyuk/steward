@@ -11,7 +11,7 @@ import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation"
 import type { SpeakerInvitation } from "@/lib/types";
 import { SpeakerChatFloatingDrawer } from "./invite-speaker-chat-drawer";
 import { SpeakerChatCTABanner, type CtaVariant } from "./invite-speaker-cta-banner";
-import { ExpiredState, NonReadyState, PrintToolbar, SessionGate } from "./invite-speaker-states";
+import { ExpiredState, NonReadyState, SessionGate, ShareToolbar } from "./invite-speaker-states";
 
 /**
  * Public landing page for an invitation link. The letter fills the
@@ -108,8 +108,12 @@ function InviteLandingContent({
         <SpeakerChatCTABanner variant={promptVariant} onTap={() => setChatOpen(true)} />
       )}
 
-      <div className="absolute top-4 right-4 z-10 pt-[env(safe-area-inset-top)]">
-        <PrintToolbar />
+      <div
+        className={`absolute right-4 z-10 pt-[env(safe-area-inset-top)] transition-[top] duration-200 ${
+          promptVariant ? "top-16" : "top-4"
+        }`}
+      >
+        <ShareToolbar speakerName={invitation.speakerName} assignedDate={invitation.assignedDate} />
       </div>
 
       <SpeakerChatFloatingDrawer
