@@ -1,4 +1,4 @@
-import { CALLING_LABELS } from "@/features/settings/callingLabels";
+import { CALLING_LABELS } from "@/lib/callingLabels";
 import type { Calling, Role } from "@/lib/types";
 import { interpolate } from "./interpolate";
 import { DEFAULT_WARD_INVITE_BODY } from "./wardInviteDefaults";
