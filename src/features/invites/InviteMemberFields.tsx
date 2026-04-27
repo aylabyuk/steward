@@ -1,5 +1,5 @@
 import type { Calling } from "@/lib/types";
-import { CALLING_OPTIONS } from "../settings/callingLabels";
+import { CALLING_OPTIONS } from "@/lib/callingLabels";
 import { INVITE_INPUT_CLS, InviteField } from "./inviteFormField";
 
 interface Props {
