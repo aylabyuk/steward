@@ -57,7 +57,12 @@ function PrayerRowGroup({ label, role, date, placeholder, assignment, onChange }
   const hasName = Boolean(assignment?.person?.name?.trim() || participant.data?.name?.trim());
 
   return (
-    <div>
+    // Suppress AssignRow's own dashed bottom border when we're
+    // grouping it with the Invite link — its `last:border-b-0`
+    // doesn't trigger because the link is now a sibling. The dashed
+    // separator role passes to this wrapper so consecutive prayer
+    // groups stay visually divided.
+    <div className="border-b border-dashed border-border last:border-b-0 *:first:border-b-0">
       <AssignRow
         label={label}
         placeholder={placeholder}
