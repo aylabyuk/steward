@@ -7,6 +7,68 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-04-27
+
+Prayer-giver invitations land end-to-end: the bishop can now invite
+opening + closing prayer participants through the same Twilio
+Conversation + capability-token pipeline used for speakers, with
+role-appropriate copy on every surface. Plus three speaker-invite UX
+upgrades and a small personal touch on the app shell.
+
+### Added
+
+- **Prayer-giver invitations (#168, #169, #170).** New
+  `wards/{wardId}/meetings/{date}/prayers/{role}` subcollection +
+  rules block, a `kind: "speaker" | "prayer"` discriminator on
+  `sendSpeakerInvitation` + `onInvitationWrite`, and four new
+  prayer-keyed message templates (`prayerInitialInvitationSms`,
+  `prayerResponseAccepted`, `prayerResponseDeclined`,
+  `prayerBishopricResponseReceipt`). The eight-Cloud-Function rule
+  holds — we extended the existing functions instead of adding new
+  ones. UI lands inline on the meeting editor's Prayers section: each
+  row shows a status chip + Invite/Resend link once a name is typed,
+  opening a dedicated `/week/:date/prayer/:role/prepare` page with the
+  full-screen letter editor + Send / Send SMS / Mark invited / Print
+  toolbar. The speaker landing page reads `invitation.kind` and
+  flips its CTA + response banners to "Please reply to the prayer
+  invitation" when appropriate. For now both prayer slots reuse the
+  speaker letter template; a dedicated `prayerLetterTemplate` ward
+  doc + editor route lands in a follow-up.
+- **Share-as-PDF button on the speaker invite page.** Speakers tap a
+  share icon that renders the resolved letter to a paginated 8.5×11
+  PDF and hands it to `navigator.share({ files })` (Web Share API on
+  iOS / Android / Edge / Safari) with a download fallback on Firefox
+  / older desktops. Reuses the same `letterCanvasToPdf` +
+  `shareLetterPdf` strategy as the bishop-side wizard, so the
+  speaker's saved PDF is pixel-for-pixel identical. Toolbar shifts
+  from `top-4` → `top-16` with a 200ms transition when the
+  reply/unread CTA banner is visible, avoiding overlap.
+- **Personal developer credit** on the app shell + invite pages. A
+  tiny italic-serif "This app was built with love and prayer, by
+  Oriel Absin." line sourced from a single shared component, visible
+  on every authenticated bishopric route, below the `/accept-invite`
+  card, and at the bottom of the speaker chat drawer. `print:hidden`
+  keeps it out of printed programs and shared letter PDFs.
+
+### Changed
+
+- **Speaker chat drawer is now a bottom-sheet on mobile, docked panel
+  on desktop.** On phone-class viewports the drawer slides up as an
+  85dvh sheet with rounded top corners and a grab-handle pill,
+  leaving the top of the letter peeking above so the speaker keeps
+  spatial context. Desktop (`sm+`) is unchanged: bottom-right docked
+  panel at `max-w-105` / `80dvh`, all corners rounded, no entrance
+  animation. New `drawerSlideUp` keyframe scoped to mobile via
+  `sm:animate-none`.
+
+### Fixed
+
+- **AssignRow's stray dashed bottom border on `lg+`** in the meeting
+  editor's Prayers + Speakers sections. The dashed line under the
+  Invite link, the inter-row dashed border, and AssignRow's bottom
+  border are all dropped on large viewports where they were creating
+  visual noise inside the multi-column layout.
+
 ## [0.13.1] — 2026-04-27
 
 Hotfix for the v0.13.0 PDF share path: the bishop tapping "Share or
@@ -1661,7 +1723,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/aylabyuk/steward/releases/tag/v0.14.0
 [0.13.1]: https://github.com/aylabyuk/steward/releases/tag/v0.13.1
 [0.13.0]: https://github.com/aylabyuk/steward/releases/tag/v0.13.0
 [0.12.2]: https://github.com/aylabyuk/steward/releases/tag/v0.12.2
