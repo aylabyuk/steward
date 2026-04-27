@@ -108,7 +108,7 @@ export function SpeakerChatFloatingDrawer({
     >
       <div
         className={cn(
-          "bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border-b sm:animate-none",
+          "bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border-b",
           exiting
             ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
             : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)]",
