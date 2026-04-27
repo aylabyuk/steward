@@ -40,10 +40,17 @@ export const onInvitationWrite = onDocumentWritten(
     const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
     try {
       const bishopric = await fetchActiveBishopricEmails(db, wardId);
+      const isPrayer = after.kind === "prayer";
       if (change.fireSpeaker) {
         const answer = after.response?.answer;
-        const key = answer === "yes" ? "speakerResponseAccepted" : "speakerResponseDeclined";
-        const headerTemplate = await readMessageTemplate(db, wardId, key);
+        const speakerKey = isPrayer
+          ? answer === "yes"
+            ? "prayerResponseAccepted"
+            : "prayerResponseDeclined"
+          : answer === "yes"
+            ? "speakerResponseAccepted"
+            : "speakerResponseDeclined";
+        const headerTemplate = await readMessageTemplate(db, wardId, speakerKey);
         // allSettled — one leg failing must NOT cancel the other.
         // Promise.all rejects on first failure; the outer try/catch
         // then catches and the function exits, which tears down the
@@ -64,7 +71,10 @@ export const onInvitationWrite = onDocumentWritten(
         }
       }
       if (change.fireBishopric) {
-        const headerTemplate = await readMessageTemplate(db, wardId, "bishopricResponseReceipt");
+        const bishopricKey = isPrayer
+          ? "prayerBishopricResponseReceipt"
+          : "bishopricResponseReceipt";
+        const headerTemplate = await readMessageTemplate(db, wardId, bishopricKey);
         await sendBishopricReceipt(after, bishopric, {
           wardId,
           invitationId,

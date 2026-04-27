@@ -2,6 +2,14 @@
  *  Cloud Functions (Admin SDK). Keeps the webhook + callable free of
  *  importing from the web Zod schema. */
 export interface SpeakerInvitationShape {
+  /** Discriminator for which kind of participant this invitation is
+   *  for. Default "speaker" (treat absent as speaker for back-compat
+   *  with pre-prayer-flow rows). */
+  kind?: "speaker" | "prayer";
+  /** Set only when `kind === "prayer"`. Mirrors the prayer
+   *  participant doc's role at
+   *  `wards/{wardId}/meetings/{date}/prayers/{role}`. */
+  prayerRole?: "opening" | "benediction";
   speakerRef: { meetingDate: string; speakerId: string };
   assignedDate: string;
   sentOn: string;
@@ -48,4 +56,15 @@ export interface SpeakerInvitationShape {
    *  subsequent SMS for this invitation route through the same
    *  number — see `twilio/fromNumber.ts`. */
   fromNumberMode?: "production" | "testing";
+}
+
+/** User-facing label for a prayer-kind invitation, used to fill the
+ *  `{{prayerType}}` token in SMS / email / receipt templates. Returns
+ *  undefined for speaker invitations so callers can spread it
+ *  conditionally into vars bags. */
+export function invitationPrayerType(
+  invitation: Pick<SpeakerInvitationShape, "kind" | "prayerRole">,
+): string | undefined {
+  if (invitation.kind !== "prayer" || !invitation.prayerRole) return undefined;
+  return invitation.prayerRole === "opening" ? "opening prayer" : "benediction";
 }

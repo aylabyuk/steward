@@ -15,6 +15,17 @@ export interface FreshInvitationRequest {
   channels: ("email" | "sms")[];
   speakerName: string;
   speakerTopic?: string;
+  /** Discriminator for the kind of participant being invited. Default
+   *  "speaker" preserves back-compat. When "prayer", `prayerRole` is
+   *  required; the SMS body uses `prayerInitialInvitationSms` and the
+   *  receipt copy uses the `prayer*` template keys. The same Twilio
+   *  Conversation + capability-token plumbing is reused — full chat
+   *  parity with speakers per product spec. */
+  kind?: "speaker" | "prayer";
+  /** Required when `kind === "prayer"`. Persisted on the invitation
+   *  doc so the speaker landing page + receipt builders can resolve
+   *  the right copy + variables (`{{prayerType}}`). */
+  prayerRole?: "opening" | "benediction";
   inviterName: string;
   wardName: string;
   assignedDate: string;

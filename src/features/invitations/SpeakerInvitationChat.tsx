@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
+import { BuiltByCredit } from "@/components/BuiltByCredit";
 import { inviteAuth } from "@/lib/firebase";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
@@ -52,6 +53,9 @@ interface Props {
    *  floating drawer on the invite page). Default layout stays inline
    *  for other callsites. */
   fillHeight?: boolean;
+  /** Discriminator from the invitation doc — adjusts the response
+   *  banner copy from "speaking" to "prayer" wording. */
+  kind?: "speaker" | "prayer";
 }
 
 /** Speaker-side chat pane. By the time this renders the parent
@@ -154,6 +158,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         answer={props.responseAnswer}
         meetingDate={props.meetingDate}
         {...(props.currentStatus !== undefined ? { currentStatus: props.currentStatus } : {})}
+        {...(props.kind ? { kind: props.kind } : {})}
       />
 
       <ConversationThread
@@ -184,6 +189,10 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         ensureReady={ensureReady}
         placeholder="Reply to the bishopric…"
       />
+
+      <div className="flex justify-center py-2 px-4 border-t border-border">
+        <BuiltByCredit />
+      </div>
     </section>
   );
 }

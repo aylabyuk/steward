@@ -14,6 +14,9 @@ interface Props {
    *  Substituted into the subtitle copy instead of the ambiguous
    *  "this Sunday" so the date is unambiguous. */
   meetingDate: string;
+  /** Discriminator from the invitation doc — adjusts "speaking" copy
+   *  to "prayer" copy when the participant is a prayer-giver. */
+  kind?: "speaker" | "prayer";
 }
 
 /** Speaker-side confirmation banner rendered under the conversation
@@ -34,8 +37,14 @@ export function SpeakerResponseBanner({
   answer,
   currentStatus,
   meetingDate,
+  kind,
 }: Props): React.ReactElement | null {
   const when = formatShortSunday(meetingDate);
+  const isPrayer = kind === "prayer";
+  const inviteLabel = isPrayer ? "prayer invitation" : "invitation to speak";
+  const declinedSubtitle = isPrayer
+    ? `You are no longer asked to give the prayer on ${when}. See the chat below for any follow-up.`
+    : `You are no longer scheduled to speak on ${when}. See the chat below for any follow-up.`;
   if (currentStatus === "confirmed") {
     return (
       <Banner
@@ -50,7 +59,7 @@ export function SpeakerResponseBanner({
       <Banner
         tone="danger"
         title="Your assignment has been updated to declined."
-        subtitle={`You are no longer scheduled to speak on ${when}. See the chat below for any follow-up.`}
+        subtitle={declinedSubtitle}
       />
     );
   }
@@ -58,7 +67,7 @@ export function SpeakerResponseBanner({
     return (
       <Banner
         tone="success"
-        title={`You accepted the invitation to speak on ${when}. Thank you!`}
+        title={`You accepted the ${inviteLabel} on ${when}. Thank you!`}
         subtitle="The bishopric will follow up with any remaining details in the chat below."
       />
     );
@@ -67,7 +76,7 @@ export function SpeakerResponseBanner({
     return (
       <Banner
         tone="danger"
-        title={`You declined the invitation to speak on ${when}.`}
+        title={`You declined the ${inviteLabel} on ${when}.`}
         subtitle="The bishopric has been notified and will respond in the chat below if needed."
       />
     );
