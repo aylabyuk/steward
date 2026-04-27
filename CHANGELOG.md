@@ -7,6 +7,37 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.12.1] — 2026-04-27
+
+Mobile follow-up to the v0.12.0 WYSIWYG release. The page-scale
+template editors aren't operable on phone-class viewports, so this
+release blocks editing there and replaces the broken-looking canvas
+with clear guidance.
+
+### Changed
+
+- **Template editors are desktop-only** at `/settings/templates/
+  speaker-letter` and `/settings/templates/programs`. Below Tailwind's
+  `md` breakpoint (768px), the routes render a friendly **Desktop
+  only** card with a Copy-link button instead of half-rendering an
+  editor that can't be operated. The Settings → Templates section
+  CTAs stay visible but disabled with a small "Desktop only" pill so
+  the feature is still discoverable when the bishop is back at a
+  laptop.
+
+- **Per-speaker letter editor is read-only on mobile** in the
+  plan-speakers wizard's review step + the prepare-invitation tab.
+  The toolbar is hidden, a walnut notice strip explains the
+  constraint, and pointer interaction on the page is blocked — the
+  bishop sees the same paper preview as desktop and can still
+  Send / Print / Skip without an unusable editor canvas in the way.
+
+### Infrastructure
+
+- New `useMediaQuery` / `useIsMobile` hook in
+  `src/hooks/useMediaQuery.ts` for any other surface that needs the
+  same viewport gate.
+
 ## [0.12.0] — 2026-04-26
 
 The big WYSIWYG release: the speaker-letter and program-template
@@ -1551,7 +1582,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.12.1...HEAD
+[0.12.1]: https://github.com/aylabyuk/steward/releases/tag/v0.12.1
 [0.12.0]: https://github.com/aylabyuk/steward/releases/tag/v0.12.0
 [0.11.0]: https://github.com/aylabyuk/steward/releases/tag/v0.11.0
 [0.10.1]: https://github.com/aylabyuk/steward/releases/tag/v0.10.1
