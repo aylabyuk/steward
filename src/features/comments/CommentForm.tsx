@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
-import { createComment } from "../utils/commentActions";
-import { extractMentions } from "../utils/extractMentions";
+import { createComment } from "./utils/commentActions";
+import { extractMentions } from "./utils/extractMentions";
 
 interface Props {
   wardId: string;
