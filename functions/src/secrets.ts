@@ -17,6 +17,15 @@ export const TWILIO_CONVERSATIONS_SERVICE_SID = defineSecret("TWILIO_CONVERSATIO
 /** Canadian long-code number the service uses for outbound SMS. */
 export const TWILIO_FROM_NUMBER = defineSecret("TWILIO_FROM_NUMBER");
 
+/** Optional secondary outbound number, used only when a developer-mode
+ *  caller (gated by email allowlist in sendSpeakerInvitation) opts an
+ *  invitation into "testing" mode. Lets the maintainer keep the prior
+ *  prod number addressable for production-side smoke tests without
+ *  affecting normal sends. Unset in lower envs — sendSmsDirect treats
+ *  the missing value as a hard error to avoid silently routing to the
+ *  wrong number. */
+export const TWILIO_FROM_NUMBER_TESTING = defineSecret("TWILIO_FROM_NUMBER_TESTING");
+
 /** Public origin of the web app (e.g. https://steward-app.ca) —
  *  used by Cloud Functions to build invite URLs in outbound
  *  correspondence. Runtime-configurable, not a secret. */
@@ -33,6 +42,7 @@ export const TWILIO_SECRETS = [
   TWILIO_API_KEY_SECRET,
   TWILIO_CONVERSATIONS_SERVICE_SID,
   TWILIO_FROM_NUMBER,
+  TWILIO_FROM_NUMBER_TESTING,
 ];
 
 // SendGrid (SENDGRID_API_KEY / INVITATION_FROM_EMAIL) is intentionally

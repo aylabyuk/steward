@@ -115,6 +115,7 @@ async function handleSpeakerTokenExchange(
         assignedDate: decision.assignedDate,
         speakerName: decision.speakerName,
         inviteUrl: buildInviteUrl(origin, wardId, invitationId, decision.newToken),
+        ...(decision.fromNumberMode ? { fromMode: decision.fromNumberMode } : {}),
       });
     } catch (err) {
       logger.error("rotation SMS send failed", {

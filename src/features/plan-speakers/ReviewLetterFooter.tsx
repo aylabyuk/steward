@@ -11,7 +11,7 @@ interface Props {
 const PRIMARY_LABEL: Record<ActionMode, string> = {
   send: "Send invitation →",
   resend: "Resend invitation →",
-  print: "Print →",
+  print: "Share or print →",
 };
 
 export function ReviewLetterFooter({ mode, busy, onBack, onPrimary }: Props) {

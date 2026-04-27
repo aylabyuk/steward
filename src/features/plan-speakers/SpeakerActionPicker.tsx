@@ -65,7 +65,7 @@ export function SpeakerActionPicker({ speaker, wardId, date, onPick, onSkip, onB
 
             <p className="font-serif text-[13.5px] text-walnut-2 leading-relaxed">
               {alreadyInvited
-                ? "An invitation has already been sent. Resend it (with any letter edits), print it for hand-delivery, or skip."
+                ? "An invitation has already been sent. Resend it (with any letter edits), share the letter directly, or skip."
                 : "How would you like to invite this speaker?"}
             </p>
 
@@ -95,7 +95,7 @@ export function SpeakerActionPicker({ speaker, wardId, date, onPick, onSkip, onB
                 onClick={() => onPick("print")}
                 className="rounded-md border border-border-strong bg-chalk px-4 py-2.5 font-sans text-[14px] font-semibold text-walnut hover:bg-parchment-2 text-left"
               >
-                Print &amp; hand-deliver →
+                Share or print letter →
               </button>
               <button
                 type="button"

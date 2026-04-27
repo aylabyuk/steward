@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { DevModeSection } from "@/features/profile/DevModeSection";
 import { IdentitySection } from "@/features/profile/IdentitySection";
 import { PageRail } from "@/components/ui/PageRail";
 import { SaveBar } from "@/components/ui/SaveBar";
@@ -9,6 +10,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { isDevModeEmail } from "@/stores/devModeStore";
 
 interface Draft {
   displayName: string;
@@ -18,6 +20,7 @@ const RAIL_ITEMS = [
   { id: "sec-identity", label: "Profile" },
   { id: "sec-session", label: "Session" },
 ];
+const RAIL_ITEMS_DEV = [...RAIL_ITEMS, { id: "sec-dev", label: "Developer" }];
 
 const RAIL_ELSEWHERE = [
   { to: "/settings/notifications", label: "Notifications" },
@@ -111,9 +114,13 @@ export function ProfilePage(): React.ReactElement {
             onDisplayNameChange={(displayName) => setDraft({ ...draft, displayName })}
           />
           <SessionSection />
+          {isDevModeEmail(authUser.email) && <DevModeSection />}
         </div>
 
-        <PageRail items={RAIL_ITEMS} elsewhere={RAIL_ELSEWHERE} />
+        <PageRail
+          items={isDevModeEmail(authUser.email) ? RAIL_ITEMS_DEV : RAIL_ITEMS}
+          elsewhere={RAIL_ELSEWHERE}
+        />
       </div>
 
       <SaveBar
