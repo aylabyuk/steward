@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
+import { letterCanvasToPdf } from "@/features/page-editor/letterToPdf";
+import { shareLetterPdf } from "@/features/page-editor/shareLetterPdf";
 import type { ActionMode } from "./SpeakerActionPicker";
 import type { useWizardActions } from "./useWizardActions";
 import type { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
@@ -72,9 +74,29 @@ export function useReviewLetterAction(args: Args) {
       return;
     }
     await form.persistOverrides();
-    window.print();
-    setPostPrint(true);
+    const target = document.querySelector<HTMLElement>("[data-print-only-letter]");
+    if (!target) {
+      actions.setError("Could not find the letter to share.");
+      return;
+    }
+    try {
+      const filename = pdfFilename(speaker.data.name, date);
+      const { file } = await letterCanvasToPdf(target, filename);
+      await shareLetterPdf(file, filename, `Invitation for ${speaker.data.name}`);
+      setPostPrint(true);
+    } catch (e) {
+      actions.setError(e instanceof Error ? e.message : "Could not share the letter.");
+    }
   }
 
   return { handle, postPrint };
+}
+
+function pdfFilename(speakerName: string, date: string): string {
+  const slug = speakerName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `invitation-${slug || "speaker"}-${date}.pdf`;
 }
