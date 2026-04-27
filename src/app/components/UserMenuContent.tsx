@@ -40,9 +40,9 @@ export function UserMenuContent({ onClose }: Props) {
 
   return (
     <>
-      <div className="flex items-center gap-3 border-b border-border px-2.5 py-2.5">
+      <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center sm:gap-3 border-b border-border px-2.5 py-3 sm:py-2.5">
         <Avatar user={avatarUser} size="lg" />
-        <div className="min-w-0">
+        <div className="min-w-0 text-center sm:text-left">
           <div className="truncate text-sm font-medium text-walnut">{name}</div>
           <div className="truncate text-[11px] text-walnut-3">{user?.email}</div>
         </div>
