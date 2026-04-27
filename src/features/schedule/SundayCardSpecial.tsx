@@ -38,8 +38,8 @@ export function SundayCardSpecial({
   hidePlanLink = false,
 }: Props) {
   return (
-    <div className="flex flex-1 flex-col px-4 pb-4">
-      <div className="flex items-center gap-2.5 pt-1 pb-1">
+    <div className="flex flex-1 flex-col px-4 pt-3 pb-4">
+      <div className="flex items-center gap-2.5 pb-1">
         <span
           className={cn(
             "w-5.5 h-5.5 rounded-full border inline-flex items-center justify-center font-display text-[11px] shrink-0",
