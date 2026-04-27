@@ -12,10 +12,10 @@ import {
   type Spread,
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { interpolate } from "@/features/templates/interpolate";
+import { interpolate } from "@/features/templates/utils/interpolate";
 import { EditPropModal } from "../EditPropModal";
-import { useLetterVars } from "../letterRenderContext";
-import { LETTER_VARIABLES } from "../letterVariables";
+import { useLetterVars } from "../utils/letterRenderContext";
+import { LETTER_VARIABLES } from "../utils/letterVariables";
 
 export type SerializedCalloutNode = Spread<{ label: string; body: string }, SerializedLexicalNode>;
 

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ensureMeetingDoc } from "@/features/meetings/utils/ensureMeetingDoc";
 import type { NonMeetingSunday } from "@/lib/types";
-import { createSpeaker } from "./speakerActions";
+import { createSpeaker } from "./utils/speakerActions";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),

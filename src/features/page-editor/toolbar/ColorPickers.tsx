@@ -1,7 +1,7 @@
 import type { LexicalEditor } from "lexical";
 import { Icon } from "./Icon";
-import { patchSelectionStyle } from "./patchStyleWithChips";
-import { usePopover } from "./usePopover";
+import { patchSelectionStyle } from "./utils/patchStyleWithChips";
+import { usePopover } from "./hooks/usePopover";
 
 const FONT_COLORS = [
   "#3B2A22",

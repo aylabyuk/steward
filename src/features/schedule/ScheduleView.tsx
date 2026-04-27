@@ -10,7 +10,7 @@ import { PageHead } from "./PageHead";
 import { HorizonSelect } from "./HorizonSelect";
 import { SundayCard } from "./SundayCard";
 import { QuarterSection } from "./QuarterSection";
-import { groupByMonth } from "./groupByMonth";
+import { groupByMonth } from "./utils/groupByMonth";
 
 export function ScheduleView() {
   const wardId = useCurrentWardStore((s) => s.wardId);

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useSpeakers } from "@/hooks/useMeeting";
 import type { NonMeetingSunday } from "@/lib/types";
-import { deleteSpeaker } from "@/features/speakers/speakerActions";
+import { deleteSpeaker } from "@/features/speakers/utils/speakerActions";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import { emptyDraft, fromSpeaker, type RosterDraft } from "./rosterDraft";
-import { persistRoster } from "./persistRoster";
+import { emptyDraft, fromSpeaker, type RosterDraft } from "./utils/rosterDraft";
+import { persistRoster } from "./utils/persistRoster";
 import { RosterRow } from "./RosterRow";
 import { WizardFooter } from "./WizardFooter";
 

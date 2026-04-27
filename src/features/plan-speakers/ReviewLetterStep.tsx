@@ -6,18 +6,18 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
 import { useLatestInvitation } from "@/features/invitations/hooks/useLatestInvitation";
-import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
-import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
-import { interpolate } from "@/features/templates/interpolate";
-import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
+import { useSpeakerLetterTemplate } from "@/features/templates/hooks/useSpeakerLetterTemplate";
+import { usePrepareInvitation } from "@/features/templates/hooks/usePrepareInvitation";
+import { interpolate } from "@/features/templates/utils/interpolate";
+import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
 import { MobileLetterPreview } from "@/features/page-editor/MobileLetterPreview";
-import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
+import { resolveChipsInState } from "@/features/page-editor/utils/serializeForInterpolation";
 import { PostPrintConfirmStep } from "./PostPrintConfirmStep";
 import { ReviewLetterFooter } from "./ReviewLetterFooter";
-import { useReviewLetterAction } from "./useReviewLetterAction";
-import { useWizardActions } from "./useWizardActions";
+import { useReviewLetterAction } from "./hooks/useReviewLetterAction";
+import { useWizardActions } from "./hooks/useWizardActions";
 import type { ActionMode } from "./SpeakerActionPicker";
 
 interface Props {

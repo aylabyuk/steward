@@ -6,10 +6,10 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { DesktopOnlyNotice } from "@/features/page-editor/DesktopOnlyNotice";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
-import { LETTER_VARIABLE_SAMPLES } from "@/features/page-editor/letterVariables";
-import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
-import { useSpeakerLetterTemplateEditor } from "@/features/page-editor/useSpeakerLetterTemplateEditor";
-import { interpolate } from "@/features/templates/interpolate";
+import { LETTER_VARIABLE_SAMPLES } from "@/features/page-editor/utils/letterVariables";
+import { resolveChipsInState } from "@/features/page-editor/utils/serializeForInterpolation";
+import { useSpeakerLetterTemplateEditor } from "@/features/page-editor/hooks/useSpeakerLetterTemplateEditor";
+import { interpolate } from "@/features/templates/utils/interpolate";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 

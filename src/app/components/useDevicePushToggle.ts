@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { subscribeDevice, unsubscribeDevice } from "@/features/notifications/fcmToken";
-import { useCurrentDeviceToken } from "@/features/notifications/useCurrentDeviceToken";
+import { subscribeDevice, unsubscribeDevice } from "@/features/notifications/utils/fcmToken";
+import { useCurrentDeviceToken } from "@/features/notifications/hooks/useCurrentDeviceToken";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 

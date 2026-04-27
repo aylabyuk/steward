@@ -7,7 +7,7 @@ import { useConversationUnread } from "@/features/invitations/hooks/useConversat
 import { useInvitationSession } from "@/features/invitations/hooks/useInvitationSession";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
-import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation";
+import { useSpeakerInvitation } from "@/features/templates/hooks/useSpeakerInvitation";
 import type { SpeakerInvitation } from "@/lib/types";
 import { SpeakerChatFloatingDrawer } from "./invite-speaker-chat-drawer";
 import { SpeakerChatCTABanner, type CtaVariant } from "./invite-speaker-cta-banner";

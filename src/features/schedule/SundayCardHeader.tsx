@@ -2,8 +2,8 @@ import { Link } from "react-router";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { useSundayInvitationsSummary } from "@/features/invitations/hooks/useSundayInvitationsSummary";
-import type { KindVariant } from "./kindLabel";
-import { formatShortDate, formatCountdown } from "./dateFormat";
+import type { KindVariant } from "./utils/kindLabel";
+import { formatShortDate, formatCountdown } from "./utils/dateFormat";
 import { SundayTypeMenu } from "./SundayTypeMenu";
 
 interface Props {

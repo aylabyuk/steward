@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/cn";
-import { renderLetterState } from "@/features/page-editor/renderLetterState";
+import { renderLetterState } from "@/features/page-editor/utils/renderLetterState";
 
 /** Natural width of the full letter-sheet variant, in CSS pixels.
  *  8.5 in × 96 dpi = 816 px. Exported so preview wrappers can compute

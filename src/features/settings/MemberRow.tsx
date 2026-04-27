@@ -3,7 +3,7 @@ import { Select } from "@/components/ui/Select";
 import type { WithId } from "@/hooks/_sub";
 import type { Calling, Member } from "@/lib/types";
 import { CALLING_OPTIONS } from "@/lib/callingLabels";
-import { LastBishopricError, setActive, setCcOnEmails, updateCalling } from "./memberActions";
+import { LastBishopricError, setActive, setCcOnEmails, updateCalling } from "./utils/memberActions";
 
 interface Props {
   wardId: string;

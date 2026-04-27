@@ -8,9 +8,9 @@ import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import type { LetterPageStyle, ProgramTemplateKey } from "@/lib/types";
 import { DEFAULT_MARGINS } from "@/features/program-templates/ProgramCanvas";
-import { defaultProgramTemplate } from "@/features/program-templates/programTemplateDefaults";
-import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
-import { writeProgramTemplate } from "@/features/program-templates/writeProgramTemplate";
+import { defaultProgramTemplate } from "@/features/program-templates/utils/programTemplateDefaults";
+import { useProgramTemplate } from "@/features/program-templates/hooks/useProgramTemplate";
+import { writeProgramTemplate } from "@/features/program-templates/utils/writeProgramTemplate";
 import { DesktopOnlyNotice } from "@/features/page-editor/DesktopOnlyNotice";
 import { ProgramPageEditor } from "@/features/page-editor/ProgramPageEditor";
 
