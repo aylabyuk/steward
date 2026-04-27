@@ -1,8 +1,11 @@
 import { Link } from "react-router";
 import type { SacramentMeeting, Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
+import { EmptyRosterRow } from "./EmptyRosterRow";
 import { PrayerRow } from "./PrayerRow";
 import { SpeakerRow } from "./SpeakerRow";
+
+const SPEAKER_SLOT_COUNT = 4;
 
 interface Props {
   speakers: WithId<Speaker>[];
@@ -11,18 +14,26 @@ interface Props {
 }
 
 export function SundayCardBody({ speakers, date, meeting }: Props) {
-  const hasSpeakers = speakers.length > 0;
+  // Fixed slot count keeps every Sunday card the same height across
+  // the schedule grid — actual speakers fill the first slots, empty
+  // placeholder rows back-fill up to SPEAKER_SLOT_COUNT.
+  const placeholderCount = Math.max(0, SPEAKER_SLOT_COUNT - speakers.length);
   return (
     <div className="px-4 pb-4">
-      {hasSpeakers ? (
-        <ul className="list-none m-0 p-0 mb-2">
-          {speakers.map((s, idx) => (
-            <SpeakerRow key={s.id} number={idx + 1} speaker={s.data} speakerId={s.id} date={date} />
-          ))}
-        </ul>
-      ) : (
-        <p className="font-serif italic text-sm text-walnut-3 py-2">No speakers yet.</p>
-      )}
+      <ul className="list-none m-0 p-0 mb-2">
+        {speakers.map((s, idx) => (
+          <SpeakerRow key={s.id} number={idx + 1} speaker={s.data} speakerId={s.id} date={date} />
+        ))}
+        {Array.from({ length: placeholderCount }, (_, i) => {
+          const slot = speakers.length + i + 1;
+          return (
+            <EmptyRosterRow
+              key={`empty-speaker-${slot}`}
+              leadingLabel={String(slot).padStart(2, "0")}
+            />
+          );
+        })}
+      </ul>
       <ul className="list-none m-0 p-0 mb-2 border-t border-border pt-1">
         <PrayerRow
           role="opening"
