@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 import type { LetterPageStyle, ProgramTemplateKey } from "@/lib/types";
-import { GROUP_LABEL, PROGRAM_VARIABLES } from "@/features/program-templates/utils/programVariables";
+import {
+  GROUP_LABEL,
+  PROGRAM_VARIABLES,
+} from "@/features/program-templates/utils/programVariables";
 import { PAGE_EDITOR_BASE_NODES } from "./utils/pageEditorNodes";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";

@@ -1,5 +1,9 @@
 import type { TextMatchTransformer } from "@lexical/markdown";
-import { $createVariableChipNode, $isVariableChipNode, VariableChipNode } from "../VariableChipNode";
+import {
+  $createVariableChipNode,
+  $isVariableChipNode,
+  VariableChipNode,
+} from "../VariableChipNode";
 
 /** Round-trips `{{token}}` text ↔ `VariableChipNode` so a Lexical
  *  editor backed by markdown storage (the speaker letter template,

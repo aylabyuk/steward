@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
 import { AppShell } from "@/app/components/AppShell";
-import { WardPicker } from "@/app/components/ward-picker";
+import { WardPicker } from "@/app/components/WardPicker";
 import { useMemberProfileSync } from "@/app/hooks/useMemberProfileSync";
 import { useWardAccess } from "@/hooks/useWardAccess";
 import { useAuthStore } from "@/stores/authStore";

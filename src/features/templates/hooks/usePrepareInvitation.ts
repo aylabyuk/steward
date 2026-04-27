@@ -8,7 +8,10 @@ import {
   DEFAULT_SPEAKER_LETTER_BODY,
   DEFAULT_SPEAKER_LETTER_FOOTER,
 } from "../utils/speakerLetterDefaults";
-import { clearSpeakerLetterOverride, saveSpeakerLetterOverride } from "../utils/speakerLetterOverride";
+import {
+  clearSpeakerLetterOverride,
+  saveSpeakerLetterOverride,
+} from "../utils/speakerLetterOverride";
 
 interface Args {
   wardId: string;
