@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
 import { updateSpeaker } from "@/features/speakers/speakerActions";
+import type { PrayerRole } from "@/lib/types";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
 import type { Speaker, SpeakerInvitation, SpeakerStatus } from "@/lib/types";
@@ -66,7 +68,11 @@ export function BishopInvitationChat({
   async function onStatusChange(next: SpeakerStatus) {
     setApplyError(null);
     try {
-      await updateSpeaker(wardId, date, speakerId, { status: next });
+      if (invitation.kind === "prayer") {
+        await upsertPrayerParticipant(wardId, date, speakerId as PrayerRole, { status: next });
+      } else {
+        await updateSpeaker(wardId, date, speakerId, { status: next });
+      }
       await noteBishopStatusChange({
         wardId,
         invitationId,

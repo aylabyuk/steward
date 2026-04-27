@@ -8,6 +8,7 @@ import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { NotificationsPage } from "./routes/notifications";
+import { PlanPrayersRoute } from "./routes/plan-prayers";
 import { PlanSpeakersRoute } from "./routes/plan-speakers";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { PreparePrayerInvitationPage } from "./routes/prepare-prayer-invitation";
@@ -69,6 +70,7 @@ export const router = createBrowserRouter([
         element: <PreparePrayerInvitationPage />,
       },
       { path: "/plan/:date", element: <PlanSpeakersRoute /> },
+      { path: "/plan/:date/prayers", element: <PlanPrayersRoute /> },
     ],
   },
   // Accept-invite skips AuthGate because the invitee isn't a ward member
