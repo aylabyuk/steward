@@ -15,10 +15,14 @@ interface Props {
 }
 
 /** Floating chat drawer for the speaker invite page. Collapsed, it
- *  shows a pill-shaped FAB bottom-right. Opened, it fills the screen
- *  on mobile and docks as a ~420px wide panel bottom-right on sm+.
- *  Body scroll is locked while open to keep the letter behind from
- *  rubber-banding on iOS. */
+ *  shows a pill-shaped FAB bottom-right. Opened on **mobile**, it
+ *  slides up from the bottom as a sheet (with a grab handle and
+ *  rounded top corners) so the top of the letter remains visible
+ *  behind it. Opened on **desktop** (sm+), it docks as a ~420px
+ *  wide panel in the bottom-right with a small inset — the speaker
+ *  has the screen real estate to keep the letter visible alongside
+ *  it. Body scroll is locked while open to keep the letter behind
+ *  from rubber-banding on iOS. */
 export function SpeakerChatFloatingDrawer({
   open,
   onOpenChange,
@@ -71,12 +75,20 @@ export function SpeakerChatFloatingDrawer({
       role="dialog"
       aria-modal="true"
       aria-label="Conversation with the bishopric"
-      className="fixed inset-0 z-20 bg-[rgba(35,24,21,0.42)] flex items-stretch sm:items-end justify-end sm:p-4 animate-[fade_160ms_ease-out]"
+      className="fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)] flex items-end justify-center sm:justify-end sm:p-4 animate-[fade_160ms_ease-out]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOpenChange(false);
       }}
     >
-      <div className="bg-chalk flex flex-col w-full h-dvh sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border sm:border-border-strong sm:shadow-elev-3 overflow-hidden">
+      <div className="bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)] sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border-b sm:animate-none">
+        <button
+          type="button"
+          aria-label="Close conversation"
+          onClick={() => onOpenChange(false)}
+          className="flex-none flex items-center justify-center pt-2.5 pb-1.5 hover:bg-[rgba(35,24,21,0.04)] cursor-pointer sm:hidden"
+        >
+          <span className="block w-10 h-1 rounded-full bg-walnut-2/40" />
+        </button>
         {children}
       </div>
     </div>
