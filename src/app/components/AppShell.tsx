@@ -65,7 +65,7 @@ export function AppShell() {
           <BuiltByCredit />
         </footer>
       </div>
-      <UserSideDrawer />
+      {isMobile && <UserSideDrawer />}
     </div>
   );
 }
