@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Drawer } from "vaul";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import type { CtaVariant } from "./SpeakerChatCTABanner";
 
 interface Props {
@@ -15,27 +16,35 @@ interface Props {
 }
 
 /** Floating chat drawer for the speaker invite page. Collapsed, it
- *  shows a pill-shaped FAB bottom-right. Opened, it slides up as a
- *  `vaul` Drawer — full-width on mobile, max-width centered-bottom
- *  on desktop. Vaul handles drag-to-dismiss, ESC, backdrop tap, and
- *  scroll lock; we just render the chrome. */
+ *  shows a pill-shaped FAB bottom-right. Mobile gets a bottom sheet
+ *  that slides up; desktop gets a side drawer that slides in from the
+ *  right edge so the speaker's letter behind it stays glanceable.
+ *  Vaul handles drag-to-dismiss (down on mobile, right on desktop),
+ *  ESC, backdrop tap, and scroll lock; we just render the chrome. */
 export function SpeakerChatFloatingDrawer({
   open,
   onOpenChange,
   attention,
   children,
 }: Props): React.ReactElement {
+  const isMobile = useIsMobile();
+  const contentClass = isMobile
+    ? "fixed bottom-0 left-0 right-0 z-20 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none"
+    : "fixed inset-y-0 right-0 z-20 flex w-[min(26.25rem,100vw)] flex-col bg-chalk shadow-elev-3 border-l border-border-strong outline-none";
   return (
     <>
       {!open && <Fab attention={attention ?? null} onClick={() => onOpenChange(true)} />}
-      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+      <Drawer.Root
+        open={open}
+        onOpenChange={onOpenChange}
+        direction={isMobile ? "bottom" : "right"}
+      >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)]" />
-          <Drawer.Content
-            aria-describedby={undefined}
-            className="fixed bottom-0 left-0 right-0 z-20 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none sm:left-auto sm:right-4 sm:bottom-4 sm:h-[80dvh] sm:w-[min(26.25rem,calc(100dvw-2rem))] sm:rounded-[14px] sm:border-b"
-          >
-            <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40 sm:hidden" />
+          <Drawer.Content aria-describedby={undefined} className={contentClass}>
+            {isMobile && (
+              <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40" />
+            )}
             <Drawer.Title className="sr-only">Conversation with the bishopric</Drawer.Title>
             {children}
           </Drawer.Content>
