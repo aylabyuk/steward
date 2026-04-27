@@ -30,10 +30,22 @@ function readConfig() {
   };
 }
 
+// Resolve the emulator host from `window.location.hostname` so the
+// SDK reaches the emulators on whatever interface the page was
+// loaded over: `127.0.0.1` from desktop localhost, the Mac's LAN IP
+// (e.g. `192.168.2.24`) when testing from a phone on the same WiFi.
+// Pair with `firebase.json`'s `"host": "0.0.0.0"` so the emulators
+// actually listen on the LAN interface.
+function emulatorHost(): string {
+  if (typeof window === "undefined") return "127.0.0.1";
+  return window.location.hostname || "127.0.0.1";
+}
+
 function connectEmulators(auth: Auth, db: Firestore, functions: Functions): void {
-  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-  connectFirestoreEmulator(db, "127.0.0.1", 8080);
-  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  const host = emulatorHost();
+  connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
+  connectFirestoreEmulator(db, host, 8080);
+  connectFunctionsEmulator(functions, host, 5001);
 }
 
 export const app: FirebaseApp = initializeApp(readConfig());
