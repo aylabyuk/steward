@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { doc, getDoc } from "firebase/firestore";
+import { BuiltByCredit } from "@/components/BuiltByCredit";
 import { AcceptInviteBody, type AcceptInviteState } from "@/features/invites/AcceptInviteBody";
 import { acceptInvite, findInvitesForEmail } from "@/features/invites/inviteActions";
 import { db } from "@/lib/firebase";
@@ -92,15 +93,18 @@ export function AcceptInvitePage() {
 
   return (
     <main className="min-h-dvh bg-parchment paper-grain grid place-items-center p-6">
-      <div className="w-full max-w-md rounded-[14px] border border-border-strong bg-chalk p-7 shadow-elev-3">
-        <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
-          Ward invitation
+      <div className="w-full max-w-md flex flex-col items-center gap-4">
+        <div className="w-full rounded-[14px] border border-border-strong bg-chalk p-7 shadow-elev-3">
+          <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
+            Ward invitation
+          </div>
+          <AcceptInviteBody
+            state={state}
+            onAccept={() => void accept()}
+            onSignOut={() => void signOut()}
+          />
         </div>
-        <AcceptInviteBody
-          state={state}
-          onAccept={() => void accept()}
-          onSignOut={() => void signOut()}
-        />
+        <BuiltByCredit />
       </div>
     </main>
   );
