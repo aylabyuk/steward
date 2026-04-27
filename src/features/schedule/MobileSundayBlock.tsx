@@ -94,6 +94,7 @@ export function MobileSundayBlock({
             currentType={type}
             locked={hasConfirmedSpeaker}
             nonMeetingSundays={nonMeetingSundays}
+            showPlanActions
           />
         </div>
       </div>
@@ -136,6 +137,7 @@ function Body({ cancelled, cancelReason, kind, date, meeting, speakers }: BodyPr
         description={kind.description}
         date={date}
         meeting={meeting}
+        hidePlanLink
       />
     );
   }

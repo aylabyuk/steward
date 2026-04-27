@@ -3,6 +3,7 @@ import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { updateMeetingField } from "@/features/meetings/utils/updateMeeting";
 import { TYPE_LABELS } from "@/features/meetings/utils/meetingLabels";
 import { cn } from "@/lib/cn";
+import { SundayMenuPlanActions } from "./SundayMenuPlanActions";
 
 interface Props {
   wardId: string;
@@ -10,11 +11,23 @@ interface Props {
   currentType: MeetingType;
   locked: boolean;
   nonMeetingSundays: readonly NonMeetingSunday[];
+  /** When true, surface "Plan speakers" / "Plan prayers" actions at
+   *  the top of the menu. Used by the mobile list view, where hover-
+   *  revealed plan links don't translate. Desktop cards keep their
+   *  inline plan links and leave this off. */
+  showPlanActions?: boolean;
 }
 
 const TYPES: readonly MeetingType[] = ["regular", "fast", "stake", "general"];
 
-export function SundayTypeMenu({ wardId, date, currentType, locked, nonMeetingSundays }: Props) {
+export function SundayTypeMenu({
+  wardId,
+  date,
+  currentType,
+  locked,
+  nonMeetingSundays,
+  showPlanActions = false,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -64,6 +77,7 @@ export function SundayTypeMenu({ wardId, date, currentType, locked, nonMeetingSu
           role="menu"
           className="absolute right-0 mt-1.5 min-w-50 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-20 animate-[menuIn_120ms_ease-out]"
         >
+          {showPlanActions && <SundayMenuPlanActions date={date} onSelect={() => setOpen(false)} />}
           <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-walnut-3 px-2.5 pt-1.5 pb-1">
             Sunday type
           </div>
