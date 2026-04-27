@@ -82,7 +82,7 @@ export function HorizonSelect({ value, onChange }: Props) {
       {open && (
         <div
           ref={menuRef}
-          className="absolute right-0 top-full mt-1.5 min-w-50 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-10 animate-[menuIn_120ms_ease-out]"
+          className="absolute right-0 top-full mt-1.5 min-w-50 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-30 animate-[menuIn_120ms_ease-out]"
         >
           {HORIZON_OPTIONS.map((option) => (
             <button
