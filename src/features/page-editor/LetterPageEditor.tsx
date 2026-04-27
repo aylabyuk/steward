@@ -7,12 +7,14 @@ import {
   buildInitialLetterState,
 } from "./letterEditorConfig";
 import {
+  type LetterVariable,
   LETTER_VARIABLE_GROUP_LABEL,
   LETTER_VARIABLE_SAMPLES,
   LETTER_VARIABLES,
 } from "./letterVariables";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
+import type { SlashCommand } from "./plugins/SlashCommandRegistry";
 import { useFitZoom } from "./useFitZoom";
 import { VariableRegistryProvider } from "./variableRegistry";
 import { PageToolbar } from "./toolbar/PageToolbar";
@@ -43,6 +45,29 @@ interface Props {
    *  Template editor omits this — falls back to LETTER_VARIABLE_SAMPLES
    *  and the bordeaux banner explains why. */
   vars?: Readonly<Record<string, string>>;
+  /** Optional override for the initial-state builder so a parallel
+   *  editor (e.g. the prayer letter) can seed distinct chrome —
+   *  different Letterhead title, different default body markdown
+   *  hydration. Defaults to `buildInitialLetterState` (speaker). */
+  buildInitialState?: (md: { bodyMarkdown: string; footerMarkdown: string }) => () => void;
+  /** Optional override for the variable list shown in the Variables
+   *  dropdown + the slash-command registry's `/variable` chip
+   *  picker. Defaults to `LETTER_VARIABLES`. */
+  variables?: readonly LetterVariable[];
+  /** Optional override for the variable group labels (used by the
+   *  Variables dropdown's grouping). Defaults to
+   *  `LETTER_VARIABLE_GROUP_LABEL`. */
+  variableGroupLabels?: Record<LetterVariable["group"], string>;
+  /** Optional override for the sample bag the editor falls back to
+   *  when `vars` is omitted. Defaults to `LETTER_VARIABLE_SAMPLES`. */
+  variableSamples?: Readonly<Record<string, string>>;
+  /** Optional override for the slash-command registry. Defaults to
+   *  `LETTER_SLASH_COMMANDS`. */
+  slashCommands?: readonly SlashCommand[];
+  /** Lexical namespace for the composer. Stable per editor surface
+   *  so collaborative state + DOM debugging stay scoped. Defaults to
+   *  `"LetterPageEditor"`. */
+  namespace?: string;
   onChange: (stateJson: string) => void;
   onInitial?: (stateJson: string) => void;
   onPageStyleChange?: (next: LetterPageStyle) => void;
@@ -62,13 +87,19 @@ export function LetterPageEditor({
   pageStyle,
   showSampleNotice,
   vars,
+  buildInitialState = buildInitialLetterState,
+  variables = LETTER_VARIABLES,
+  variableGroupLabels = LETTER_VARIABLE_GROUP_LABEL,
+  variableSamples = LETTER_VARIABLE_SAMPLES,
+  slashCommands = LETTER_SLASH_COMMANDS,
+  namespace = "LetterPageEditor",
   onChange,
   onInitial,
   onPageStyleChange,
   ariaLabel,
   editorDisabled,
 }: Props) {
-  const initialState = initialJson ?? buildInitialLetterState(initialMarkdown);
+  const initialState = initialJson ?? buildInitialState(initialMarkdown);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [zoomMode, setZoomMode] = useState<ZoomMode>({ kind: "fit-page" });
   const fits = useFitZoom(scrollRef, pageStyle);
@@ -81,29 +112,26 @@ export function LetterPageEditor({
   return (
     <LetterRenderContextProvider
       assignedDate={assignedDate}
-      vars={vars ?? LETTER_VARIABLE_SAMPLES}
+      vars={vars ?? variableSamples}
       liveValues={vars !== undefined}
     >
-      <VariableRegistryProvider
-        variables={LETTER_VARIABLES}
-        groupLabels={LETTER_VARIABLE_GROUP_LABEL}
-      >
+      <VariableRegistryProvider variables={variables} groupLabels={variableGroupLabels}>
         <div
           className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
         >
           <PageEditorComposer
-            namespace="LetterPageEditor"
+            namespace={namespace}
             nodes={LETTER_EDITOR_NODES}
             initialState={initialState}
             onChange={onChange}
             onInitial={onInitial}
             ariaLabel={ariaLabel}
-            slashCommands={LETTER_SLASH_COMMANDS}
+            slashCommands={slashCommands}
             pageToolbar={
               <PageToolbar
-                slashCommands={LETTER_SLASH_COMMANDS}
-                variables={LETTER_VARIABLES}
-                variableGroupLabels={LETTER_VARIABLE_GROUP_LABEL}
+                slashCommands={slashCommands}
+                variables={variables}
+                variableGroupLabels={variableGroupLabels}
                 pageStyle={pageStyle}
                 zoom={zoom}
                 zoomMode={zoomMode}

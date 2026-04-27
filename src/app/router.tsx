@@ -8,11 +8,13 @@ import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
 import { Login } from "./routes/login";
 import { NotificationsPage } from "./routes/notifications";
+import { PlanPrayersRoute } from "./routes/plan-prayers";
 import { PlanSpeakersRoute } from "./routes/plan-speakers";
 import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { PreparePrayerInvitationPage } from "./routes/prepare-prayer-invitation";
 import { ProfilePage } from "./routes/profile";
 import { TemplatesPage } from "./routes/templates";
+import { PrayerLetterTemplatePage } from "./routes/templates-prayer-letter";
 import { ProgramTemplatesPage } from "./routes/templates-programs";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speaker-letter";
 import { WardSettingsPage } from "./routes/ward-settings";
@@ -56,6 +58,10 @@ export const router = createBrowserRouter([
       },
       { path: "/settings/templates/programs", element: <ProgramTemplatesPage /> },
       {
+        path: "/settings/templates/prayer-letter",
+        element: <PrayerLetterTemplatePage />,
+      },
+      {
         path: "/week/:date/speaker/:speakerId/prepare",
         element: <PrepareInvitationPage />,
       },
@@ -64,6 +70,7 @@ export const router = createBrowserRouter([
         element: <PreparePrayerInvitationPage />,
       },
       { path: "/plan/:date", element: <PlanSpeakersRoute /> },
+      { path: "/plan/:date/prayers", element: <PlanPrayersRoute /> },
     ],
   },
   // Accept-invite skips AuthGate because the invitee isn't a ward member

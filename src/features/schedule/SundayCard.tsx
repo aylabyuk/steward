@@ -9,10 +9,12 @@ import { SundayCardHeader } from "./SundayCardHeader";
 import { SundayCardSpecial } from "./SundayCardSpecial";
 import { leadTimeSeverity } from "@/features/speakers/leadTime";
 
-const SEVERITY_TEXT: Record<"warn" | "urgent", string> = {
-  warn: "Less than 2 weeks notice — consider a later week.",
-  urgent: "Short notice — confirm speakers directly.",
-};
+// Lead-time severity computation stays live (the urgent flag still
+// styles the header's relative-time label in bordeaux); the banner
+// UI is silenced for now. Original copy was:
+//   warn:    "Less than 2 weeks notice — consider a later week."
+//   urgent:  "Short notice — confirm speakers directly."
+// Tracked for re-add — see GH issue.
 
 const CARD_BG: Record<KindVariant, string> = {
   regular: "bg-chalk",
@@ -54,34 +56,36 @@ export function SundayCard({
   }
 
   return (
-    <article className={cn("rounded-lg border border-border shadow-elev-1", CARD_BG[kind.variant])}>
-      <SundayCardHeader
-        date={date}
-        wardId={wardId}
-        currentType={type}
-        nonMeetingSundays={nonMeetingSundays}
-        urgent={severity === "urgent"}
-        {...(kind.badge ? { badge: kind.badge } : {})}
-        variant={kind.variant}
-        locked={hasConfirmedSpeaker}
-      />
-
-      {!kind.isSpecial && severity !== "none" && (
-        <div className="mx-4 mb-3 rounded-md border border-danger-soft bg-danger-soft/30 px-3 py-2 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-bordeaux shrink-0" />
-          <span className="text-[12.5px] text-bordeaux-deep">{SEVERITY_TEXT[severity]}</span>
-        </div>
-      )}
-
-      {kind.isSpecial ? (
-        <SundayCardSpecial
+    <div className="relative h-full">
+      <article
+        className={cn(
+          "relative flex h-full flex-col rounded-lg border border-border shadow-elev-1",
+          CARD_BG[kind.variant],
+        )}
+      >
+        <SundayCardHeader
+          date={date}
+          wardId={wardId}
+          currentType={type}
+          nonMeetingSundays={nonMeetingSundays}
+          urgent={severity === "urgent"}
+          {...(kind.badge ? { badge: kind.badge } : {})}
           variant={kind.variant}
-          stampLabel={kind.stampLabel}
-          description={kind.description}
+          locked={hasConfirmedSpeaker}
         />
-      ) : (
-        <SundayCardBody speakers={speakers} date={date} />
-      )}
-    </article>
+
+        {kind.isSpecial ? (
+          <SundayCardSpecial
+            variant={kind.variant}
+            stampLabel={kind.stampLabel}
+            description={kind.description}
+            date={date}
+            meeting={meeting ?? null}
+          />
+        ) : (
+          <SundayCardBody speakers={speakers} date={date} meeting={meeting ?? null} />
+        )}
+      </article>
+    </div>
   );
 }

@@ -20,16 +20,21 @@ interface Props {
    *  manual overrides via updateSpeaker. */
   speaker: Speaker;
   date: string;
+  /** Speaker doc ID, OR the prayer role string when `kind === "prayer"`. */
   speakerId: string;
+  /** Discriminator. Defaults to "speaker"; "prayer" routes status
+   *  writes + the no-invitation placeholder's Prepare CTA to the
+   *  prayer participant doc + prayer prepare-invitation route. */
+  kind?: "speaker" | "prayer";
 }
 
 /** Nested modal that hosts the bishop-side chat pane from inside the
  *  Assign Speakers modal. Renders at `z-[60]` (above the Assign
  *  modal's `z-50`), and closes on Escape or backdrop click. Uses the
- *  TwilioChatProvider established higher up the tree. Full-screen on
- *  mobile (100dvh, no padding), centered modal on sm+. Background
- *  scroll is locked while open so mobile rubber-banding doesn't drag
- *  the page behind it. */
+ *  TwilioChatProvider established higher up the tree. Slides up from
+ *  the bottom as a sheet on mobile (85dvh, rounded top corners, grab
+ *  handle), centered modal on sm+. Background scroll is locked while
+ *  open so mobile rubber-banding doesn't drag the page behind it. */
 export function BishopInvitationDialog({
   open,
   onClose,
@@ -39,6 +44,7 @@ export function BishopInvitationDialog({
   speaker,
   date,
   speakerId,
+  kind = "speaker",
 }: Props): React.ReactElement | null {
   useLockBodyScroll(open);
 
@@ -59,12 +65,20 @@ export function BishopInvitationDialog({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[60] bg-[rgba(35,24,21,0.42)] flex items-stretch sm:items-center justify-center sm:p-5 animate-[fade_160ms_ease-out]"
+      className="fixed inset-0 z-[60] bg-[rgba(35,24,21,0.42)] flex items-end sm:items-center justify-center sm:p-5 animate-[fade_160ms_ease-out]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-chalk flex flex-col w-full max-w-xl h-[100dvh] sm:h-auto sm:min-h-140 sm:max-h-[94vh] sm:rounded-[14px] sm:border sm:border-border-strong sm:shadow-elev-3 overflow-hidden">
+      <div className="bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)] sm:max-w-xl sm:h-auto sm:min-h-140 sm:max-h-[94vh] sm:rounded-[14px] sm:border-b sm:animate-none">
+        <button
+          type="button"
+          aria-label="Close conversation"
+          onClick={onClose}
+          className="flex-none flex items-center justify-center pt-2.5 pb-1.5 hover:bg-[rgba(35,24,21,0.04)] cursor-pointer sm:hidden"
+        >
+          <span className="block w-10 h-1 rounded-full bg-walnut-2/40" />
+        </button>
         <div className="flex items-start gap-3 px-5 py-3.5 border-b border-border bg-parchment">
           <div className="flex-1 min-w-0">
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
@@ -104,6 +118,7 @@ export function BishopInvitationDialog({
             speaker={speaker}
             speakerId={speakerId}
             date={date}
+            kind={kind}
             onNavigate={onClose}
           />
         )}
