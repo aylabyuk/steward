@@ -2,12 +2,15 @@ import { useState } from "react";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
 import { WizardFooter } from "@/features/plan-speakers/WizardFooter";
+import type { NonMeetingSunday } from "@/lib/types";
 import { PrayerRosterRow } from "./PrayerRosterRow";
 import { usePrayerPlanRow } from "./usePrayerPlanRow";
+import { validatePrayerRow } from "./validatePrayerRow";
 
 interface Props {
   wardId: string;
   date: string;
+  nonMeetingSundays: readonly NonMeetingSunday[];
   onContinue: () => void;
 }
 
@@ -15,7 +18,7 @@ interface Props {
  *  speakers but with a fixed 2-slot shape (Opening + Benediction).
  *  Persists name + contact onto the prayer participant docs at
  *  `meetings/{date}/prayers/{role}` before advancing. */
-export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
+export function PrayerRosterStep({ wardId, date, nonMeetingSundays, onContinue }: Props) {
   const opening = usePrayerPlanRow(date, "opening");
   const benediction = usePrayerPlanRow(date, "benediction");
   const [saving, setSaving] = useState(false);
@@ -26,7 +29,8 @@ export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
     { role: "benediction" as const, row: benediction },
   ];
   const validCount = rows.filter(({ row }) => row.name.trim()).length;
-  const canContinue = validCount > 0 && !saving;
+  const hasFieldError = rows.some(({ row }) => validatePrayerRow(row).hasError);
+  const canContinue = validCount > 0 && !hasFieldError && !saving;
 
   async function handleContinue() {
     setError(null);
@@ -38,6 +42,7 @@ export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
           name: row.name.trim(),
           email: row.email.trim(),
           phone: row.phone.trim(),
+          nonMeetingSundays,
         });
       }
       onContinue();
@@ -58,8 +63,16 @@ export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
           </p>
 
           <ul className="flex flex-col gap-3 list-none p-0 m-0">
-            <PrayerRosterRow row={opening} label="Opening prayer" />
-            <PrayerRosterRow row={benediction} label="Benediction" />
+            <PrayerRosterRow
+              row={opening}
+              label="Opening prayer"
+              autocompleteSection="prayer-opening"
+            />
+            <PrayerRosterRow
+              row={benediction}
+              label="Benediction"
+              autocompleteSection="prayer-benediction"
+            />
           </ul>
 
           {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
