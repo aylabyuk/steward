@@ -55,7 +55,9 @@ export function PrayerRow({ inlineName, role, date }: Props) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
-        <div className="font-serif italic text-sm text-walnut-2 truncate">{ROLE_SUBTITLE[role]}</div>
+        <div className="font-serif italic text-sm text-walnut-2 truncate">
+          {ROLE_SUBTITLE[role]}
+        </div>
       </div>
       <div
         className={cn(
