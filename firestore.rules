@@ -203,6 +203,15 @@ service cloud.firestore {
           allow create, update, delete: if isActiveMember(wardId);
         }
 
+        // Prayer-giver participants. One doc per role
+        // (`opening` | `benediction`). Same trust boundary as
+        // speakers — any active bishopric/clerk member can read +
+        // mutate; non-members locked out.
+        match /prayers/{role} {
+          allow read: if isActiveMember(wardId);
+          allow create, update, delete: if isActiveMember(wardId);
+        }
+
         // Comments: any active member reads + creates (with authorUid tied
         // to the caller). Authors own their edits/soft-deletes; no one else
         // can mutate. authorUid on create MUST match request.auth.uid so a

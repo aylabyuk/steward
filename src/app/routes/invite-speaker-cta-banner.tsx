@@ -2,6 +2,9 @@ export type CtaVariant = "reply" | "unread";
 
 interface Props {
   variant: CtaVariant;
+  /** Discriminator from the invitation doc — adjusts the "speaking
+   *  invitation" copy to "prayer invitation" for prayer-givers. */
+  kind?: "speaker" | "prayer";
   onTap: () => void;
 }
 
@@ -9,8 +12,9 @@ interface Props {
  *  chat drawer. Shown only while the drawer is closed and something
  *  demands attention (no response yet, or an unread bishop message).
  *  Taps anywhere on the banner open the drawer. */
-export function SpeakerChatCTABanner({ variant, onTap }: Props): React.ReactElement {
-  const copy = variant === "reply" ? REPLY_COPY : UNREAD_COPY;
+export function SpeakerChatCTABanner({ variant, kind, onTap }: Props): React.ReactElement {
+  const copy =
+    variant === "reply" ? (kind === "prayer" ? REPLY_COPY_PRAYER : REPLY_COPY) : UNREAD_COPY;
   return (
     <button
       type="button"
@@ -42,6 +46,12 @@ const REPLY_COPY = {
   body: "Please reply to the speaking invitation",
   action: "Reply now",
   aria: "Please reply to the speaking invitation — tap to open the chat",
+};
+
+const REPLY_COPY_PRAYER = {
+  body: "Please reply to the prayer invitation",
+  action: "Reply now",
+  aria: "Please reply to the prayer invitation — tap to open the chat",
 };
 
 const UNREAD_COPY = {

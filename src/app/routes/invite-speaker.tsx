@@ -105,7 +105,11 @@ function InviteLandingContent({
       </div>
 
       {promptVariant && (
-        <SpeakerChatCTABanner variant={promptVariant} onTap={() => setChatOpen(true)} />
+        <SpeakerChatCTABanner
+          variant={promptVariant}
+          kind={invitation.kind}
+          onTap={() => setChatOpen(true)}
+        />
       )}
 
       <div
@@ -133,6 +137,7 @@ function InviteLandingContent({
               meetingDate={invitation.speakerRef.meetingDate}
               responseAnswer={invitation.response?.answer ?? null}
               currentStatus={invitation.currentSpeakerStatus ?? null}
+              {...(invitation.kind ? { kind: invitation.kind } : {})}
               onClose={() => setChatOpen(false)}
               fillHeight
             />
