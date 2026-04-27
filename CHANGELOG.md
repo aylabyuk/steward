@@ -7,6 +7,51 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-04-27
+
+A native-feel pass on navigation. Mobile gets iOS-style stacked page
+transitions — Schedule sits at the base of the stack, and any other
+page (Week, settings) slides on top from the right; the browser back
+gesture slides it back off. The user-menu destinations (Profile,
+Notifications, Ward settings, Templates) become full-screen modal
+pages with a sliver-style app bar that collapses smoothly as you
+scroll. Schedule remembers its scroll position when you open and
+dismiss a modal.
+
+### Added
+
+- **Native-stack page transitions** on mobile — built on React
+  Router v7's View Transitions integration. A wrapper around
+  `Link`/`useNavigate` (`@/lib/nav`) sets a `data-nav-direction`
+  attribute synchronously on every navigation; CSS keyframes keyed
+  off that attribute drive a slide-from-right (push) and
+  slide-to-right (pop). A `popstate` listener catches the browser
+  back button and iOS swipe-back. Desktop and `prefers-reduced-motion`
+  fall back to instant swaps with zero snapshot overhead.
+- **Full-screen modal layout** for user-menu pages — Profile,
+  Notifications, Ward settings, and Templates move out of `AppShell`
+  into a new `ModalPage` route layout with no Topbar. Settings now
+  feel like overlays sitting on top of Schedule rather than peer
+  pages with the same chrome.
+- **Sliver-style `AppBar`** on every modal page — large hero
+  (eyebrow + title + description) in normal flow with a 48px
+  compact bar (back arrow + small centered title) sticky at the top.
+  As the hero scrolls under the bar, the small title and a hairline
+  cross-fade in. Animation is opacity-only, GPU-composited, driven
+  by a rAF-throttled scroll handler reading the sentinel's viewport
+  position — no layout reflow per frame.
+- **Schedule scroll restoration** — `useScrollRestore` saves the
+  scroll position to `sessionStorage` on unmount and restores on
+  mount. Auto-detects the right scroll source (AppShell's inner
+  container on desktop, window on mobile). Opening a modal and
+  dismissing back to Schedule lands you at the same Sunday you left.
+
+### Changed
+
+- **Settings index `/settings` is no longer in-shell** — the legacy
+  redirect remains, but the four leaf pages route through the modal
+  layout instead of nesting under the AppShell topbar.
+
 ## [0.16.1] — 2026-04-27
 
 A polish-pass release on top of v0.16.0. Two layout fixes — desktop
@@ -1929,7 +1974,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/aylabyuk/steward/releases/tag/v0.17.0
 [0.16.1]: https://github.com/aylabyuk/steward/releases/tag/v0.16.1
 [0.16.0]: https://github.com/aylabyuk/steward/releases/tag/v0.16.0
 [0.15.0]: https://github.com/aylabyuk/steward/releases/tag/v0.15.0
