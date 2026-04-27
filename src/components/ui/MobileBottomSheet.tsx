@@ -1,6 +1,9 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { cn } from "@/lib/cn";
+
+const EXIT_MS = 200;
 
 interface Props {
   open: boolean;
@@ -24,7 +27,29 @@ interface Props {
  *  Without the portal, a sheet opened from inside a sticky row that
  *  uses `backdrop-blur-sm` ends up trapped inside the row. */
 export function MobileBottomSheet({ open, onClose, title, children }: Props) {
-  useLockBodyScroll(open);
+  // `open` flips immediately when the caller dismisses, but we keep the
+  // sheet mounted through the exit animation. `mounted` outlives `open`
+  // by EXIT_MS; `exiting` flags the exit-animation classes during that
+  // window so the slide-down + fade-out play before unmount.
+  const [mounted, setMounted] = useState(open);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      setExiting(false);
+      return;
+    }
+    if (!mounted) return;
+    setExiting(true);
+    const t = setTimeout(() => {
+      setMounted(false);
+      setExiting(false);
+    }, EXIT_MS);
+    return () => clearTimeout(t);
+  }, [open, mounted]);
+
+  useLockBodyScroll(mounted && !exiting);
 
   useEffect(() => {
     if (!open) return;
@@ -37,19 +62,29 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
     return () => document.removeEventListener("keydown", handleEsc, true);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!mounted) return null;
   if (typeof document === "undefined") return null;
 
   return createPortal(
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-40 bg-[rgba(35,24,21,0.32)] flex items-end justify-center animate-[fade_160ms_ease-out]"
+      className={cn(
+        "fixed inset-0 z-40 bg-[rgba(35,24,21,0.32)] flex items-end justify-center",
+        exiting ? "animate-[fadeOut_180ms_ease-in]" : "animate-[fade_160ms_ease-out]",
+      )}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-chalk flex flex-col w-full max-h-[75dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div
+        className={cn(
+          "bg-chalk flex flex-col w-full max-h-[75dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+          exiting
+            ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
+            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)]",
+        )}
+      >
         <button
           type="button"
           aria-label="Close"
