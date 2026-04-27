@@ -4,9 +4,6 @@ import { useMeeting } from "@/hooks/useMeeting";
 import { usePrayerParticipant } from "@/features/prayers/usePrayerParticipant";
 
 interface Result {
-  /** Mirrors the `role` argument so the consumer can pass the row
-   *  straight into writers without re-threading it. */
-  role: PrayerRole;
   /** Effective name — participant doc takes precedence over the
    *  inline `meeting.{role}.person.name` Assignment row. */
   name: string;
@@ -73,7 +70,6 @@ export function usePrayerPlanRow(date: string, role: PrayerRole): Result {
   ]);
 
   return {
-    role,
     name,
     email,
     phone,
