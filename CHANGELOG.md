@@ -7,6 +7,25 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.12.2] — 2026-04-27
+
+Real-device follow-up to the v0.12.1 mobile gate. The read-only path
+kept the Lexical editor + paginated stage and just hid the toolbar,
+which left the paper visibly tiny while the inner text rendered close
+to native size and produced 3 stacked page sheets the bishop couldn't
+navigate.
+
+### Fixed
+
+- **Mobile letter preview is now pinch / pan / zoom on a single page.**
+  The wizard's review step + the prepare-invitation tab render a
+  dedicated `MobileLetterPreview` instead of a hidden-toolbar Lexical
+  editor. Initial scale fits the paper to viewport width, pinch zooms
+  in to read, double-tap resets, drag pans the page. Variable chips +
+  `{{tokens}}` are pre-resolved against the speaker's vars so the
+  bishop sees the real letter, not sample values. The walnut "Editing
+  is desktop-only" notice strip stays pinned at top.
+
 ## [0.12.1] — 2026-04-27
 
 Mobile follow-up to the v0.12.0 WYSIWYG release. The page-scale
@@ -1582,7 +1601,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.12.2...HEAD
+[0.12.2]: https://github.com/aylabyuk/steward/releases/tag/v0.12.2
 [0.12.1]: https://github.com/aylabyuk/steward/releases/tag/v0.12.1
 [0.12.0]: https://github.com/aylabyuk/steward/releases/tag/v0.12.0
 [0.11.0]: https://github.com/aylabyuk/steward/releases/tag/v0.11.0
