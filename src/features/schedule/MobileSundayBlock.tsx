@@ -51,7 +51,7 @@ export function MobileSundayBlock({
 
   return (
     <article className={cn("border-b border-border", ROW_BG[kind.variant])}>
-      <div className="sticky top-12 z-10 flex items-center justify-between gap-3 px-4 py-2.5 bg-parchment/95 backdrop-blur-sm border-b border-border">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-2.5 bg-parchment/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-baseline gap-2 flex-1 min-w-0">
           <Link
             to={`/week/${date}`}
