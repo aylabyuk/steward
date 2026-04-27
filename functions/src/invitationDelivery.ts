@@ -24,11 +24,14 @@ export async function tryEmail(
   args: EmailArgs,
 ): Promise<DeliveryEntry> {
   try {
+    const subject = args.prayerType
+      ? `Prayer invitation — ${params.assignedDate}`
+      : `Speaking invitation — ${params.assignedDate}`;
     const messageId = await sendEmail({
       to: params.speakerEmail,
       fromDisplayName: `${params.inviterName} (via Steward)`,
       replyTo: params.replyToEmail,
-      subject: `Speaking invitation — ${params.assignedDate}`,
+      subject,
       text: buildEmailText(args),
       html: buildEmailHtml(args),
     });
@@ -43,9 +46,12 @@ export async function tryEmail(
 
 async function buildInitialInvitationSms(
   wardId: string,
-  vars: Pick<EmailArgs, "inviterName" | "wardName" | "assignedDate" | "inviteUrl">,
+  vars: Pick<EmailArgs, "inviterName" | "wardName" | "assignedDate" | "inviteUrl"> & {
+    prayerType?: string;
+  },
 ): Promise<string> {
-  const template = await readMessageTemplate(getFirestore(), wardId, "initialInvitationSms");
+  const key = vars.prayerType ? "prayerInitialInvitationSms" : "initialInvitationSms";
+  const template = await readMessageTemplate(getFirestore(), wardId, key);
   return interpolate(template, vars);
 }
 
