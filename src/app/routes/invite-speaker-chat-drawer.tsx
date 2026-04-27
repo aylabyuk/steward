@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
-import type { CtaVariant } from "./SpeakerChatCTABanner";
+import type { CtaVariant } from "./invite-speaker-cta-banner";
 
 interface Props {
   /** Controlled open state so the parent can auto-open when chat
