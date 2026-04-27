@@ -4,6 +4,7 @@ import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
 import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "./hooks/useUpcomingMeetings";
+import { useInfiniteHorizon } from "./hooks/useInfiniteHorizon";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -13,6 +14,10 @@ import { SundayCard } from "./SundayCard";
 import { QuarterSection } from "./QuarterSection";
 import { MobileScheduleList } from "./MobileScheduleList";
 import { groupByMonth } from "./utils/groupByMonth";
+
+const MOBILE_INITIAL_WEEKS = 4;
+const MOBILE_STEP_WEEKS = 4;
+const MOBILE_MAX_WEEKS = 52;
 
 export function ScheduleView() {
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -28,7 +33,14 @@ export function ScheduleView() {
     if (stored) setHorizon(Number(stored));
   }, []);
 
-  const { slots, error } = useUpcomingMeetings(horizon);
+  const { weeks: mobileHorizon, sentinelRef } = useInfiniteHorizon(isMobile, {
+    initial: MOBILE_INITIAL_WEEKS,
+    step: MOBILE_STEP_WEEKS,
+    max: MOBILE_MAX_WEEKS,
+  });
+
+  const horizonInUse = isMobile ? mobileHorizon : horizon;
+  const { slots, error } = useUpcomingMeetings(horizonInUse);
 
   if (!wardId) return null;
 
@@ -52,15 +64,18 @@ export function ScheduleView() {
           eyebrow="Sacrament meeting"
           title="Schedule"
           subtitle="Assign speakers for the weeks ahead."
-          rightSlot={<HorizonSelect value={horizon} onChange={setHorizon} />}
+          rightSlot={isMobile ? null : <HorizonSelect value={horizon} onChange={setHorizon} />}
         />
 
         {isMobile ? (
-          <MobileScheduleList
-            monthGroups={monthGroups}
-            leadTimeDays={leadTimeDays}
-            nonMeetingSundays={nonMeeting}
-          />
+          <>
+            <MobileScheduleList
+              monthGroups={monthGroups}
+              leadTimeDays={leadTimeDays}
+              nonMeetingSundays={nonMeeting}
+            />
+            <div ref={sentinelRef} aria-hidden className="h-px" />
+          </>
         ) : (
           <div className="mt-8">
             {monthGroups.map((group) => (
