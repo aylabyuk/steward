@@ -21,11 +21,16 @@ const STATE_CLS: Record<InvitationStatus, string> = {
 };
 
 const ROLE_LABEL: Record<PrayerRole, string> = {
-  opening: "Opening",
+  opening: "OP",
+  benediction: "CP",
+};
+
+const ROLE_SUBTITLE: Record<PrayerRole, string> = {
+  opening: "Invocation",
   benediction: "Benediction",
 };
 
-const ROLE_WIDTH_CLS = "w-20";
+const ROLE_WIDTH_CLS = "w-6";
 
 /** Sunday-card row for a prayer slot. Mirrors `SpeakerRow`'s rhythm:
  *  role label, name, status pill, chat launcher. Falls back to
@@ -50,6 +55,7 @@ export function PrayerRow({ inlineName, role, date }: Props) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
+        <div className="font-serif italic text-sm text-walnut-2 truncate">{ROLE_SUBTITLE[role]}</div>
       </div>
       <div
         className={cn(
