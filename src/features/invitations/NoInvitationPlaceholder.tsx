@@ -1,18 +1,26 @@
 import { useState } from "react";
 import { SpeakerStatusPills } from "@/features/schedule/SpeakerStatusPills";
 import { statusProvenanceLabel } from "@/features/schedule/statusProvenance";
+import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
 import { updateSpeaker } from "@/features/speakers/speakerActions";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/cn";
-import type { Speaker, SpeakerStatus } from "@/lib/types";
+import type { PrayerRole, Speaker, SpeakerStatus } from "@/lib/types";
 import { statusStripBg } from "./statusStripBg";
 
 interface Props {
   wardId: string;
   speaker: Speaker;
+  /** For speaker invitations: the speaker doc ID. For prayer
+   *  invitations: the role string ("opening" | "benediction"),
+   *  matching the prayer participant doc path. */
   speakerId: string;
   date: string;
+  /** Discriminator. Defaults to "speaker"; "prayer" routes the
+   *  Prepare CTA to the prayer prepare-invitation route and the
+   *  status pill writes to the prayer participant doc. */
+  kind?: "speaker" | "prayer";
   onNavigate?: () => void;
 }
 
@@ -29,12 +37,16 @@ export function NoInvitationPlaceholder({
   speaker,
   speakerId,
   date,
+  kind = "speaker",
   onNavigate,
 }: Props): React.ReactElement {
   const user = useAuthStore((s) => s.user);
   const members = useWardMembers();
   const [statusError, setStatusError] = useState<string | null>(null);
-  const prepareHref = `/week/${encodeURIComponent(date)}/speaker/${encodeURIComponent(speakerId)}/prepare`;
+  const prepareHref =
+    kind === "prayer"
+      ? `/week/${encodeURIComponent(date)}/prayer/${encodeURIComponent(speakerId)}/prepare`
+      : `/week/${encodeURIComponent(date)}/speaker/${encodeURIComponent(speakerId)}/prepare`;
   const view = deriveView(speaker);
   const provenance = statusProvenanceLabel(speaker, members);
 
@@ -50,7 +62,11 @@ export function NoInvitationPlaceholder({
   async function onStatusChange(next: SpeakerStatus) {
     setStatusError(null);
     try {
-      await updateSpeaker(wardId, date, speakerId, { status: next });
+      if (kind === "prayer") {
+        await upsertPrayerParticipant(wardId, date, speakerId as PrayerRole, { status: next });
+      } else {
+        await updateSpeaker(wardId, date, speakerId, { status: next });
+      }
     } catch (err) {
       setStatusError((err as Error).message);
     }

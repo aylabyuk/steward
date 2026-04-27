@@ -95,6 +95,17 @@ export const speakerLetterTemplateSchema = z.object({
 });
 export type SpeakerLetterTemplate = z.infer<typeof speakerLetterTemplateSchema>;
 
+/** Ward-level editable template for the prayer-giver invitation
+ *  letter. Same shape as the speaker letter template (Lexical state
+ *  + dual-written legacy markdown + page-frame style) but stored at
+ *  a separate Firestore path so the bishop can author the prayer
+ *  invitation distinctly — different default copy, different
+ *  variables (`{{prayerType}}`, `{{prayerGiverName}}`), and a
+ *  different look from the speaker letter without conflating the two.
+ *  Path: `wards/{wardId}/templates/prayerLetter`. */
+export const prayerLetterTemplateSchema = speakerLetterTemplateSchema;
+export type PrayerLetterTemplate = z.infer<typeof prayerLetterTemplateSchema>;
+
 /**
  * Ward-level editable template for the ward-member invitation message.
  *
