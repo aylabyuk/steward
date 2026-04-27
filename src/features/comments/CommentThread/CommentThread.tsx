@@ -1,7 +1,7 @@
-import { useComments } from "./hooks/useComments";
 import { ProgramSection } from "@/features/meetings/program/ProgramSection";
-import { CommentForm } from "./CommentForm";
-import { CommentItem } from "./CommentItem";
+import { CommentForm } from "../CommentForm";
+import { CommentItem } from "../CommentItem";
+import { useComments } from "../hooks/useComments";
 
 interface Props {
   wardId: string;
