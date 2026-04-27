@@ -12,8 +12,8 @@ import { usePrepareInvitation } from "@/features/templates/hooks/usePrepareInvit
 import { usePrepareInvitationActions } from "@/features/templates/hooks/usePrepareInvitationActions";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { PrepareInvitationPageMessage } from "./PrepareInvitationPageMessage";
-import { computeSendValidation } from "./prepare-invitation-validation";
+import { PrepareInvitationPageMessage } from "../PrepareInvitationPageMessage";
+import { computeSendValidation } from "./utils/prepareInvitationValidation";
 
 export function PrepareInvitationPage() {
   const { date, speakerId } = useParams<{ date: string; speakerId: string }>();
