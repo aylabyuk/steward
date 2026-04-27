@@ -19,7 +19,7 @@ export function SundayCardBody({ speakers, date, meeting }: Props) {
   // placeholder rows back-fill up to SPEAKER_SLOT_COUNT.
   const placeholderCount = Math.max(0, SPEAKER_SLOT_COUNT - speakers.length);
   return (
-    <div className="px-4 pb-4">
+    <div className="flex flex-1 flex-col px-4 pb-4">
       <ul className="list-none m-0 p-0 mb-2">
         {speakers.map((s, idx) => (
           <SpeakerRow key={s.id} number={idx + 1} speaker={s.data} speakerId={s.id} date={date} />
