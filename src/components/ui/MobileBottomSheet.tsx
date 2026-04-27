@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { cn } from "@/lib/cn";
 
 const EXIT_MS = 200;
-const ENTER_MS = 250;
-const DRAG_DISMISS_THRESHOLD = 100;
-const TAP_THRESHOLD = 5;
 
 interface Props {
   open: boolean;
@@ -17,20 +14,25 @@ interface Props {
   children: ReactNode;
 }
 
-/** Phone-only bottom sheet. Slides up with a grab handle, locks body
- *  scroll, dismisses on backdrop tap / ESC / handle drag. The handle
- *  supports a native-feeling drag gesture: drag down to follow the
- *  finger, release past ~100px to dismiss, release earlier to snap
- *  back. Portaled to `document.body` so `position: fixed` always
- *  anchors to the viewport regardless of ancestor effects. */
+/** Phone-only bottom sheet. Mirrors the SpeakerChatFloatingDrawer
+ *  pattern (full-width, slides up, grab handle, body-scroll lock,
+ *  backdrop dismiss, ESC to close) but at content-height instead of
+ *  85dvh — appropriate for short option lists like "horizon select"
+ *  or "Sunday actions".
+ *
+ *  Portals to `document.body` so `position: fixed` always anchors to
+ *  the viewport, regardless of whether an ancestor has `transform`,
+ *  `filter`, `backdrop-filter`, etc. (any of which would re-root a
+ *  fixed descendant against that ancestor instead of the viewport).
+ *  Without the portal, a sheet opened from inside a sticky row that
+ *  uses `backdrop-blur-sm` ends up trapped inside the row. */
 export function MobileBottomSheet({ open, onClose, title, children }: Props) {
+  // `open` flips immediately when the caller dismisses, but we keep the
+  // sheet mounted through the exit animation. `mounted` outlives `open`
+  // by EXIT_MS; `exiting` flags the exit-animation classes during that
+  // window so the slide-down + fade-out play before unmount.
   const [mounted, setMounted] = useState(open);
   const [exiting, setExiting] = useState(false);
-  const [entered, setEntered] = useState(false);
-  const [dragY, setDragY] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [snapping, setSnapping] = useState(false);
-  const startYRef = useRef(0);
 
   useEffect(() => {
     if (open) {
@@ -47,18 +49,6 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
     return () => clearTimeout(t);
   }, [open, mounted]);
 
-  // Once the entrance animation is done, swap to "no animation class"
-  // so the entrance doesn't replay when state changes (e.g. after a
-  // snap-back) re-render the sheet.
-  useEffect(() => {
-    if (!mounted) {
-      setEntered(false);
-      return;
-    }
-    const t = setTimeout(() => setEntered(true), ENTER_MS);
-    return () => clearTimeout(t);
-  }, [mounted]);
-
   useLockBodyScroll(mounted && !exiting);
 
   useEffect(() => {
@@ -72,60 +62,8 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
     return () => document.removeEventListener("keydown", handleEsc, true);
   }, [open, onClose]);
 
-  function onPointerDown(e: React.PointerEvent<HTMLButtonElement>) {
-    if (!entered || exiting) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    startYRef.current = e.clientY;
-    setDragging(true);
-    setSnapping(false);
-    setDragY(0);
-  }
-
-  function onPointerMove(e: React.PointerEvent<HTMLButtonElement>) {
-    if (!dragging) return;
-    setDragY(Math.max(0, e.clientY - startYRef.current));
-  }
-
-  function onPointerEnd(e: React.PointerEvent<HTMLButtonElement>) {
-    if (!dragging) return;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    setDragging(false);
-    if (dragY < TAP_THRESHOLD) {
-      onClose();
-      return;
-    }
-    if (dragY > DRAG_DISMISS_THRESHOLD) {
-      // Continue the slide off-screen via CSS transition, then unmount
-      // through the parent's open=false flow. Snapping stays `true`
-      // through unmount so the inline transform keeps the sheet
-      // off-screen — no late jump back to 0% from the CSS exit class.
-      setSnapping(true);
-      setDragY(window.innerHeight);
-      setTimeout(() => onClose(), EXIT_MS);
-      return;
-    }
-    setSnapping(true);
-    setDragY(0);
-    setTimeout(() => setSnapping(false), 220);
-  }
-
   if (!mounted) return null;
   if (typeof document === "undefined") return null;
-
-  const dragControlled = dragging || snapping;
-  const inlineStyle: CSSProperties = dragControlled
-    ? {
-        transform: `translateY(${dragY}px)`,
-        transition: snapping ? "transform 200ms cubic-bezier(0.22,1,0.36,1)" : "none",
-      }
-    : {};
-
-  let sheetAnim = "";
-  if (!dragControlled) {
-    if (exiting) sheetAnim = "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]";
-    else if (!entered)
-      sheetAnim = "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)_backwards]";
-  }
 
   return createPortal(
     <div
@@ -144,18 +82,16 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
       <div
         className={cn(
           "bg-chalk flex flex-col w-full max-h-[75dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]",
-          sheetAnim,
+          exiting
+            ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
+            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)_backwards]",
         )}
-        style={inlineStyle}
       >
         <button
           type="button"
           aria-label="Close"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerEnd}
-          onPointerCancel={onPointerEnd}
-          className="flex-none flex items-center justify-center pt-2.5 pb-1.5 hover:bg-[rgba(35,24,21,0.04)] cursor-grab active:cursor-grabbing touch-none"
+          onClick={onClose}
+          className="flex-none flex items-center justify-center pt-2.5 pb-1.5 hover:bg-[rgba(35,24,21,0.04)] cursor-pointer"
         >
           <span className="block w-10 h-1 rounded-full bg-walnut-2/40" />
         </button>
