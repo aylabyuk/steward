@@ -7,6 +7,116 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-04-27
+
+A mobile-first pass on the schedule plus a project-wide structural
+reorg. The schedule list, every dropdown, and the user menu all get
+proper phone treatment — drag-to-dismiss bottom sheets, a full-height
+side drawer, infinite-scroll horizon, and a darkened app bar. Under
+the hood, every feature directory is now organized as `hooks/ +
+utils/ + __tests__/`, every overlay surface runs on `vaul`, and the
+per-component-folder discipline is codified as a project skill.
+
+### Added
+
+- **Mobile schedule list view** — below `md`, the Sunday cards
+  collapse into an edge-to-edge list with sticky per-Sunday date
+  rows. Reuses real `SpeakerRow` / `PrayerRow` components for the
+  fixed 4 speaker + 2 prayer slots so density matches the desktop
+  card. New `MobileScheduleList`, `MobileSundayBlock`,
+  `MobileSundayBody`. Special meetings (fast / stake / general) and
+  cancelled meetings render their existing variants edge-to-edge.
+- **Infinite-scroll horizon on mobile** — `useInfiniteHorizon` hook
+  drives the load-more behavior: 4 weeks initial, 4 more on each
+  intersection-observer trigger (200 px pre-roll, 450 ms delay with a
+  "Loading…" indicator). Capped at 4 months; bottom of list reads
+  "Showing up to 4 months ahead" once reached. Desktop dropdown
+  options match the new ceiling (1/2/3/4 months — 6/12 month options
+  retired).
+- **Bottom sheets for the per-Sunday menu and horizon select**
+  (mobile) — both run on a new `MobileBottomSheet` primitive backed
+  by `vaul`. Drag the handle down to dismiss, ESC to close, backdrop
+  tap to close. Sunday menu sheet header reads `1st Sunday · May 3
+  · In 6 days` so the user always knows which week they're editing.
+  "Plan speakers" / "Plan prayers" actions move into the menu so
+  they're discoverable regardless of slot fill state.
+- **Mobile right-side user menu drawer** — `UserSideDrawer`
+  (`vaul direction="right"`) replaces the old corner popover on
+  phone-class viewports. Avatar bumps to 64×64 stacked above name
+  and email; X close button absolute top-right; built-by-credit +
+  version pinned bottom-center. Desktop popover unchanged.
+- **Darker mobile app bar** — `Topbar` switches to `bg-walnut` on
+  mobile with light-text overrides on the ward name and user-menu
+  trigger, plus a subtle `shadow-elev-1` drop shadow on both layouts.
+
+### Changed
+
+- **All overlay surfaces now use [`vaul`](https://vaul.emilkowal.ski/)**
+  for animation + gesture handling. `MobileBottomSheet`,
+  `BishopInvitationDialog`, `SpeakerChatFloatingDrawer`, and
+  `UserSideDrawer` all share the same drag-to-dismiss + spring-easing
+  + body-scroll-lock behavior. Net ~250 lines of hand-rolled
+  mount/exit/animation state machines deleted.
+- **Per-component-folder discipline codified** —
+  `.claude/skills/project-structure.md` defines the convention:
+  components live as flat `.tsx` at the feature root by default and
+  get promoted to a folder (`Component/{index.tsx, Component.tsx,
+  hooks?, __tests__?}`) only when they grow component-private hooks
+  or tests. CLAUDE.md adds a hard-rule line linking to the skill.
+- **Bulk feature reorg** — every `src/features/<feature>/` is now
+  `<feature>/{hooks/, utils/, __tests__/, ...components.tsx}`.
+  Sub-features (`meetings/program/`, `page-editor/{nodes,plugins,
+  toolbar}/`, `program-templates/nodes/`) follow the same pattern
+  recursively. ~313 files touched, mostly renames; ~7 components
+  promoted to folders because they have tests (e.g. `SundayCard`,
+  `HorizonSelect`, `PrepareInvitationActionBar`,
+  `VariableChipNode`, `Avatar`).
+- **Routes reorg** — `app/routes/<kebab-name>.tsx` →
+  `app/routes/<kebab-name>/{index.tsx, <RouteComponent>.tsx}`. Folder
+  names stay kebab (URL-shaped); component file inside is PascalCase.
+  Sub-components specific to a route move into the route folder
+  (e.g. `invite-speaker/` houses `SpeakerChatFloatingDrawer`,
+  `SessionGate`, etc.).
+- **`callingLabels` promoted to `src/lib/`** — was at
+  `features/settings/`, now imported by 5 cross-feature consumers
+  via `@/lib/callingLabels`.
+- **Seven single-feature hooks demoted from `src/hooks/`** —
+  `useComments`, `useHistory`, `useLongPress`, `useMinuteTick`,
+  `useUpcomingMeetings` now live in their feature's `hooks/`;
+  `useHideOnScroll` moved to `app/components/hooks/`;
+  `useMemberProfileSync` moved to `app/hooks/`.
+
+### Fixed
+
+- **Sticky week header was binding to a non-viewport scroll context**
+  on mobile — both `will-change: transform` and `overflow-x: hidden`
+  on the AppShell wrapper were silently turning ancestors into
+  containing blocks for sticky descendants. Removed the former and
+  switched the latter to `overflow-x: clip` (later removed entirely).
+- **HorizonSelect popover was being covered by sticky list rows** —
+  popover was at `z-10` (same as the sticky row), bumped to `z-30`.
+- **Open/close sheet flicker** — pinned `animation-fill-mode:
+  backwards` on entrance and `forwards` on exit so the browser
+  doesn't snap to default opacity for a single frame between mount
+  and animation start (or between animation end and unmount).
+  Eventually superseded by the move to `vaul`.
+- **`MobileBottomSheet` was getting trapped inside a sticky row**
+  whose `backdrop-blur-sm` re-rooted `position: fixed` against it —
+  portal the sheet to `document.body` so it always anchors to the
+  viewport.
+
+### Infrastructure
+
+- **`vaul` added** (`v1.1.2`) — drag-to-dismiss + spring-easing
+  drawer primitive. Replaces hand-rolled animation state machines
+  in 4 surfaces.
+- **Removed unused `useCommentUnread` hook** — zero importers.
+
+### Removed
+
+- Custom `drawerSlideInRight` / `drawerSlideOutRight` keyframes
+  (replaced by vaul-driven animations).
+
 ## [0.15.0] — 2026-04-27
 
 Plan-prayers wizard finally mirrors the speaker wizard 1:1, so the
@@ -1788,7 +1898,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/aylabyuk/steward/releases/tag/v0.16.0
 [0.15.0]: https://github.com/aylabyuk/steward/releases/tag/v0.15.0
 [0.14.0]: https://github.com/aylabyuk/steward/releases/tag/v0.14.0
 [0.13.1]: https://github.com/aylabyuk/steward/releases/tag/v0.13.1
