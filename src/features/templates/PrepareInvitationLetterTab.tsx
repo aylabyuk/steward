@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
+import { MobileLetterPreview } from "@/features/page-editor/MobileLetterPreview";
 import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PrintOnlyLetter } from "./PrintOnlyLetter";
@@ -64,20 +65,31 @@ export function PrepareInvitationLetterTab({
         {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
       />
       <div className="relative h-full">
-        {previewToolbar && !isMobile && (
-          <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>
+        {isMobile ? (
+          <MobileLetterPreview
+            wardName={vars.wardName}
+            assignedDate={vars.date}
+            today={vars.today}
+            bodyMarkdown={renderedBody}
+            footerMarkdown={renderedFooter}
+            editorStateJson={liveStateJson ?? initialJson}
+            vars={vars}
+          />
+        ) : (
+          <>
+            {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
+            <LetterPageEditor
+              key={resetKey}
+              assignedDate={vars.date}
+              initialJson={initialJson}
+              initialMarkdown={initialMarkdown}
+              vars={vars}
+              onChange={onChange}
+              onInitial={onInitial}
+              ariaLabel={`Letter for ${vars.speakerName}`}
+            />
+          </>
         )}
-        <LetterPageEditor
-          key={resetKey}
-          assignedDate={vars.date}
-          initialJson={initialJson}
-          initialMarkdown={initialMarkdown}
-          vars={vars}
-          onChange={onChange}
-          onInitial={onInitial}
-          ariaLabel={`Letter for ${vars.speakerName}`}
-          readOnly={isMobile}
-        />
       </div>
     </>
   );
