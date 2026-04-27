@@ -53,35 +53,45 @@ export function SundayCard({
     );
   }
 
-  return (
-    <article className={cn("rounded-lg border border-border shadow-elev-1", CARD_BG[kind.variant])}>
-      <SundayCardHeader
-        date={date}
-        wardId={wardId}
-        currentType={type}
-        nonMeetingSundays={nonMeetingSundays}
-        urgent={severity === "urgent"}
-        {...(kind.badge ? { badge: kind.badge } : {})}
-        variant={kind.variant}
-        locked={hasConfirmedSpeaker}
-      />
+  const showWarning = !kind.isSpecial && severity !== "none";
 
-      {!kind.isSpecial && severity !== "none" && (
-        <div className="mx-4 mb-3 rounded-md border border-danger-soft bg-danger-soft/30 px-3 py-2 flex items-center gap-2">
+  return (
+    <div className="relative">
+      {showWarning && (
+        <div className="absolute -top-6 left-0 right-0 rounded-t-lg border border-b-0 border-danger-soft bg-danger-soft px-4 pt-1.5 pb-3 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-bordeaux shrink-0" />
-          <span className="text-[12.5px] text-bordeaux-deep">{SEVERITY_TEXT[severity]}</span>
+          <span className="text-[12px] text-bordeaux-deep leading-tight">
+            {SEVERITY_TEXT[severity]}
+          </span>
         </div>
       )}
-
-      {kind.isSpecial ? (
-        <SundayCardSpecial
+      <article
+        className={cn(
+          "relative rounded-lg border border-border shadow-elev-1",
+          CARD_BG[kind.variant],
+        )}
+      >
+        <SundayCardHeader
+          date={date}
+          wardId={wardId}
+          currentType={type}
+          nonMeetingSundays={nonMeetingSundays}
+          urgent={severity === "urgent"}
+          {...(kind.badge ? { badge: kind.badge } : {})}
           variant={kind.variant}
-          stampLabel={kind.stampLabel}
-          description={kind.description}
+          locked={hasConfirmedSpeaker}
         />
-      ) : (
-        <SundayCardBody speakers={speakers} date={date} />
-      )}
-    </article>
+
+        {kind.isSpecial ? (
+          <SundayCardSpecial
+            variant={kind.variant}
+            stampLabel={kind.stampLabel}
+            description={kind.description}
+          />
+        ) : (
+          <SundayCardBody speakers={speakers} date={date} meeting={meeting ?? null} />
+        )}
+      </article>
+    </div>
   );
 }
