@@ -12,6 +12,7 @@ import { interpolate } from "@/features/templates/interpolate";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
+import { MobileLetterPreview } from "@/features/page-editor/MobileLetterPreview";
 import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { PostPrintConfirmStep } from "./PostPrintConfirmStep";
 import { ReviewLetterFooter } from "./ReviewLetterFooter";
@@ -129,19 +130,30 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
         {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
       />
       <div className="flex-1 min-h-0">
-        <LetterPageEditor
-          key={form.resetKey}
-          assignedDate={vars.date}
-          initialJson={form.initialJson}
-          initialMarkdown={form.initialMarkdown}
-          {...(effectivePageStyle ? { pageStyle: effectivePageStyle } : {})}
-          {...(isMobile ? {} : { onPageStyleChange: setPageStyle })}
-          vars={vars}
-          onChange={form.setLetterStateJson}
-          onInitial={form.captureInitial}
-          ariaLabel={`Letter for ${speaker.data.name}`}
-          readOnly={isMobile}
-        />
+        {isMobile ? (
+          <MobileLetterPreview
+            wardName={wardName}
+            assignedDate={vars.date}
+            today={vars.today}
+            bodyMarkdown={renderedBody}
+            footerMarkdown={renderedFooter}
+            editorStateJson={form.letterStateJson ?? form.initialJson}
+            vars={vars}
+          />
+        ) : (
+          <LetterPageEditor
+            key={form.resetKey}
+            assignedDate={vars.date}
+            initialJson={form.initialJson}
+            initialMarkdown={form.initialMarkdown}
+            {...(effectivePageStyle ? { pageStyle: effectivePageStyle } : {})}
+            onPageStyleChange={setPageStyle}
+            vars={vars}
+            onChange={form.setLetterStateJson}
+            onInitial={form.captureInitial}
+            ariaLabel={`Letter for ${speaker.data.name}`}
+          />
+        )}
       </div>
       {(form.error || actions.error) && (
         <p className="shrink-0 px-5 sm:px-8 pb-2 font-sans text-[12.5px] text-bordeaux">
