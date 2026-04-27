@@ -9,13 +9,24 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [0.13.0] — 2026-04-27
 
-A small mobile-polish + maintainer-tooling release. The fixed bottom
-bars now sit above the iPhone home indicator, and the maintainer can
-opt a single invitation onto a separate Twilio FROM number so smoke
-tests don't have to share the production line.
+Wizard's Print & hand-deliver path now generates a PDF and routes it
+through the OS share sheet, so the bishop can hand a letter off via
+iMessage / WhatsApp / AirDrop / Mail / Files instead of an actual
+printer. Plus a mobile-polish fix on the fixed bottom bars and a new
+maintainer-only Twilio testing FROM number.
 
 ### Added
 
+- **PDF share on the wizard's deliver path.** The wizard step 2's
+  "Print & hand-deliver" CTA is now "Share or print letter" — it
+  generates a paginated 8.5×11 PDF of the resolved letter (chip
+  styling, signature, letterhead intact) and hands it to
+  `navigator.share({ files })` on iOS / Android / Chrome / Edge /
+  Safari, falling back to a plain download on Firefox / older
+  desktops. The PDF carries no capability link, so the fake-response
+  surface stays closed. The post-deliver confirm copy softens to
+  "Did you deliver this letter?" since delivery is no longer always
+  physical.
 - **Maintainer-only "testing" outbound SMS number.** A new
   `TWILIO_FROM_NUMBER_TESTING` secret + per-invitation toggle let
   allowlisted callers (currently `oriel.absin@gmail.com`) send an
