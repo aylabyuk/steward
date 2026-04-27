@@ -4,12 +4,9 @@ import { UserMenuContent } from "./UserMenuContent";
 
 /** Mobile-only right-side drawer that hosts the user menu content.
  *  Backed by `vaul`'s Drawer with `direction="right"` so we get
- *  drag-to-dismiss, ESC, and spring animations as built-ins.
- *
- *  AppShell does its own page-push transform when the drawer is open
- *  (translates the content -85vw to leave a 15vw peek). Vaul's overlay
- *  is rendered transparent so the peek stays visible and receives the
- *  tap-to-dismiss directly via `onOpenChange`. */
+ *  drag-to-dismiss, ESC, backdrop tap, and spring animations as
+ *  built-ins. Overlays the page (no push transform) — tap the dimmed
+ *  backdrop to close. */
 export function UserSideDrawer() {
   const open = useUserMenuStore((s) => s.open);
   const close = useUserMenuStore((s) => s.close);
@@ -23,7 +20,7 @@ export function UserSideDrawer() {
       direction="right"
     >
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 z-40 bg-transparent" />
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-[rgba(35,24,21,0.42)]" />
         <Drawer.Content
           aria-describedby={undefined}
           className="fixed inset-y-0 right-0 z-50 flex w-[85vw] flex-col bg-chalk shadow-elev-3 outline-none pt-[env(safe-area-inset-top)] pb-[max(0.75rem,env(safe-area-inset-bottom))]"
