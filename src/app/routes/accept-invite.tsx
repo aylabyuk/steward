@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router";
 import { doc, getDoc } from "firebase/firestore";
 import { BuiltByCredit } from "@/components/BuiltByCredit";
 import { AcceptInviteBody, type AcceptInviteState } from "@/features/invites/AcceptInviteBody";
-import { acceptInvite, findInvitesForEmail } from "@/features/invites/inviteActions";
+import { acceptInvite, findInvitesForEmail } from "@/features/invites/utils/inviteActions";
 import { db } from "@/lib/firebase";
 import { inviteSchema } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";

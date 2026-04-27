@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { WithId } from "@/hooks/_sub";
 import type { SacramentMeeting, Speaker } from "@/lib/types";
-import { canonicalizeContent, computeContentHash } from "./contentHash";
+import { canonicalizeContent, computeContentHash } from "../contentHash";
 
 const base: SacramentMeeting = {
   meetingType: "regular",

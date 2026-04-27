@@ -1,7 +1,7 @@
 import { doc, runTransaction, serverTimestamp } from "firebase/firestore";
-import { computeContentHash } from "@/features/meetings/contentHash";
-import { appendHistoryEvent, currentActor } from "@/features/meetings/history";
-import { buildInvalidationPatch } from "@/features/meetings/writeMeetingPatch";
+import { computeContentHash } from "@/features/meetings/utils/contentHash";
+import { appendHistoryEvent, currentActor } from "@/features/meetings/utils/history";
+import { buildInvalidationPatch } from "@/features/meetings/utils/writeMeetingPatch";
 import { db } from "@/lib/firebase";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import { sacramentMeetingSchema, speakerSchema } from "@/lib/types";

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { WithId } from "@/hooks/_sub";
 import type { Assignment, SacramentMeeting, Speaker } from "@/lib/types";
-import type { ReadinessReport } from "../readiness";
-import { buildRailSections } from "./railSections";
+import type { ReadinessReport } from "../utils/readiness";
+import { buildRailSections } from "../railSections";
 
 const emptyReport: ReadinessReport = {
   missing: [],

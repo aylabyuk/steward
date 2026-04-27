@@ -3,7 +3,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import type { Approval } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
-import { AlreadyApprovedError, approveMeeting, requestApproval, resetToDraft } from "../approvals";
+import { AlreadyApprovedError, approveMeeting, requestApproval, resetToDraft } from "../../utils/approvals";
 
 interface UseApprovalActions {
   wardId: string;

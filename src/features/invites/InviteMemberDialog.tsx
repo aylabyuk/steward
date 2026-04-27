@@ -6,10 +6,10 @@ import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { renderWardInviteMessage } from "@/features/templates/renderWardInviteMessage";
 import { useWardInviteTemplate } from "@/features/templates/useWardInviteTemplate";
 import { DEFAULT_WARD_INVITE_BODY } from "@/features/templates/wardInviteDefaults";
-import { sendInvite } from "./inviteActions";
+import { sendInvite } from "./utils/inviteActions";
 import { InviteMemberFields } from "./InviteMemberFields";
 import { InviteMessageOverridePanel } from "./InviteMessageOverridePanel";
-import { openInviteMailto } from "./inviteMailto";
+import { openInviteMailto } from "./utils/inviteMailto";
 
 interface Props {
   wardId: string;

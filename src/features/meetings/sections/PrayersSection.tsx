@@ -4,7 +4,7 @@ import { SpeakerStatusChip } from "@/features/plan-speakers/SpeakerStatusChip";
 import { usePrayerParticipant } from "@/features/prayers/usePrayerParticipant";
 import { AssignRow } from "../program/AssignRow";
 import { ProgramSection } from "../program/ProgramSection";
-import { updateMeetingField } from "../updateMeeting";
+import { updateMeetingField } from "../utils/updateMeeting";
 
 interface Props {
   wardId: string;

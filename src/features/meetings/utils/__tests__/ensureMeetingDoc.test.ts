@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultMeetingType } from "./ensureMeetingDoc";
+import { defaultMeetingType } from "../ensureMeetingDoc";
 
 describe("defaultMeetingType", () => {
   it("picks fast for the first Sunday of a month", () => {

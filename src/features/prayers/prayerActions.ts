@@ -1,5 +1,5 @@
 import { doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
-import { ensureMeetingDoc } from "@/features/meetings/ensureMeetingDoc";
+import { ensureMeetingDoc } from "@/features/meetings/utils/ensureMeetingDoc";
 import { db } from "@/lib/firebase";
 import type { InvitationStatus, NonMeetingSunday, PrayerRole } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";

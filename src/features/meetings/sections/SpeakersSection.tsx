@@ -3,9 +3,9 @@ import type { WithId } from "@/hooks/_sub";
 import type { MidItem as MidItemType, NonMeetingSunday, Speaker } from "@/lib/types";
 import { reorderSpeakers } from "@/features/speakers/speakerActions";
 import { ProgramSection } from "../program/ProgramSection";
-import { updateMeetingField } from "../updateMeeting";
+import { updateMeetingField } from "../utils/updateMeeting";
 import { MidPlaceholderRow, SpeakerListRow } from "./SpeakerListRow";
-import { buildItems, formatMidLabel, sortByOrder, type Item } from "./speakerListItems";
+import { buildItems, formatMidLabel, sortByOrder, type Item } from "./utils/speakerListItems";
 
 interface Props {
   wardId: string;

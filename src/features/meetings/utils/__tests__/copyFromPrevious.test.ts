@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SacramentMeeting } from "@/lib/types";
-import { copyableFields, hasExistingValues } from "./copyFromPrevious";
+import { copyableFields, hasExistingValues } from "../copyFromPrevious";
 
 const base: SacramentMeeting = {
   meetingType: "regular",

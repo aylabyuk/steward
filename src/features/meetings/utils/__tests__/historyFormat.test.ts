@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatHistoryEvent } from "./historyFormat";
+import { formatHistoryEvent } from "../historyFormat";
 
 describe("formatHistoryEvent", () => {
   it("formats a hymn change with field labels", () => {

@@ -1,5 +1,5 @@
 import type { Cancellation } from "@/lib/types";
-import { uncancelMeeting } from "./updateMeeting";
+import { uncancelMeeting } from "./utils/updateMeeting";
 
 interface Props {
   wardId: string;
