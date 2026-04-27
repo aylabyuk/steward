@@ -156,5 +156,12 @@ export const speakerInvitationSchema = z.object({
    *  changes status via the chat-banner pills. Absent on pre-rollout
    *  invitations — the speaker page treats that as unchanged. */
   currentSpeakerStatus: z.enum(["planned", "invited", "confirmed", "declined"]).optional(),
+
+  /** Picks the outbound SMS proxy number for this thread. Set to
+   *  "testing" only when an allowlisted dev-mode caller sent the
+   *  invitation; otherwise omitted (treated as "production"). The
+   *  webhook + rotation paths read this back so every SMS in the
+   *  thread routes through the same number. */
+  fromNumberMode: z.enum(["production", "testing"]).optional(),
 });
 export type SpeakerInvitation = z.infer<typeof speakerInvitationSchema>;

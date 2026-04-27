@@ -3,6 +3,7 @@ import { STEWARD_ORIGIN, TWILIO_SECRETS } from "./secrets.js";
 import { assertActiveMember } from "./sendSpeakerInvitation.helpers.js";
 import { createFreshInvitation } from "./freshInvitation.js";
 import { rotateInvitationLink } from "./rotateInvitationLink.js";
+import { resolveCallerFromNumberMode } from "./devModeAccess.js";
 import type {
   SendSpeakerInvitationRequest,
   SendSpeakerInvitationResponse,
@@ -35,6 +36,7 @@ export const sendSpeakerInvitation = onCall(
     if (input.mode === "rotate") {
       return rotateInvitationLink(input, origin);
     }
-    return createFreshInvitation(input, origin);
+    const fromNumberMode = resolveCallerFromNumberMode(auth, input.useTestingNumber);
+    return createFreshInvitation(input, origin, fromNumberMode);
   },
 );
