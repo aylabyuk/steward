@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 
 interface Props {
@@ -14,9 +15,14 @@ interface Props {
  *  pattern (full-width, slides up, grab handle, body-scroll lock,
  *  backdrop dismiss, ESC to close) but at content-height instead of
  *  85dvh — appropriate for short option lists like "horizon select"
- *  or "Sunday actions". Desktop callers should keep their existing
- *  absolute-positioned popover; this primitive doesn't render a
- *  responsive variant. */
+ *  or "Sunday actions".
+ *
+ *  Portals to `document.body` so `position: fixed` always anchors to
+ *  the viewport, regardless of whether an ancestor has `transform`,
+ *  `filter`, `backdrop-filter`, etc. (any of which would re-root a
+ *  fixed descendant against that ancestor instead of the viewport).
+ *  Without the portal, a sheet opened from inside a sticky row that
+ *  uses `backdrop-blur-sm` ends up trapped inside the row. */
 export function MobileBottomSheet({ open, onClose, title, children }: Props) {
   useLockBodyScroll(open);
 
@@ -32,8 +38,9 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
   }, [open, onClose]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -58,6 +65,7 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
         )}
         <div className="overflow-y-auto px-2 pb-2">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
