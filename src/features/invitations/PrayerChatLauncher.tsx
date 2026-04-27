@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import type { PrayerParticipant, PrayerRole, Speaker } from "@/lib/types";
 import { BishopInvitationDialog } from "./BishopInvitationDialog";
-import { useConversationUnread } from "./useConversationUnread";
-import { useLatestInvitation } from "./useLatestInvitation";
+import { useConversationUnread } from "./hooks/useConversationUnread";
+import { useLatestInvitation } from "./hooks/useLatestInvitation";
 
 interface Props {
   wardId: string;

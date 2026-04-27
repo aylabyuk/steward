@@ -3,7 +3,7 @@ import type { LetterPageStyle, PrayerParticipant, PrayerRole } from "@/lib/types
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
-import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
+import { useLatestInvitation } from "@/features/invitations/hooks/useLatestInvitation";
 import { usePrayerLetterTemplate } from "@/features/templates/usePrayerLetterTemplate";
 import { usePreparePrayerInvitation } from "@/features/prayers/usePreparePrayerInvitation";
 import { interpolate } from "@/features/templates/interpolate";

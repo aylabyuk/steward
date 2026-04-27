@@ -1,5 +1,5 @@
 import type { User } from "firebase/auth";
-import type { AuthorInfo, AuthorMap } from "./useConversation";
+import type { AuthorInfo, AuthorMap } from "../hooks/useConversation";
 
 interface BishopricParticipant {
   uid: string;

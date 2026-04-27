@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { OverflowMenu } from "@/components/ui/OverflowMenu";
 import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
-import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
+import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";

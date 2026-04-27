@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { defaultMeetingType } from "@/features/meetings/ensureMeetingDoc";
 import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
-import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
+import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "./hooks/useUpcomingMeetings";
 import { useWardSettings } from "@/hooks/useWardSettings";

@@ -3,7 +3,7 @@ import type { PrayerRole } from "@/lib/types";
 import {
   callRotateInvitationLink,
   type DeliveryEntry,
-} from "@/features/invitations/invitationsCallable";
+} from "@/features/invitations/utils/invitationsCallable";
 import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
 import { sendPrayerInvitation } from "@/features/prayers/sendPrayerInvitation";
 import { isPlausiblePhone } from "@/features/templates/smsInvitation";

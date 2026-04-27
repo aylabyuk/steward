@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Speaker, SpeakerInvitation } from "@/lib/types";
-import { deriveBannerView, formatLastSeen } from "./invitationBannerView";
+import { deriveBannerView, formatLastSeen } from "../invitationBannerView";
 
 function speakerWith(status: Speaker["status"]): Speaker {
   return { name: "Test", status, role: "Member" } as Speaker;

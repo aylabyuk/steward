@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, signInWithCustomToken, type User } from "firebase/auth";
 import { inviteAuth } from "@/lib/firebase";
-import { callIssueSpeakerSession } from "./invitationsCallable";
+import { callIssueSpeakerSession } from "../utils/invitationsCallable";
 
 type Status =
   | { kind: "idle" }

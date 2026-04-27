@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Hymn } from "@/lib/types";
-import { HYMNS } from "./hymns";
+import { HYMNS } from "./utils/hymns";
 import { HymnPickerPopover } from "./HymnPickerPopover";
 import { HymnPickerTrigger } from "./HymnPickerTrigger";
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Conversation, Message, Participant } from "@twilio/conversations";
-import { parseAuthorInfo, toChatMessage } from "./conversationHelpers";
-import { useTwilioChat } from "./twilioClientProvider";
+import { parseAuthorInfo, toChatMessage } from "../utils/conversationHelpers";
+import { useTwilioChat } from "../TwilioChatProvider";
 
 export interface ChatMessage {
   sid: string;

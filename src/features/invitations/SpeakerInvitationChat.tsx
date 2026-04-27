@@ -8,15 +8,15 @@ import { QuickActionButtons } from "./QuickActionButtons";
 import { SpeakerChatHeader } from "./SpeakerChatHeader";
 import { SpeakerResponseBanner } from "./SpeakerResponseBanner";
 import { TypingIndicator } from "./TypingIndicator";
-import { useConversation } from "./useConversation";
-import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
-import { useReadHorizon } from "./useReadHorizon";
-import { useTypingParticipants } from "./useTypingParticipants";
-import { useSpeakerHeartbeat } from "./useSpeakerHeartbeat";
-import { useTwilioChat } from "./twilioClientProvider";
-import { writeSpeakerResponse } from "./invitationActions";
-import { removeMessage, updateMessageBody } from "./messageMutations";
-import { buildSpeakerAuthorMap } from "./speakerAuthorMap";
+import { useConversation } from "./hooks/useConversation";
+import { useFirstUnreadIndex } from "./hooks/useFirstUnreadIndex";
+import { useReadHorizon } from "./hooks/useReadHorizon";
+import { useTypingParticipants } from "./hooks/useTypingParticipants";
+import { useSpeakerHeartbeat } from "./hooks/useSpeakerHeartbeat";
+import { useTwilioChat } from "./TwilioChatProvider";
+import { writeSpeakerResponse } from "./utils/invitationActions";
+import { removeMessage, updateMessageBody } from "./utils/messageMutations";
+import { buildSpeakerAuthorMap } from "./utils/speakerAuthorMap";
 
 interface Props {
   wardId: string;

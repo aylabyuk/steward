@@ -3,7 +3,7 @@ import { useLongPress } from "./hooks/useLongPress";
 import { cn } from "@/lib/cn";
 import { BubbleActions } from "./BubbleActions";
 import { BubbleEditForm } from "./BubbleEditForm";
-import type { ChatMessage } from "./useConversation";
+import type { ChatMessage } from "./hooks/useConversation";
 
 export type BubblePosition = "single" | "first" | "middle" | "last";
 

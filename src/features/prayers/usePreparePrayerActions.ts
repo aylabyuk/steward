@@ -1,5 +1,5 @@
 import type { PrayerRole } from "@/lib/types";
-import type { DeliveryEntry } from "@/features/invitations/invitationsCallable";
+import type { DeliveryEntry } from "@/features/invitations/utils/invitationsCallable";
 import { useAuthStore } from "@/stores/authStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { upsertPrayerParticipant } from "./prayerActions";

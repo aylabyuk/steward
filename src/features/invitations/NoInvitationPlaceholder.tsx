@@ -7,7 +7,7 @@ import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/cn";
 import type { PrayerRole, Speaker, SpeakerStatus } from "@/lib/types";
-import { statusStripBg } from "./statusStripBg";
+import { statusStripBg } from "./utils/statusStripBg";
 
 interface Props {
   wardId: string;

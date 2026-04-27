@@ -6,9 +6,9 @@ import { ConversationGroup } from "./ConversationGroup";
 import { JumpToLatest } from "./JumpToLatest";
 import { SystemNotice } from "./SystemNotice";
 import { DayDivider, UnreadDivider } from "./ThreadDividers";
-import { buildMessagePermissions, findLastMineIndex } from "./messageActions";
-import { buildThreadItems } from "./threadItems";
-import type { AuthorMap, ChatMessage } from "./useConversation";
+import { buildMessagePermissions, findLastMineIndex } from "./utils/messageActions";
+import { buildThreadItems } from "./utils/threadItems";
+import type { AuthorMap, ChatMessage } from "./hooks/useConversation";
 
 interface Props {
   messages: readonly ChatMessage[];

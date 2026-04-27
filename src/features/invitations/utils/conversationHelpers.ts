@@ -1,5 +1,5 @@
 import type { Message, Participant } from "@twilio/conversations";
-import type { AuthorInfo, ChatMessage } from "./useConversation";
+import type { AuthorInfo, ChatMessage } from "../hooks/useConversation";
 
 export function toChatMessage(m: Message): ChatMessage {
   let attributes: Record<string, unknown> | null = null;

@@ -6,7 +6,7 @@ import { useDevModeStore } from "@/stores/devModeStore";
 import {
   callSendSpeakerInvitation,
   type FreshInvitationResponse,
-} from "@/features/invitations/invitationsCallable";
+} from "@/features/invitations/utils/invitationsCallable";
 import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
 import { interpolate } from "@/features/templates/interpolate";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Conversation } from "@twilio/conversations";
-import { useTwilioChat } from "./twilioClientProvider";
+import { useTwilioChat } from "../TwilioChatProvider";
 
 /** Per-conversation unread badge signal. Returns the unread
  *  message count for `conversationSid` as seen by the currently-
