@@ -4,7 +4,7 @@ import { updateMeetingField } from "@/features/meetings/utils/updateMeeting";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { MobileBottomSheet } from "@/components/ui/MobileBottomSheet";
 import { SundayMenuOptions } from "./SundayMenuOptions";
-import { formatShortSunday, formatCountdown } from "./utils/dateFormat";
+import { formatShortDate, formatSundayOrdinal, formatCountdown } from "./utils/dateFormat";
 
 interface Props {
   wardId: string;
@@ -89,13 +89,12 @@ export function SundayTypeMenu({
       )}
       {isMobile && (
         <MobileBottomSheet open={open} onClose={() => setOpen(false)}>
-          <div className="px-2.5 pb-3 mb-1.5 border-b border-border">
-            <div className="font-display font-semibold text-walnut text-xl leading-tight">
-              {formatShortSunday(date)}
-            </div>
-            <div className="font-mono text-[10px] tracking-[0.08em] uppercase text-walnut-3 mt-0.5">
-              {formatCountdown(date)}
-            </div>
+          <div className="px-2.5 pb-3 mb-1.5 border-b border-border font-display text-walnut text-base">
+            <span className="font-semibold">{formatSundayOrdinal(date)}</span>
+            <span className="text-walnut-3 mx-2">·</span>
+            <span>{formatShortDate(date)}</span>
+            <span className="text-walnut-3 mx-2">·</span>
+            <span className="text-walnut-2">{formatCountdown(date)}</span>
           </div>
           <SundayMenuOptions
             date={date}
