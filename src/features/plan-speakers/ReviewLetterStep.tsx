@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { LetterPageStyle, Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
 import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
@@ -31,6 +32,7 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
   const me = useCurrentMember();
   const authUser = useAuthStore((s) => s.user);
   const ward = useWardSettings();
+  const isMobile = useIsMobile();
   const { data: letterTemplate } = useSpeakerLetterTemplate();
   const { invitation } = useLatestInvitation(wardId, date, speaker.id);
   const actions = useWizardActions();
@@ -133,11 +135,12 @@ export function ReviewLetterStep({ wardId, date, speaker, mode, onBack, onComple
           initialJson={form.initialJson}
           initialMarkdown={form.initialMarkdown}
           {...(effectivePageStyle ? { pageStyle: effectivePageStyle } : {})}
-          onPageStyleChange={setPageStyle}
+          {...(isMobile ? {} : { onPageStyleChange: setPageStyle })}
           vars={vars}
           onChange={form.setLetterStateJson}
           onInitial={form.captureInitial}
           ariaLabel={`Letter for ${speaker.data.name}`}
+          readOnly={isMobile}
         />
       </div>
       {(form.error || actions.error) && (

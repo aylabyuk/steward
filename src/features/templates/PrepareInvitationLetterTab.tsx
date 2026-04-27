@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
 import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PrintOnlyLetter } from "./PrintOnlyLetter";
 import { interpolate } from "./interpolate";
 import type { LetterVars } from "./prepareInvitationVars";
@@ -43,6 +44,7 @@ export function PrepareInvitationLetterTab({
   vars,
   previewToolbar,
 }: Props) {
+  const isMobile = useIsMobile();
   const renderedBody = useMemo(() => interpolate(body, vars), [body, vars]);
   const renderedFooter = useMemo(() => interpolate(footer, vars), [footer, vars]);
   const printEditorStateJson = useMemo(() => {
@@ -62,7 +64,9 @@ export function PrepareInvitationLetterTab({
         {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
       />
       <div className="relative h-full">
-        {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
+        {previewToolbar && !isMobile && (
+          <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>
+        )}
         <LetterPageEditor
           key={resetKey}
           assignedDate={vars.date}
@@ -72,6 +76,7 @@ export function PrepareInvitationLetterTab({
           onChange={onChange}
           onInitial={onInitial}
           ariaLabel={`Letter for ${vars.speakerName}`}
+          readOnly={isMobile}
         />
       </div>
     </>
