@@ -90,7 +90,9 @@ export function BishopInvitationDialog({
       aria-modal="true"
       className={cn(
         "fixed inset-0 z-60 bg-[rgba(35,24,21,0.42)] flex items-end sm:items-center justify-center sm:p-5",
-        exiting ? "animate-[fadeOut_180ms_ease-in]" : "animate-[fade_160ms_ease-out]",
+        exiting
+          ? "animate-[fadeOut_180ms_ease-in_forwards]"
+          : "animate-[fade_160ms_ease-out_backwards]",
       )}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -101,7 +103,7 @@ export function BishopInvitationDialog({
           "bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden sm:max-w-xl sm:h-auto sm:min-h-140 sm:max-h-[94vh] sm:rounded-[14px] sm:border-b sm:animate-none",
           exiting
             ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
-            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)]",
+            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)_backwards]",
         )}
       >
         <button
