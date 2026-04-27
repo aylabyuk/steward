@@ -11,6 +11,9 @@ interface Props {
   inlineName: string;
   role: PrayerRole;
   date: string;
+  /** Mobile list view collapses unfilled rows; pass `true` to render
+   *  nothing (instead of an `EmptyRosterRow`) when no name is set. */
+  hideEmpty?: boolean;
 }
 
 const STATE_CLS: Record<InvitationStatus, string> = {
@@ -36,13 +39,14 @@ const ROLE_WIDTH_CLS = "w-6";
  *  role label, name, status pill, chat launcher. Falls back to
  *  `EmptyRosterRow` when no name is set so unfilled prayer slots
  *  share their height + look with the speaker placeholder slots. */
-export function PrayerRow({ inlineName, role, date }: Props) {
+export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const { data: participant } = usePrayerParticipant(date, role);
   const name = participant?.name?.trim() || inlineName.trim();
   const status: InvitationStatus = participant?.status ?? "planned";
 
   if (!name) {
+    if (hideEmpty) return null;
     return <EmptyRosterRow leadingLabel={ROLE_LABEL[role]} leadingWidthCls={ROLE_WIDTH_CLS} />;
   }
 
