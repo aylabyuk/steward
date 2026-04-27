@@ -13,7 +13,7 @@ interface Props {
  *  child and `shrink-0` so it never gets squeezed out. */
 export function WizardFooter({ children, align = "between" }: Props) {
   return (
-    <div className="shrink-0 border-t border-border bg-parchment px-5 sm:px-8 py-3">
+    <div className="shrink-0 border-t border-border bg-parchment px-5 sm:px-8 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div
         className={cn(
           "max-w-3xl w-full mx-auto flex items-center gap-2",
