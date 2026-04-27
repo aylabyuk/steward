@@ -1,9 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
-import { cn } from "@/lib/cn";
+import type { ReactNode } from "react";
+import { Drawer } from "vaul";
 import type { CtaVariant } from "./SpeakerChatCTABanner";
-
-const EXIT_MS = 200;
 
 interface Props {
   /** Controlled open state so the parent can auto-open when chat
@@ -18,115 +15,66 @@ interface Props {
 }
 
 /** Floating chat drawer for the speaker invite page. Collapsed, it
- *  shows a pill-shaped FAB bottom-right. Opened on **mobile**, it
- *  slides up from the bottom as a sheet (with a grab handle and
- *  rounded top corners) so the top of the letter remains visible
- *  behind it. Opened on **desktop** (sm+), it docks as a ~420px
- *  wide panel in the bottom-right with a small inset — the speaker
- *  has the screen real estate to keep the letter visible alongside
- *  it. Body scroll is locked while open to keep the letter behind
- *  from rubber-banding on iOS. */
+ *  shows a pill-shaped FAB bottom-right. Opened, it slides up as a
+ *  `vaul` Drawer — full-width on mobile, max-width centered-bottom
+ *  on desktop. Vaul handles drag-to-dismiss, ESC, backdrop tap, and
+ *  scroll lock; we just render the chrome. */
 export function SpeakerChatFloatingDrawer({
   open,
   onOpenChange,
   attention,
   children,
 }: Props): React.ReactElement {
-  // Keep the drawer mounted through its slide-down so dismissal mirrors
-  // the slide-up entrance instead of vanishing instantly.
-  const [mounted, setMounted] = useState(open);
-  const [exiting, setExiting] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true);
-      setExiting(false);
-      return;
-    }
-    if (!mounted) return;
-    setExiting(true);
-    const t = setTimeout(() => {
-      setMounted(false);
-      setExiting(false);
-    }, EXIT_MS);
-    return () => clearTimeout(t);
-  }, [open, mounted]);
-
-  useLockBodyScroll(mounted && !exiting);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleEsc(e: KeyboardEvent) {
-      if (e.key !== "Escape") return;
-      e.stopImmediatePropagation();
-      onOpenChange(false);
-    }
-    document.addEventListener("keydown", handleEsc, true);
-    return () => document.removeEventListener("keydown", handleEsc, true);
-  }, [open, onOpenChange]);
-
-  if (!mounted) {
-    const label =
-      attention === "reply"
-        ? "Reply to the bishopric"
-        : attention === "unread"
-          ? "New message"
-          : "Conversation";
-    const pulseStyle: React.CSSProperties | undefined = attention
-      ? { animation: "fabPulse 1.8s ease-out infinite" }
-      : undefined;
-    return (
-      <button
-        type="button"
-        onClick={() => onOpenChange(true)}
-        style={pulseStyle}
-        className={
-          attention
-            ? "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-bordeaux text-parchment font-sans text-[14px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.875rem,env(safe-area-inset-bottom))]"
-            : "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-bordeaux text-parchment font-sans text-[13.5px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-        }
-        aria-label={`${label} — open the conversation with the bishopric`}
-      >
-        <ChatIcon />
-        <span>{label}</span>
-      </button>
-    );
-  }
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Conversation with the bishopric"
-      className={cn(
-        "fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)] flex items-end justify-center sm:justify-end sm:p-4",
-        exiting
-          ? "animate-[fadeOut_180ms_ease-in_forwards]"
-          : "animate-[fade_160ms_ease-out_backwards]",
-      )}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onOpenChange(false);
-      }}
+    <>
+      {!open && <Fab attention={attention ?? null} onClick={() => onOpenChange(true)} />}
+      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)]" />
+          <Drawer.Content
+            aria-describedby={undefined}
+            className="fixed bottom-0 left-0 right-0 z-20 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none sm:left-auto sm:right-4 sm:bottom-4 sm:h-[80dvh] sm:w-[min(26.25rem,calc(100dvw-2rem))] sm:rounded-[14px] sm:border-b"
+          >
+            <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40 sm:hidden" />
+            <Drawer.Title className="sr-only">Conversation with the bishopric</Drawer.Title>
+            {children}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    </>
+  );
+}
+
+interface FabProps {
+  attention?: CtaVariant | null;
+  onClick: () => void;
+}
+
+function Fab({ attention, onClick }: FabProps) {
+  const label =
+    attention === "reply"
+      ? "Reply to the bishopric"
+      : attention === "unread"
+        ? "New message"
+        : "Conversation";
+  const pulseStyle: React.CSSProperties | undefined = attention
+    ? { animation: "fabPulse 1.8s ease-out infinite" }
+    : undefined;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={pulseStyle}
+      className={
+        attention
+          ? "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-bordeaux text-parchment font-sans text-[14px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.875rem,env(safe-area-inset-bottom))]"
+          : "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-bordeaux text-parchment font-sans text-[13.5px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      }
+      aria-label={`${label} — open the conversation with the bishopric`}
     >
-      <div
-        className={cn(
-          "bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border-b",
-          exiting
-            ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
-            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)_backwards]",
-        )}
-      >
-        <button
-          type="button"
-          aria-label="Close conversation"
-          onClick={() => onOpenChange(false)}
-          className="flex-none flex items-center justify-center pt-2.5 pb-1.5 hover:bg-[rgba(35,24,21,0.04)] cursor-pointer sm:hidden"
-        >
-          <span className="block w-10 h-1 rounded-full bg-walnut-2/40" />
-        </button>
-        {children}
-      </div>
-    </div>
+      <ChatIcon />
+      <span>{label}</span>
+    </button>
   );
 }
 
