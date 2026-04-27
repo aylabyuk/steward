@@ -1,4 +1,4 @@
-import type { AuthorInfo, AuthorMap, ChatMessage } from "./useConversation";
+import type { AuthorInfo, AuthorMap, ChatMessage } from "../hooks/useConversation";
 
 export interface MessageGroup {
   key: string;

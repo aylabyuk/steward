@@ -1,5 +1,5 @@
 import type { PrayerParticipant, PrayerRole } from "@/lib/types";
-import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
+import { useLatestInvitation } from "@/features/invitations/hooks/useLatestInvitation";
 import { isPlausiblePhone } from "@/features/templates/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import { SpeakerStatusChip } from "@/features/plan-speakers/SpeakerStatusChip";

@@ -1,5 +1,5 @@
 import { updateSpeaker } from "@/features/speakers/speakerActions";
-import type { DeliveryEntry } from "@/features/invitations/invitationsCallable";
+import type { DeliveryEntry } from "@/features/invitations/utils/invitationsCallable";
 import { useAuthStore } from "@/stores/authStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { sendSpeakerInvitation } from "./sendSpeakerInvitation";

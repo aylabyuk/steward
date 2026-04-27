@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { OverflowMenu, type OverflowMenuItem } from "@/components/ui/OverflowMenu";
 import type { SpeakerInvitation } from "@/lib/types";
-import { callRotateInvitationLink } from "./invitationsCallable";
+import { callRotateInvitationLink } from "../utils/invitationsCallable";
 
 interface Props {
   wardId: string;

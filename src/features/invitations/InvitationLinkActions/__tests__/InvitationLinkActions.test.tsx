@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./invitationsCallable", () => ({
+vi.mock("../../utils/invitationsCallable", () => ({
   callRotateInvitationLink: vi.fn(),
 }));
 
-import { callRotateInvitationLink } from "./invitationsCallable";
-import { InvitationLinkActions } from "./InvitationLinkActions";
+import { callRotateInvitationLink } from "../../utils/invitationsCallable";
+import { InvitationLinkActions } from "../InvitationLinkActions";
 import type { SpeakerInvitation } from "@/lib/types";
 
 const mockFn = vi.mocked(callRotateInvitationLink);

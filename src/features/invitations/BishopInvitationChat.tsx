@@ -9,16 +9,16 @@ import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { InvitationStatusBanner } from "./InvitationStatusBanner";
 import { TypingIndicator } from "./TypingIndicator";
-import { applyResponseToSpeaker } from "./invitationActions";
-import { callIssueSpeakerSession } from "./invitationsCallable";
-import { removeMessage, updateMessageBody } from "./messageMutations";
-import { noteBishopStatusChange } from "./statusChangeNotice";
-import { useBishopAuthors } from "./useBishopAuthors";
-import { useConversation } from "./useConversation";
-import { useFirstUnreadIndex } from "./useFirstUnreadIndex";
-import { useReadHorizon } from "./useReadHorizon";
-import { useTypingParticipants } from "./useTypingParticipants";
-import { useTwilioChat } from "./twilioClientProvider";
+import { applyResponseToSpeaker } from "./utils/invitationActions";
+import { callIssueSpeakerSession } from "./utils/invitationsCallable";
+import { removeMessage, updateMessageBody } from "./utils/messageMutations";
+import { noteBishopStatusChange } from "./utils/statusChangeNotice";
+import { useBishopAuthors } from "./hooks/useBishopAuthors";
+import { useConversation } from "./hooks/useConversation";
+import { useFirstUnreadIndex } from "./hooks/useFirstUnreadIndex";
+import { useReadHorizon } from "./hooks/useReadHorizon";
+import { useTypingParticipants } from "./hooks/useTypingParticipants";
+import { useTwilioChat } from "./TwilioChatProvider";
 
 interface Props {
   wardId: string;

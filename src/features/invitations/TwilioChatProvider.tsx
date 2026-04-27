@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { Client as TwilioClient } from "@twilio/conversations";
-import { callIssueSpeakerSession } from "./invitationsCallable";
+import { callIssueSpeakerSession } from "./utils/invitationsCallable";
 
 type Status = "idle" | "connecting" | "ready" | "error";
 

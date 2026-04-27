@@ -4,7 +4,7 @@ import { sendSpeakerInvitation } from "@/features/templates/sendSpeakerInvitatio
 import {
   callRotateInvitationLink,
   type DeliveryEntry,
-} from "@/features/invitations/invitationsCallable";
+} from "@/features/invitations/utils/invitationsCallable";
 import { isPlausiblePhone } from "@/features/templates/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import { friendlyWriteError } from "@/stores/saveStatusStore";

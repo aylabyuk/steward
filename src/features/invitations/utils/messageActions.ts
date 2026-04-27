@@ -1,4 +1,4 @@
-import type { ChatMessage } from "./useConversation";
+import type { ChatMessage } from "../hooks/useConversation";
 
 /** Index of the viewer's latest sent message, or null if they haven't
  *  spoken yet. Used by the thread to anchor the "Read" receipt under

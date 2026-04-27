@@ -3,8 +3,8 @@ import {
   buildMessagePermissions,
   EDIT_DELETE_WINDOW_MS,
   findLastMineIndex,
-} from "./messageActions";
-import type { ChatMessage } from "./useConversation";
+} from "../messageActions";
+import type { ChatMessage } from "../../hooks/useConversation";
 
 const NOW = new Date("2026-04-24T12:00:00Z").getTime();
 

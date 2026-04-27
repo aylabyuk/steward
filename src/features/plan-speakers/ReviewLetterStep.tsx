@@ -5,7 +5,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
-import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
+import { useLatestInvitation } from "@/features/invitations/hooks/useLatestInvitation";
 import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/usePrepareInvitation";
 import { interpolate } from "@/features/templates/interpolate";

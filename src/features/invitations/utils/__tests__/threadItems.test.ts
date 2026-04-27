@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AuthorMap, ChatMessage } from "./useConversation";
-import { buildThreadItems } from "./threadItems";
+import type { AuthorMap, ChatMessage } from "../../hooks/useConversation";
+import { buildThreadItems } from "../threadItems";
 
 function mk(sid: string, author: string, body: string, date: Date | null, index = 0): ChatMessage {
   return { sid, index, author, body, dateCreated: date, attributes: null };

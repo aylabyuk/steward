@@ -3,7 +3,7 @@ import { statusProvenanceLabel } from "@/features/schedule/statusProvenance";
 import type { SubState } from "@/hooks/_sub";
 import { cn } from "@/lib/cn";
 import type { Member, Speaker, SpeakerInvitation, SpeakerStatus, WithId } from "@/lib/types";
-import { deriveBannerView, formatLastSeen } from "./invitationBannerView";
+import { deriveBannerView, formatLastSeen } from "./utils/invitationBannerView";
 
 interface Props {
   speaker: Speaker;
