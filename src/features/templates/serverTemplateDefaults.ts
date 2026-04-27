@@ -55,6 +55,26 @@ export const DEFAULT_BISHOP_REPLY_EMAIL = [
   "— {{wardName}}",
 ].join("\n");
 
+/** Twilio SMS body sent when a bishop first invites a prayer-giver.
+ *  Mirrors the speaker-side wording with prayer phrasing in place of
+ *  "speak". `{{prayerType}}` resolves to "opening prayer" or
+ *  "benediction" per the prayer participant's role. */
+export const DEFAULT_PRAYER_INITIAL_INVITATION_SMS =
+  "{{inviterName}} ({{wardName}}) has invited you to give the {{prayerType}} on {{assignedDate}}. " +
+  "Read the full invitation: {{inviteUrl}}. Reply STOP to unsubscribe.";
+
+/** Speaker-side acceptance receipt for prayer invitations. */
+export const DEFAULT_PRAYER_RESPONSE_ACCEPTED =
+  "You accepted the invitation to give the {{prayerType}} on {{assignedDate}}. Thank you.";
+
+/** Speaker-side decline receipt for prayer invitations. */
+export const DEFAULT_PRAYER_RESPONSE_DECLINED =
+  "You declined the invitation to give the {{prayerType}} on {{assignedDate}}. Thank you for letting us know.";
+
+/** Bishopric-side receipt opening line for prayer invitations. */
+export const DEFAULT_PRAYER_BISHOPRIC_RESPONSE_RECEIPT =
+  "{{speakerName}} {{verb}} the invitation to give the {{prayerType}} on {{assignedDate}}.";
+
 export const DEFAULT_MESSAGE_TEMPLATES: Record<MessageTemplateKey, string> = {
   initialInvitationSms: DEFAULT_INITIAL_INVITATION_SMS,
   speakerResponseAccepted: DEFAULT_SPEAKER_RESPONSE_ACCEPTED,
@@ -62,4 +82,8 @@ export const DEFAULT_MESSAGE_TEMPLATES: Record<MessageTemplateKey, string> = {
   bishopricResponseReceipt: DEFAULT_BISHOPRIC_RESPONSE_RECEIPT,
   bishopReplySms: DEFAULT_BISHOP_REPLY_SMS,
   bishopReplyEmail: DEFAULT_BISHOP_REPLY_EMAIL,
+  prayerInitialInvitationSms: DEFAULT_PRAYER_INITIAL_INVITATION_SMS,
+  prayerResponseAccepted: DEFAULT_PRAYER_RESPONSE_ACCEPTED,
+  prayerResponseDeclined: DEFAULT_PRAYER_RESPONSE_DECLINED,
+  prayerBishopricResponseReceipt: DEFAULT_PRAYER_BISHOPRIC_RESPONSE_RECEIPT,
 };

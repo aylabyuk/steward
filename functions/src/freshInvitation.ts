@@ -8,6 +8,7 @@ import {
   trySms,
 } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
+import { invitationPrayerType } from "./invitationTypes.js";
 import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type {
   DeliveryEntry,
@@ -45,8 +46,13 @@ export async function createFreshInvitation(
   // include the optional contact/topic fields when the caller actually
   // provided them. Missing fields read as `undefined` downstream,
   // which is what the rest of the code already expects.
+  const isPrayer = input.kind === "prayer";
   const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
     speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
+    // Persist `kind` only for non-default ("prayer") rows so the doc
+    // shape stays clean for every speaker send. Readers default
+    // missing-field to "speaker" via the Zod schema.
+    ...(isPrayer ? { kind: "prayer", prayerRole: input.prayerRole } : {}),
     assignedDate: input.assignedDate,
     sentOn: input.sentOn,
     wardName: input.wardName,
@@ -80,12 +86,17 @@ export async function createFreshInvitation(
   });
 
   const inviteUrl = buildInviteUrl(origin, input.wardId, docRef.id, plaintextToken);
+  const prayerType =
+    isPrayer && input.prayerRole
+      ? invitationPrayerType({ kind: "prayer", prayerRole: input.prayerRole })
+      : undefined;
   const emailArgs = {
     speakerName: input.speakerName,
     inviterName: input.inviterName,
     assignedDate: input.assignedDate,
     wardName: input.wardName,
     inviteUrl,
+    ...(prayerType ? { prayerType } : {}),
   };
 
   const deliveryRecord: DeliveryEntry[] = [];

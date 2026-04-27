@@ -157,6 +157,10 @@ export const MESSAGE_TEMPLATE_KEYS = [
   "bishopricResponseReceipt",
   "bishopReplySms",
   "bishopReplyEmail",
+  "prayerInitialInvitationSms",
+  "prayerResponseAccepted",
+  "prayerResponseDeclined",
+  "prayerBishopricResponseReceipt",
 ] as const;
 export type MessageTemplateKey = (typeof MESSAGE_TEMPLATE_KEYS)[number];
 
