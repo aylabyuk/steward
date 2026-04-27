@@ -14,15 +14,18 @@ export function AppShell() {
   const hidden = useHideOnScroll(isMobile);
   const drawerOpen = useUserMenuStore((s) => s.open);
   // The mobile drawer "pushes" the page off-screen left so a small
-  // peek of the page stays visible on the right of the drawer. Lock
-  // body horizontal overflow while open so the off-screen content
-  // can't be panned into view.
+  // peek of the page stays visible. Lock both axes of body overflow
+  // while open so the off-screen content can't be panned into view
+  // and the underlying page can't scroll vertically behind the drawer.
   useEffect(() => {
     if (!drawerOpen || !isMobile) return;
-    const prev = document.body.style.overflowX;
+    const prevX = document.body.style.overflowX;
+    const prevY = document.body.style.overflowY;
     document.body.style.overflowX = "hidden";
+    document.body.style.overflowY = "hidden";
     return () => {
-      document.body.style.overflowX = prev;
+      document.body.style.overflowX = prevX;
+      document.body.style.overflowY = prevY;
     };
   }, [drawerOpen, isMobile]);
 

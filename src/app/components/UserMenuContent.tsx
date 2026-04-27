@@ -1,4 +1,5 @@
 import { Avatar } from "@/components/ui/Avatar";
+import { BuiltByCredit } from "@/components/BuiltByCredit";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useAuthStore } from "@/stores/authStore";
 import { MenuItemDisabled, MenuLink, MenuLinkWithToggle } from "./UserMenuItems";
@@ -81,19 +82,23 @@ export function UserMenuContent({ onClose }: Props) {
         Sign out
       </button>
 
-      <div className="border-t border-border" />
-
-      <a
-        href={`https://github.com/aylabyuk/steward/releases/tag/v${__APP_VERSION__}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={onClose}
-        role="menuitem"
-        aria-label={`Version ${__APP_VERSION__} — open release notes`}
-        className="block px-2.5 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut hover:bg-parchment-2 hover:rounded transition-colors"
-      >
-        v{__APP_VERSION__} ↗
-      </a>
+      {/* Credit + version pinned to the bottom. `mt-auto` only takes
+       *  effect when the host is a flex column (the mobile drawer);
+       *  in the desktop popover the block sits naturally at the end. */}
+      <div className="mt-auto flex flex-col items-center gap-1.5 pt-4 pb-1 px-2.5 border-t border-border">
+        <BuiltByCredit className="text-center" />
+        <a
+          href={`https://github.com/aylabyuk/steward/releases/tag/v${__APP_VERSION__}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClose}
+          role="menuitem"
+          aria-label={`Version ${__APP_VERSION__} — open release notes`}
+          className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut transition-colors"
+        >
+          v{__APP_VERSION__} ↗
+        </a>
+      </div>
     </>
   );
 }
