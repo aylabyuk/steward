@@ -48,13 +48,6 @@ interface Props {
   onPageStyleChange?: (next: LetterPageStyle) => void;
   ariaLabel: string;
   editorDisabled?: boolean;
-  /** Read-only render — used on mobile where the canvas isn't
-   *  operable. Hides the toolbar, swaps in a "Editing is desktop-only"
-   *  notice, and blocks pointer interaction on the page surface so
-   *  the bishop sees the same paper preview as desktop without being
-   *  able to type into it. Distinct from `editorDisabled` (which dims
-   *  the page for inactive members). */
-  readOnly?: boolean;
 }
 
 /** WYSIWYG speaker-letter editor — Word-style layout: full-width
@@ -74,7 +67,6 @@ export function LetterPageEditor({
   onPageStyleChange,
   ariaLabel,
   editorDisabled,
-  readOnly,
 }: Props) {
   const initialState = initialJson ?? buildInitialLetterState(initialMarkdown);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -107,28 +99,20 @@ export function LetterPageEditor({
             onInitial={onInitial}
             ariaLabel={ariaLabel}
             slashCommands={LETTER_SLASH_COMMANDS}
-            {...(readOnly
-              ? {}
-              : {
-                  pageToolbar: (
-                    <PageToolbar
-                      slashCommands={LETTER_SLASH_COMMANDS}
-                      variables={LETTER_VARIABLES}
-                      variableGroupLabels={LETTER_VARIABLE_GROUP_LABEL}
-                      pageStyle={pageStyle}
-                      zoom={zoom}
-                      zoomMode={zoomMode}
-                      onZoomMode={setZoomMode}
-                      {...(onPageStyleChange ? { onPageStyleChange } : {})}
-                    />
-                  ),
-                })}
+            pageToolbar={
+              <PageToolbar
+                slashCommands={LETTER_SLASH_COMMANDS}
+                variables={LETTER_VARIABLES}
+                variableGroupLabels={LETTER_VARIABLE_GROUP_LABEL}
+                pageStyle={pageStyle}
+                zoom={zoom}
+                zoomMode={zoomMode}
+                onZoomMode={setZoomMode}
+                {...(onPageStyleChange ? { onPageStyleChange } : {})}
+              />
+            }
             noticeBar={
-              readOnly ? (
-                <div className="w-full bg-walnut text-chalk text-center font-mono text-[11px] uppercase tracking-[0.16em] py-2 px-4">
-                  Editing is desktop-only — open this on a laptop to customize this letter.
-                </div>
-              ) : showSampleNotice ? (
+              showSampleNotice ? (
                 <div className="w-full bg-bordeaux text-chalk text-center font-mono text-[11px] uppercase tracking-[0.16em] py-2 px-4">
                   Preview — variable chips show sample values. Actual speaker / ward values fill in
                   when sent.
@@ -136,14 +120,12 @@ export function LetterPageEditor({
               ) : undefined
             }
             page={(contentEditable) => (
-              <div className={`flex-1 min-h-0 ${readOnly ? "pointer-events-none" : ""}`}>
+              <div className="flex-1 min-h-0">
                 <PaginatedPageStage
                   variant="letter"
                   pageStyle={pageStyle}
                   zoom={zoom}
-                  {...(readOnly
-                    ? {}
-                    : { onZoomChange: (v) => setZoomMode({ kind: "manual", value: v }) })}
+                  onZoomChange={(v) => setZoomMode({ kind: "manual", value: v })}
                   scrollRef={scrollRef}
                 >
                   <div className="font-serif text-[16.5px] leading-[1.65] text-walnut-2">
