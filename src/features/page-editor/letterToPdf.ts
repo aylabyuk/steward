@@ -1,4 +1,4 @@
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import { jsPDF as JsPDF } from "jspdf";
 
 const PAGE_W_IN = 8.5;

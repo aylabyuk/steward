@@ -39,7 +39,7 @@
     "@twilio/conversations": "^3.0.0",
     "clsx": "^2.1.1",
     "firebase": "^12.12.0",
-    "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.0.2",
     "jspdf": "^4.2.1",
     "lexical": "^0.43.0",
     "lucide-react": "^1.11.0",
