@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { WithId } from "@/hooks/_sub";
 import type { Assignment, SacramentMeeting, Speaker } from "@/lib/types";
-import { checkMeetingReadiness } from "./readiness";
+import { checkMeetingReadiness } from "../readiness";
 
 const confirmed: Assignment = { person: { name: "Alice" }, confirmed: true };
 

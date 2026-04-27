@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeDiff } from "./history";
+import { computeDiff } from "../history";
 
 describe("computeDiff", () => {
   it("returns no changes when objects are identical", () => {

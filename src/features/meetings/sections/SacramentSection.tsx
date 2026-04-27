@@ -2,7 +2,7 @@ import type { Assignment, NonMeetingSunday, SacramentMeeting } from "@/lib/types
 import { emptyAssignment } from "@/lib/types";
 import { AssignRow } from "../program/AssignRow";
 import { ProgramSection } from "../program/ProgramSection";
-import { updateMeetingField } from "../updateMeeting";
+import { updateMeetingField } from "../utils/updateMeeting";
 
 interface Props {
   wardId: string;

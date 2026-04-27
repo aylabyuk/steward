@@ -1,5 +1,5 @@
 import { collection, doc, serverTimestamp, writeBatch } from "firebase/firestore";
-import { appendHistoryEvent, currentActor } from "@/features/meetings/history";
+import { appendHistoryEvent, currentActor } from "@/features/meetings/utils/history";
 import { db } from "@/lib/firebase";
 
 function commentRef(wardId: string, date: string, commentId: string) {

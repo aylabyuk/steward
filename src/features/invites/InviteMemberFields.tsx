@@ -1,6 +1,6 @@
 import type { Calling } from "@/lib/types";
 import { CALLING_OPTIONS } from "@/lib/callingLabels";
-import { INVITE_INPUT_CLS, InviteField } from "./inviteFormField";
+import { INVITE_INPUT_CLS, InviteField } from "./InviteField";
 
 interface Props {
   email: string;

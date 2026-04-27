@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
-import { updateMeetingField } from "@/features/meetings/updateMeeting";
-import { TYPE_LABELS } from "@/features/meetings/meetingLabels";
+import { updateMeetingField } from "@/features/meetings/utils/updateMeeting";
+import { TYPE_LABELS } from "@/features/meetings/utils/meetingLabels";
 import { cn } from "@/lib/cn";
 
 interface Props {

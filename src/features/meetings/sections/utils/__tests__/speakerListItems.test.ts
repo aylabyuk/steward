@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { WithId } from "@/hooks/_sub";
 import type { MidItem, Speaker } from "@/lib/types";
-import { buildItems, formatMidLabel, sortByOrder } from "./speakerListItems";
+import { buildItems, formatMidLabel, sortByOrder } from "../speakerListItems";
 
 function speaker(id: string, order?: number): WithId<Speaker> {
   return {

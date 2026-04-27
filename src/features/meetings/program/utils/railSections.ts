@@ -1,7 +1,7 @@
 import type { WithId } from "@/hooks/_sub";
 import type { Assignment, MeetingType, SacramentMeeting, Speaker } from "@/lib/types";
 import type { RailSection, RailState } from "./ProgramRail";
-import type { ReadinessReport } from "../readiness";
+import type { ReadinessReport } from "../utils/readiness";
 
 function hasPerson(a: Assignment | undefined): boolean {
   return Boolean(a?.person?.name);

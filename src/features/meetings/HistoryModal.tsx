@@ -4,7 +4,7 @@ import type { WithId } from "@/hooks/_sub";
 import { useHistory } from "./hooks/useHistory";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import type { HistoryEvent } from "@/lib/types";
-import { formatHistoryEvent } from "./historyFormat";
+import { formatHistoryEvent } from "./utils/historyFormat";
 
 const PAGE_STEP = 20;
 
