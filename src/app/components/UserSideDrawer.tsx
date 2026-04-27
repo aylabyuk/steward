@@ -74,28 +74,29 @@ export function UserSideDrawer() {
             : "animate-[drawerSlideInRight_280ms_cubic-bezier(0.22,1,0.36,1)_backwards]",
         )}
       >
-        <div className="flex items-center justify-end px-3 pt-2 pb-1">
-          <button
-            type="button"
-            onClick={close}
-            aria-label="Close menu"
-            className="w-9 h-9 inline-flex items-center justify-center rounded-md text-walnut-3 hover:text-walnut hover:bg-parchment-2 transition-colors"
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Close menu"
+          // Absolute so it doesn't push the avatar header down — sits in
+          // the top-right corner against the safe-area-inset that the
+          // aside's padding already accounts for.
+          className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] w-9 h-9 inline-flex items-center justify-center rounded-md text-walnut-3 hover:text-walnut hover:bg-parchment-2 transition-colors z-10"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-            >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
         <UserMenuContent onClose={close} />
       </aside>
     </>,
