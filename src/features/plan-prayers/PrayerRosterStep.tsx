@@ -4,6 +4,7 @@ import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
 import { WizardFooter } from "@/features/plan-speakers/WizardFooter";
 import { PrayerRosterRow } from "./PrayerRosterRow";
 import { usePrayerPlanRow } from "./usePrayerPlanRow";
+import { validatePrayerRow } from "./validatePrayerRow";
 
 interface Props {
   wardId: string;
@@ -26,7 +27,8 @@ export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
     { role: "benediction" as const, row: benediction },
   ];
   const validCount = rows.filter(({ row }) => row.name.trim()).length;
-  const canContinue = validCount > 0 && !saving;
+  const hasFieldError = rows.some(({ row }) => validatePrayerRow(row).hasError);
+  const canContinue = validCount > 0 && !hasFieldError && !saving;
 
   async function handleContinue() {
     setError(null);
