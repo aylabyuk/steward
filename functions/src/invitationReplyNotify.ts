@@ -54,7 +54,11 @@ export async function smsSpeaker(inv: ResolvedInvitation, body: string): Promise
     text = `${inv.inviterName} (Steward): ${preview}`;
   }
   try {
-    await sendSmsDirect({ to: inv.speakerPhone, body: text });
+    await sendSmsDirect({
+      to: inv.speakerPhone,
+      body: text,
+      ...(inv.fromNumberMode ? { fromMode: inv.fromNumberMode } : {}),
+    });
   } catch (err) {
     logger.error("reply SMS failed", { err: (err as Error).message, token: inv.token });
   }

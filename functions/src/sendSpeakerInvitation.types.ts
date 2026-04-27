@@ -35,6 +35,13 @@ export interface FreshInvitationRequest {
   speakerPhone?: string;
   bishopReplyToEmail: string;
   expiresAtMillis: number;
+  /** Dev-mode override: when true, this invitation routes outbound
+   *  SMS through TWILIO_FROM_NUMBER_TESTING instead of the production
+   *  default. Honored only for callers on the email allowlist —
+   *  silently ignored for everyone else. Persisted on the invitation
+   *  doc as `fromNumberMode` so subsequent sends in the same thread
+   *  (rotation, bishop-reply notification) stay on the same number. */
+  useTestingNumber?: boolean;
 }
 
 /** Rotate-link path: generates a fresh capability token on an

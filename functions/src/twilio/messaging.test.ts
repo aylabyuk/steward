@@ -45,4 +45,31 @@ describe("sendSmsDirect dev stub", () => {
       /TWILIO_FROM_NUMBER/,
     );
   });
+
+  it("uses TWILIO_FROM_NUMBER_TESTING when fromMode is 'testing'", async () => {
+    delete process.env.STEWARD_DEV_STUB_SMS;
+    process.env.TWILIO_FROM_NUMBER = "+15550000000";
+    process.env.TWILIO_FROM_NUMBER_TESTING = "+15559999999";
+    messagesCreate.mockResolvedValue({ sid: "SMtest" });
+    const sid = await sendSmsDirect({
+      to: "+15551234567",
+      body: "hi",
+      fromMode: "testing",
+    });
+    expect(sid).toBe("SMtest");
+    expect(messagesCreate).toHaveBeenCalledWith({
+      to: "+15551234567",
+      from: "+15559999999",
+      body: "hi",
+    });
+  });
+
+  it("throws if testing requested but TWILIO_FROM_NUMBER_TESTING missing", async () => {
+    delete process.env.STEWARD_DEV_STUB_SMS;
+    process.env.TWILIO_FROM_NUMBER = "+15550000000";
+    delete process.env.TWILIO_FROM_NUMBER_TESTING;
+    await expect(
+      sendSmsDirect({ to: "+15551234567", body: "hi", fromMode: "testing" }),
+    ).rejects.toThrow(/TWILIO_FROM_NUMBER_TESTING/);
+  });
 });

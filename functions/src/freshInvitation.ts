@@ -8,6 +8,7 @@ import {
   trySms,
 } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
+import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type {
   DeliveryEntry,
   FreshInvitationRequest,
@@ -22,6 +23,7 @@ import type {
 export async function createFreshInvitation(
   input: FreshInvitationRequest,
   origin: string,
+  fromNumberMode: FromNumberMode,
 ): Promise<FreshInvitationResponse> {
   const db = getFirestore();
   const wantsEmail = input.channels.includes("email") && Boolean(input.speakerEmail);
@@ -64,6 +66,11 @@ export async function createFreshInvitation(
     conversationSid,
     deliveryRecord: [],
     bishopricParticipants,
+    // Persist only when non-default — keeps the doc shape clean for
+    // every normal send and lets downstream code treat absence as
+    // "production". The webhook's smsSpeaker + the rotation path in
+    // issueSpeakerSession both read this back.
+    ...(fromNumberMode === "testing" ? { fromNumberMode } : {}),
     createdAt: FieldValue.serverTimestamp(),
   });
 
@@ -95,7 +102,8 @@ export async function createFreshInvitation(
       ),
     );
   }
-  if (wantsSms) deliveryRecord.push(await trySms(input.wardId, input.speakerPhone!, emailArgs));
+  if (wantsSms)
+    deliveryRecord.push(await trySms(input.wardId, input.speakerPhone!, emailArgs, fromNumberMode));
   await docRef.update({ deliveryRecord });
 
   return { mode: "fresh", token: docRef.id, conversationSid, deliveryRecord };
