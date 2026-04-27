@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useSundayInvitationsSummary } from "@/features/invitations/hooks/useSundayInvitationsSummary";
 import { leadTimeSeverity } from "@/features/speakers/utils/leadTime";

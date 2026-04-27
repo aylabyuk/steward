@@ -1,4 +1,5 @@
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
+import { Link } from "@/lib/nav";
 import { Avatar } from "@/components/ui/Avatar";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { useSpeakerInvitation } from "@/features/templates/hooks/useSpeakerInvitation";

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
 /** Templates → Prayer invitation letter section. Sits beside the

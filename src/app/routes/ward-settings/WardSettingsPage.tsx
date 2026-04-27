@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { AppBar } from "@/components/ui/AppBar";
 import { PageRail } from "@/components/ui/PageRail";
 import { SaveBar } from "@/components/ui/SaveBar";
 import { InviteMemberDialog } from "@/features/invites/InviteMemberDialog";
@@ -43,9 +43,12 @@ export function WardSettingsPage() {
 
   if (!wardId || !ward.data || !draft) {
     return (
-      <main className="pb-24">
-        <p className="font-serif italic text-[14px] text-walnut-2">Loading ward settings…</p>
-      </main>
+      <>
+        <AppBar eyebrow="Ward administration" title="Ward settings" />
+        <main className="w-full max-w-380 mx-auto px-4 sm:px-8 py-6 pb-24">
+          <p className="font-serif italic text-[14px] text-walnut-2">Loading ward settings…</p>
+        </main>
+      </>
     );
   }
 
@@ -83,59 +86,49 @@ export function WardSettingsPage() {
   ];
 
   return (
-    <main className="pb-24">
-      <nav className="mb-4 text-sm text-walnut-2">
-        <Link to="/schedule" className="hover:text-walnut">
-          ← Schedule
-        </Link>
-      </nav>
-      <header className="mb-6">
-        <div className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium mb-1.5">
-          Ward administration
-        </div>
-        <h1 className="font-display text-[2.25rem] font-semibold text-walnut leading-tight">
-          Ward settings
-        </h1>
-        <p className="font-serif italic text-[16px] text-walnut-2 mt-1">
-          Preferences and member roster for the bishopric.
-        </p>
-      </header>
+    <>
+      <AppBar
+        eyebrow="Ward administration"
+        title="Ward settings"
+        description="Preferences and member roster for the bishopric."
+      />
+      <main className="w-full max-w-380 mx-auto px-4 sm:px-8 py-6 pb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-8 items-start">
+          <div>
+            <WardPrefsSection value={draft} onChange={setDraft} canEdit={Boolean(canEdit)} />
+            {!membersLoading && (
+              <>
+                <PendingInvitesList wardId={wardId} canEdit={Boolean(canEdit)} />
+                <MembersSection
+                  wardId={wardId}
+                  members={members}
+                  canEdit={Boolean(canEdit)}
+                  onInvite={() => setInviteOpen(true)}
+                />
+              </>
+            )}
+          </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-8 items-start">
-        <div>
-          <WardPrefsSection value={draft} onChange={setDraft} canEdit={Boolean(canEdit)} />
-          {!membersLoading && (
-            <>
-              <PendingInvitesList wardId={wardId} canEdit={Boolean(canEdit)} />
-              <MembersSection
-                wardId={wardId}
-                members={members}
-                canEdit={Boolean(canEdit)}
-                onInvite={() => setInviteOpen(true)}
-              />
-            </>
-          )}
+          <PageRail items={rail} elsewhere={RAIL_ELSEWHERE} label="Ward settings sections" />
         </div>
 
-        <PageRail items={rail} elsewhere={RAIL_ELSEWHERE} label="Ward settings sections" />
-      </div>
+        <SaveBar
+          dirty={dirty && !hasErrors}
+          saving={saving}
+          savedAt={savedAt}
+          error={error ?? (hasErrors ? "Fix the highlighted fields to save." : null)}
+          onDiscard={discard}
+          onSave={() => void save()}
+        />
 
-      <SaveBar
-        dirty={dirty && !hasErrors}
-        saving={saving}
-        savedAt={savedAt}
-        error={error ?? (hasErrors ? "Fix the highlighted fields to save." : null)}
-        onDiscard={discard}
-        onSave={() => void save()}
-      />
-
-      <InviteMemberDialog
-        wardId={wardId}
-        ward={ward.data}
-        inviter={me ? { uid: me.id, displayName: me.data.displayName } : null}
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-      />
-    </main>
+        <InviteMemberDialog
+          wardId={wardId}
+          ward={ward.data}
+          inviter={me ? { uid: me.id, displayName: me.data.displayName } : null}
+          open={inviteOpen}
+          onClose={() => setInviteOpen(false)}
+        />
+      </main>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link } from "@/lib/nav";
 import type { MeetingType, SacramentMeeting } from "@/lib/types";
 import { ApprovalPanel } from "./ApprovalPanel";
 

@@ -3,6 +3,7 @@ import { CongregationProgram } from "@/features/print/CongregationProgram";
 import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
 import { AuthGate } from "./AuthGate";
+import { ModalPage } from "./components/ModalPage";
 import { AcceptInvitePage } from "./routes/accept-invite";
 import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";
@@ -32,10 +33,6 @@ export const router = createBrowserRouter([
       // a bookmark or old link gets bounced back to Schedule. Specific
       // destinations (ward/profile/templates) are reached via UserMenu.
       { path: "settings", element: <Navigate to="/schedule" replace /> },
-      { path: "settings/ward", element: <WardSettingsPage /> },
-      { path: "settings/profile", element: <ProfilePage /> },
-      { path: "settings/notifications", element: <NotificationsPage /> },
-      { path: "settings/templates", element: <TemplatesPage /> },
       {
         path: "ward/:wardId/invitations/:invitationId/view",
         element: <InvitationViewPage />,
@@ -50,6 +47,18 @@ export const router = createBrowserRouter([
   {
     element: <AuthGate appShell={false} />,
     children: [
+      // Settings pages reached from the user menu — full-screen
+      // modal layout sitting on top of Schedule. Each page handles
+      // its own back link to /schedule.
+      {
+        element: <ModalPage />,
+        children: [
+          { path: "/settings/ward", element: <WardSettingsPage /> },
+          { path: "/settings/profile", element: <ProfilePage /> },
+          { path: "/settings/notifications", element: <NotificationsPage /> },
+          { path: "/settings/templates", element: <TemplatesPage /> },
+        ],
+      },
       { path: "/print/:date/congregation", element: <CongregationProgram /> },
       { path: "/print/:date/conducting", element: <ConductingProgram /> },
       {

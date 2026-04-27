@@ -5,6 +5,7 @@ import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "./hooks/useUpcomingMeetings";
 import { useInfiniteHorizon } from "./hooks/useInfiniteHorizon";
+import { useScrollRestore } from "@/hooks/useScrollRestore";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -23,6 +24,7 @@ const MOBILE_STEP_WEEKS = 4;
 const MOBILE_MAX_WEEKS = 16;
 
 export function ScheduleView() {
+  useScrollRestore("schedule");
   const wardId = useCurrentWardStore((s) => s.wardId);
   const settingsState = useWardSettings();
   const defaultHorizon = settingsState.data?.settings.scheduleHorizonWeeks ?? 8;
