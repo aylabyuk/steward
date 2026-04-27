@@ -5,11 +5,13 @@ import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "./hooks/useUpcomingMeetings";
 import { useWardSettings } from "@/hooks/useWardSettings";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { PageHead } from "./PageHead";
 import { HorizonSelect } from "./HorizonSelect";
 import { SundayCard } from "./SundayCard";
 import { QuarterSection } from "./QuarterSection";
+import { MobileScheduleList } from "./MobileScheduleList";
 import { groupByMonth } from "./utils/groupByMonth";
 
 export function ScheduleView() {
@@ -18,6 +20,7 @@ export function ScheduleView() {
   const defaultHorizon = settingsState.data?.settings.scheduleHorizonWeeks ?? 8;
   const leadTimeDays = settingsState.data?.settings.speakerLeadTimeDays ?? 14;
   const nonMeeting = settingsState.data?.settings.nonMeetingSundays ?? [];
+  const isMobile = useIsMobile();
 
   const [horizon, setHorizon] = useState(defaultHorizon);
   useEffect(() => {
@@ -52,26 +55,34 @@ export function ScheduleView() {
           rightSlot={<HorizonSelect value={horizon} onChange={setHorizon} />}
         />
 
-        <div className="mt-8">
-          {monthGroups.map((group) => (
-            <QuarterSection
-              key={`${group.year}-${group.month}`}
-              title={group.label}
-              count={group.sundays.length}
-            >
-              {group.sundays.map((sunday) => (
-                <SundayCard
-                  key={sunday.date}
-                  date={sunday.date}
-                  meeting={sunday.meeting}
-                  fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
-                  leadTimeDays={leadTimeDays}
-                  nonMeetingSundays={nonMeeting}
-                />
-              ))}
-            </QuarterSection>
-          ))}
-        </div>
+        {isMobile ? (
+          <MobileScheduleList
+            monthGroups={monthGroups}
+            leadTimeDays={leadTimeDays}
+            nonMeetingSundays={nonMeeting}
+          />
+        ) : (
+          <div className="mt-8">
+            {monthGroups.map((group) => (
+              <QuarterSection
+                key={`${group.year}-${group.month}`}
+                title={group.label}
+                count={group.sundays.length}
+              >
+                {group.sundays.map((sunday) => (
+                  <SundayCard
+                    key={sunday.date}
+                    date={sunday.date}
+                    meeting={sunday.meeting}
+                    fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
+                    leadTimeDays={leadTimeDays}
+                    nonMeetingSundays={nonMeeting}
+                  />
+                ))}
+              </QuarterSection>
+            ))}
+          </div>
+        )}
       </main>
     </TwilioChatProvider>
   );
