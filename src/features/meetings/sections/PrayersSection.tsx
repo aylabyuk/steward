@@ -1,5 +1,5 @@
-import { Link } from "react-router";
 import type { Assignment, NonMeetingSunday, PrayerRole, SacramentMeeting } from "@/lib/types";
+import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
 import { SpeakerStatusChip } from "@/features/plan-speakers/SpeakerStatusChip";
 import { usePrayerParticipant } from "@/features/prayers/usePrayerParticipant";
 import { AssignRow } from "../program/AssignRow";
@@ -24,6 +24,7 @@ export function PrayersSection({ wardId, date, meeting, nonMeetingSundays }: Pro
         <PrayerRowGroup
           label="Opening"
           role="opening"
+          wardId={wardId}
           date={date}
           placeholder="Who will give the opening prayer?"
           assignment={meeting?.openingPrayer}
@@ -32,6 +33,7 @@ export function PrayersSection({ wardId, date, meeting, nonMeetingSundays }: Pro
         <PrayerRowGroup
           label="Benediction"
           role="benediction"
+          wardId={wardId}
           date={date}
           placeholder="Who will give the benediction?"
           assignment={meeting?.benediction}
@@ -45,43 +47,58 @@ export function PrayersSection({ wardId, date, meeting, nonMeetingSundays }: Pro
 interface RowGroupProps {
   label: string;
   role: PrayerRole;
+  wardId: string;
   date: string;
   placeholder: string;
   assignment: Assignment | undefined;
   onChange: (a: Assignment) => void;
 }
 
-function PrayerRowGroup({ label, role, date, placeholder, assignment, onChange }: RowGroupProps) {
+/** Per-prayer row in the meeting editor. The Invite/Resend trigger
+ *  has moved to the schedule's "+ Plan prayers" entry point — the
+ *  meeting editor stays focused on quick name capture. The status
+ *  chip + chat launcher mirror the speaker rows so the bishop can
+ *  open the prayer-giver chat from this surface too. */
+function PrayerRowGroup({
+  label,
+  role,
+  wardId,
+  date,
+  placeholder,
+  assignment,
+  onChange,
+}: RowGroupProps) {
   const participant = usePrayerParticipant(date, role);
   const status = participant.data?.status ?? null;
-  const hasName = Boolean(assignment?.person?.name?.trim() || participant.data?.name?.trim());
+  const inlineName = assignment?.person?.name?.trim() ?? "";
+  const hasName = Boolean(inlineName || participant.data?.name?.trim());
+  const showChip = participant.data && status && status !== "planned";
+  const showLauncher = hasName && participant.data?.invitationId;
 
   return (
-    // Suppress AssignRow's own dashed bottom border when we're
-    // grouping it with the Invite link — its `last:border-b-0`
-    // doesn't trigger because the link is now a sibling. The dashed
-    // separator role passes to this wrapper for the stacked
-    // (mobile / tablet) layout; on `lg:` the rows sit side by side
-    // in a 2-col grid so a horizontal separator below each row reads
-    // as noise — drop it.
-    <div className="border-b border-dashed border-border last:border-b-0 lg:border-b-0 *:first:border-b-0">
+    <div>
       <AssignRow
         label={label}
         placeholder={placeholder}
         assignment={assignment}
+        // Once a prayer participant doc exists, the structured status
+        // chip + chat launcher take over from the legacy "confirmed"
+        // toggle so the row reads like a speaker row.
+        showStatus={!participant.data}
         onChange={onChange}
       />
-      {hasName && (
-        <div className="flex items-center justify-end gap-2 pl-24.5 pr-10.5 -mt-1 mb-2">
-          {status && status !== "planned" && <SpeakerStatusChip status={status} />}
-          <Link
-            to={`/week/${date}/prayer/${role}/prepare`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-[10px] uppercase tracking-[0.14em] text-bordeaux hover:text-bordeaux-deep underline-offset-2 hover:underline"
-          >
-            {status === "invited" || status === "confirmed" ? "Resend" : "Invite"} →
-          </Link>
+      {(showChip || showLauncher) && (
+        <div className="flex items-center justify-end gap-2 pl-24.5 pr-2 -mt-1 mb-2">
+          {showChip && status && <SpeakerStatusChip status={status} />}
+          {showLauncher && (
+            <PrayerChatLauncher
+              wardId={wardId}
+              date={date}
+              role={role}
+              participant={participant.data ?? null}
+              fallbackName={inlineName}
+            />
+          )}
         </div>
       )}
     </div>

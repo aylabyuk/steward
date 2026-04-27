@@ -35,10 +35,17 @@ export interface ApplyResponseInput {
   bishopUid: string;
 }
 
-/** Bishop-side: applies the speaker's response to `speaker.status`
- *  (confirmed for yes, declined for no) and stamps the invitation's
- *  acknowledgement. Batched so either both writes land or neither.
- *  Routes through the main `db` (bishopric Google session). */
+/** Bishop-side: applies the participant's response to their status
+ *  doc (confirmed for yes, declined for no) and stamps the
+ *  invitation's acknowledgement. Batched so either both writes land
+ *  or neither. Routes through the main `db` (bishopric Google
+ *  session).
+ *
+ *  Kind-aware: the invitation doc carries `kind: "speaker" | "prayer"`
+ *  (PR #169). Speakers update their doc at `meetings/{date}/speakers/
+ *  {speakerId}`; prayers update `meetings/{date}/prayers/{role}` —
+ *  for prayer invitations the doc's `speakerRef.speakerId` field
+ *  holds the role string. */
 export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise<void> {
   const invitationRef = doc(db, "wards", input.wardId, "speakerInvitations", input.invitationId);
   const snap = await getDoc(invitationRef);
@@ -46,18 +53,20 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
   const data = snap.data() as {
     response?: { answer: "yes" | "no" };
     speakerRef: { meetingDate: string; speakerId: string };
+    kind?: "speaker" | "prayer";
   };
   const answer = data.response?.answer;
   if (!answer) throw new Error("No response to apply.");
 
   const newStatus: "confirmed" | "declined" = answer === "yes" ? "confirmed" : "declined";
-  const speakerRef = doc(
+  const subcollection = data.kind === "prayer" ? "prayers" : "speakers";
+  const participantRef = doc(
     db,
     "wards",
     input.wardId,
     "meetings",
     data.speakerRef.meetingDate,
-    "speakers",
+    subcollection,
     data.speakerRef.speakerId,
   );
 
@@ -66,7 +75,7 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
     "response.acknowledgedAt": serverTimestamp(),
     "response.acknowledgedBy": input.bishopUid,
   });
-  batch.update(speakerRef, {
+  batch.update(participantRef, {
     status: newStatus,
     statusSource: "speaker-response",
     statusSetBy: input.bishopUid,
