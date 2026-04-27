@@ -7,6 +7,36 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-04-27
+
+A small mobile-polish + maintainer-tooling release. The fixed bottom
+bars now sit above the iPhone home indicator, and the maintainer can
+opt a single invitation onto a separate Twilio FROM number so smoke
+tests don't have to share the production line.
+
+### Added
+
+- **Maintainer-only "testing" outbound SMS number.** A new
+  `TWILIO_FROM_NUMBER_TESTING` secret + per-invitation toggle let
+  allowlisted callers (currently `6472022+aylabyuk@users.noreply.github.com`) send an
+  invitation through a separate Twilio number, leaving the production
+  line free. The flag is persisted on the invitation only when set,
+  so SMS rotations + bishop-reply notifications stay on the same
+  FROM for the lifetime of the thread. Server allowlist is the
+  security boundary; non-allowlisted callers are silently downgraded
+  to the production number. A "Developer" section on the Profile
+  page surfaces the toggle when the caller qualifies.
+
+### Fixed
+
+- **Bottom save bar + plan-speakers wizard footer respect the iOS
+  safe area.** `ProgramSaveBar` (week editor) and `WizardFooter`
+  (every step of the plan-speakers wizard, on its `h-dvh` shell)
+  now apply `pb-[max(<base>,env(safe-area-inset-bottom))]` so the
+  Approve / Send / Print buttons clear the iPhone home indicator
+  instead of overlapping it. Matches the pattern already used by
+  the global `SaveBar` and the speaker-invite FAB.
+
 ## [0.12.2] — 2026-04-27
 
 Real-device follow-up to the v0.12.1 mobile gate. The read-only path
@@ -1601,7 +1631,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.12.2...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/aylabyuk/steward/releases/tag/v0.13.0
 [0.12.2]: https://github.com/aylabyuk/steward/releases/tag/v0.12.2
 [0.12.1]: https://github.com/aylabyuk/steward/releases/tag/v0.12.1
 [0.12.0]: https://github.com/aylabyuk/steward/releases/tag/v0.12.0
