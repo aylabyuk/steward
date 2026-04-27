@@ -85,9 +85,21 @@
    ========================================================= */
 @layer base {
   html {
-    /* Always reserve room for the scrollbar so the centered main element
-       doesn't shift horizontally between short and long pages. */
+    /* Mobile only: reserve room for the scrollbar so the centered
+       main element doesn't shift horizontally between short and long
+       pages. Desktop owns scrolling on an inner content wrapper (so
+       the topbar visually sits above the scrollbar) — html-level
+       overflow stays hidden so no gutter strip appears on the right. */
     scrollbar-gutter: stable;
+  }
+  @media (min-width: 768px) {
+    html,
+    body {
+      overflow: hidden;
+    }
+    html {
+      scrollbar-gutter: auto;
+    }
   }
   html,
   body {
