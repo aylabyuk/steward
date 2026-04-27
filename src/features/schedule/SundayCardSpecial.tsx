@@ -66,7 +66,7 @@ export function SundayCardSpecial({ variant, stampLabel, description, date, meet
       </ul>
       <Link
         to={`/plan/${date}/prayers`}
-        className="inline-flex items-center gap-1.5 text-[13px] font-sans font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors py-1.5"
+        className="inline-flex items-center gap-1.5 text-[13px] font-sans font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors py-1.5 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
       >
         <span className="w-4 h-4 border border-bordeaux rounded-sm flex items-center justify-center">
           <svg

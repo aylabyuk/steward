@@ -34,7 +34,7 @@ export function SundayCardBody({ speakers, date, meeting }: Props) {
           );
         })}
       </ul>
-      <ul className="list-none m-0 p-0 mb-2 border-t border-border pt-1">
+      <ul className="list-none m-0 p-0 mb-2 border-t-2 border-walnut-3 pt-1">
         <PrayerRow
           role="opening"
           date={date}
@@ -46,7 +46,7 @@ export function SundayCardBody({ speakers, date, meeting }: Props) {
           inlineName={meeting?.benediction?.person?.name ?? ""}
         />
       </ul>
-      <div className="flex flex-wrap gap-x-5 gap-y-1">
+      <div className="flex flex-wrap gap-x-5 gap-y-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
         <PlanLink to={`/plan/${date}`} label="Plan speakers" />
         <PlanLink to={`/plan/${date}/prayers`} label="Plan prayers" />
       </div>

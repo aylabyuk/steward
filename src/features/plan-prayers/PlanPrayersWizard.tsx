@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
+import { useWardSettings } from "@/hooks/useWardSettings";
 import { formatShortDate } from "@/features/schedule/dateFormat";
 import { WizardHeader } from "@/features/plan-speakers/WizardHeader";
 import { PrayerInvitationStep } from "./PrayerInvitationStep";
@@ -22,6 +23,8 @@ interface Props {
 export function PlanPrayersWizard({ wardId, date }: Props) {
   const navigate = useNavigate();
   const participants = usePrayerParticipants(date);
+  const ward = useWardSettings();
+  const nonMeetingSundays = ward.data?.settings.nonMeetingSundays ?? [];
   const [step, setStep] = useState<PrayerWizardStep>("roster");
   useFullViewportLayout();
 
@@ -42,7 +45,12 @@ export function PlanPrayersWizard({ wardId, date }: Props) {
 
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {step === "roster" && (
-          <PrayerRosterStep wardId={wardId} date={date} onContinue={() => setStep("invitations")} />
+          <PrayerRosterStep
+            wardId={wardId}
+            date={date}
+            nonMeetingSundays={nonMeetingSundays}
+            onContinue={() => setStep("invitations")}
+          />
         )}
         {step === "invitations" && (
           <PrayerInvitationStep
