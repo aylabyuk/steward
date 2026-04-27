@@ -1,4 +1,5 @@
 import { Outlet } from "react-router";
+import { BuiltByCredit } from "@/components/BuiltByCredit";
 import { OnlineStatusBanner } from "./OnlineStatusBanner";
 import { Topbar } from "./Topbar";
 
@@ -15,6 +16,9 @@ export function AppShell() {
       <div className="flex flex-1 flex-col w-full max-w-380 mx-auto px-4 sm:px-8 pt-4 sm:pt-7">
         <Outlet />
       </div>
+      <footer className="flex justify-center py-3 px-4">
+        <BuiltByCredit />
+      </footer>
     </div>
   );
 }
