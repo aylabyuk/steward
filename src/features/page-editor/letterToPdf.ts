@@ -1,4 +1,4 @@
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import { jsPDF as JsPDF } from "jspdf";
 
 const PAGE_W_IN = 8.5;
@@ -20,14 +20,26 @@ export async function letterCanvasToPdf(
   el: HTMLElement,
   filename: string,
 ): Promise<{ blob: Blob; file: File }> {
-  const canvas = await html2canvas(el, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    useCORS: true,
-    logging: false,
-    width: PAGE_W_PX,
-    windowWidth: PAGE_W_PX,
-  });
+  // The PrintOnlyLetter portal is `display: none` on screen so the
+  // print path can rely on it (see styles/index.css). html2canvas
+  // would otherwise snapshot a 0-by-0 canvas and the slice drawImage
+  // would throw "image argument is a canvas element with a width or
+  // height of 0". Park it off-screen for the duration of the capture
+  // so it lays out at full 8.5×11 without flashing on the user.
+  const restore = unhideOffscreen(el);
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await html2canvas(el, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false,
+      width: PAGE_W_PX,
+      windowWidth: PAGE_W_PX,
+    });
+  } finally {
+    restore();
+  }
 
   const pxPerInch = canvas.width / PAGE_W_IN;
   const pageHeightPx = pxPerInch * PAGE_H_IN;
@@ -55,4 +67,33 @@ export async function letterCanvasToPdf(
   const blob = pdf.output("blob");
   const file = new File([blob], filename, { type: "application/pdf" });
   return { blob, file };
+}
+
+const OFFSCREEN_STYLES = {
+  display: "block",
+  position: "fixed",
+  top: "0",
+  left: "-100000px",
+  visibility: "visible",
+  pointerEvents: "none",
+} as const;
+
+function unhideOffscreen(el: HTMLElement): () => void {
+  const previous: Record<string, string> = {};
+  for (const key of Object.keys(OFFSCREEN_STYLES) as (keyof typeof OFFSCREEN_STYLES)[]) {
+    previous[key] = el.style.getPropertyValue(camelToKebab(key));
+    el.style.setProperty(camelToKebab(key), OFFSCREEN_STYLES[key], "important");
+  }
+  return () => {
+    for (const key of Object.keys(previous)) {
+      const prop = camelToKebab(key);
+      const prev = previous[key];
+      if (prev) el.style.setProperty(prop, prev);
+      else el.style.removeProperty(prop);
+    }
+  };
+}
+
+function camelToKebab(s: string): string {
+  return s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 }
