@@ -59,7 +59,7 @@ export function SundayCard({
     <div className="relative h-full">
       <article
         className={cn(
-          "relative flex h-full flex-col rounded-lg border border-border shadow-elev-1",
+          "group relative flex h-full flex-col rounded-lg border border-border shadow-elev-1",
           CARD_BG[kind.variant],
         )}
       >
