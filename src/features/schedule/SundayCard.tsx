@@ -56,7 +56,7 @@ export function SundayCard({
   const showWarning = !kind.isSpecial && severity !== "none";
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {showWarning && (
         <div className="absolute -top-6 left-0 right-0 rounded-t-lg border border-b-0 border-danger-soft bg-danger-soft px-4 pt-1.5 pb-3 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-bordeaux shrink-0" />
@@ -67,7 +67,7 @@ export function SundayCard({
       )}
       <article
         className={cn(
-          "relative rounded-lg border border-border shadow-elev-1",
+          "relative flex h-full flex-col rounded-lg border border-border shadow-elev-1",
           CARD_BG[kind.variant],
         )}
       >
@@ -87,6 +87,8 @@ export function SundayCard({
             variant={kind.variant}
             stampLabel={kind.stampLabel}
             description={kind.description}
+            date={date}
+            meeting={meeting ?? null}
           />
         ) : (
           <SundayCardBody speakers={speakers} date={date} meeting={meeting ?? null} />
