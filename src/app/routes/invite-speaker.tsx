@@ -9,9 +9,9 @@ import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
 import { useSpeakerInvitation } from "@/features/templates/hooks/useSpeakerInvitation";
 import type { SpeakerInvitation } from "@/lib/types";
-import { SpeakerChatFloatingDrawer } from "./SpeakerChatFloatingDrawer";
-import { SpeakerChatCTABanner, type CtaVariant } from "./SpeakerChatCTABanner";
-import { ExpiredState, NonReadyState, SessionGate, ShareToolbar } from "./InviteSpeakerStates";
+import { SpeakerChatFloatingDrawer } from "./invite-speaker-chat-drawer";
+import { SpeakerChatCTABanner, type CtaVariant } from "./invite-speaker-cta-banner";
+import { ExpiredState, NonReadyState, SessionGate, ShareToolbar } from "./invite-speaker-states";
 
 /**
  * Public landing page for an invitation link. The letter fills the

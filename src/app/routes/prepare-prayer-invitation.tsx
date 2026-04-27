@@ -15,7 +15,7 @@ import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticip
 import { usePreparePrayerInvitation } from "@/features/prayers/hooks/usePreparePrayerInvitation";
 import { usePreparePrayerActions } from "@/features/prayers/hooks/usePreparePrayerActions";
 import { PreparePrayerInvitationHeader } from "./PreparePrayerInvitationHeader";
-import { PrepareInvitationPageMessage } from "../PrepareInvitationPageMessage";
+import { PrepareInvitationPageMessage } from "./PrepareInvitationPageMessage";
 
 export function PreparePrayerInvitationPage() {
   const { date, role: roleParam } = useParams<{ date: string; role: string }>();

@@ -1,8 +1,8 @@
 import type { SpeakerInvitation } from "@/lib/types";
 import type { SpeakerInvitationState } from "@/features/templates/hooks/useSpeakerInvitation";
 
-export { SessionGate } from "./SessionGate";
-export { ShareToolbar } from "./ShareToolbar";
+export { SessionGate } from "./invite-speaker-session-gate";
+export { ShareToolbar } from "./invite-speaker-share-toolbar";
 
 /** Non-"ready" sub-states for the invite landing page. Split out so
  *  the main route stays under the 150-LOC ceiling while keeping
