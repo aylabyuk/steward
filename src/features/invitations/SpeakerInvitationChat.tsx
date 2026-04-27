@@ -53,6 +53,9 @@ interface Props {
    *  floating drawer on the invite page). Default layout stays inline
    *  for other callsites. */
   fillHeight?: boolean;
+  /** Discriminator from the invitation doc — adjusts the response
+   *  banner copy from "speaking" to "prayer" wording. */
+  kind?: "speaker" | "prayer";
 }
 
 /** Speaker-side chat pane. By the time this renders the parent
@@ -155,6 +158,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         answer={props.responseAnswer}
         meetingDate={props.meetingDate}
         {...(props.currentStatus !== undefined ? { currentStatus: props.currentStatus } : {})}
+        {...(props.kind ? { kind: props.kind } : {})}
       />
 
       <ConversationThread
