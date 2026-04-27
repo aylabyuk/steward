@@ -20,6 +20,7 @@ PWA for a ward bishopric to plan weekly sacrament meeting programs. Desktop + mo
 
 - **Everything is always editable.** No field locks based on status; status is a label, never a gate. Editing an `approved` program invalidates approvals (logged, not deleted).
 - **Components ≤ 150 LOC.** Enforced by oxlint `max-lines` + `max-lines-per-function` (error, not warn).
+- **Per-component barrel folders.** Every component lives in its own folder (`ComponentName/{index.tsx,ComponentName.tsx}`). Component-private hooks go in a sibling `hooks/` folder; tests in `__tests__/`. Feature-shared hooks live at `<feature>/hooks/`, feature utils at `<feature>/utils/`, and cross-feature shared at `src/hooks/` / `src/lib/`. Components are PascalCase; routes are the only kebab-case folders (URL-shaped). See the [`project-structure`](.claude/skills/project-structure.md) skill for the decision trees and full anatomy.
 - **Eight Cloud Functions, no API server.** The list above is the full surface; expanding it requires a deliberate scope decision. Firestore rules carry the rest of the authorization logic.
 - **Multi-ward from day one.** All data scoped under `wards/{wardId}/`.
 - **No direct pushes to `develop` or `main`.** Every change flows through a PR: feature branch → PR into `develop` (see the [`feature-branch-workflow`](.claude/skills/feature-branch-workflow.md) skill); releases go via PR from `develop` → `main` (see [`release-to-main`](.claude/skills/release-to-main.md)). GitHub's free tier doesn't enforce this — discipline does. No force-pushes to either branch, ever.
