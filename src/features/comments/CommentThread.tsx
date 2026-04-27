@@ -1,4 +1,4 @@
-import { useComments } from "@/hooks/useComments";
+import { useComments } from "./hooks/useComments";
 import { ProgramSection } from "@/features/meetings/program/ProgramSection";
 import { CommentForm } from "./CommentForm";
 import { CommentItem } from "./CommentItem";

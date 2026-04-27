@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLongPress } from "@/hooks/useLongPress";
+import { useLongPress } from "./hooks/useLongPress";
 import { cn } from "@/lib/cn";
 import { BubbleActions } from "./BubbleActions";
 import { BubbleEditForm } from "./BubbleEditForm";

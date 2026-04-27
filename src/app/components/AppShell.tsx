@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
 import { BuiltByCredit } from "@/components/BuiltByCredit";
-import { useHideOnScroll } from "@/hooks/useHideOnScroll";
+import { useHideOnScroll } from "./hooks/useHideOnScroll";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/cn";
 import { OnlineStatusBanner } from "./OnlineStatusBanner";
