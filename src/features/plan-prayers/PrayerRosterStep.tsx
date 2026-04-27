@@ -60,8 +60,16 @@ export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
           </p>
 
           <ul className="flex flex-col gap-3 list-none p-0 m-0">
-            <PrayerRosterRow row={opening} label="Opening prayer" />
-            <PrayerRosterRow row={benediction} label="Benediction" />
+            <PrayerRosterRow
+              row={opening}
+              label="Opening prayer"
+              autocompleteSection="prayer-opening"
+            />
+            <PrayerRosterRow
+              row={benediction}
+              label="Benediction"
+              autocompleteSection="prayer-benediction"
+            />
           </ul>
 
           {error && <p className="font-sans text-[12.5px] text-bordeaux">{error}</p>}
