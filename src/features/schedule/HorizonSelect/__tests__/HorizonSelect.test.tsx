@@ -37,7 +37,7 @@ describe("HorizonSelect", () => {
     await userEvent.click(button);
 
     expect(screen.getByText("Next 1 month")).toBeInTheDocument();
-    expect(screen.getByText("Next 6 months")).toBeInTheDocument();
+    expect(screen.getByText("Next 4 months")).toBeInTheDocument();
   });
 
   it("closes dropdown on selection", async () => {

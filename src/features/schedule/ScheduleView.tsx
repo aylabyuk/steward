@@ -17,10 +17,10 @@ import { groupByMonth } from "./utils/groupByMonth";
 
 const MOBILE_INITIAL_WEEKS = 4;
 const MOBILE_STEP_WEEKS = 4;
-// 26 weeks ≈ 6 months. Past that, the bishopric is planning further
+// 17 weeks ≈ 4 months. Past that, the bishopric is planning further
 // out than is useful — speakers haven't even been assigned to wards
 // for those weeks yet — so the list caps and the bottom communicates.
-const MOBILE_MAX_WEEKS = 26;
+const MOBILE_MAX_WEEKS = 17;
 
 export function ScheduleView() {
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -91,7 +91,7 @@ export function ScheduleView() {
             )}
             {mobileHorizon >= MOBILE_MAX_WEEKS && (
               <div className="text-center py-6 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3 border-t border-border/60">
-                Showing up to 6 months ahead
+                Showing up to 4 months ahead
               </div>
             )}
           </>
