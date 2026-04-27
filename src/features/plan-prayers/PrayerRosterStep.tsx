@@ -21,16 +21,20 @@ export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const validCount = [opening, benediction].filter((r) => r.name.trim()).length;
+  const rows = [
+    { role: "opening" as const, row: opening },
+    { role: "benediction" as const, row: benediction },
+  ];
+  const validCount = rows.filter(({ row }) => row.name.trim()).length;
   const canContinue = validCount > 0 && !saving;
 
   async function handleContinue() {
     setError(null);
     setSaving(true);
     try {
-      for (const row of [opening, benediction]) {
+      for (const { role, row } of rows) {
         if (!row.name.trim()) continue;
-        await upsertPrayerParticipant(wardId, date, row.role, {
+        await upsertPrayerParticipant(wardId, date, role, {
           name: row.name.trim(),
           email: row.email.trim(),
           phone: row.phone.trim(),
