@@ -1,18 +1,29 @@
 import { Link } from "react-router";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 /** Templates → Speaker invitation letter section. The letter editor
  *  needs the full viewport for its 8.5×11 preview, so this section
  *  is a CTA card that links out to the standalone editor in a new
  *  tab. Keeps the combined Templates page coherent without cramping
- *  the preview. */
+ *  the preview. The CTA is disabled on phone-class viewports — the
+ *  editor itself shows a "Desktop only" notice if the user gets there
+ *  another way (typed URL, deep link from elsewhere). */
 export function SpeakerLetterSection(): React.ReactElement {
+  const isMobile = useIsMobile();
   return (
     <section
       id="sec-speaker-letter"
       className="bg-chalk border border-border rounded-lg p-6 mb-4 scroll-mt-24"
     >
-      <div className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium mb-1">
-        Template
+      <div className="flex items-center gap-2 mb-1">
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep font-medium">
+          Template
+        </span>
+        {isMobile && (
+          <span className="inline-flex items-center rounded-full border border-border bg-parchment-2 px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-walnut-3">
+            Desktop only
+          </span>
+        )}
       </div>
       <h2 className="font-display text-[22px] font-semibold text-walnut mb-1">
         Speaker invitation letter
@@ -24,18 +35,29 @@ export function SpeakerLetterSection(): React.ReactElement {
 
       <div className="flex items-center justify-between gap-4 p-4 rounded-md border border-border bg-parchment/70">
         <p className="font-serif text-[13.5px] text-walnut-2 max-w-md">
-          Edit the body, footer, and signature of the printed invitation. A live preview shows the
-          letter as speakers will see it.
+          {isMobile
+            ? "Open this on a laptop or tablet — the editor lays out the letter at print size (8.5 × 11)."
+            : "Edit the body, footer, and signature of the printed invitation. A live preview shows the letter as speakers will see it."}
         </p>
-        <Link
-          to="/settings/templates/speaker-letter"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] transition-colors"
-        >
-          Open editor
-          <NewTabIcon />
-        </Link>
+        {isMobile ? (
+          <span
+            aria-disabled="true"
+            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border bg-parchment-2 text-walnut-3 cursor-not-allowed"
+          >
+            Open editor
+            <NewTabIcon />
+          </span>
+        ) : (
+          <Link
+            to="/settings/templates/speaker-letter"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] transition-colors"
+          >
+            Open editor
+            <NewTabIcon />
+          </Link>
+        )}
       </div>
     </section>
   );

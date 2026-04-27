@@ -2,7 +2,9 @@ import { Link } from "react-router";
 import { SaveBar } from "@/components/ui/SaveBar";
 import { useMemo } from "react";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
+import { DesktopOnlyNotice } from "@/features/page-editor/DesktopOnlyNotice";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
 import { LETTER_VARIABLE_SAMPLES } from "@/features/page-editor/letterVariables";
 import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
@@ -24,11 +26,14 @@ const SAMPLE = {
  *  persist/discard/status. */
 export function SpeakerLetterTemplatePage(): React.ReactElement {
   useFullViewportLayout();
+  const isMobile = useIsMobile();
   const ward = useWardSettings();
   const me = useCurrentMember();
   const editor = useSpeakerLetterTemplateEditor();
   const canEdit = Boolean(me?.data.active);
   const wardName = ward.data?.name ?? "";
+
+  if (isMobile) return <DesktopOnlyNotice title="Speaker invitation letter" />;
 
   // Live editor JSON, baked against sample vars (chip resolution +
   // {{token}} interpolation) so the OS print dialog renders the
