@@ -1,10 +1,9 @@
 interface Props {
   /** Mono-brass leading label — the speaker number ("01"…"04") or the
-   *  prayer role ("Opening" / "Benediction"). */
+   *  prayer role ("OP" / "CP"). */
   leadingLabel: string;
-  /** Width class for the leading column so speaker number ("01")
-   *  + prayer role ("Benediction") align to the same baseline as the
-   *  filled rows above them. */
+  /** Width class for the leading column so the leading label aligns
+   *  with the filled rows above it. */
   leadingWidthCls?: string;
 }
 

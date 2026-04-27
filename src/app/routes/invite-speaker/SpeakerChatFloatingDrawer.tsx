@@ -1,0 +1,97 @@
+import type { ReactNode } from "react";
+import { Drawer } from "vaul";
+import type { CtaVariant } from "./SpeakerChatCTABanner";
+
+interface Props {
+  /** Controlled open state so the parent can auto-open when chat
+   *  activity demands attention (e.g. a bishop reply lands while the
+   *  drawer is collapsed). */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** When set, the FAB draws attention via a pulse ring, larger size,
+   *  and a variant-specific label. `null` renders the calm FAB. */
+  attention?: CtaVariant | null;
+  children: ReactNode;
+}
+
+/** Floating chat drawer for the speaker invite page. Collapsed, it
+ *  shows a pill-shaped FAB bottom-right. Opened, it slides up as a
+ *  `vaul` Drawer — full-width on mobile, max-width centered-bottom
+ *  on desktop. Vaul handles drag-to-dismiss, ESC, backdrop tap, and
+ *  scroll lock; we just render the chrome. */
+export function SpeakerChatFloatingDrawer({
+  open,
+  onOpenChange,
+  attention,
+  children,
+}: Props): React.ReactElement {
+  return (
+    <>
+      {!open && <Fab attention={attention ?? null} onClick={() => onOpenChange(true)} />}
+      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)]" />
+          <Drawer.Content
+            aria-describedby={undefined}
+            className="fixed bottom-0 left-0 right-0 z-20 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none sm:left-auto sm:right-4 sm:bottom-4 sm:h-[80dvh] sm:w-[min(26.25rem,calc(100dvw-2rem))] sm:rounded-[14px] sm:border-b"
+          >
+            <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40 sm:hidden" />
+            <Drawer.Title className="sr-only">Conversation with the bishopric</Drawer.Title>
+            {children}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    </>
+  );
+}
+
+interface FabProps {
+  attention?: CtaVariant | null;
+  onClick: () => void;
+}
+
+function Fab({ attention, onClick }: FabProps) {
+  const label =
+    attention === "reply"
+      ? "Reply to the bishopric"
+      : attention === "unread"
+        ? "New message"
+        : "Conversation";
+  const pulseStyle: React.CSSProperties | undefined = attention
+    ? { animation: "fabPulse 1.8s ease-out infinite" }
+    : undefined;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={pulseStyle}
+      className={
+        attention
+          ? "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-bordeaux text-parchment font-sans text-[14px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.875rem,env(safe-area-inset-bottom))]"
+          : "fixed bottom-4 right-4 z-20 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-bordeaux text-parchment font-sans text-[13.5px] font-semibold shadow-elev-3 hover:bg-bordeaux-deep pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      }
+      aria-label={`${label} — open the conversation with the bishopric`}
+    >
+      <ChatIcon />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import type { AuthorInfo } from "./useConversation";
+import type { AuthorInfo } from "./hooks/useConversation";
 
 /** Circle avatar for a conversation participant. Renders the
  *  participant's Google profile photo when present (photoURL),

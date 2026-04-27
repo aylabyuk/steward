@@ -1,7 +1,7 @@
 import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
 import { $createVariableChipNode } from "@/features/program-templates/nodes/VariableChipNode";
 import { Icon } from "./Icon";
-import { usePopover } from "./usePopover";
+import { usePopover } from "./hooks/usePopover";
 
 export interface VariableEntry {
   token: string;

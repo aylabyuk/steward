@@ -1,4 +1,4 @@
-import type { VariableMeta } from "@/features/page-editor/variableRegistry";
+import type { VariableMeta } from "@/features/page-editor/utils/variableRegistry";
 
 interface Props {
   variables: ReadonlyArray<VariableMeta>;

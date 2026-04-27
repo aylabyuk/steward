@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, $isRangeSelection } from "lexical";
-import type { ProgramVariable } from "./programVariables";
+import type { ProgramVariable } from "./utils/programVariables";
 import { $createVariableChipNode } from "./nodes/VariableChipNode";
 
 interface Props {

@@ -13,7 +13,7 @@ import { InsertMenu } from "./InsertMenu";
 import { LinkButton } from "./LinkButton";
 import { PageSetupPopover } from "./PageSetupPopover";
 import { ToolbarButton, ToolbarSep } from "./ToolbarButton";
-import { useToolbarState } from "./useToolbarState";
+import { useToolbarState } from "./hooks/useToolbarState";
 import { VariableMenu, type VariableEntry } from "./VariableMenu";
 import { ZoomMenu, type ZoomMode } from "./ZoomMenu";
 import type { SlashCommand } from "../plugins/SlashCommandRegistry";

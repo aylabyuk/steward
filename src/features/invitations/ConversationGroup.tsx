@@ -1,8 +1,8 @@
 import { cn } from "@/lib/cn";
 import { ConversationAvatar } from "./ConversationAvatar";
 import { ConversationBubble, bubblePositionOf } from "./ConversationBubble";
-import type { Permissions } from "./messageActions";
-import type { MessageGroup } from "./threadItems";
+import type { Permissions } from "./utils/messageActions";
+import type { MessageGroup } from "./utils/threadItems";
 
 interface Props {
   group: MessageGroup;

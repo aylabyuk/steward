@@ -1,12 +1,15 @@
 import { useRef, useState } from "react";
 import type { LetterPageStyle, ProgramTemplateKey } from "@/lib/types";
-import { GROUP_LABEL, PROGRAM_VARIABLES } from "@/features/program-templates/programVariables";
-import { PAGE_EDITOR_BASE_NODES } from "./pageEditorNodes";
+import {
+  GROUP_LABEL,
+  PROGRAM_VARIABLES,
+} from "@/features/program-templates/utils/programVariables";
+import { PAGE_EDITOR_BASE_NODES } from "./utils/pageEditorNodes";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
-import { useFitZoom } from "./useFitZoom";
-import { VariableRegistryProvider } from "./variableRegistry";
-import { PROGRAM_SLASH_COMMANDS } from "./programSlashCommands";
+import { useFitZoom } from "./hooks/useFitZoom";
+import { VariableRegistryProvider } from "./utils/variableRegistry";
+import { PROGRAM_SLASH_COMMANDS } from "./utils/programSlashCommands";
 import { PageToolbar } from "./toolbar/PageToolbar";
 import type { ZoomMode } from "./toolbar/ZoomMenu";
 

@@ -1,5 +1,5 @@
 import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
-import { usePrayerParticipant } from "@/features/prayers/usePrayerParticipant";
+import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticipant";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { InvitationStatus, PrayerRole } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -11,6 +11,9 @@ interface Props {
   inlineName: string;
   role: PrayerRole;
   date: string;
+  /** Mobile list view collapses unfilled rows; pass `true` to render
+   *  nothing (instead of an `EmptyRosterRow`) when no name is set. */
+  hideEmpty?: boolean;
 }
 
 const STATE_CLS: Record<InvitationStatus, string> = {
@@ -21,23 +24,29 @@ const STATE_CLS: Record<InvitationStatus, string> = {
 };
 
 const ROLE_LABEL: Record<PrayerRole, string> = {
-  opening: "Opening",
+  opening: "OP",
+  benediction: "CP",
+};
+
+const ROLE_SUBTITLE: Record<PrayerRole, string> = {
+  opening: "Invocation",
   benediction: "Benediction",
 };
 
-const ROLE_WIDTH_CLS = "w-20";
+const ROLE_WIDTH_CLS = "w-6";
 
 /** Sunday-card row for a prayer slot. Mirrors `SpeakerRow`'s rhythm:
  *  role label, name, status pill, chat launcher. Falls back to
  *  `EmptyRosterRow` when no name is set so unfilled prayer slots
  *  share their height + look with the speaker placeholder slots. */
-export function PrayerRow({ inlineName, role, date }: Props) {
+export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const { data: participant } = usePrayerParticipant(date, role);
   const name = participant?.name?.trim() || inlineName.trim();
   const status: InvitationStatus = participant?.status ?? "planned";
 
   if (!name) {
+    if (hideEmpty) return null;
     return <EmptyRosterRow leadingLabel={ROLE_LABEL[role]} leadingWidthCls={ROLE_WIDTH_CLS} />;
   }
 
@@ -50,6 +59,9 @@ export function PrayerRow({ inlineName, role, date }: Props) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
+        <div className="font-serif italic text-sm text-walnut-2 truncate">
+          {ROLE_SUBTITLE[role]}
+        </div>
       </div>
       <div
         className={cn(

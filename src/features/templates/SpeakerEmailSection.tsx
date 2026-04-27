@@ -5,11 +5,11 @@ import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { MessageTemplateCardDesktop } from "./MessageTemplateCardDesktop";
 import { MobileTemplateAccordion } from "./MobileTemplateAccordion";
-import { renderSpeakerEmailBody } from "./renderSpeakerEmailBody";
-import { DEFAULT_SPEAKER_EMAIL_BODY } from "./speakerEmailDefaults";
+import { renderSpeakerEmailBody } from "./utils/renderSpeakerEmailBody";
+import { DEFAULT_SPEAKER_EMAIL_BODY } from "./utils/speakerEmailDefaults";
 import { TemplateEditorModal } from "./TemplateEditorModal";
-import { useSpeakerEmailTemplate } from "./useSpeakerEmailTemplate";
-import { writeSpeakerEmailTemplate } from "./writeSpeakerEmailTemplate";
+import { useSpeakerEmailTemplate } from "./hooks/useSpeakerEmailTemplate";
+import { writeSpeakerEmailTemplate } from "./utils/writeSpeakerEmailTemplate";
 
 const VARIABLES = [
   { name: "speakerName", hint: "Display name from the speaker form" },

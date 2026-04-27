@@ -12,8 +12,8 @@ import {
   REMOVE_LIST_COMMAND,
 } from "@lexical/list";
 import { Icon, type IconName } from "./Icon";
-import { usePopover } from "./usePopover";
-import type { BlockType } from "./useToolbarState";
+import { usePopover } from "./hooks/usePopover";
+import type { BlockType } from "./hooks/useToolbarState";
 
 interface Props {
   editor: LexicalEditor;

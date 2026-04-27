@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useTwilioChat } from "./twilioClientProvider";
+import { useTwilioChat } from "./TwilioChatProvider";
 
 interface Props {
   wardId: string;

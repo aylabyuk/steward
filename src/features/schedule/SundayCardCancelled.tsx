@@ -1,4 +1,4 @@
-import { formatShortDate } from "./dateFormat";
+import { formatShortDate } from "./utils/dateFormat";
 
 interface Props {
   date: string;

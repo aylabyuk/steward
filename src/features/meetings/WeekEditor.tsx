@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { OverflowMenu } from "@/components/ui/OverflowMenu";
 import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
-import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
+import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
@@ -9,10 +9,10 @@ import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
-import { defaultMeetingType, ensureMeetingDoc } from "./ensureMeetingDoc";
+import { defaultMeetingType, ensureMeetingDoc } from "./utils/ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
-import { NO_MEETING_TYPES, TYPE_LABELS } from "./meetingLabels";
-import { checkMeetingReadiness } from "./readiness";
+import { NO_MEETING_TYPES, TYPE_LABELS } from "./utils/meetingLabels";
+import { checkMeetingReadiness } from "./utils/readiness";
 import { LockBanner } from "./program/LockBanner";
 import { ProgramApproval } from "./program/ProgramApproval";
 import { ProgramHead } from "./program/ProgramHead";
@@ -21,9 +21,9 @@ import { ProgramSections } from "./program/ProgramSections";
 import { ProgramSide } from "./program/ProgramSide";
 import { ResetToDraftDialog } from "./program/ResetToDraftDialog";
 import { StatusLegend } from "./program/StatusLegend";
-import { buildRailSections } from "./program/railSections";
-import { useApprovalActions } from "./program/useApprovalActions";
-import { cancelMeeting } from "./updateMeeting";
+import { buildRailSections } from "./program/utils/railSections";
+import { useApprovalActions } from "./program/hooks/useApprovalActions";
+import { cancelMeeting } from "./utils/updateMeeting";
 
 interface Props {
   date: string;

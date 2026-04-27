@@ -1,5 +1,5 @@
 import { MessageTemplateCard } from "./MessageTemplateCard";
-import { DEFAULT_SPEAKER_RESPONSE_DECLINED } from "./serverTemplateDefaults";
+import { DEFAULT_SPEAKER_RESPONSE_DECLINED } from "./utils/serverTemplateDefaults";
 
 export function SpeakerResponseDeclinedSection(): React.ReactElement {
   return (

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
-import { useLatestInvitation } from "@/features/invitations/useLatestInvitation";
-import { isPlausiblePhone } from "@/features/templates/smsInvitation";
+import { useLatestInvitation } from "@/features/invitations/hooks/useLatestInvitation";
+import { isPlausiblePhone } from "@/features/templates/utils/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import { MissingContactPrompt } from "./MissingContactPrompt";
 import { SpeakerStatusChip } from "./SpeakerStatusChip";

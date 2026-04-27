@@ -7,7 +7,7 @@ import {
   type LexicalNode,
   type SerializedLexicalNode,
 } from "lexical";
-import { useAssignedDate } from "../letterRenderContext";
+import { useAssignedDate } from "../utils/letterRenderContext";
 
 export type SerializedAssignedSundayCalloutNode = SerializedLexicalNode;
 

@@ -1,6 +1,6 @@
 import type { NotificationPrefs } from "@/lib/types";
 import { cn } from "@/lib/cn";
-import { describeQuietWindow, hourToTime, timeToHour } from "./quietHoursTime";
+import { describeQuietWindow, hourToTime, timeToHour } from "./utils/quietHoursTime";
 import { Switch } from "./Switch";
 
 interface Props {
