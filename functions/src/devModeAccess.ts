@@ -1,11 +1,24 @@
 import type { CallableRequest } from "firebase-functions/v2/https";
 import type { FromNumberMode } from "./twilio/fromNumber.js";
 
-/** Hardcoded email allowlist for the dev-mode "use testing number"
- *  toggle. Mirrors the lightweight gating pattern used elsewhere in
- *  the codebase (e.g. bootstrap-ward) — a general feature-flag system
- *  isn't warranted yet. Add emails as the maintainer set grows. */
-const DEV_MODE_EMAILS: ReadonlySet<string> = new Set(["6472022+aylabyuk@users.noreply.github.com"]);
+/** Email allowlist for the dev-mode "use testing number" toggle.
+ *  Sourced from the `DEV_MODE_EMAILS` env var (comma-separated),
+ *  loaded by Firebase Functions at deploy time from the per-project
+ *  `.env.<projectId>` file (or `.env.local` in the emulator). Empty
+ *  by default — production deploys can set the var when the
+ *  maintainer set is small enough not to warrant a general
+ *  feature-flag system. */
+const DEV_MODE_EMAILS: ReadonlySet<string> = parseEmails(process.env.DEV_MODE_EMAILS);
+
+function parseEmails(raw: string | undefined): ReadonlySet<string> {
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
 
 /** Maps the inbound `useTestingNumber` flag to a FromNumberMode,
  *  silently downgrading non-allowlisted callers to "production". The

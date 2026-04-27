@@ -285,7 +285,7 @@ maintainer-only Twilio testing FROM number.
   physical.
 - **Maintainer-only "testing" outbound SMS number.** A new
   `TWILIO_FROM_NUMBER_TESTING` secret + per-invitation toggle let
-  allowlisted callers (currently `6472022+aylabyuk@users.noreply.github.com`) send an
+  allowlisted callers (configured via `DEV_MODE_EMAILS`) send an
   invitation through a separate Twilio number, leaving the production
   line free. The flag is persisted on the invitation only when set,
   so SMS rotations + bishop-reply notifications stay on the same
