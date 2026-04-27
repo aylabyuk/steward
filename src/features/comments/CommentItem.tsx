@@ -4,8 +4,8 @@ import type { WithId } from "@/hooks/_sub";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import type { Comment } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
-import { editComment, softDeleteComment } from "./commentActions";
-import { extractMentions } from "./extractMentions";
+import { editComment, softDeleteComment } from "./utils/commentActions";
+import { extractMentions } from "./utils/extractMentions";
 
 interface Props {
   wardId: string;
