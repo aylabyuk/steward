@@ -7,6 +7,71 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-04-27
+
+Plan-prayers wizard finally mirrors the speaker wizard 1:1, so the
+bishop walks Opening + Benediction prayer-givers through the same
+Roster → Invitations → Summary flow used for speakers. The Sunday
+schedule grid gets a uniform-roster layout, prayer rows get a
+dedicated letter template, and the mobile app shell auto-hides its
+topbar on scroll. Plus a workflow rule against stacked PRs after a
+13-commit chain stranded behind a deleted parent branch.
+
+### Added
+
+- **Full plan-prayers wizard at `/plan/:date/prayers`** (#178) — 3-step
+  flow that mirrors `PlanSpeakersWizard` 1:1: same header chrome, same
+  step keys (`roster | invitations | summary`), same per-participant
+  sub-step flow (action picker → letter review → optional post-print
+  confirm). New `src/features/plan-prayers/` module with
+  `PlanPrayersWizard`, `PrayerRosterStep`, `PrayerActionPicker`,
+  `PrayerInvitationStep`, `ReviewPrayerLetterStep`, `PrayerSummaryStep`,
+  plus `usePrayerWizardActions`, `useReviewPrayerLetterAction`, and
+  `usePrayerParticipants`. Reuses `WizardHeader`, `WizardFooter`,
+  `ReviewLetterFooter`, `PostPrintConfirmStep`, and `SpeakerStatusChip`
+  from the speaker wizard so step labels render identically. Retires
+  the legacy single-page `PlanPrayersPage`. Differences from the
+  speaker wizard: fixed 2-slot roster (no "+ Add another"), no
+  `{{topic}}` (uses `{{prayerType}}`), no `MissingContactPrompt` (the
+  roster step front-loads contact collection).
+- **Dedicated prayer letter template** (#178) — separate
+  `prayerLetterTemplate` ward doc + editor route alongside the
+  speaker letter template, instead of reusing the speaker template
+  for prayer invitations.
+- **Prayer chat parity on schedule + week** (#178) — prayer rows now
+  surface the same per-participant chat icon + unread badge that
+  speaker rows do.
+- **Mobile auto-hide topbar** (#178) — new `useHideOnScroll` hook +
+  AppShell wiring; the topbar slides out of view on downward scroll
+  and reappears on scroll-up, recovering vertical real estate on
+  small viewports.
+
+### Changed
+
+- **Uniform Sunday-card roster shape on `/schedule`** (#178) — every
+  card now reserves up to 4 speaker rows + 2 prayer rows so the grid
+  reads as a uniform set instead of stretching/squeezing per Sunday.
+  Empty slots render as a shared `EmptyRosterRow` (mono-brass label +
+  "Not assigned" italic) at pixel-for-pixel the same height as a
+  populated row, minus the chip / chat launcher. `SundayCardBody`
+  drops the legacy "No speakers yet." paragraph fallback.
+- **Schedule roster rows are now a fixed 64px tall** (#178) with the
+  speaker name + topic restored as a stacked block. Special meeting
+  cards (fast / stake / general) match the height and now render their
+  prayer rows so the layout doesn't collapse on those weeks. The
+  lead-time warning banner is silenced on the schedule grid; the
+  prayer status pill always shows.
+
+### Infrastructure
+
+- **No-stacked-PRs hard rule** (#179) — every PR's base must be
+  `develop` (or `main` for a release PR), never another feature branch.
+  Codified in `CLAUDE.md` and the `feature-branch-workflow` skill after
+  PR #173 (closed, base branch deleted) stranded a 13-commit chain
+  outside `develop` for a full release cycle, including the
+  merged-but-orphaned PR #175 plan-prayers wizard. Recovered via
+  PR #178; the rule prevents recurrence.
+
 ## [0.14.0] — 2026-04-27
 
 Prayer-giver invitations land end-to-end: the bishop can now invite
@@ -1723,7 +1788,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/aylabyuk/steward/releases/tag/v0.15.0
 [0.14.0]: https://github.com/aylabyuk/steward/releases/tag/v0.14.0
 [0.13.1]: https://github.com/aylabyuk/steward/releases/tag/v0.13.1
 [0.13.0]: https://github.com/aylabyuk/steward/releases/tag/v0.13.0
