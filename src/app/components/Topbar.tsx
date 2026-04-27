@@ -6,7 +6,7 @@ export function Topbar() {
   const ward = useWardSettings();
   const wardName = ward.data?.name;
   return (
-    <div className="bg-walnut border-b border-walnut sm:border-border sm:bg-parchment/82 sm:backdrop-blur-sm">
+    <div className="bg-walnut border-b border-walnut shadow-elev-1 sm:border-border sm:bg-parchment/82 sm:backdrop-blur-sm">
       <div className="flex items-center gap-3 px-4 py-2.5 sm:gap-4 sm:px-8 sm:py-3.5">
         <Link
           to="/"
