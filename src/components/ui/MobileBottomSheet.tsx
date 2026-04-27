@@ -71,7 +71,9 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
       aria-modal="true"
       className={cn(
         "fixed inset-0 z-40 bg-[rgba(35,24,21,0.32)] flex items-end justify-center",
-        exiting ? "animate-[fadeOut_180ms_ease-in]" : "animate-[fade_160ms_ease-out]",
+        exiting
+          ? "animate-[fadeOut_180ms_ease-in_forwards]"
+          : "animate-[fade_160ms_ease-out_backwards]",
       )}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -82,7 +84,7 @@ export function MobileBottomSheet({ open, onClose, title, children }: Props) {
           "bg-chalk flex flex-col w-full max-h-[75dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]",
           exiting
             ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
-            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)]",
+            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)_backwards]",
         )}
       >
         <button

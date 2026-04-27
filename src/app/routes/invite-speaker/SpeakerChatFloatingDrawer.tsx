@@ -100,7 +100,9 @@ export function SpeakerChatFloatingDrawer({
       aria-label="Conversation with the bishopric"
       className={cn(
         "fixed inset-0 z-20 bg-[rgba(35,24,21,0.32)] flex items-end justify-center sm:justify-end sm:p-4",
-        exiting ? "animate-[fadeOut_180ms_ease-in]" : "animate-[fade_160ms_ease-out]",
+        exiting
+          ? "animate-[fadeOut_180ms_ease-in_forwards]"
+          : "animate-[fade_160ms_ease-out_backwards]",
       )}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOpenChange(false);
@@ -111,7 +113,7 @@ export function SpeakerChatFloatingDrawer({
           "bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden sm:h-[80dvh] sm:max-w-105 sm:rounded-[14px] sm:border-b",
           exiting
             ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
-            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)]",
+            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)_backwards]",
         )}
       >
         <button
