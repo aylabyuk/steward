@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { Drawer } from "vaul";
+import { useKeyboardAwareViewport } from "@/hooks/useKeyboardAwareViewport";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type { Speaker, SpeakerInvitation } from "@/lib/types";
 import { BishopInvitationChat } from "./BishopInvitationChat";
@@ -49,6 +51,11 @@ export function BishopInvitationDialog({
   kind = "speaker",
 }: Props): React.ReactElement | null {
   const isMobile = useIsMobile();
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  // Keyboard-aware sizing only applies on the mobile bottom sheet.
+  // Desktop is `inset-y-0 right-0` and never collides with the soft
+  // keyboard.
+  useKeyboardAwareViewport(contentRef, isMobile && open);
   const contentClass = isMobile
     ? "fixed bottom-0 left-0 right-0 z-60 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none"
     : "fixed inset-y-0 right-0 z-60 flex w-[min(28rem,100vw)] flex-col bg-chalk shadow-elev-3 border-l border-border-strong outline-none";
@@ -59,10 +66,15 @@ export function BishopInvitationDialog({
         if (!o) onClose();
       }}
       direction={isMobile ? "bottom" : "right"}
+      repositionInputs={false}
     >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-60 bg-[rgba(35,24,21,0.42)]" />
-        <Drawer.Content aria-describedby={undefined} className={contentClass}>
+        <Drawer.Content
+          ref={contentRef}
+          aria-describedby={undefined}
+          className={contentClass}
+        >
           {isMobile && (
             <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40" />
           )}
