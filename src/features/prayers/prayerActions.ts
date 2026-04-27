@@ -58,28 +58,34 @@ export async function upsertPrayerParticipant(
       if (actor?.uid) participantData.statusSetBy = actor.uid;
     }
 
-    // Mirror to meeting.{role}.person.name + .confirmed when the
-    // patch carries either. The mirror uses dot-notation field paths
-    // so we don't clobber unrelated assignment fields the bishop has
-    // set inline (e.g. a person object the meeting editor's
-    // PrayersSection wrote). `confirmed` only mirrors when status is
-    // in the patch — leaves the inline toggle alone on name-only
-    // edits.
-    const mirror: Record<string, unknown> = {};
+    // Mirror name + confirmed back to the inline meeting assignment
+    // row (`meeting.openingPrayer` / `meeting.benediction`) so the
+    // printed program template — which reads from the meeting doc,
+    // not the prayer participant — stays in sync. Uses a nested
+    // object so `setDoc(..., { merge: true })` deep-merges and
+    // doesn't clobber sibling fields. `confirmed` only mirrors when
+    // status is in the patch, leaving the inline toggle alone on
+    // name-only edits.
+    const fieldUpdate: Record<string, unknown> = {};
     if (typeof patch.name === "string") {
-      mirror[`${MEETING_FIELD[role]}.person.name`] = patch.name.trim();
+      fieldUpdate.person = { name: patch.name.trim() };
     }
     if (patch.status) {
-      mirror[`${MEETING_FIELD[role]}.confirmed`] = patch.status === "confirmed";
+      fieldUpdate.confirmed = patch.status === "confirmed";
     }
+    const hasMirror = Object.keys(fieldUpdate).length > 0;
 
     const participantRef = doc(db, "wards", wardId, "meetings", date, "prayers", role);
-    if (Object.keys(mirror).length === 0) {
+    if (!hasMirror) {
       await setDoc(participantRef, participantData, { merge: true });
     } else {
       const batch = writeBatch(db);
       batch.set(participantRef, participantData, { merge: true });
-      batch.set(doc(db, "wards", wardId, "meetings", date), mirror, { merge: true });
+      batch.set(
+        doc(db, "wards", wardId, "meetings", date),
+        { [MEETING_FIELD[role]]: fieldUpdate },
+        { merge: true },
+      );
       await batch.commit();
     }
     reportSaved();
