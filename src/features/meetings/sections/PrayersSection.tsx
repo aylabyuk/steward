@@ -60,9 +60,11 @@ function PrayerRowGroup({ label, role, date, placeholder, assignment, onChange }
     // Suppress AssignRow's own dashed bottom border when we're
     // grouping it with the Invite link — its `last:border-b-0`
     // doesn't trigger because the link is now a sibling. The dashed
-    // separator role passes to this wrapper so consecutive prayer
-    // groups stay visually divided.
-    <div className="border-b border-dashed border-border last:border-b-0 *:first:border-b-0">
+    // separator role passes to this wrapper for the stacked
+    // (mobile / tablet) layout; on `lg:` the rows sit side by side
+    // in a 2-col grid so a horizontal separator below each row reads
+    // as noise — drop it.
+    <div className="border-b border-dashed border-border last:border-b-0 lg:border-b-0 *:first:border-b-0">
       <AssignRow
         label={label}
         placeholder={placeholder}
