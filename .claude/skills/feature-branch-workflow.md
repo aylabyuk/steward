@@ -117,6 +117,17 @@ git fetch --prune origin                   # drops the remote-tracking ref
 - **Don't commit directly to `develop`** — even for a one-line doc
   fix. GitHub isn't enforcing this on the free tier; discipline is.
 - **Don't commit directly to `main`** — ever.
+- **Don't stack PRs.** Every PR's base must be `develop` (or `main`
+  for a release PR), never another feature branch. Stacked PRs become
+  orphans the moment the parent branch is deleted post-merge — see
+  PR #173, which was based on `feat/prayer-chat-parity`, sat dirty
+  when that base was deleted, and stranded 13 commits of finished
+  work (including the merged-but-stranded #175 plan-prayers wizard)
+  outside of `develop` for a full release cycle. If a feature
+  naturally splits into multiple PRs, ship the foundational PR first,
+  wait for it to merge into `develop`, then branch the next slice off
+  the new `develop`. The cost of waiting one CI cycle is far less
+  than the cost of an orphaned stack.
 - **Don't force-push to `develop` or `main`**, even with
   `--force-with-lease`. (The `release-to-main` skill used to, for
   drift cleanup. It no longer does, because merge-commit-only is now
