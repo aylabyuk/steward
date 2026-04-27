@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { subscribeDevice, unsubscribeDevice } from "@/features/notifications/fcmToken";
-import { useCurrentDeviceToken } from "@/features/notifications/useCurrentDeviceToken";
+import { subscribeDevice, unsubscribeDevice } from "@/features/notifications/utils/fcmToken";
+import { useCurrentDeviceToken } from "@/features/notifications/hooks/useCurrentDeviceToken";
 import type { FcmToken, NotificationPrefs } from "@/lib/types";
 import { CategoryRowsComingSoon, DigestSelectComingSoon } from "./ComingSoonRows";
 import { DeviceRow } from "./DeviceRow";

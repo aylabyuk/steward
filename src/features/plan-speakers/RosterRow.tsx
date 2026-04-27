@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SpeakerRolePicker } from "@/features/schedule/SpeakerRolePicker";
 import { SpeakerStatusChip } from "./SpeakerStatusChip";
 import { DeleteSpeakerConfirm } from "./DeleteSpeakerConfirm";
-import type { RosterDraft } from "./rosterDraft";
+import type { RosterDraft } from "./utils/rosterDraft";
 
 const INPUT_CLS =
   "font-sans text-[14px] px-3 py-2.5 bg-chalk border border-border-strong rounded-md text-walnut w-full transition-colors placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15";

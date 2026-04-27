@@ -10,7 +10,7 @@ import type {
 import { AssignRow } from "../program/AssignRow";
 import { MidItem } from "../program/MidItem";
 import { ProgramSection } from "../program/ProgramSection";
-import { updateMeetingField } from "../updateMeeting";
+import { updateMeetingField } from "../utils/updateMeeting";
 
 interface Props {
   wardId: string;

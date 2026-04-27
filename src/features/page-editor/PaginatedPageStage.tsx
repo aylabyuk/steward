@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { MARGIN_PRESET_INCHES, PAGE_SIZE_INCHES, type LetterPageStyle } from "@/lib/types/template";
 import { PageSheet } from "./PageSheet";
-import { usePagination } from "./usePagination";
+import { usePagination } from "./hooks/usePagination";
 
 const DPI = 96; // CSS px per CSS inch (browser default)
 const PAGE_GAP_PX = 24; // visual gap between stacked sheets

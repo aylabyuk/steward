@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
+import { upsertPrayerParticipant } from "@/features/prayers/utils/prayerActions";
 import { WizardFooter } from "@/features/plan-speakers/WizardFooter";
 import type { NonMeetingSunday } from "@/lib/types";
 import { PrayerRosterRow } from "./PrayerRosterRow";
-import { usePrayerPlanRow } from "./usePrayerPlanRow";
-import { validatePrayerRow } from "./validatePrayerRow";
+import { usePrayerPlanRow } from "./hooks/usePrayerPlanRow";
+import { validatePrayerRow } from "./utils/validatePrayerRow";
 
 interface Props {
   wardId: string;

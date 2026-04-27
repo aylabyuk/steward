@@ -1,6 +1,6 @@
 import { FORMAT_ELEMENT_COMMAND, type ElementFormatType, type LexicalEditor } from "lexical";
 import { Icon, type IconName } from "./Icon";
-import { usePopover } from "./usePopover";
+import { usePopover } from "./hooks/usePopover";
 
 interface Props {
   editor: LexicalEditor;

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 import type { Approval } from "@/lib/types";
-import type { ReadinessReport } from "../readiness";
+import type { ReadinessReport } from "../utils/readiness";
 import { ApprovedBody, DraftMissingBody, PendingBody } from "./ApprovalBodies";
 import { CheckIcon, Eyebrow } from "./ApprovalEyebrow";
 

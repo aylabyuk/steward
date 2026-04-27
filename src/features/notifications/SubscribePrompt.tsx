@@ -3,10 +3,10 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { useNotificationsStore } from "@/stores/notificationsStore";
-import { subscribeDevice } from "./fcmToken";
-import { readBrowserContext, shouldShowIosNudge } from "./iosInstallNudge";
+import { subscribeDevice } from "./utils/fcmToken";
+import { readBrowserContext, shouldShowIosNudge } from "./utils/iosInstallNudge";
 
-import { detectMode } from "./subscribeMode";
+import { detectMode } from "./utils/subscribeMode";
 
 export function SubscribePrompt() {
   const wardId = useCurrentWardStore((s) => s.wardId);

@@ -7,7 +7,7 @@ import {
   type PageSize,
 } from "@/lib/types/template";
 import { Icon } from "./Icon";
-import { usePopover } from "./usePopover";
+import { usePopover } from "./hooks/usePopover";
 
 interface Props {
   value: LetterPageStyle | null | undefined;

@@ -6,7 +6,7 @@ import {
   type LexicalEditor,
 } from "lexical";
 import { Icon } from "./Icon";
-import { usePopover } from "./usePopover";
+import { usePopover } from "./hooks/usePopover";
 
 interface Props {
   editor: LexicalEditor;

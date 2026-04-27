@@ -7,7 +7,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { db } from "@/lib/firebase";
 import type { NotificationPrefs } from "@/lib/types";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { withDefaults } from "@/features/settings/notificationPrefs";
+import { withDefaults } from "@/features/settings/utils/notificationPrefs";
 
 function nowLabel(): string {
   return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });

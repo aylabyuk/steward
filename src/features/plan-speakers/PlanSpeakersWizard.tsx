@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useFullViewportLayout } from "@/hooks/useFullViewportLayout";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { formatShortDate } from "@/features/schedule/dateFormat";
+import { formatShortDate } from "@/features/schedule/utils/dateFormat";
 import { RosterStep } from "./RosterStep";
 import { InvitationStep } from "./InvitationStep";
 import { SummaryStep } from "./SummaryStep";

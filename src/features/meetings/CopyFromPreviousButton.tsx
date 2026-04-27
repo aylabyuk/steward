@@ -5,8 +5,8 @@ import {
   findPreviousMeeting,
   hasExistingValues,
   type PreviousMeeting,
-} from "./copyFromPrevious";
-import { updateMeetingField } from "./updateMeeting";
+} from "./utils/copyFromPrevious";
+import { updateMeetingField } from "./utils/updateMeeting";
 
 interface Props {
   wardId: string;

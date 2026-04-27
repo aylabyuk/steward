@@ -6,9 +6,9 @@ import {
   PRAYER_LETTER_VARIABLE_GROUP_LABEL,
   PRAYER_LETTER_VARIABLES,
   PRAYER_LETTER_VARIABLE_SAMPLES,
-} from "@/features/page-editor/prayerLetterVariables";
-import { buildInitialPrayerLetterState } from "@/features/page-editor/prayerLetterEditorConfig";
-import type { usePreparePrayerInvitation } from "@/features/prayers/usePreparePrayerInvitation";
+} from "@/features/page-editor/utils/prayerLetterVariables";
+import { buildInitialPrayerLetterState } from "@/features/page-editor/utils/prayerLetterEditorConfig";
+import type { usePreparePrayerInvitation } from "@/features/prayers/hooks/usePreparePrayerInvitation";
 
 interface Props {
   participant: PrayerParticipant;

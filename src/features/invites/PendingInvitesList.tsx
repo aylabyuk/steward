@@ -2,8 +2,8 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { CALLING_LABELS } from "@/lib/callingLabels";
-import { revokeInvite } from "./inviteActions";
-import { useWardInvites } from "./useWardInvites";
+import { revokeInvite } from "./utils/inviteActions";
+import { useWardInvites } from "./hooks/useWardInvites";
 
 interface Props {
   wardId: string;

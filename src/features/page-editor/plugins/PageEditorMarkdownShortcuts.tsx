@@ -13,7 +13,7 @@ import {
   STRIKETHROUGH,
   UNORDERED_LIST,
 } from "@lexical/markdown";
-import { VARIABLE_CHIP_MARKDOWN_TRANSFORMER } from "@/features/program-templates/nodes/variableChipMarkdown";
+import { VARIABLE_CHIP_MARKDOWN_TRANSFORMER } from "@/features/program-templates/nodes/utils/variableChipMarkdown";
 
 /** Hand-picked transformer set — excludes CODE / INLINE_CODE / CHECK_LIST
  *  / HIGHLIGHT because those require nodes (`CodeNode`,

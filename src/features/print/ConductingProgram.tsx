@@ -2,12 +2,12 @@ import { useParams, Navigate } from "react-router";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
-import { useProgramTemplate } from "@/features/program-templates/useProgramTemplate";
-import { renderProgramState } from "@/features/program-templates/programTemplateRender";
+import { useProgramTemplate } from "@/features/program-templates/hooks/useProgramTemplate";
+import { renderProgramState } from "@/features/program-templates/utils/programTemplateRender";
 import { PrintLayout } from "./PrintLayout";
-import { buildMeetingVariables } from "./buildMeetingVariables";
+import { buildMeetingVariables } from "./utils/buildMeetingVariables";
 import { LegacyConductingCopy } from "./LegacyConductingCopy";
-import { formatLongDate, orderedSpeakers, speakerSequence } from "./programData";
+import { formatLongDate, orderedSpeakers, speakerSequence } from "./utils/programData";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 

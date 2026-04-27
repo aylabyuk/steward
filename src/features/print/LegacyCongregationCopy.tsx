@@ -1,6 +1,6 @@
 import type { SacramentMeeting } from "@/lib/types";
-import { personName, type SequenceEntry } from "./programData";
-import { RowFreeform, RowHymn, RowLabeled, RowSection } from "./programRows";
+import { personName, type SequenceEntry } from "./utils/programData";
+import { RowFreeform, RowHymn, RowLabeled, RowSection } from "./utils/programRows";
 
 interface Props {
   m: SacramentMeeting | null;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { LexicalEditor } from "lexical";
-import { patchSelectionStyle } from "@/features/page-editor/toolbar/patchStyleWithChips";
+import { patchSelectionStyle } from "@/features/page-editor/toolbar/utils/patchStyleWithChips";
 import { cn } from "@/lib/cn";
 
 interface ColorToken {

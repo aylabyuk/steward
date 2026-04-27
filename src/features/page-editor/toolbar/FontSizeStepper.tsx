@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { LexicalEditor } from "lexical";
 import { Icon } from "./Icon";
-import { patchSelectionStyle } from "./patchStyleWithChips";
+import { patchSelectionStyle } from "./utils/patchStyleWithChips";
 
 interface Props {
   editor: LexicalEditor;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { defaultMeetingType } from "@/features/meetings/ensureMeetingDoc";
+import { defaultMeetingType } from "@/features/meetings/utils/ensureMeetingDoc";
 import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
-import { TwilioChatProvider } from "@/features/invitations/twilioClientProvider";
+import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "./hooks/useUpcomingMeetings";
 import { useWardSettings } from "@/hooks/useWardSettings";
@@ -10,7 +10,7 @@ import { PageHead } from "./PageHead";
 import { HorizonSelect } from "./HorizonSelect";
 import { SundayCard } from "./SundayCard";
 import { QuarterSection } from "./QuarterSection";
-import { groupByMonth } from "./groupByMonth";
+import { groupByMonth } from "./utils/groupByMonth";
 
 export function ScheduleView() {
   const wardId = useCurrentWardStore((s) => s.wardId);

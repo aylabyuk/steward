@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Conversation } from "@twilio/conversations";
-import { formatShortSunday } from "@/features/schedule/dateFormat";
+import { formatShortSunday } from "@/features/schedule/utils/dateFormat";
 import { cn } from "@/lib/cn";
 
 interface Props {

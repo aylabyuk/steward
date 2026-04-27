@@ -3,8 +3,8 @@ import { useSpeakers } from "@/hooks/useMeeting";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import type { MeetingType, SacramentMeeting } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
-import { AlreadyApprovedError, approveMeeting, requestApproval } from "./approvals";
-import { checkMeetingReadiness } from "./readiness";
+import { AlreadyApprovedError, approveMeeting, requestApproval } from "./utils/approvals";
+import { checkMeetingReadiness } from "./utils/readiness";
 
 interface Props {
   wardId: string;

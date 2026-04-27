@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { $getNodeByKey, type NodeKey } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { interpolate } from "@/features/templates/interpolate";
+import { interpolate } from "@/features/templates/utils/interpolate";
 import { EditPropModal } from "../EditPropModal";
-import { useLetterVars } from "../letterRenderContext";
-import { LETTER_VARIABLES } from "../letterVariables";
+import { useLetterVars } from "../utils/letterRenderContext";
+import { LETTER_VARIABLES } from "../utils/letterVariables";
 import { DEFAULT_EYEBROW, DEFAULT_SUBTITLE, DEFAULT_TITLE, LetterheadNode } from "./LetterheadNode";
 
 interface Props {

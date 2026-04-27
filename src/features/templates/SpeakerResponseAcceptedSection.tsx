@@ -1,5 +1,5 @@
 import { MessageTemplateCard } from "./MessageTemplateCard";
-import { DEFAULT_SPEAKER_RESPONSE_ACCEPTED } from "./serverTemplateDefaults";
+import { DEFAULT_SPEAKER_RESPONSE_ACCEPTED } from "./utils/serverTemplateDefaults";
 
 export function SpeakerResponseAcceptedSection(): React.ReactElement {
   return (
