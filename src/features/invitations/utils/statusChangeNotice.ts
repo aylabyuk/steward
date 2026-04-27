@@ -1,6 +1,6 @@
 import type { Conversation } from "@twilio/conversations";
 import { doc, updateDoc } from "firebase/firestore";
-import { formatShortSunday } from "@/features/schedule/dateFormat";
+import { formatShortSunday } from "@/features/schedule/utils/dateFormat";
 import { db } from "@/lib/firebase";
 import type { SpeakerStatus } from "@/lib/types";
 

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import type { SacramentMeeting } from "@/lib/types";
 import { cn } from "@/lib/cn";
-import type { KindVariant } from "./kindLabel";
+import type { KindVariant } from "./utils/kindLabel";
 import { PrayerRow } from "./PrayerRow";
 
 interface Props {

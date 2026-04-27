@@ -6,15 +6,15 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
 import { DesktopOnlyNotice } from "@/features/page-editor/DesktopOnlyNotice";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
-import { buildInitialPrayerLetterState } from "@/features/page-editor/prayerLetterEditorConfig";
+import { buildInitialPrayerLetterState } from "@/features/page-editor/utils/prayerLetterEditorConfig";
 import {
   PRAYER_LETTER_VARIABLES,
   PRAYER_LETTER_VARIABLE_GROUP_LABEL,
   PRAYER_LETTER_VARIABLE_SAMPLES,
-} from "@/features/page-editor/prayerLetterVariables";
-import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
-import { usePrayerLetterTemplateEditor } from "@/features/page-editor/usePrayerLetterTemplateEditor";
-import { interpolate } from "@/features/templates/interpolate";
+} from "@/features/page-editor/utils/prayerLetterVariables";
+import { resolveChipsInState } from "@/features/page-editor/utils/serializeForInterpolation";
+import { usePrayerLetterTemplateEditor } from "@/features/page-editor/hooks/usePrayerLetterTemplateEditor";
+import { interpolate } from "@/features/templates/utils/interpolate";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 

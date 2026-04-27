@@ -4,18 +4,18 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useAuthStore } from "@/stores/authStore";
 import { useLatestInvitation } from "@/features/invitations/hooks/useLatestInvitation";
-import { usePrayerLetterTemplate } from "@/features/templates/usePrayerLetterTemplate";
-import { usePreparePrayerInvitation } from "@/features/prayers/usePreparePrayerInvitation";
-import { interpolate } from "@/features/templates/interpolate";
-import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
+import { usePrayerLetterTemplate } from "@/features/templates/hooks/usePrayerLetterTemplate";
+import { usePreparePrayerInvitation } from "@/features/prayers/hooks/usePreparePrayerInvitation";
+import { interpolate } from "@/features/templates/utils/interpolate";
+import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { PrintOnlyLetter } from "@/features/templates/PrintOnlyLetter";
-import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
+import { resolveChipsInState } from "@/features/page-editor/utils/serializeForInterpolation";
 import { ReviewLetterFooter } from "@/features/plan-speakers/ReviewLetterFooter";
 import { PostPrintConfirmStep } from "@/features/plan-speakers/PostPrintConfirmStep";
 import type { PrayerActionMode } from "./PrayerActionPicker";
 import { PrayerLetterReviewBody } from "./PrayerLetterReviewBody";
-import { useReviewPrayerLetterAction } from "./useReviewPrayerLetterAction";
-import { usePrayerWizardActions } from "./usePrayerWizardActions";
+import { useReviewPrayerLetterAction } from "./hooks/useReviewPrayerLetterAction";
+import { usePrayerWizardActions } from "./hooks/usePrayerWizardActions";
 
 interface Props {
   wardId: string;

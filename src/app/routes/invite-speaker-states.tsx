@@ -1,5 +1,5 @@
 import type { SpeakerInvitation } from "@/lib/types";
-import type { SpeakerInvitationState } from "@/features/templates/useSpeakerInvitation";
+import type { SpeakerInvitationState } from "@/features/templates/hooks/useSpeakerInvitation";
 
 export { SessionGate } from "./invite-speaker-session-gate";
 export { ShareToolbar } from "./invite-speaker-share-toolbar";

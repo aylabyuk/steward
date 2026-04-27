@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { WithId } from "@/hooks/_sub";
 import type { MidItem as MidItemType, NonMeetingSunday, Speaker } from "@/lib/types";
-import { reorderSpeakers } from "@/features/speakers/speakerActions";
+import { reorderSpeakers } from "@/features/speakers/utils/speakerActions";
 import { ProgramSection } from "../program/ProgramSection";
 import { updateMeetingField } from "../utils/updateMeeting";
 import { MidPlaceholderRow, SpeakerListRow } from "./SpeakerListRow";

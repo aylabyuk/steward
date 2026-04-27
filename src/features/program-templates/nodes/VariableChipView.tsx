@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { $getNodeByKey, type NodeKey } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useLetterVars, useLiveValues } from "@/features/page-editor/letterRenderContext";
-import { useVariableMeta, useVariableRegistry } from "@/features/page-editor/variableRegistry";
-import { styleStringToReact } from "./chipStyle";
+import { useLetterVars, useLiveValues } from "@/features/page-editor/utils/letterRenderContext";
+import { useVariableMeta, useVariableRegistry } from "@/features/page-editor/utils/variableRegistry";
+import { styleStringToReact } from "./utils/chipStyle";
 import { VariableChipNode } from "./VariableChipNode";
 import { VariableChipPicker } from "./VariableChipPicker";
 

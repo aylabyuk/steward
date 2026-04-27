@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
-import { updateSpeaker } from "@/features/speakers/speakerActions";
+import { upsertPrayerParticipant } from "@/features/prayers/utils/prayerActions";
+import { updateSpeaker } from "@/features/speakers/utils/speakerActions";
 import type { PrayerRole } from "@/lib/types";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";

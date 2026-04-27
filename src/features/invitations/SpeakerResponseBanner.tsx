@@ -1,4 +1,4 @@
-import { formatShortSunday } from "@/features/schedule/dateFormat";
+import { formatShortSunday } from "@/features/schedule/utils/dateFormat";
 import type { SpeakerStatus } from "@/lib/types";
 
 interface Props {

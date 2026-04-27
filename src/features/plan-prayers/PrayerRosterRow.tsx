@@ -1,7 +1,7 @@
-import { toE164 } from "@/features/templates/smsInvitation";
-import type { usePrayerPlanRow } from "./usePrayerPlanRow";
+import { toE164 } from "@/features/templates/utils/smsInvitation";
+import type { usePrayerPlanRow } from "./hooks/usePrayerPlanRow";
 import { PrayerPlanField } from "./PrayerPlanField";
-import { validatePrayerRow } from "./validatePrayerRow";
+import { validatePrayerRow } from "./utils/validatePrayerRow";
 
 interface Props {
   row: ReturnType<typeof usePrayerPlanRow>;

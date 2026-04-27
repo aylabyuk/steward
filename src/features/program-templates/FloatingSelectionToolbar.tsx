@@ -9,7 +9,7 @@ import {
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { $isLinkNode } from "@lexical/link";
-import { type ActiveFormats, EMPTY_FORMATS, ToolbarButtons } from "./floatingToolbarButtons";
+import { type ActiveFormats, EMPTY_FORMATS, ToolbarButtons } from "./utils/floatingToolbarButtons";
 
 const VERTICAL_GAP = 10;
 const VIEWPORT_PADDING = 8;

@@ -1,5 +1,5 @@
 import { MessageTemplateCard } from "./MessageTemplateCard";
-import { DEFAULT_BISHOPRIC_RESPONSE_RECEIPT } from "./serverTemplateDefaults";
+import { DEFAULT_BISHOPRIC_RESPONSE_RECEIPT } from "./utils/serverTemplateDefaults";
 
 export function BishopricResponseReceiptSection(): React.ReactElement {
   return (

@@ -3,13 +3,13 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import type { MessageTemplateKey } from "@/lib/types";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import { interpolate } from "./interpolate";
+import { interpolate } from "./utils/interpolate";
 import { MessageTemplateCardDesktop, PreviewPane } from "./MessageTemplateCardDesktop";
 import { MobileTemplateAccordion } from "./MobileTemplateAccordion";
 import { TemplateEditorModal } from "./TemplateEditorModal";
 import type { TemplateVariableDoc } from "./TemplateVariableList";
-import { useMessageTemplate } from "./useMessageTemplate";
-import { writeMessageTemplate } from "./writeMessageTemplate";
+import { useMessageTemplate } from "./hooks/useMessageTemplate";
+import { writeMessageTemplate } from "./utils/writeMessageTemplate";
 
 interface Props {
   sectionId: string;

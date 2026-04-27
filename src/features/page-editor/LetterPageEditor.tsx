@@ -1,22 +1,22 @@
 import { useRef, useState } from "react";
 import type { LetterPageStyle } from "@/lib/types/template";
-import { LetterRenderContextProvider } from "./letterRenderContext";
+import { LetterRenderContextProvider } from "./utils/letterRenderContext";
 import {
   LETTER_EDITOR_NODES,
   LETTER_SLASH_COMMANDS,
   buildInitialLetterState,
-} from "./letterEditorConfig";
+} from "./utils/letterEditorConfig";
 import {
   type LetterVariable,
   LETTER_VARIABLE_GROUP_LABEL,
   LETTER_VARIABLE_SAMPLES,
   LETTER_VARIABLES,
-} from "./letterVariables";
+} from "./utils/letterVariables";
 import { PageEditorComposer } from "./PageEditorComposer";
 import { PaginatedPageStage } from "./PaginatedPageStage";
 import type { SlashCommand } from "./plugins/SlashCommandRegistry";
-import { useFitZoom } from "./useFitZoom";
-import { VariableRegistryProvider } from "./variableRegistry";
+import { useFitZoom } from "./hooks/useFitZoom";
+import { VariableRegistryProvider } from "./utils/variableRegistry";
 import { PageToolbar } from "./toolbar/PageToolbar";
 import type { ZoomMode } from "./toolbar/ZoomMenu";
 

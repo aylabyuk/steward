@@ -2,8 +2,8 @@ import { useMemo, useRef } from "react";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { useFitScale } from "@/hooks/useFitScale";
 import { LETTER_CANVAS_WIDTH_PX, LetterCanvas } from "@/features/templates/LetterCanvas";
-import { interpolate } from "@/features/templates/interpolate";
-import { resolveChipsInState } from "./serializeForInterpolation";
+import { interpolate } from "@/features/templates/utils/interpolate";
+import { resolveChipsInState } from "./utils/serializeForInterpolation";
 
 interface Props {
   wardName: string;

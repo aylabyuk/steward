@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { letterCanvasToPdf } from "@/features/page-editor/letterToPdf";
-import { shareLetterPdf } from "@/features/page-editor/shareLetterPdf";
+import { letterCanvasToPdf } from "@/features/page-editor/utils/letterToPdf";
+import { shareLetterPdf } from "@/features/page-editor/utils/shareLetterPdf";
 
 /** Renders the letter PDF and hands it to the OS share sheet (Web
  *  Share API on iOS / Android), falling back to a download on

@@ -1,5 +1,5 @@
 import { MessageTemplateCard } from "./MessageTemplateCard";
-import { DEFAULT_BISHOP_REPLY_SMS } from "./serverTemplateDefaults";
+import { DEFAULT_BISHOP_REPLY_SMS } from "./utils/serverTemplateDefaults";
 
 const SAMPLE_INVITE_URL = "https://example.com/invite/speaker/your-ward/sample-token";
 

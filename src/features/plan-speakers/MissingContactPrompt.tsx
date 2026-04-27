@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
-import { updateSpeaker } from "@/features/speakers/speakerActions";
-import { isE164, toE164 } from "@/features/templates/smsInvitation";
+import { updateSpeaker } from "@/features/speakers/utils/speakerActions";
+import { isE164, toE164 } from "@/features/templates/utils/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { cn } from "@/lib/cn";

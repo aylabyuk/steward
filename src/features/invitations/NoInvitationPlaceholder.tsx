@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { SpeakerStatusPills } from "@/features/schedule/SpeakerStatusPills";
-import { statusProvenanceLabel } from "@/features/schedule/statusProvenance";
-import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
-import { updateSpeaker } from "@/features/speakers/speakerActions";
+import { statusProvenanceLabel } from "@/features/schedule/utils/statusProvenance";
+import { upsertPrayerParticipant } from "@/features/prayers/utils/prayerActions";
+import { updateSpeaker } from "@/features/speakers/utils/speakerActions";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/cn";

@@ -1,5 +1,5 @@
 import { Icon } from "./Icon";
-import { usePopover } from "./usePopover";
+import { usePopover } from "./hooks/usePopover";
 
 export type ZoomMode =
   | { kind: "manual"; value: number }

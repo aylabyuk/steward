@@ -1,4 +1,4 @@
-import { isPlausiblePhone } from "@/features/templates/smsInvitation";
+import { isPlausiblePhone } from "@/features/templates/utils/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import type { Speaker } from "@/lib/types";
 

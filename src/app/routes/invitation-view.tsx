@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router";
 import { Avatar } from "@/components/ui/Avatar";
 import { ScaledLetterPreview } from "@/features/templates/ScaledLetterPreview";
-import { useSpeakerInvitation } from "@/features/templates/useSpeakerInvitation";
+import { useSpeakerInvitation } from "@/features/templates/hooks/useSpeakerInvitation";
 import { useWardMembers } from "@/hooks/useWardMembers";
 
 function formatTimestamp(value: unknown): string | null {

@@ -1,5 +1,5 @@
 import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
-import { usePrayerParticipant } from "@/features/prayers/usePrayerParticipant";
+import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticipant";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { InvitationStatus, PrayerRole } from "@/lib/types";
 import { cn } from "@/lib/cn";

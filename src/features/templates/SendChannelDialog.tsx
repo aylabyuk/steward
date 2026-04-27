@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
-import { isE164, toE164 } from "@/features/templates/smsInvitation";
+import { isE164, toE164 } from "@/features/templates/utils/smsInvitation";
 import { cn } from "@/lib/cn";
 import { isValidEmail } from "@/lib/email";
 

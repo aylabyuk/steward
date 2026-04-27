@@ -1,5 +1,5 @@
 import { SpeakerStatusPills } from "@/features/schedule/SpeakerStatusPills";
-import { statusProvenanceLabel } from "@/features/schedule/statusProvenance";
+import { statusProvenanceLabel } from "@/features/schedule/utils/statusProvenance";
 import type { SubState } from "@/hooks/_sub";
 import { cn } from "@/lib/cn";
 import type { Member, Speaker, SpeakerInvitation, SpeakerStatus, WithId } from "@/lib/types";
