@@ -21,6 +21,22 @@ export function formatShortSunday(iso: string): string {
   });
 }
 
+/** "1st Sunday", "2nd Sunday", "5th Sunday" — based on which Sunday
+ *  of the month the given ISO date is. Sundays are 7 days apart, so
+ *  ceil(day-of-month / 7) gives the ordinal directly: day 1–7 → 1st,
+ *  8–14 → 2nd, 15–21 → 3rd, 22–28 → 4th, 29–31 → 5th. The caller is
+ *  expected to pass an actual Sunday date; no validation here. */
+export function formatSundayOrdinal(iso: string): string {
+  const [, , dStr] = iso.split("-");
+  const day = Number(dStr);
+  if (!Number.isInteger(day) || day < 1) return iso;
+  const ordinal = Math.ceil(day / 7);
+  const SUFFIX = ["th", "st", "nd", "rd"];
+  const v = ordinal % 100;
+  const suffix = SUFFIX[(v - 20) % 10] ?? SUFFIX[v] ?? SUFFIX[0];
+  return `${ordinal}${suffix} Sunday`;
+}
+
 export function formatCountdown(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;

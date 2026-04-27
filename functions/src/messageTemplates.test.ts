@@ -8,7 +8,7 @@ import { interpolate, readMessageTemplate } from "./messageTemplates.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLIENT_DEFAULTS_PATH = resolve(
   __dirname,
-  "../../src/features/templates/serverTemplateDefaults.ts",
+  "../../src/features/templates/utils/serverTemplateDefaults.ts",
 );
 
 describe("interpolate", () => {
