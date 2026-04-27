@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
+import { cn } from "@/lib/cn";
 import type { Speaker, SpeakerInvitation } from "@/lib/types";
 import { BishopInvitationChat } from "./BishopInvitationChat";
 import { InvitationLinkActions } from "./InvitationLinkActions";
 import { NoInvitationPlaceholder } from "./NoInvitationPlaceholder";
+
+const EXIT_MS = 200;
 
 interface Props {
   open: boolean;
@@ -46,7 +49,27 @@ export function BishopInvitationDialog({
   speakerId,
   kind = "speaker",
 }: Props): React.ReactElement | null {
-  useLockBodyScroll(open);
+  // Stay mounted through the slide-down so dismissal mirrors the
+  // slide-up entrance instead of cutting off mid-animation.
+  const [mounted, setMounted] = useState(open);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      setExiting(false);
+      return;
+    }
+    if (!mounted) return;
+    setExiting(true);
+    const t = setTimeout(() => {
+      setMounted(false);
+      setExiting(false);
+    }, EXIT_MS);
+    return () => clearTimeout(t);
+  }, [open, mounted]);
+
+  useLockBodyScroll(mounted && !exiting);
 
   useEffect(() => {
     if (!open) return;
@@ -59,18 +82,28 @@ export function BishopInvitationDialog({
     return () => document.removeEventListener("keydown", handleEsc, true);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[60] bg-[rgba(35,24,21,0.42)] flex items-end sm:items-center justify-center sm:p-5 animate-[fade_160ms_ease-out]"
+      className={cn(
+        "fixed inset-0 z-60 bg-[rgba(35,24,21,0.42)] flex items-end sm:items-center justify-center sm:p-5",
+        exiting ? "animate-[fadeOut_180ms_ease-in]" : "animate-[fade_160ms_ease-out]",
+      )}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)] sm:max-w-xl sm:h-auto sm:min-h-140 sm:max-h-[94vh] sm:rounded-[14px] sm:border-b sm:animate-none">
+      <div
+        className={cn(
+          "bg-chalk flex flex-col w-full h-[85dvh] rounded-t-[18px] border-t border-x border-border-strong shadow-elev-3 overflow-hidden sm:max-w-xl sm:h-auto sm:min-h-140 sm:max-h-[94vh] sm:rounded-[14px] sm:border-b sm:animate-none",
+          exiting
+            ? "animate-[drawerSlideDown_200ms_cubic-bezier(0.4,0,1,1)_forwards]"
+            : "animate-[drawerSlideUp_220ms_cubic-bezier(0.22,1,0.36,1)]",
+        )}
+      >
         <button
           type="button"
           aria-label="Close conversation"
