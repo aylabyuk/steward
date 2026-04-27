@@ -27,7 +27,7 @@ export function ProgramSaveBar({
           message ("Couldn't save — Connection failed…") doesn't wrap
           inside a cramped row next to a big CTA. Desktop: everything
           on one line. */}
-      <div className="flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:gap-3.5 sm:px-8 sm:py-3">
+      <div className="flex flex-col gap-2 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:gap-3.5 sm:px-8 sm:py-3 sm:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <SaveIndicator />
         <span className="hidden sm:block sm:flex-1" />
         <div className="flex items-center gap-2.5">
