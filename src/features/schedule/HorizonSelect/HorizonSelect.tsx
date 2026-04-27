@@ -3,12 +3,15 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { MobileBottomSheet } from "@/components/ui/MobileBottomSheet";
 import { cn } from "@/lib/cn";
 
-const HORIZON_OPTIONS = [
-  { label: "1 month", display: "Next 1 month", weeks: 4 },
-  { label: "2 months", display: "Next 2 months", weeks: 9 },
-  { label: "3 months", display: "Next 3 months", weeks: 13 },
-  { label: "4 months", display: "Next 4 months", weeks: 17 },
-];
+// Sundays are weekly, so "weeks" is the natural unit — sidesteps the
+// 4-vs-5-week-month ambiguity. Going in 4-week increments keeps the
+// labels readable and the upper bound (16 weeks ≈ 4 months) consistent
+// with the mobile infinite-scroll cap.
+const HORIZON_OPTIONS = [{ weeks: 4 }, { weeks: 8 }, { weeks: 12 }, { weeks: 16 }];
+
+function displayFor(weeks: number): string {
+  return `Next ${weeks} ${weeks === 1 ? "week" : "weeks"}`;
+}
 
 interface Props {
   value: number;
@@ -21,8 +24,7 @@ export function HorizonSelect({ value, onChange }: Props) {
   const menuRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const selectedOption = HORIZON_OPTIONS.find((o) => o.weeks === value);
-  const display = selectedOption?.display ?? "Schedule";
+  const display = displayFor(value);
 
   useEffect(() => {
     if (!open || isMobile) return;
@@ -119,7 +121,7 @@ function Options({ value, onSelect }: OptionsProps) {
           <span className="text-[8px] text-center text-bordeaux leading-none">
             {value === option.weeks ? "•" : ""}
           </span>
-          <span>{option.display}</span>
+          <span>{displayFor(option.weeks)}</span>
         </button>
       ))}
     </>

@@ -7,6 +7,37 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.16.1] — 2026-04-27
+
+A polish-pass release on top of v0.16.0. Two layout fixes — desktop
+scrollbar tucking, and the OS keyboard breaking the chat drawers —
+a horizon-dropdown cleanup, a secrets-hygiene pass, and the desktop
+side-drawer treatment for bishop conversations.
+
+### Changed
+
+- **Desktop chat drawers slide in from the right** instead of
+  centering as a bottom-anchored modal — the speaker's letter or
+  schedule context behind the drawer stays glanceable while the
+  bishop composes a reply.
+- **Horizon dropdown speaks in weeks**, with the mobile cap aligned
+  to 16 weeks so the dropdown matches the infinite-scroll ceiling.
+
+### Fixed
+
+- **OS keyboard no longer pushes the chat drawer upward** on mobile.
+  `interactive-widget=resizes-content` was silently disabling vaul's
+  `visualViewport`-based keyboard handler; removing it lets vaul pin
+  the drawer's bottom edge just above the keyboard while keeping the
+  top anchored, instead of compressing the whole drawer via `dvh`.
+- **Desktop scrollbar tucks behind the topbar** instead of overlaying
+  it, restoring the polished edge on wide viewports.
+
+### Security
+
+- Dev-mode email allowlist moved out of the bundle and into env vars;
+  references to specific addresses scrubbed from the repo.
+
 ## [0.16.0] — 2026-04-27
 
 A mobile-first pass on the schedule plus a project-wide structural
@@ -285,7 +316,7 @@ maintainer-only Twilio testing FROM number.
   physical.
 - **Maintainer-only "testing" outbound SMS number.** A new
   `TWILIO_FROM_NUMBER_TESTING` secret + per-invitation toggle let
-  allowlisted callers (currently `6472022+aylabyuk@users.noreply.github.com`) send an
+  allowlisted callers (configured via `DEV_MODE_EMAILS`) send an
   invitation through a separate Twilio number, leaving the production
   line free. The flag is persisted on the invitation only when set,
   so SMS rotations + bishop-reply notifications stay on the same
@@ -1898,7 +1929,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.16.1...HEAD
+[0.16.1]: https://github.com/aylabyuk/steward/releases/tag/v0.16.1
 [0.16.0]: https://github.com/aylabyuk/steward/releases/tag/v0.16.0
 [0.15.0]: https://github.com/aylabyuk/steward/releases/tag/v0.15.0
 [0.14.0]: https://github.com/aylabyuk/steward/releases/tag/v0.14.0

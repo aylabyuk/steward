@@ -11,23 +11,31 @@ export function AppShell() {
   const isMobile = useIsMobile();
   const hidden = useHideOnScroll(isMobile);
 
+  // Mobile: body scrolls. Sticky topbar with auto-hide on scroll. The
+  // browser's vertical scrollbar runs full-height — fine on touch
+  // devices where it's an overlay.
+  // Desktop: outer is `h-dvh + overflow-hidden`; the inner content
+  // wrapper owns the scroll. That way the vertical scrollbar starts
+  // BELOW the topbar instead of running edge-to-edge alongside it.
   return (
-    <div className="flex min-h-dvh flex-col bg-parchment paper-grain">
+    <div className="flex flex-col bg-parchment paper-grain min-h-dvh sm:h-dvh sm:overflow-hidden">
       <div
         className={cn(
-          "sticky top-0 z-20 transition-transform duration-200 ease-out will-change-transform",
+          "z-20 sticky top-0 sm:static transition-transform duration-200 ease-out will-change-transform",
           hidden && "-translate-y-full",
         )}
       >
         <Topbar />
         <OnlineStatusBanner />
       </div>
-      <div className="flex flex-1 flex-col w-full max-w-380 mx-auto px-4 sm:px-8 pt-4 sm:pt-7">
-        <Outlet />
+      <div className="flex flex-1 flex-col sm:overflow-y-auto sm:overflow-x-clip">
+        <div className="flex flex-1 flex-col w-full max-w-380 mx-auto px-4 sm:px-8 pt-4 sm:pt-7">
+          <Outlet />
+        </div>
+        <footer className="flex justify-center py-3 px-4">
+          <BuiltByCredit />
+        </footer>
       </div>
-      <footer className="flex justify-center py-3 px-4">
-        <BuiltByCredit />
-      </footer>
       {isMobile && <UserSideDrawer />}
     </div>
   );

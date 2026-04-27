@@ -1,4 +1,5 @@
 import { Drawer } from "vaul";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import type { Speaker, SpeakerInvitation } from "@/lib/types";
 import { BishopInvitationChat } from "./BishopInvitationChat";
 import { InvitationLinkActions } from "./InvitationLinkActions";
@@ -29,10 +30,13 @@ interface Props {
 
 /** Bishop-side conversation panel. Hosts BishopInvitationChat (or the
  *  no-invitation placeholder when the speaker hasn't been invited
- *  yet) inside a `vaul` Drawer — gives us native drag-to-dismiss,
- *  ESC, backdrop tap, and spring animations on both mobile and
- *  desktop. Z-index pinned to 60 so the panel sits above the Assign
- *  Speakers modal (z-50) it's launched from. */
+ *  yet) inside a `vaul` Drawer. Mobile gets a bottom sheet that
+ *  slides up; desktop gets a side drawer that slides in from the
+ *  right edge — better than a centered modal because the speaker's
+ *  schedule context behind it stays glanceable. Drag-to-dismiss
+ *  works on both (down on mobile, right on desktop). Z-index pinned
+ *  to 60 so the panel sits above the Assign Speakers modal (z-50)
+ *  it's launched from. */
 export function BishopInvitationDialog({
   open,
   onClose,
@@ -44,20 +48,24 @@ export function BishopInvitationDialog({
   speakerId,
   kind = "speaker",
 }: Props): React.ReactElement | null {
+  const isMobile = useIsMobile();
+  const contentClass = isMobile
+    ? "fixed bottom-0 left-0 right-0 z-60 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none"
+    : "fixed inset-y-0 right-0 z-60 flex w-[min(28rem,100vw)] flex-col bg-chalk shadow-elev-3 border-l border-border-strong outline-none";
   return (
     <Drawer.Root
       open={open}
       onOpenChange={(o) => {
         if (!o) onClose();
       }}
+      direction={isMobile ? "bottom" : "right"}
     >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-60 bg-[rgba(35,24,21,0.42)]" />
-        <Drawer.Content
-          aria-describedby={undefined}
-          className="fixed bottom-0 left-0 right-0 z-60 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none sm:left-1/2 sm:right-auto sm:bottom-4 sm:h-auto sm:min-h-140 sm:max-h-[94dvh] sm:w-[min(40rem,calc(100dvw-2rem))] sm:-translate-x-1/2 sm:rounded-[14px] sm:border-b"
-        >
-          <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40 sm:hidden" />
+        <Drawer.Content aria-describedby={undefined} className={contentClass}>
+          {isMobile && (
+            <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40" />
+          )}
           <Drawer.Title className="sr-only">Conversation with {speaker.name}</Drawer.Title>
           <div className="flex items-start gap-3 px-5 py-3.5 border-b border-border bg-parchment">
             <div className="flex-1 min-w-0">

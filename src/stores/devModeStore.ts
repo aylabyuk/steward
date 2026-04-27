@@ -1,15 +1,30 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-/** Email allowlist for the dev-mode UI toggles. Mirrors the
- *  server-side allowlist in `functions/src/devModeAccess.ts` — keep
- *  them in sync. The server is authoritative; the client check just
- *  hides UI that wouldn't take effect anyway. */
-export const DEV_MODE_EMAILS: ReadonlySet<string> = new Set(["6472022+aylabyuk@users.noreply.github.com"]);
+/** Email allowlist for the dev-mode UI toggles. Sourced from the
+ *  `VITE_DEV_MODE_EMAILS` env var (comma-separated). Empty in
+ *  production builds where the var isn't set, so dev-mode toggles
+ *  are hidden for everyone. The server-side mirror lives at
+ *  `functions/src/devModeAccess.ts` and reads its own env var
+ *  (`DEV_MODE_EMAILS`). The server is authoritative; the client
+ *  check just hides UI that wouldn't take effect anyway. */
+export const DEV_MODE_EMAILS: ReadonlySet<string> = parseEmails(
+  import.meta.env.VITE_DEV_MODE_EMAILS,
+);
 
 export function isDevModeEmail(email: string | null | undefined): boolean {
   if (!email) return false;
   return DEV_MODE_EMAILS.has(email.toLowerCase());
+}
+
+function parseEmails(raw: string | undefined): ReadonlySet<string> {
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
 }
 
 interface DevModeState {
