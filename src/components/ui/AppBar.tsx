@@ -81,10 +81,7 @@ export function AppBar({
   return (
     <>
       {/* Compact bar — only this element is sticky. */}
-      <div
-        ref={barRef}
-        className="sticky top-0 z-20 bg-parchment/85 backdrop-blur-sm"
-      >
+      <div ref={barRef} className="sticky top-0 z-20 bg-parchment/85 backdrop-blur-sm">
         <div className="w-full max-w-380 mx-auto px-4 sm:px-8">
           <div className="relative flex items-center h-12">
             <Link

@@ -30,10 +30,7 @@ export function AppShell() {
         <Topbar />
         <OnlineStatusBanner />
       </div>
-      <div
-        data-app-scroll
-        className="flex flex-1 flex-col sm:overflow-y-auto sm:overflow-x-clip"
-      >
+      <div data-app-scroll className="flex flex-1 flex-col sm:overflow-y-auto sm:overflow-x-clip">
         <div className="shell-content flex flex-1 flex-col w-full max-w-380 mx-auto px-4 sm:px-8 pt-4 sm:pt-7">
           <Outlet />
         </div>

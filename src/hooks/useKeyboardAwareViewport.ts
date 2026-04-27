@@ -36,8 +36,7 @@ export function useKeyboardAwareViewport(
     function apply() {
       if (!el || !vv) return;
       const layoutHeight = window.innerHeight;
-      const visibleBottomFromLayoutBottom =
-        layoutHeight - (vv.offsetTop + vv.height);
+      const visibleBottomFromLayoutBottom = layoutHeight - (vv.offsetTop + vv.height);
       el.style.bottom = `${Math.max(visibleBottomFromLayoutBottom, 0)}px`;
       el.style.height = `${Math.max(vv.height - topInset, 0)}px`;
     }
