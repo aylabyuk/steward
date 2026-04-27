@@ -32,7 +32,7 @@ export function AppShell() {
   const pushed = drawerOpen && isMobile;
 
   return (
-    <div className="min-h-dvh bg-parchment paper-grain overflow-x-hidden">
+    <div className="min-h-dvh bg-parchment paper-grain overflow-x-clip">
       <div
         className={cn(
           // Note: no `will-change-transform` here. Setting it would
