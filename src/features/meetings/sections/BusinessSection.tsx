@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { ProgramSection } from "../program/ProgramSection";
-import { updateMeetingField } from "../updateMeeting";
+import { updateMeetingField } from "../utils/updateMeeting";
 
 type TextField = "wardBusiness" | "stakeBusiness" | "announcements";
 

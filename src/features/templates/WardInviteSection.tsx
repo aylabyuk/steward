@@ -5,11 +5,11 @@ import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { MessageTemplateCardDesktop } from "./MessageTemplateCardDesktop";
 import { MobileTemplateAccordion } from "./MobileTemplateAccordion";
-import { renderWardInviteMessage } from "./renderWardInviteMessage";
+import { renderWardInviteMessage } from "./utils/renderWardInviteMessage";
 import { TemplateEditorModal } from "./TemplateEditorModal";
-import { useWardInviteTemplate } from "./useWardInviteTemplate";
-import { DEFAULT_WARD_INVITE_BODY } from "./wardInviteDefaults";
-import { writeWardInviteTemplate } from "./writeWardInviteTemplate";
+import { useWardInviteTemplate } from "./hooks/useWardInviteTemplate";
+import { DEFAULT_WARD_INVITE_BODY } from "./utils/wardInviteDefaults";
+import { writeWardInviteTemplate } from "./utils/writeWardInviteTemplate";
 
 const VARIABLES = [
   { name: "inviteeName", hint: "Member being invited" },

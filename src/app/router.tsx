@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { CongregationProgram } from "@/features/print/CongregationProgram";
 import { ConductingProgram } from "@/features/print/ConductingProgram";
 import { ScheduleView } from "@/features/schedule/ScheduleView";
-import { AuthGate } from "./auth-gate";
+import { AuthGate } from "./AuthGate";
 import { AcceptInvitePage } from "./routes/accept-invite";
 import { InvitationViewPage } from "./routes/invitation-view";
 import { SpeakerInvitationLandingPage } from "./routes/invite-speaker";

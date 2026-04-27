@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import type { Speaker } from "@/lib/types";
 import { BishopInvitationDialog } from "./BishopInvitationDialog";
-import { useConversationUnread } from "./useConversationUnread";
-import { useLatestInvitation } from "./useLatestInvitation";
+import { useConversationUnread } from "./hooks/useConversationUnread";
+import { useLatestInvitation } from "./hooks/useLatestInvitation";
 
 interface Props {
   wardId: string;

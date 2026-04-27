@@ -3,13 +3,13 @@ import { useLockBodyScroll } from "@/hooks/useLockBodyScroll";
 import { isValidEmail } from "@/lib/email";
 import { callingToRole, type Calling, type Ward } from "@/lib/types";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
-import { renderWardInviteMessage } from "@/features/templates/renderWardInviteMessage";
-import { useWardInviteTemplate } from "@/features/templates/useWardInviteTemplate";
-import { DEFAULT_WARD_INVITE_BODY } from "@/features/templates/wardInviteDefaults";
-import { sendInvite } from "./inviteActions";
+import { renderWardInviteMessage } from "@/features/templates/utils/renderWardInviteMessage";
+import { useWardInviteTemplate } from "@/features/templates/hooks/useWardInviteTemplate";
+import { DEFAULT_WARD_INVITE_BODY } from "@/features/templates/utils/wardInviteDefaults";
+import { sendInvite } from "./utils/inviteActions";
 import { InviteMemberFields } from "./InviteMemberFields";
 import { InviteMessageOverridePanel } from "./InviteMessageOverridePanel";
-import { openInviteMailto } from "./inviteMailto";
+import { openInviteMailto } from "./utils/inviteMailto";
 
 interface Props {
   wardId: string;

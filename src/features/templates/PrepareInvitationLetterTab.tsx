@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { LetterPageEditor } from "@/features/page-editor/LetterPageEditor";
 import { MobileLetterPreview } from "@/features/page-editor/MobileLetterPreview";
-import { resolveChipsInState } from "@/features/page-editor/serializeForInterpolation";
+import { resolveChipsInState } from "@/features/page-editor/utils/serializeForInterpolation";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PrintOnlyLetter } from "./PrintOnlyLetter";
-import { interpolate } from "./interpolate";
-import type { LetterVars } from "./prepareInvitationVars";
+import { interpolate } from "./utils/interpolate";
+import type { LetterVars } from "./utils/prepareInvitationVars";
 
 interface Props {
   initialJson: string | null;

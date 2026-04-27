@@ -7,7 +7,7 @@ import {
   useBasicTypeaheadTriggerMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { cn } from "@/lib/cn";
-import { filterSlashCommands, type SlashCommand } from "./SlashCommandRegistry";
+import { filterSlashCommands, type SlashCommand } from "./utils/SlashCommandRegistry";
 
 class SlashOption extends MenuOption {
   constructor(public command: SlashCommand) {

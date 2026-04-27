@@ -1,4 +1,4 @@
-import type { AuthorMap } from "./useConversation";
+import type { AuthorMap } from "./hooks/useConversation";
 
 interface Props {
   typingIdentities: readonly string[];

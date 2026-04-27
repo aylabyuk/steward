@@ -1,5 +1,5 @@
 import { MessageTemplateCard } from "./MessageTemplateCard";
-import { DEFAULT_BISHOP_REPLY_EMAIL } from "./serverTemplateDefaults";
+import { DEFAULT_BISHOP_REPLY_EMAIL } from "./utils/serverTemplateDefaults";
 
 export function BishopReplyEmailSection(): React.ReactElement {
   return (

@@ -4,7 +4,7 @@ import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/cn";
 import { MenuItemDisabled, MenuLink, MenuLinkWithToggle } from "./UserMenuItems";
-import { useDevicePushToggle } from "./useDevicePushToggle";
+import { useDevicePushToggle } from "./hooks/useDevicePushToggle";
 
 function ChevronDown({ size = 14 }: { size?: number }) {
   return (

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { SacramentMeeting } from "@/lib/types";
-import { type OrderedSpeaker, personName, type SequenceEntry } from "./programData";
-import { RowFreeform, RowHymn, RowLabeled, ScriptLine } from "./programRows";
+import { type OrderedSpeaker, personName, type SequenceEntry } from "./utils/programData";
+import { RowFreeform, RowHymn, RowLabeled, ScriptLine } from "./utils/programRows";
 
 function Group({ children }: { children: ReactNode }) {
   return <section className="mt-3.5 mb-1.5 flex flex-col">{children}</section>;

@@ -18,7 +18,7 @@ import { $setBlocksType } from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
 import { InsertVariableMenu } from "./InsertVariableMenu";
 import { ProgramToolbarButton, ToolbarSep } from "./ProgramToolbarButton";
-import type { ProgramVariable } from "./programVariables";
+import type { ProgramVariable } from "./utils/programVariables";
 
 type BlockKind = "p" | "h1" | "h2" | "h3" | "quote";
 

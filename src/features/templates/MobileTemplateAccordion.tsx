@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, PencilIcon } from "./accordionIcons";
+import { ChevronDown, PencilIcon } from "./utils/accordionIcons";
 
 interface Props {
   sectionId: string;

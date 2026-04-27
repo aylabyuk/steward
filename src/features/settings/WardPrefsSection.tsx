@@ -3,8 +3,8 @@ import { Select } from "@/components/ui/Select";
 import type { WardSettings } from "@/lib/types";
 import { NudgeChipRow } from "./NudgeChipRow";
 import { NumberStepper } from "./NumberStepper";
-import { timezoneSuggestions } from "./timezone";
-import { HORIZON_MAX, HORIZON_MIN, LEAD_MAX, LEAD_MIN } from "./wardSettingsValidate";
+import { timezoneSuggestions } from "./utils/timezone";
+import { HORIZON_MAX, HORIZON_MIN, LEAD_MAX, LEAD_MIN } from "./utils/wardSettingsValidate";
 
 interface Props {
   value: WardSettings;

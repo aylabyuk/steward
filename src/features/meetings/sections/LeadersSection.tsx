@@ -1,7 +1,7 @@
 import type { Assignment, NonMeetingSunday, SacramentMeeting, Visitor } from "@/lib/types";
 import { AssignRow } from "../program/AssignRow";
 import { ProgramSection } from "../program/ProgramSection";
-import { updateMeetingField } from "../updateMeeting";
+import { updateMeetingField } from "../utils/updateMeeting";
 import { VisitorsList } from "./VisitorsList";
 
 interface Props {

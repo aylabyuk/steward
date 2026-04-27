@@ -17,11 +17,11 @@ import {
   type Transformer,
 } from "@lexical/markdown";
 import { FloatingSelectionToolbar } from "@/features/program-templates/FloatingSelectionToolbar";
-import { lexicalTheme } from "@/features/program-templates/lexicalTheme";
+import { lexicalTheme } from "@/features/program-templates/utils/lexicalTheme";
 import { ProgramToolbar } from "@/features/program-templates/ProgramToolbar";
-import type { ProgramVariable } from "@/features/program-templates/programVariables";
+import type { ProgramVariable } from "@/features/program-templates/utils/programVariables";
 import { VariableChipNode } from "@/features/program-templates/nodes/VariableChipNode";
-import { VARIABLE_CHIP_MARKDOWN_TRANSFORMER } from "@/features/program-templates/nodes/variableChipMarkdown";
+import { VARIABLE_CHIP_MARKDOWN_TRANSFORMER } from "@/features/program-templates/nodes/utils/variableChipMarkdown";
 
 interface Props {
   initialMarkdown: string;

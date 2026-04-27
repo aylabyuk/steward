@@ -10,7 +10,7 @@ import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Klass, LexicalEditor, LexicalNode } from "lexical";
 import { FloatingSelectionToolbar } from "@/features/program-templates/FloatingSelectionToolbar";
-import { lexicalTheme } from "@/features/program-templates/lexicalTheme";
+import { lexicalTheme } from "@/features/program-templates/utils/lexicalTheme";
 import { ImagePlugin } from "./plugins/ImagePlugin";
 import { PageEditorAutoLink } from "./plugins/PageEditorAutoLink";
 import { PageEditorMarkdownShortcuts } from "./plugins/PageEditorMarkdownShortcuts";
