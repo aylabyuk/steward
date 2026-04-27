@@ -2,6 +2,7 @@ import { useState } from "react";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { upsertPrayerParticipant } from "@/features/prayers/prayerActions";
 import { WizardFooter } from "@/features/plan-speakers/WizardFooter";
+import type { NonMeetingSunday } from "@/lib/types";
 import { PrayerRosterRow } from "./PrayerRosterRow";
 import { usePrayerPlanRow } from "./usePrayerPlanRow";
 import { validatePrayerRow } from "./validatePrayerRow";
@@ -9,6 +10,7 @@ import { validatePrayerRow } from "./validatePrayerRow";
 interface Props {
   wardId: string;
   date: string;
+  nonMeetingSundays: readonly NonMeetingSunday[];
   onContinue: () => void;
 }
 
@@ -16,7 +18,7 @@ interface Props {
  *  speakers but with a fixed 2-slot shape (Opening + Benediction).
  *  Persists name + contact onto the prayer participant docs at
  *  `meetings/{date}/prayers/{role}` before advancing. */
-export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
+export function PrayerRosterStep({ wardId, date, nonMeetingSundays, onContinue }: Props) {
   const opening = usePrayerPlanRow(date, "opening");
   const benediction = usePrayerPlanRow(date, "benediction");
   const [saving, setSaving] = useState(false);
@@ -40,6 +42,7 @@ export function PrayerRosterStep({ wardId, date, onContinue }: Props) {
           name: row.name.trim(),
           email: row.email.trim(),
           phone: row.phone.trim(),
+          nonMeetingSundays,
         });
       }
       onContinue();

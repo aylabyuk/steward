@@ -1,6 +1,7 @@
 import { doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
+import { ensureMeetingDoc } from "@/features/meetings/ensureMeetingDoc";
 import { db } from "@/lib/firebase";
-import type { InvitationStatus, PrayerRole } from "@/lib/types";
+import type { InvitationStatus, NonMeetingSunday, PrayerRole } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 
@@ -14,6 +15,13 @@ interface PrayerUpsertPatch {
    *  "speaker-response" so the audit line distinguishes a
    *  bishop-initiated override from a speaker-driven Yes/No. */
   statusSource?: "manual" | "speaker-response";
+  /** Required when the patch can mirror to the meeting doc (i.e.
+   *  `name` or `status` is set). Threaded through to
+   *  `ensureMeetingDoc` so a brand-new Sunday gets a properly-formed
+   *  meeting doc before the mirror lands — otherwise the mirror's
+   *  `setDoc(merge: true)` creates a partial doc that fails the
+   *  schema parse on `meetingType` + `status`. */
+  nonMeetingSundays?: readonly NonMeetingSunday[];
 }
 
 const MEETING_FIELD: Record<PrayerRole, "openingPrayer" | "benediction"> = {
@@ -46,9 +54,11 @@ export async function upsertPrayerParticipant(
 ): Promise<void> {
   reportSaving();
   try {
+    // Strip transport-only fields before they reach the doc.
+    const { nonMeetingSundays: _nms, ...persisted } = patch;
     const participantData: Record<string, unknown> = {
       role,
-      ...patch,
+      ...persisted,
       updatedAt: serverTimestamp(),
     };
     if ("status" in patch) {
@@ -79,6 +89,10 @@ export async function upsertPrayerParticipant(
     if (!hasMirror) {
       await setDoc(participantRef, participantData, { merge: true });
     } else {
+      // Make sure the meeting doc has its required `meetingType` +
+      // `status` before the mirror runs — otherwise the mirror's
+      // `setDoc(merge: true)` creates a partial doc that fails Zod.
+      await ensureMeetingDoc(wardId, date, patch.nonMeetingSundays ?? []);
       const batch = writeBatch(db);
       batch.set(participantRef, participantData, { merge: true });
       batch.set(
