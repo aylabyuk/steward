@@ -13,6 +13,7 @@ import { PrepareInvitationPage } from "./routes/prepare-invitation";
 import { PreparePrayerInvitationPage } from "./routes/prepare-prayer-invitation";
 import { ProfilePage } from "./routes/profile";
 import { TemplatesPage } from "./routes/templates";
+import { PrayerLetterTemplatePage } from "./routes/templates-prayer-letter";
 import { ProgramTemplatesPage } from "./routes/templates-programs";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speaker-letter";
 import { WardSettingsPage } from "./routes/ward-settings";
@@ -55,6 +56,10 @@ export const router = createBrowserRouter([
         element: <SpeakerLetterTemplatePage />,
       },
       { path: "/settings/templates/programs", element: <ProgramTemplatesPage /> },
+      {
+        path: "/settings/templates/prayer-letter",
+        element: <PrayerLetterTemplatePage />,
+      },
       {
         path: "/week/:date/speaker/:speakerId/prepare",
         element: <PrepareInvitationPage />,

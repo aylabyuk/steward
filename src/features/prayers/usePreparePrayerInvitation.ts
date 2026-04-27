@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { type PrayerRole, type SpeakerLetterTemplate, prayerParticipantSchema } from "@/lib/types";
+import { type PrayerLetterTemplate, type PrayerRole, prayerParticipantSchema } from "@/lib/types";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { legacyFieldsFromState } from "@/features/page-editor/serializeForInterpolation";
 import {
-  DEFAULT_SPEAKER_LETTER_BODY,
-  DEFAULT_SPEAKER_LETTER_FOOTER,
-} from "@/features/templates/speakerLetterDefaults";
+  DEFAULT_PRAYER_LETTER_BODY,
+  DEFAULT_PRAYER_LETTER_FOOTER,
+} from "@/features/templates/prayerLetterDefaults";
 import { clearPrayerLetterOverride, savePrayerLetterOverride } from "./prayerLetterOverride";
 
 interface Args {
@@ -15,11 +15,11 @@ interface Args {
   date: string;
   role: PrayerRole;
   open: boolean;
-  /** Reused from the speaker letter template for now — the dedicated
-   *  `prayerLetterTemplate` editor route lands in a follow-up PR.
-   *  Until then, the bishop's per-prayer override + the ward speaker
-   *  template feed the prayer prepare-invitation page. */
-  letterTemplate: SpeakerLetterTemplate | null;
+  /** Ward's prayer letter template. The dedicated editor lives at
+   *  `/settings/templates/prayer-letter`; until the bishop authors
+   *  one this is `null` and the prepare page falls back to the
+   *  hard-coded prayer defaults. */
+  letterTemplate: PrayerLetterTemplate | null;
 }
 
 interface InitialMarkdown {
@@ -35,8 +35,8 @@ export function usePreparePrayerInvitation(args: Args) {
   const { wardId, date, role, open, letterTemplate } = args;
   const [initialJson, setInitialJson] = useState<string | null>(null);
   const [initialMarkdown, setInitialMarkdown] = useState<InitialMarkdown>({
-    bodyMarkdown: DEFAULT_SPEAKER_LETTER_BODY,
-    footerMarkdown: DEFAULT_SPEAKER_LETTER_FOOTER,
+    bodyMarkdown: DEFAULT_PRAYER_LETTER_BODY,
+    footerMarkdown: DEFAULT_PRAYER_LETTER_FOOTER,
   });
   const [letterStateJson, setLetterStateJson] = useState<string | null>(null);
   const [letterHasOverride, setLetterHasOverride] = useState(false);
@@ -57,11 +57,11 @@ export function usePreparePrayerInvitation(args: Args) {
       const json = override?.editorStateJson ?? letterTemplate?.editorStateJson ?? null;
       const md: InitialMarkdown = {
         bodyMarkdown:
-          override?.bodyMarkdown ?? letterTemplate?.bodyMarkdown ?? DEFAULT_SPEAKER_LETTER_BODY,
+          override?.bodyMarkdown ?? letterTemplate?.bodyMarkdown ?? DEFAULT_PRAYER_LETTER_BODY,
         footerMarkdown:
           override?.footerMarkdown ??
           letterTemplate?.footerMarkdown ??
-          DEFAULT_SPEAKER_LETTER_FOOTER,
+          DEFAULT_PRAYER_LETTER_FOOTER,
       };
       setInitialJson(json);
       setInitialMarkdown(md);
@@ -109,8 +109,8 @@ export function usePreparePrayerInvitation(args: Args) {
     setLetterStateJson(letterTemplate?.editorStateJson ?? null);
     setInitialJson(letterTemplate?.editorStateJson ?? null);
     setInitialMarkdown({
-      bodyMarkdown: letterTemplate?.bodyMarkdown ?? DEFAULT_SPEAKER_LETTER_BODY,
-      footerMarkdown: letterTemplate?.footerMarkdown ?? DEFAULT_SPEAKER_LETTER_FOOTER,
+      bodyMarkdown: letterTemplate?.bodyMarkdown ?? DEFAULT_PRAYER_LETTER_BODY,
+      footerMarkdown: letterTemplate?.footerMarkdown ?? DEFAULT_PRAYER_LETTER_FOOTER,
     });
     setResetKey((k) => k + 1);
   }

@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useMeeting } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { useSpeakerLetterTemplate } from "@/features/templates/useSpeakerLetterTemplate";
+import { usePrayerLetterTemplate } from "@/features/templates/usePrayerLetterTemplate";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { formatAssignedDate, formatToday } from "@/features/templates/letterDates";
 import { isPlausiblePhone } from "@/features/templates/smsInvitation";
@@ -23,7 +23,7 @@ export function PreparePrayerInvitationPage() {
   const me = useCurrentMember();
   const authUser = useAuthStore((s) => s.user);
   const ward = useWardSettings();
-  const { data: letterTemplate } = useSpeakerLetterTemplate();
+  const { data: letterTemplate } = usePrayerLetterTemplate();
   const meeting = useMeeting(date ?? null);
   const roleParseResult = roleParam ? prayerRoleSchema.safeParse(roleParam) : null;
   const role: PrayerRole | null = roleParseResult?.success ? roleParseResult.data : null;
