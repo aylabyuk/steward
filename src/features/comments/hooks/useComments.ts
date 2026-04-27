@@ -3,7 +3,7 @@ import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { commentSchema, type Comment } from "@/lib/types";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import type { WithId } from "./_sub";
+import type { WithId } from "@/hooks/_sub";
 
 export interface CommentsState {
   data: WithId<Comment>[];

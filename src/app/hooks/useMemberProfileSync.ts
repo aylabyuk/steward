@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/stores/authStore";
-import { useWardAccess } from "./useWardAccess";
+import { useWardAccess } from "@/hooks/useWardAccess";
 
 /** Pushes the signed-in user's Google profile fields (`displayName`,
  *  `photoURL`) up to each ward membership doc they own, once per
