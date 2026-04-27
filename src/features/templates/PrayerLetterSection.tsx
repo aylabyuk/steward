@@ -58,7 +58,7 @@ export function PrayerLetterSection(): React.ReactElement {
             to="/settings/templates/prayer-letter"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut-3 bg-chalk text-walnut hover:bg-parchment shadow-[0_1px_0_rgba(35,24,21,0.12)] transition-colors"
+            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] transition-colors"
           >
             Open editor
             <NewTabIcon />
