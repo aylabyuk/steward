@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { WithId } from "@/hooks/_sub";
 import type { Member } from "@/lib/types";
-import { extractMentions } from "./extractMentions";
+import { extractMentions } from "../extractMentions";
 
 function mk(id: string, displayName: string, active = true): WithId<Member> {
   return {
