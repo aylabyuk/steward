@@ -67,11 +67,16 @@ export function UserMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="inline-flex items-center gap-2.5 rounded-full border border-transparent bg-transparent px-2.5 py-1 text-walnut transition-all hover:border-border hover:bg-chalk"
+        className="inline-flex items-center gap-2.5 rounded-full border border-transparent bg-transparent px-2.5 py-1 text-parchment-2 sm:text-walnut transition-all hover:border-border hover:bg-chalk"
       >
         <Avatar user={avatarUser} size="sm" />
         <span className="hidden text-sm font-medium sm:inline">{name}</span>
-        <span className={cn("text-walnut-3 transition-transform", open && "rotate-180")}>
+        <span
+          className={cn(
+            "text-parchment-3 sm:text-walnut-3 transition-transform",
+            open && "rotate-180",
+          )}
+        >
           <ChevronDown size={13} />
         </span>
       </button>
