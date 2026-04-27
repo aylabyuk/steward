@@ -35,7 +35,13 @@ export function AppShell() {
     <div className="min-h-dvh bg-parchment paper-grain overflow-x-hidden">
       <div
         className={cn(
-          "min-h-dvh flex flex-col transition-transform duration-300 ease-out will-change-transform",
+          // Note: no `will-change-transform` here. Setting it would
+          // promote this wrapper into a containing block for the
+          // sticky-positioned descendants inside (the schedule's
+          // sticky week header, etc.), breaking their stick-to-
+          // viewport behavior. The 300ms translate animates fine
+          // without the hint on modern browsers.
+          "min-h-dvh flex flex-col transition-transform duration-300 ease-out",
           pushed && "-translate-x-[85vw]",
         )}
         // While pushed, taps on the visible peek shouldn't activate
