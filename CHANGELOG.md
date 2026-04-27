@@ -7,6 +7,25 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.13.1] — 2026-04-27
+
+Hotfix for the v0.13.0 PDF share path: the bishop tapping "Share or
+print letter" on a real letter threw two stacked errors. Both fixed.
+
+### Fixed
+
+- **`'Attempting to parse an unsupported color function "oklab"'`** —
+  upstream `html2canvas` can't parse Tailwind v4's modern colour
+  functions (`oklch`, `oklab`, `color-mix`). Swapped to the
+  maintained `html2canvas-pro` fork, drop-in replacement.
+
+- **`'image argument is a canvas element with a width or height of 0'`**
+  — the `PrintOnlyLetter` portal is `display: none` on screen so the
+  print path can rely on it; html2canvas-pro therefore snapshotted a
+  0×0 canvas and the slice `drawImage` rejected it. Now the portal
+  is parked off-screen (position: fixed; left: -100000px) for the
+  duration of the capture, then its inline styles restored.
+
 ## [0.13.0] — 2026-04-27
 
 Wizard's Print & hand-deliver path now generates a PDF and routes it
@@ -1642,7 +1661,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/aylabyuk/steward/releases/tag/v0.13.1
 [0.13.0]: https://github.com/aylabyuk/steward/releases/tag/v0.13.0
 [0.12.2]: https://github.com/aylabyuk/steward/releases/tag/v0.12.2
 [0.12.1]: https://github.com/aylabyuk/steward/releases/tag/v0.12.1
