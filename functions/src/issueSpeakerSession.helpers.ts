@@ -20,6 +20,7 @@ export type TokenDecision =
       inviterName: string;
       wardName: string;
       assignedDate: string;
+      fromNumberMode: SpeakerInvitationShape["fromNumberMode"];
     }
   | { kind: "rate-limited" }
   | { kind: "invalid" };
@@ -74,6 +75,7 @@ export async function decideTokenAction(
       inviterName: data.inviterName,
       wardName: data.wardName,
       assignedDate: data.assignedDate,
+      fromNumberMode: data.fromNumberMode,
     };
   });
 }

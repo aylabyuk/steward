@@ -42,4 +42,10 @@ export interface SpeakerInvitationShape {
    *  visible. Used by the bishop-reply webhook to skip SMS when the
    *  speaker is presumed online. */
   speakerLastSeenAt?: FirebaseFirestore.Timestamp;
+  /** Picks the outbound SMS proxy number for this thread. Set to
+   *  "testing" only when an allowlisted dev-mode caller sent the
+   *  invitation; otherwise omitted (treated as "production"). All
+   *  subsequent SMS for this invitation route through the same
+   *  number — see `twilio/fromNumber.ts`. */
+  fromNumberMode?: "production" | "testing";
 }

@@ -1,9 +1,13 @@
 import { logger } from "firebase-functions/v2";
 import { getTwilioClient } from "./client.js";
+import { resolveFromNumber, type FromNumberMode } from "./fromNumber.js";
 
 export interface SendSmsInput {
   to: string;
   body: string;
+  /** Picks between TWILIO_FROM_NUMBER (default) and the testing
+   *  fallback. See `fromNumber.ts`. */
+  fromMode?: FromNumberMode;
 }
 
 /** One-off SMS via Twilio's Messaging REST API. Independent of
@@ -18,15 +22,14 @@ export interface SendSmsInput {
  *  return a fake SID. Lets the full flow run offline against the
  *  emulator without burning SMS budget. The Conversations path
  *  (chat JWTs, participants) still uses real Twilio creds. */
-export async function sendSmsDirect({ to, body }: SendSmsInput): Promise<string> {
+export async function sendSmsDirect({ to, body, fromMode }: SendSmsInput): Promise<string> {
   if (process.env.STEWARD_DEV_STUB_SMS === "true") {
     const url = body.match(/https?:\/\/\S+/)?.[0];
-    logger.info("[SMS stub] would send", { to, body });
+    logger.info("[SMS stub] would send", { to, body, fromMode: fromMode ?? "production" });
     if (url) logger.info("[SMS stub] invite URL →", url);
     return `SM_stub_${Date.now()}`;
   }
-  const from = process.env.TWILIO_FROM_NUMBER;
-  if (!from) throw new Error("TWILIO_FROM_NUMBER missing.");
+  const from = resolveFromNumber(fromMode);
   const msg = await getTwilioClient().messages.create({ to, from, body });
   return msg.sid;
 }
