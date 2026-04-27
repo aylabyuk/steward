@@ -42,7 +42,7 @@ export function PrayerRow({ inlineName, role, date }: Props) {
   }
 
   return (
-    <li className="flex items-center gap-3 h-10 border-b border-border last:border-b-0">
+    <li className="flex items-center gap-3 h-16 border-b border-border last:border-b-0">
       <div
         className={`font-mono text-[10.5px] tracking-[0.08em] text-brass-deep shrink-0 ${ROLE_WIDTH_CLS}`}
       >
