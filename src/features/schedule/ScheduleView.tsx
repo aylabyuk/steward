@@ -4,13 +4,23 @@ import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
 import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { SubscribePrompt } from "@/features/notifications/SubscribePrompt";
 import { useUpcomingMeetings } from "./hooks/useUpcomingMeetings";
+import { useInfiniteHorizon } from "./hooks/useInfiniteHorizon";
 import { useWardSettings } from "@/hooks/useWardSettings";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { PageHead } from "./PageHead";
 import { HorizonSelect } from "./HorizonSelect";
 import { SundayCard } from "./SundayCard";
 import { QuarterSection } from "./QuarterSection";
+import { MobileScheduleList } from "./MobileScheduleList";
 import { groupByMonth } from "./utils/groupByMonth";
+
+const MOBILE_INITIAL_WEEKS = 4;
+const MOBILE_STEP_WEEKS = 4;
+// 17 weeks ≈ 4 months. Past that, the bishopric is planning further
+// out than is useful — speakers haven't even been assigned to wards
+// for those weeks yet — so the list caps and the bottom communicates.
+const MOBILE_MAX_WEEKS = 17;
 
 export function ScheduleView() {
   const wardId = useCurrentWardStore((s) => s.wardId);
@@ -18,6 +28,7 @@ export function ScheduleView() {
   const defaultHorizon = settingsState.data?.settings.scheduleHorizonWeeks ?? 8;
   const leadTimeDays = settingsState.data?.settings.speakerLeadTimeDays ?? 14;
   const nonMeeting = settingsState.data?.settings.nonMeetingSundays ?? [];
+  const isMobile = useIsMobile();
 
   const [horizon, setHorizon] = useState(defaultHorizon);
   useEffect(() => {
@@ -25,7 +36,18 @@ export function ScheduleView() {
     if (stored) setHorizon(Number(stored));
   }, []);
 
-  const { slots, error } = useUpcomingMeetings(horizon);
+  const {
+    weeks: mobileHorizon,
+    loading: loadingMore,
+    sentinelRef,
+  } = useInfiniteHorizon(isMobile, {
+    initial: MOBILE_INITIAL_WEEKS,
+    step: MOBILE_STEP_WEEKS,
+    max: MOBILE_MAX_WEEKS,
+  });
+
+  const horizonInUse = isMobile ? mobileHorizon : horizon;
+  const { slots, error } = useUpcomingMeetings(horizonInUse);
 
   if (!wardId) return null;
 
@@ -49,29 +71,52 @@ export function ScheduleView() {
           eyebrow="Sacrament meeting"
           title="Schedule"
           subtitle="Assign speakers for the weeks ahead."
-          rightSlot={<HorizonSelect value={horizon} onChange={setHorizon} />}
+          rightSlot={isMobile ? null : <HorizonSelect value={horizon} onChange={setHorizon} />}
         />
 
-        <div className="mt-8">
-          {monthGroups.map((group) => (
-            <QuarterSection
-              key={`${group.year}-${group.month}`}
-              title={group.label}
-              count={group.sundays.length}
-            >
-              {group.sundays.map((sunday) => (
-                <SundayCard
-                  key={sunday.date}
-                  date={sunday.date}
-                  meeting={sunday.meeting}
-                  fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
-                  leadTimeDays={leadTimeDays}
-                  nonMeetingSundays={nonMeeting}
-                />
-              ))}
-            </QuarterSection>
-          ))}
-        </div>
+        {isMobile ? (
+          <>
+            <MobileScheduleList
+              monthGroups={monthGroups}
+              leadTimeDays={leadTimeDays}
+              nonMeetingSundays={nonMeeting}
+            />
+            {mobileHorizon < MOBILE_MAX_WEEKS && (
+              <div
+                ref={sentinelRef}
+                className="text-center py-6 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3"
+              >
+                {loadingMore ? "Loading…" : ""}
+              </div>
+            )}
+            {mobileHorizon >= MOBILE_MAX_WEEKS && (
+              <div className="text-center py-6 font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3 border-t border-border/60">
+                Showing up to 4 months ahead
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="mt-8">
+            {monthGroups.map((group) => (
+              <QuarterSection
+                key={`${group.year}-${group.month}`}
+                title={group.label}
+                count={group.sundays.length}
+              >
+                {group.sundays.map((sunday) => (
+                  <SundayCard
+                    key={sunday.date}
+                    date={sunday.date}
+                    meeting={sunday.meeting}
+                    fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
+                    leadTimeDays={leadTimeDays}
+                    nonMeetingSundays={nonMeeting}
+                  />
+                ))}
+              </QuarterSection>
+            ))}
+          </div>
+        )}
       </main>
     </TwilioChatProvider>
   );
