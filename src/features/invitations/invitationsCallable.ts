@@ -4,11 +4,19 @@ import { functions, inviteFunctions } from "@/lib/firebase";
 export interface FreshInvitationRequest {
   mode?: "fresh";
   wardId: string;
+  /** Speaker doc ID, OR the prayer role string ("opening" |
+   *  "benediction") when `kind === "prayer"`. The Cloud Function
+   *  treats this as the participant's identifier within its
+   *  collection. */
   speakerId: string;
   meetingDate: string;
   channels: ("email" | "sms")[];
   speakerName: string;
   speakerTopic?: string;
+  /** Discriminator. Default "speaker" preserves back-compat. */
+  kind?: "speaker" | "prayer";
+  /** Required when `kind === "prayer"`. */
+  prayerRole?: "opening" | "benediction";
   inviterName: string;
   wardName: string;
   assignedDate: string;
