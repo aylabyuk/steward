@@ -5,6 +5,7 @@ import { BishopReplyEmailSection } from "@/features/templates/BishopReplyEmailSe
 import { BishopReplySmsSection } from "@/features/templates/BishopReplySmsSection";
 import { BishopricResponseReceiptSection } from "@/features/templates/BishopricResponseReceiptSection";
 import { InitialSmsSection } from "@/features/templates/InitialSmsSection";
+import { PrayerLetterSection } from "@/features/templates/PrayerLetterSection";
 import { SpeakerEmailSection } from "@/features/templates/SpeakerEmailSection";
 import { SpeakerLetterSection } from "@/features/templates/SpeakerLetterSection";
 import { SpeakerResponseAcceptedSection } from "@/features/templates/SpeakerResponseAcceptedSection";
@@ -16,6 +17,7 @@ const RAIL_ITEMS = [
   { id: "sec-speaker-letter", label: "Letter", group: "Speaker invitation" },
   { id: "sec-speaker-email", label: "Email", group: "Speaker invitation" },
   { id: "sec-initial-sms", label: "SMS", group: "Speaker invitation" },
+  { id: "sec-prayer-letter", label: "Letter", group: "Prayer invitation" },
   { id: "sec-response-accepted", label: "Accepted", group: "Response receipts" },
   { id: "sec-response-declined", label: "Declined", group: "Response receipts" },
   { id: "sec-bishopric-receipt", label: "Bishopric notice", group: "Response receipts" },
@@ -60,6 +62,7 @@ export function TemplatesPage(): React.ReactElement {
           <SpeakerLetterSection />
           <SpeakerEmailSection />
           <InitialSmsSection />
+          <PrayerLetterSection />
           <SpeakerResponseAcceptedSection />
           <SpeakerResponseDeclinedSection />
           <BishopricResponseReceiptSection />
