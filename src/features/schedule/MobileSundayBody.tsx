@@ -35,8 +35,6 @@ export function MobileSundayBody({ date, meeting, speakers }: Props) {
             />
           );
         })}
-      </ul>
-      <ul className="list-none m-0 p-0 border-t-2 border-walnut-3 pt-1 mt-2">
         <PrayerRow
           role="opening"
           date={date}
