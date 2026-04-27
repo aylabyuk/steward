@@ -1,5 +1,5 @@
 import { interpolate } from "./messageTemplates.js";
-import type { SpeakerInvitationShape } from "./invitationTypes.js";
+import { invitationPrayerType, type SpeakerInvitationShape } from "./invitationTypes.js";
 
 export interface ReceiptBuildArgs {
   invitation: SpeakerInvitationShape;
@@ -63,12 +63,16 @@ export function buildSpeakerReceipt(args: ReceiptBuildArgs): ReceiptContent {
   const answer = invitation.response?.answer;
   if (!answer) throw new Error("speaker receipt requires a recorded response");
   const verb = answer === "yes" ? "accepted" : "declined";
+  const prayerType = invitationPrayerType(invitation);
 
-  const subject = `You ${verb} the speaking invitation — ${invitation.assignedDate}`;
+  const subject = prayerType
+    ? `You ${verb} the prayer invitation — ${invitation.assignedDate}`
+    : `You ${verb} the speaking invitation — ${invitation.assignedDate}`;
   const headerText = interpolate(headerTemplate, {
     speakerName: invitation.speakerName,
     assignedDate: invitation.assignedDate,
     reason: invitation.response?.reason ?? "",
+    ...(prayerType ? { prayerType } : {}),
   });
   const text = [
     headerText,
@@ -109,11 +113,15 @@ export function buildBishopricReceipt(args: ReceiptBuildArgs): ReceiptContent {
   if (!answer) throw new Error("bishopric receipt requires a recorded response");
   const verb = answer === "yes" ? "accepted" : "declined";
 
-  const subject = `${invitation.speakerName} ${verb} the speaking invitation — ${invitation.assignedDate}`;
+  const prayerType = invitationPrayerType(invitation);
+  const subject = prayerType
+    ? `${invitation.speakerName} ${verb} the prayer invitation — ${invitation.assignedDate}`
+    : `${invitation.speakerName} ${verb} the speaking invitation — ${invitation.assignedDate}`;
   const responseLine = interpolate(headerTemplate, {
     speakerName: invitation.speakerName,
     verb,
     assignedDate: invitation.assignedDate,
+    ...(prayerType ? { prayerType } : {}),
   });
   const metaLines: string[] = [];
   if (respondedAt) metaLines.push(`Responded: ${respondedAt.toLocaleString()}`);

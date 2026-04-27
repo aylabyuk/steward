@@ -5,9 +5,18 @@ export const MEETING_TYPES = ["regular", "fast", "stake", "general"] as const;
 export const meetingTypeSchema = z.enum(MEETING_TYPES);
 export type MeetingType = z.infer<typeof meetingTypeSchema>;
 
-export const SPEAKER_STATUSES = ["planned", "invited", "confirmed", "declined"] as const;
-export const speakerStatusSchema = z.enum(SPEAKER_STATUSES);
-export type SpeakerStatus = z.infer<typeof speakerStatusSchema>;
+// Shared invitation lifecycle for both speakers and prayer-givers.
+// `SPEAKER_STATUSES` / `speakerStatusSchema` / `SpeakerStatus` are
+// retained as aliases so existing speaker call sites don't churn —
+// new invitation kinds (prayers, future) should import the
+// `INVITATION_*` names directly.
+export const INVITATION_STATUSES = ["planned", "invited", "confirmed", "declined"] as const;
+export const invitationStatusSchema = z.enum(INVITATION_STATUSES);
+export type InvitationStatus = z.infer<typeof invitationStatusSchema>;
+
+export const SPEAKER_STATUSES = INVITATION_STATUSES;
+export const speakerStatusSchema = invitationStatusSchema;
+export type SpeakerStatus = InvitationStatus;
 
 export const SPEAKER_ROLES = ["Member", "Youth", "High Council", "Visiting"] as const;
 export const speakerRoleSchema = z.enum(SPEAKER_ROLES);
@@ -156,3 +165,29 @@ export const speakerSchema = z.object({
   updatedAt: z.any().optional(),
 });
 export type Speaker = z.infer<typeof speakerSchema>;
+
+// Prayer-giver participant — promoted from the lightweight inline
+// `Assignment` row on the meeting (`openingPrayer`, `benediction`)
+// when the bishop wants to send a formal invitation. Stored at
+// `wards/{wardId}/meetings/{date}/prayers/{role}` (one doc per slot).
+// The status enum is shared with speakers (see `INVITATION_STATUSES`).
+export const PRAYER_ROLES = ["opening", "benediction"] as const;
+export const prayerRoleSchema = z.enum(PRAYER_ROLES);
+export type PrayerRole = z.infer<typeof prayerRoleSchema>;
+
+export const prayerParticipantSchema = z.object({
+  name: z.string().min(1),
+  email: z.email().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  role: prayerRoleSchema,
+  status: invitationStatusSchema.catch("planned"),
+  letterOverride: speakerLetterOverrideSchema.optional(),
+  invitationId: z.string().optional(),
+  conversationSid: z.string().optional(),
+  statusSource: statusSourceSchema.optional(),
+  statusSetBy: z.string().optional(),
+  statusSetAt: z.any().optional(),
+  createdAt: z.any().optional(),
+  updatedAt: z.any().optional(),
+});
+export type PrayerParticipant = z.infer<typeof prayerParticipantSchema>;

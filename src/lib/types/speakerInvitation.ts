@@ -65,7 +65,23 @@ export const speakerInvitationResponseSchema = z.object({
 export type SpeakerInvitationResponse = z.infer<typeof speakerInvitationResponseSchema>;
 
 export const speakerInvitationSchema = z.object({
-  /** Denormalized speaker reference back to the originating doc. */
+  /** Discriminator for which kind of participant this invitation is
+   *  for. Default "speaker" preserves back-compat for invitations
+   *  written before the prayer flow shipped; "prayer" routes through
+   *  the same Cloud Function + Twilio Conversation infrastructure
+   *  but with prayer-specific copy + the prayer letter template.
+   *  When `kind === "prayer"`, `prayerRole` is required and
+   *  `speakerRef.speakerId` holds the prayer role ("opening" |
+   *  "benediction") rather than a speaker doc ID. */
+  kind: z.enum(["speaker", "prayer"]).default("speaker"),
+  /** Set only when `kind === "prayer"`. Mirrors the participant doc's
+   *  role at `wards/{wardId}/meetings/{date}/prayers/{role}`. */
+  prayerRole: z.enum(["opening", "benediction"]).optional(),
+  /** Denormalized participant reference back to the originating doc.
+   *  For speakers: `speakerId` is the speaker doc ID. For prayers:
+   *  `speakerId` holds the role string ("opening" | "benediction")
+   *  matching the prayer participant doc path. The field name is
+   *  retained for back-compat — see follow-up rename issue. */
   speakerRef: z.object({
     meetingDate: z.string(), // ISO YYYY-MM-DD
     speakerId: z.string().min(1),
