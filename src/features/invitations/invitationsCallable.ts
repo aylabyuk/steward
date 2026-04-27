@@ -22,6 +22,9 @@ export interface FreshInvitationRequest {
   speakerPhone?: string;
   bishopReplyToEmail: string;
   expiresAtMillis: number;
+  /** Dev-mode override (allowlisted callers only). Server silently
+   *  downgrades to the production number for non-allowlisted callers. */
+  useTestingNumber?: boolean;
 }
 
 export interface RotateInvitationRequest {

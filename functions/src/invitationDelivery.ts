@@ -4,6 +4,7 @@ import { buildEmailHtml, buildEmailText } from "./invitationEmailBody.js";
 import { interpolate, readMessageTemplate } from "./messageTemplates.js";
 import { sendEmail } from "./sendgrid/client.js";
 import { sendSmsDirect } from "./twilio/messaging.js";
+import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type { DeliveryEntry } from "./sendSpeakerInvitation.types.js";
 
 type EmailArgs = Parameters<typeof buildEmailText>[0];
@@ -52,10 +53,15 @@ export async function trySms(
   wardId: string,
   speakerPhone: string,
   emailArgs: EmailArgs,
+  fromMode?: FromNumberMode,
 ): Promise<DeliveryEntry> {
   try {
     const body = await buildInitialInvitationSms(wardId, emailArgs);
-    const sid = await sendSmsDirect({ to: speakerPhone, body });
+    const sid = await sendSmsDirect({
+      to: speakerPhone,
+      body,
+      ...(fromMode ? { fromMode } : {}),
+    });
     return { channel: "sms", status: "sent", providerId: sid, at: new Date() };
   } catch (err) {
     logger.error("initial SMS send failed", { err: (err as Error).message });
@@ -74,8 +80,13 @@ export async function sendInvitationSms(args: {
   assignedDate: string;
   speakerName: string;
   inviteUrl: string;
+  fromMode?: FromNumberMode;
 }): Promise<{ providerId: string }> {
   const body = await buildInitialInvitationSms(args.wardId, args);
-  const sid = await sendSmsDirect({ to: args.speakerPhone, body });
+  const sid = await sendSmsDirect({
+    to: args.speakerPhone,
+    body,
+    ...(args.fromMode ? { fromMode: args.fromMode } : {}),
+  });
   return { providerId: sid };
 }

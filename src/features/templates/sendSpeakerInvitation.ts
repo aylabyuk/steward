@@ -2,6 +2,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { wardSchema } from "@/lib/types";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
+import { useDevModeStore } from "@/stores/devModeStore";
 import {
   callSendSpeakerInvitation,
   type FreshInvitationResponse,
@@ -86,6 +87,7 @@ export async function sendSpeakerInvitation(
       : undefined;
     const expiresAtMillis = computeExpiresAt(input.meetingDate);
 
+    const useTestingNumber = useDevModeStore.getState().useTestingNumber;
     const res = await callSendSpeakerInvitation({
       wardId: input.wardId,
       speakerId: input.speakerId,
@@ -104,6 +106,7 @@ export async function sendSpeakerInvitation(
       ...(input.speakerPhone.trim() ? { speakerPhone: input.speakerPhone.trim() } : {}),
       bishopReplyToEmail: input.bishopReplyToEmail,
       expiresAtMillis,
+      ...(useTestingNumber ? { useTestingNumber: true } : {}),
     });
     reportSaved();
     return res;
