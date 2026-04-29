@@ -58,109 +58,133 @@ export function BubbleActions({
 
   if (!open || (!canEdit && !canDelete && !reactionPalette)) return null;
 
-  const showActionsCard = canEdit || canDelete;
+  const showActions = canEdit || canDelete;
 
   return (
-    // iMessage-style stacked layout: palette pill on top, actions
-    // card below, with a small gap between them. Two visually
-    // distinct floating elements rather than one combined popup, so
-    // the user reads them as "react" and "act" — not a menu with a
-    // header. Outside-click + Escape on the wrapper still dismisses
-    // both at once.
+    // Single-row capsule: emoji palette on the leading edge, a thin
+    // divider, then icon-only Edit/Delete on the trailing edge.
+    // One container keeps the rounding consistent (vs. earlier
+    // two-card stack with mismatched radii).
     <div
       ref={rootRef}
-      role="presentation"
+      role="menu"
       className={cn(
-        "absolute z-10 bottom-full mb-1 flex flex-col gap-1.5",
-        mine ? "right-0 items-end" : "left-0 items-start",
+        "absolute z-10 bottom-full mb-1 flex items-center gap-1 px-2 py-1.5",
+        "rounded-full border border-border-strong bg-chalk shadow-elev-2",
+        mine ? "right-0" : "left-0",
       )}
     >
-      {reactionPalette && (
-        <div
-          className="flex items-center gap-1 px-2 py-1.5 rounded-full border border-border-strong bg-chalk shadow-elev-2"
-          role="group"
-          aria-label="React with emoji"
-        >
-          {REACTION_PALETTE.map((emoji) => {
-            const mineReaction = reactionIncludes(
-              reactionPalette.reactions,
-              emoji,
-              reactionPalette.identity,
-            );
-            return (
-              <button
-                key={emoji}
-                role="menuitem"
-                type="button"
-                aria-pressed={mineReaction}
-                aria-label={`React with ${emoji}${mineReaction ? " (selected)" : ""}`}
-                onClick={() => {
-                  onClose();
-                  reactionPalette.onToggle(emoji);
-                }}
-                className={cn(
-                  "rounded-full text-[18px] leading-none w-8 h-8 flex items-center justify-center transition-colors",
-                  mineReaction
-                    ? "bg-danger-soft ring-1 ring-bordeaux/40"
-                    : "hover:bg-parchment-2",
-                )}
-              >
-                {emoji}
-              </button>
-            );
-          })}
-        </div>
+      {reactionPalette &&
+        REACTION_PALETTE.map((emoji) => {
+          const mineReaction = reactionIncludes(
+            reactionPalette.reactions,
+            emoji,
+            reactionPalette.identity,
+          );
+          return (
+            <button
+              key={emoji}
+              role="menuitem"
+              type="button"
+              aria-pressed={mineReaction}
+              aria-label={`React with ${emoji}${mineReaction ? " (selected)" : ""}`}
+              onClick={() => {
+                onClose();
+                reactionPalette.onToggle(emoji);
+              }}
+              className={cn(
+                "rounded-full text-[18px] leading-none w-8 h-8 flex items-center justify-center transition-colors",
+                mineReaction
+                  ? "bg-danger-soft ring-1 ring-bordeaux/40"
+                  : "hover:bg-parchment-2",
+              )}
+            >
+              {emoji}
+            </button>
+          );
+        })}
+      {reactionPalette && showActions && (
+        <span aria-hidden="true" className="mx-1 h-7 w-px bg-border" />
       )}
-      {showActionsCard && (
-        <div
-          role="menu"
-          className="min-w-30 py-1 rounded-md border border-border-strong bg-chalk shadow-elev-2"
-        >
-          {canEdit && (
-            <MenuItem
-              onClick={() => {
-                onClose();
-                onEdit();
-              }}
-              label="Edit"
-            />
-          )}
-          {canDelete && (
-            <MenuItem
-              onClick={() => {
-                onClose();
-                onDelete();
-              }}
-              label="Delete"
-              danger
-            />
-          )}
-        </div>
+      {canEdit && (
+        <IconButton
+          label="Edit"
+          onClick={() => {
+            onClose();
+            onEdit();
+          }}
+          icon={
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-[18px] h-[18px]"
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+            </svg>
+          }
+        />
+      )}
+      {canDelete && (
+        <IconButton
+          label="Delete"
+          danger
+          onClick={() => {
+            onClose();
+            onDelete();
+          }}
+          icon={
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-[18px] h-[18px]"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+            </svg>
+          }
+        />
       )}
     </div>
   );
 }
 
-function MenuItem({
+function IconButton({
   label,
   danger,
   onClick,
+  icon,
 }: {
   label: string;
   danger?: boolean;
   onClick: () => void;
+  icon: React.ReactNode;
 }) {
   return (
     <button
       role="menuitem"
       type="button"
       onClick={onClick}
+      aria-label={label}
       className={cn(
-        "w-full text-left px-3 py-1.5 font-sans text-[12.5px] transition-colors",
-        danger ? "text-bordeaux hover:bg-danger-soft/50" : "text-walnut hover:bg-parchment-2",
+        "rounded-full w-8 h-8 flex items-center justify-center transition-colors",
+        danger ? "text-bordeaux hover:bg-danger-soft/60" : "text-walnut hover:bg-parchment-2",
       )}
     >
-      {label}
+      {icon}
     </button>
   );
 }
