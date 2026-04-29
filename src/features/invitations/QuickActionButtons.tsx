@@ -2,6 +2,12 @@ import { useState } from "react";
 import type { Conversation } from "@twilio/conversations";
 import { formatShortSunday } from "@/features/schedule/utils/dateFormat";
 import { cn } from "@/lib/cn";
+import {
+  formatResponseBody,
+  formatResponsePrompt,
+  formatYesButtonLabel,
+  type ResponseKind,
+} from "./utils/quickResponseCopy";
 
 interface Props {
   conversation: Conversation | null;
@@ -13,6 +19,11 @@ interface Props {
    *  ("Can you speak on Sun May 20?") instead of the ambiguous
    *  "this Sunday". */
   meetingDate: string;
+  /** Discriminator from the invitation doc — flips the prompt /
+   *  Yes-button label / persisted message body to prayer-flavoured
+   *  copy ("offer the prayer") instead of speaker-flavoured. Default
+   *  `"speaker"` matches the historical behaviour for legacy callers. */
+  kind?: ResponseKind;
 }
 
 type Mode = "idle" | "noReason";
@@ -22,18 +33,17 @@ type Mode = "idle" | "noReason";
  *   1. ensureReady() — sign-in + email-match + Twilio connect
  *   2. onSubmit() — mirror the response into Firestore
  *   3. post a Twilio message with `{ responseType, reason? }` so the
- *      thread shows the structured bubble on both sides. */
-function formatResponseBody(answer: "yes" | "no", reasonText?: string): string {
-  if (answer === "yes") return "Yes, I can speak.";
-  if (reasonText) return `No — ${reasonText}`;
-  return "No, I can't.";
-}
-
+ *      thread shows the structured bubble on both sides.
+ *
+ *  Copy branches on `kind` via `quickResponseCopy` helpers — the
+ *  body posted to Twilio is the audit-trail piece, so accuracy
+ *  matters there even more than on the live UI. */
 export function QuickActionButtons({
   conversation,
   ensureReady,
   onSubmit,
   meetingDate,
+  kind = "speaker",
 }: Props): React.ReactElement {
   const [mode, setMode] = useState<Mode>("idle");
   const [reason, setReason] = useState("");
@@ -51,7 +61,7 @@ export function QuickActionButtons({
       }
       await onSubmit(answer, reasonText);
       if (conversation) {
-        const body = formatResponseBody(answer, reasonText);
+        const body = formatResponseBody({ answer, kind, reasonText });
         await conversation.sendMessage(body, { responseType: answer, reason: reasonText ?? null });
       }
       setMode("idle");
@@ -101,7 +111,7 @@ export function QuickActionButtons({
   return (
     <div className="flex flex-col gap-2 p-3 border-t border-border bg-chalk">
       <p className="font-serif text-[13.5px] text-walnut-2">
-        Can you speak on {formatShortSunday(meetingDate)}?
+        {formatResponsePrompt({ kind, shortSunday: formatShortSunday(meetingDate) })}
       </p>
       <div className="flex gap-2">
         <button
@@ -114,7 +124,7 @@ export function QuickActionButtons({
             "disabled:opacity-60",
           )}
         >
-          Yes, I can speak
+          {formatYesButtonLabel(kind)}
         </button>
         <button
           type="button"

@@ -20,10 +20,11 @@ export function findLastMineIndex(
 export const RECENT_EDITABLE_WINDOW = 5;
 
 /** After this many milliseconds from creation, edit + delete become
- *  unavailable on a message. Matches the "can retract" window most
- *  messengers use — long enough to fix a typo, short enough that
- *  older context stays stable for everyone else reading the thread. */
-export const EDIT_DELETE_WINDOW_MS = 30 * 60 * 1000;
+ *  unavailable on a message. Long enough to cover "noticed the
+ *  mistake later in the day"; the recent-N cap above is the
+ *  structural guard that prevents deep-history rewriting even within
+ *  the window. iOS mirrors this constant — keep them in sync. */
+export const EDIT_DELETE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export interface Permissions {
   canDelete: (message: ChatMessage) => boolean;

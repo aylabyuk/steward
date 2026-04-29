@@ -111,7 +111,7 @@ describe("buildMessagePermissions", () => {
     expect(canEdit(messages[1]!)).toBe(false);
   });
 
-  it("a message older than 30 minutes is neither editable nor deletable", () => {
+  it("a message older than the edit/delete window is neither editable nor deletable", () => {
     const stale = msg({
       sid: "1",
       author: BISHOP_A,
@@ -122,7 +122,7 @@ describe("buildMessagePermissions", () => {
     expect(canEdit(stale)).toBe(false);
   });
 
-  it("a message exactly at the 30-minute boundary is still editable + deletable", () => {
+  it("a message exactly at the window boundary is still editable + deletable", () => {
     const onTheLine = msg({
       sid: "1",
       author: BISHOP_A,
