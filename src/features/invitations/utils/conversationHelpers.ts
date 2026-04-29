@@ -1,5 +1,6 @@
 import type { Message, Participant } from "@twilio/conversations";
 import type { AuthorInfo, ChatMessage } from "../hooks/useConversation";
+import { parseReactions } from "./reactions";
 
 export function toChatMessage(m: Message): ChatMessage {
   let attributes: Record<string, unknown> | null = null;
@@ -13,6 +14,7 @@ export function toChatMessage(m: Message): ChatMessage {
     dateCreated: m.dateCreated ?? null,
     dateUpdated: m.dateUpdated ?? null,
     attributes,
+    reactions: parseReactions(attributes),
   };
 }
 
