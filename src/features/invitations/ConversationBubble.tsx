@@ -4,6 +4,11 @@ import { cn } from "@/lib/cn";
 import { BubbleActions } from "./BubbleActions";
 import { BubbleEditForm } from "./BubbleEditForm";
 import type { ChatMessage } from "./hooks/useConversation";
+import {
+  isReactionsNonEmpty,
+  orderedReactionEntries,
+  reactionIncludes,
+} from "./utils/reactions";
 
 export type BubblePosition = "single" | "first" | "middle" | "last";
 
@@ -36,6 +41,14 @@ interface Props {
   canDelete?: boolean;
   onEdit?: (nextBody: string) => Promise<void> | void;
   onDelete?: () => Promise<void> | void;
+  /** Current viewer's Twilio identity. Drives the React menu's
+   *  "your reactions are checked" state and the chip highlight on
+   *  emojis you've already reacted with. Reactions are available to
+   *  any signed-in identity, no edit-window gate. */
+  currentIdentity?: string;
+  /** Toggle a reaction on this bubble. The parent does the Twilio
+   *  read-merge-write via `toggleMessageReaction`. */
+  onToggleReaction?: (emoji: string) => Promise<void> | void;
 }
 
 /** A single Messenger-style speech bubble. Long-press the bubble to
@@ -50,6 +63,8 @@ export function ConversationBubble({
   canDelete,
   onEdit,
   onDelete,
+  currentIdentity,
+  onToggleReaction,
 }: Props): React.ReactElement {
   const responseType = message.attributes?.responseType as "yes" | "no" | undefined;
   const radius = mine ? MINE_RADIUS[position] : THEIRS_RADIUS[position];
@@ -61,7 +76,8 @@ export function ConversationBubble({
 
   const editAvailable = Boolean(canEdit && onEdit);
   const deleteAvailable = Boolean(canDelete && onDelete);
-  const actionsAvailable = editAvailable || deleteAvailable;
+  const reactAvailable = Boolean(currentIdentity && onToggleReaction);
+  const actionsAvailable = editAvailable || deleteAvailable || reactAvailable;
 
   const { pressing, bind } = useLongPress({
     enabled: actionsAvailable && !editing,
@@ -136,6 +152,17 @@ export function ConversationBubble({
           mine={mine}
           canEdit={editAvailable}
           canDelete={deleteAvailable}
+          {...(reactAvailable && currentIdentity
+            ? {
+                reactionPalette: {
+                  identity: currentIdentity,
+                  reactions: message.reactions,
+                  onToggle: (emoji: string) => {
+                    if (onToggleReaction) void onToggleReaction(emoji);
+                  },
+                },
+              }
+            : {})}
           onClose={() => setMenuOpen(false)}
           onEdit={() => setEditing(true)}
           onDelete={() => {
@@ -143,6 +170,45 @@ export function ConversationBubble({
           }}
         />
       </div>
+      {isReactionsNonEmpty(message.reactions) && (
+        <div
+          className={cn("flex flex-wrap gap-1 mt-1", mine ? "justify-end" : "justify-start")}
+          role="list"
+        >
+          {orderedReactionEntries(message.reactions).map((entry) => {
+            const mineReaction = currentIdentity
+              ? reactionIncludes(message.reactions, entry.emoji, currentIdentity)
+              : false;
+            const count = entry.identities.length;
+            return (
+              <button
+                key={entry.emoji}
+                type="button"
+                role="listitem"
+                onClick={() => {
+                  if (onToggleReaction && currentIdentity) void onToggleReaction(entry.emoji);
+                }}
+                disabled={!reactAvailable}
+                aria-pressed={mineReaction}
+                aria-label={`${entry.emoji} ${count === 1 ? "1 reaction" : `${count} reactions`}${
+                  mineReaction ? "; tap to remove yours" : "; tap to react"
+                }`}
+                className={cn(
+                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full",
+                  "font-mono text-[10.5px] leading-none transition-colors",
+                  mineReaction
+                    ? "bg-danger-soft border border-bordeaux/50 text-bordeaux"
+                    : "bg-parchment-2 border border-border text-walnut-2 hover:bg-parchment",
+                  !reactAvailable && "cursor-default opacity-90",
+                )}
+              >
+                <span className="text-[12px] leading-none">{entry.emoji}</span>
+                {count > 1 && <span>{count}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {message.dateUpdated &&
         message.dateCreated &&
         message.dateUpdated.getTime() > message.dateCreated.getTime() && (

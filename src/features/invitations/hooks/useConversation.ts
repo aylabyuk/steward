@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Conversation, Message, Participant } from "@twilio/conversations";
 import { parseAuthorInfo, toChatMessage } from "../utils/conversationHelpers";
 import { useTwilioChat } from "../TwilioChatProvider";
+import type { Reactions } from "../utils/reactions";
 
 export interface ChatMessage {
   sid: string;
@@ -17,6 +18,11 @@ export interface ChatMessage {
    *  for the structured quick-action messages, `{ kind: 'invitation' }`
    *  for the initial letter, else null. */
   attributes: Record<string, unknown> | null;
+  /** Reaction overlay parsed out of `attributes.reactions`. Lives
+   *  parallel to `attributes` because reactions can co-exist with
+   *  any kind of message (you can react to a status-change notice
+   *  the same as a regular bubble). */
+  reactions: Reactions;
 }
 
 export interface AuthorInfo {

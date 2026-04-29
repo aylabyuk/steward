@@ -33,6 +33,10 @@ interface Props {
    *  action isn't wired into the embedding chat). */
   onEditMessage?: (sid: string, nextBody: string) => Promise<void> | void;
   onDeleteMessage?: (sid: string) => Promise<void> | void;
+  /** Toggle a reaction on a bubble. When omitted, the reaction
+   *  affordance stays hidden — even if `currentIdentity` is set —
+   *  matching the existing edit/delete-handler-required pattern. */
+  onToggleReaction?: (sid: string, emoji: string) => Promise<void> | void;
 }
 
 /** Bubble list styled after Messenger. Consecutive messages by the
@@ -49,6 +53,7 @@ export function ConversationThread({
   fillHeight,
   onEditMessage,
   onDeleteMessage,
+  onToggleReaction,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -156,8 +161,10 @@ export function ConversationThread({
                 item.group.messages.some((m) => m.index === readByOtherAt)
               }
               permissions={permissions}
+              {...(currentIdentity ? { currentIdentity } : {})}
               {...(onEditMessage ? { onEditMessage } : {})}
               {...(onDeleteMessage ? { onRequestDelete: setPendingDeleteSid } : {})}
+              {...(onToggleReaction ? { onToggleReaction } : {})}
             />
           );
         })}

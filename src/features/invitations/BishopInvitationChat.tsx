@@ -11,7 +11,7 @@ import { InvitationStatusBanner } from "./InvitationStatusBanner";
 import { TypingIndicator } from "./TypingIndicator";
 import { applyResponseToSpeaker } from "./utils/invitationActions";
 import { callIssueSpeakerSession } from "./utils/invitationsCallable";
-import { removeMessage, updateMessageBody } from "./utils/messageMutations";
+import { removeMessage, toggleMessageReaction, updateMessageBody } from "./utils/messageMutations";
 import { noteBishopStatusChange } from "./utils/statusChangeNotice";
 import { useBishopAuthors } from "./hooks/useBishopAuthors";
 import { useConversation } from "./hooks/useConversation";
@@ -152,6 +152,12 @@ export function BishopInvitationChat({
         fillHeight
         onDeleteMessage={(sid) => removeMessage(conversation, sid)}
         onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
+        {...(twilio.identity
+          ? {
+              onToggleReaction: (sid: string, emoji: string) =>
+                toggleMessageReaction(conversation, sid, twilio.identity!, emoji),
+            }
+          : {})}
       />
 
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
