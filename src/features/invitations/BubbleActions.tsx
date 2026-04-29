@@ -58,17 +58,29 @@ export function BubbleActions({
 
   if (!open || (!canEdit && !canDelete && !reactionPalette)) return null;
 
+  const showActionsCard = canEdit || canDelete;
+
   return (
+    // iMessage-style stacked layout: palette pill on top, actions
+    // card below, with a small gap between them. Two visually
+    // distinct floating elements rather than one combined popup, so
+    // the user reads them as "react" and "act" — not a menu with a
+    // header. Outside-click + Escape on the wrapper still dismisses
+    // both at once.
     <div
       ref={rootRef}
-      role="menu"
+      role="presentation"
       className={cn(
-        "absolute z-10 bottom-full mb-1 rounded-md border border-border-strong bg-chalk shadow-elev-2",
-        mine ? "right-0" : "left-0",
+        "absolute z-10 bottom-full mb-1 flex flex-col gap-1.5",
+        mine ? "right-0 items-end" : "left-0 items-start",
       )}
     >
       {reactionPalette && (
-        <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border" role="group" aria-label="React with emoji">
+        <div
+          className="flex items-center gap-1 px-2 py-1.5 rounded-full border border-border-strong bg-chalk shadow-elev-2"
+          role="group"
+          aria-label="React with emoji"
+        >
           {REACTION_PALETTE.map((emoji) => {
             const mineReaction = reactionIncludes(
               reactionPalette.reactions,
@@ -99,30 +111,32 @@ export function BubbleActions({
           })}
         </div>
       )}
-      <div className="min-w-30 py-1">
-        {canEdit && (
-          <MenuItem
-            onClick={() => {
-              onClose();
-              onEdit();
-            }}
-            label="Edit"
-          />
-        )}
-        {canDelete && (
-          <MenuItem
-            onClick={() => {
-              onClose();
-              onDelete();
-            }}
-            label="Delete"
-            danger
-          />
-        )}
-        {!canEdit && !canDelete && reactionPalette && (
-          <div className="px-3 py-1 font-sans text-[11px] text-walnut-3">React only</div>
-        )}
-      </div>
+      {showActionsCard && (
+        <div
+          role="menu"
+          className="min-w-30 py-1 rounded-md border border-border-strong bg-chalk shadow-elev-2"
+        >
+          {canEdit && (
+            <MenuItem
+              onClick={() => {
+                onClose();
+                onEdit();
+              }}
+              label="Edit"
+            />
+          )}
+          {canDelete && (
+            <MenuItem
+              onClick={() => {
+                onClose();
+                onDelete();
+              }}
+              label="Delete"
+              danger
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
