@@ -24,10 +24,7 @@ export function formatResponseBody(args: {
 }
 
 /** "Can you speak on Sun May 20?" / "Can you offer the prayer on Sun May 20?" */
-export function formatResponsePrompt(args: {
-  kind: ResponseKind;
-  shortSunday: string;
-}): string {
+export function formatResponsePrompt(args: { kind: ResponseKind; shortSunday: string }): string {
   const verb = args.kind === "prayer" ? "offer the prayer" : "speak";
   return `Can you ${verb} on ${args.shortSunday}?`;
 }
