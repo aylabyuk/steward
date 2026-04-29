@@ -171,8 +171,16 @@ export function ConversationBubble({
         />
       </div>
       {isReactionsNonEmpty(message.reactions) && (
+        // Negative top margin overlaps the chips into the bottom of
+        // the bubble — Messenger-style. `relative z-10` ensures the
+        // chip layer paints over the bubble's own corner. Inline
+        // padding nudges the row away from the bubble's outer edge
+        // so it sits ~half-inside, half-outside the corner.
         <div
-          className={cn("flex flex-wrap gap-1 mt-1", mine ? "justify-end" : "justify-start")}
+          className={cn(
+            "flex flex-wrap gap-1 -mt-2.5 relative z-10",
+            mine ? "justify-end pr-3" : "justify-start pl-3",
+          )}
           role="list"
         >
           {orderedReactionEntries(message.reactions).map((entry) => {
@@ -196,9 +204,13 @@ export function ConversationBubble({
                 className={cn(
                   "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full",
                   "font-mono text-[10.5px] leading-none transition-colors",
+                  // bg-chalk reads cleanly on either bubble fill
+                  // (bordeaux for mine / parchment-2 for theirs);
+                  // shadow lifts the chip off the bubble edge.
+                  "bg-chalk shadow-[0_1px_3px_rgba(35,24,21,0.12)]",
                   mineReaction
-                    ? "bg-danger-soft border border-bordeaux/50 text-bordeaux"
-                    : "bg-parchment-2 border border-border text-walnut-2 hover:bg-parchment",
+                    ? "border border-bordeaux/50 text-bordeaux"
+                    : "border border-border text-walnut-2 hover:bg-parchment-2",
                   !reactAvailable && "cursor-default opacity-90",
                 )}
               >
