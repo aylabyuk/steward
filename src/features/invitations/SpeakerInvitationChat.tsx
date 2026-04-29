@@ -181,6 +181,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
           ensureReady={ensureReady}
           onSubmit={submitResponse}
           meetingDate={props.meetingDate}
+          {...(props.kind ? { kind: props.kind } : {})}
         />
       )}
 
