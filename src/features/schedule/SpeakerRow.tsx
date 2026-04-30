@@ -1,7 +1,7 @@
 import { SpeakerChatLauncher } from "@/features/invitations/SpeakerChatLauncher";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import type { Speaker, SpeakerStatus } from "@/lib/types";
-import { cn } from "@/lib/cn";
+import type { Speaker } from "@/lib/types";
+import { StatusIndicator } from "./StatusIndicator";
 
 interface Props {
   number: number;
@@ -12,13 +12,6 @@ interface Props {
   /** Meeting date (ISO YYYY-MM-DD). Scopes the invitation lookup. */
   date: string;
 }
-
-const STATE_CLS: Record<SpeakerStatus, string> = {
-  planned: "bg-parchment-2 text-walnut-2 border-border",
-  invited: "bg-brass-soft/40 text-brass-deep border-brass-soft",
-  confirmed: "bg-success-soft text-success border-success-soft",
-  declined: "bg-danger-soft text-bordeaux border-danger-soft",
-};
 
 export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
   const status = speaker.status ?? "planned";
@@ -34,14 +27,7 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
           <div className="font-serif italic text-sm text-walnut-2 truncate">{speaker.topic}</div>
         )}
       </div>
-      <div
-        className={cn(
-          "font-mono text-[9.5px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border whitespace-nowrap",
-          STATE_CLS[status],
-        )}
-      >
-        {status}
-      </div>
+      <StatusIndicator status={status} />
       <SpeakerChatLauncher wardId={wardId} date={date} speaker={speaker} speakerId={speakerId} />
     </li>
   );

@@ -30,6 +30,8 @@ export function SundayCardBody({ speakers, date, meeting }: Props) {
             <EmptyRosterRow
               key={`empty-speaker-${slot}`}
               leadingLabel={String(slot).padStart(2, "0")}
+              label="Assign Speaker"
+              to={`/week/${date}/speaker/new/assign`}
             />
           );
         })}

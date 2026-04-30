@@ -2,8 +2,8 @@ import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
 import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticipant";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { InvitationStatus, PrayerRole } from "@/lib/types";
-import { cn } from "@/lib/cn";
 import { EmptyRosterRow } from "./EmptyRosterRow";
+import { StatusIndicator } from "./StatusIndicator";
 
 interface Props {
   /** Lightweight inline name from `meeting.{role}.person.name`. The
@@ -16,13 +16,6 @@ interface Props {
   hideEmpty?: boolean;
 }
 
-const STATE_CLS: Record<InvitationStatus, string> = {
-  planned: "bg-parchment-2 text-walnut-2 border-border",
-  invited: "bg-brass-soft/40 text-brass-deep border-brass-soft",
-  confirmed: "bg-success-soft text-success border-success-soft",
-  declined: "bg-danger-soft text-bordeaux border-danger-soft",
-};
-
 const ROLE_LABEL: Record<PrayerRole, string> = {
   opening: "OP",
   benediction: "CP",
@@ -31,6 +24,11 @@ const ROLE_LABEL: Record<PrayerRole, string> = {
 const ROLE_SUBTITLE: Record<PrayerRole, string> = {
   opening: "Invocation",
   benediction: "Closing Prayer",
+};
+
+const ROLE_ASSIGN_LABEL: Record<PrayerRole, string> = {
+  opening: "Assign Opening Prayer",
+  benediction: "Assign Closing Prayer",
 };
 
 const ROLE_WIDTH_CLS = "w-6";
@@ -48,7 +46,14 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
 
   if (!name) {
     if (hideEmpty) return null;
-    return <EmptyRosterRow leadingLabel={ROLE_LABEL[role]} leadingWidthCls={ROLE_WIDTH_CLS} />;
+    return (
+      <EmptyRosterRow
+        leadingLabel={ROLE_LABEL[role]}
+        leadingWidthCls={ROLE_WIDTH_CLS}
+        label={ROLE_ASSIGN_LABEL[role]}
+        to={`/week/${date}/prayer/${role}/assign`}
+      />
+    );
   }
 
   return (
@@ -59,14 +64,7 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
           {ROLE_SUBTITLE[role]}
         </div>
       </div>
-      <div
-        className={cn(
-          "font-mono text-[9.5px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border whitespace-nowrap",
-          STATE_CLS[status],
-        )}
-      >
-        {status}
-      </div>
+      <StatusIndicator status={status} />
       <PrayerChatLauncher
         wardId={wardId}
         date={date}
