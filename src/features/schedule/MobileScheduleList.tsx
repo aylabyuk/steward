@@ -37,7 +37,7 @@ export function MobileScheduleList({ monthGroups, leadTimeDays, nonMeetingSunday
 
   return (
     <>
-      <div className="px-4 space-y-4">
+      <div className="-mx-2 space-y-4">
         {monthGroups.flatMap((group) =>
           group.sundays.map((sunday) => {
             const isHero = sunday.date === firstDate;

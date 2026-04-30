@@ -6,7 +6,6 @@ import { useWardSettings } from "@/hooks/useWardSettings";
 import { usePrayerLetterTemplate } from "@/features/templates/hooks/usePrayerLetterTemplate";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
-import { isPlausiblePhone } from "@/features/templates/utils/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import { type PrayerRole, prayerRoleSchema } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
@@ -105,25 +104,15 @@ export function PreparePrayerInvitationPage() {
   }
 
   const hasEmail = isValidEmail(prayerGiverEmail);
-  const hasPhone = isPlausiblePhone(prayerGiverPhone);
-  const canSend = hasEmail;
-  const canSms = hasPhone;
-  const canSendReason = hasEmail ? "" : "Add an email address.";
-  const canSmsReason = hasPhone ? "" : "Add a phone number.";
 
   const toolbarProps = {
     busy: form.busy,
-    canSend,
-    canSendReason,
-    canSms,
-    canSmsReason,
     hasOverride: form.letterHasOverride,
     speakerName: prayerGiverName,
     speakerEmail: prayerGiverEmail,
     speakerPhone: prayerGiverPhone,
+    assignedDate: date,
     onRevert: () => void form.clearLetterOverride(),
-    onMarkInvited: actions.markInvited,
-    onPrint: () => window.print(),
     onSend: actions.send,
     onSendSms: actions.sendSms,
   };

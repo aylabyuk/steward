@@ -1,7 +1,7 @@
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { SendChannelDialog } from "./SendChannelDialog";
 
-type PendingConfirm = "revert" | "markInvited" | "printAndMarkInvited" | null;
+type PendingConfirm = "revert" | null;
 type PendingSend = "email" | "sms" | null;
 
 interface Props {
@@ -15,13 +15,11 @@ interface Props {
   onCancelPending: () => void;
   onCancelPendingSend: () => void;
   onRevert: () => void;
-  onMarkInvited: () => void;
-  onPrint: () => void;
   onSend: (email: string) => void;
   onSendSms: (phone: string) => void;
 }
 
-/** Extracts the five confirm / send-channel dialogs that the Prepare
+/** Extracts the confirm / send-channel dialogs that the Prepare
  *  Invitation action bar renders. Keeps the action bar focused on
  *  button layout + state and under the 150-LOC file cap. */
 export function PrepareInvitationDialogs({
@@ -35,8 +33,6 @@ export function PrepareInvitationDialogs({
   onCancelPending,
   onCancelPendingSend,
   onRevert,
-  onMarkInvited,
-  onPrint,
   onSend,
   onSendSms,
 }: Props) {
@@ -55,29 +51,6 @@ export function PrepareInvitationDialogs({
         onConfirm={() => {
           onCancelPending();
           onRevert();
-        }}
-        onCancel={onCancelPending}
-      />
-      <ConfirmDialog
-        open={pending === "markInvited"}
-        title="Mark as invited without sending?"
-        body={`${speakerName}'s status will be set to "invited" — no email is sent. Use this if you've already reached them another way (phone, in person, separate email).`}
-        confirmLabel="Mark invited"
-        onConfirm={() => {
-          onCancelPending();
-          onMarkInvited();
-        }}
-        onCancel={onCancelPending}
-      />
-      <ConfirmDialog
-        open={pending === "printAndMarkInvited"}
-        title="Print letter and mark as invited?"
-        body={`${speakerName} has no phone or email on file, so printing the letter is how you'll hand off this invitation. We'll open the print dialog now and set their status to "invited" so the schedule reflects that you've delivered it.`}
-        confirmLabel="Print & mark invited"
-        onConfirm={() => {
-          onCancelPending();
-          onPrint();
-          onMarkInvited();
         }}
         onCancel={onCancelPending}
       />

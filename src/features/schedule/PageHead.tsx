@@ -9,7 +9,7 @@ interface Props {
 
 export function PageHead({ eyebrow, title, subtitle, rightSlot }: Props) {
   return (
-    <div className="-mx-4 sm:mx-0 px-4 sm:px-0 flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 pb-5 sm:pb-6 border-b border-border">
+    <div className="-mx-4 sm:mx-0 px-4 sm:px-0 flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 pb-5 sm:pb-6 sm:border-b sm:border-border">
       <div className="flex-1 min-w-0">
         {eyebrow && (
           <p className="text-[9.5px] uppercase tracking-[0.14em] text-brass-deep mb-2 font-medium font-mono">

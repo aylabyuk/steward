@@ -17,9 +17,9 @@ const baseProps = {
   speakerName: "Sister Reeves",
   speakerEmail: "",
   speakerPhone: "",
+  assignedDate: "2026-05-03",
   onRevert: noop,
   onMarkInvited: noop,
-  onPrint: noop,
   onSend: noop,
   onSendSms: noop,
 };
@@ -73,8 +73,4 @@ describe("PrepareInvitationActionBar — SMS", () => {
     expect(onSendSms).not.toHaveBeenCalled();
   });
 
-  it("surfaces canSmsReason when Send email is also unavailable", () => {
-    render(<PrepareInvitationActionBar {...baseProps} canSmsReason="No phone on file." />);
-    expect(screen.getByText("No phone on file.")).toBeInTheDocument();
-  });
 });

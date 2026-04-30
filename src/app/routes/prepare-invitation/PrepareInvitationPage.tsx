@@ -93,25 +93,16 @@ export function PrepareInvitationPage() {
     );
   }
 
-  const { email, hasEmail, canSend, canSendReason, canSms, canSmsReason } = computeSendValidation(
-    speaker.data,
-  );
+  const { email, hasEmail } = computeSendValidation(speaker.data);
 
   const toolbarProps = {
     busy: form.busy,
-    canSend,
-    canSendReason,
-    canSms,
-    canSmsReason,
     hasOverride: form.letterHasOverride,
     speakerName: speaker.data.name,
     speakerEmail: speaker.data.email ?? "",
     speakerPhone: speaker.data.phone ?? "",
+    assignedDate: date,
     onRevert: () => void form.clearLetterOverride(),
-    onMarkInvited: actions.markInvited,
-    // Global `@media print` rules pin the preview's LetterCanvas to
-    // the sheet at true 8.5×11 — WYSIWYG, no new route, no re-read.
-    onPrint: () => window.print(),
     onSend: actions.send,
     onSendSms: actions.sendSms,
   };
