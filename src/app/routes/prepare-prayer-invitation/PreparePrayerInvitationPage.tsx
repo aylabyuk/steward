@@ -56,7 +56,7 @@ export function PreparePrayerInvitationPage() {
     () => ({
       speakerName: prayerGiverName,
       prayerGiverName,
-      prayerType: role === "opening" ? "opening prayer" : "benediction",
+      prayerType: role === "opening" ? "opening prayer" : "closing prayer",
       date: date ? formatAssignedDate(date) : "",
       today: formatToday(),
       wardName,

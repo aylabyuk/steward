@@ -49,7 +49,7 @@ export function LegacyCongregationCopy({ m, wardName, dateLong, sequence, visito
           title={m?.openingHymn?.title}
           dense
         />
-        <RowLabeled label="Invocation" value={personName(m?.openingPrayer)} dense />
+        <RowLabeled label="Opening Prayer" value={personName(m?.openingPrayer)} dense />
       </RowSection>
 
       <RowSection title="Sacrament" dense>
@@ -83,7 +83,7 @@ export function LegacyCongregationCopy({ m, wardName, dateLong, sequence, visito
           title={m?.closingHymn?.title}
           dense
         />
-        <RowLabeled label="Benediction" value={personName(m?.benediction)} dense />
+        <RowLabeled label="Closing Prayer" value={personName(m?.benediction)} dense />
       </RowSection>
     </>
   );

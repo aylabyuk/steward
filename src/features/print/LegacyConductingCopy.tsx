@@ -69,7 +69,7 @@ export function LegacyConductingCopy({
           title={m?.openingHymn?.title}
           dense
         />
-        <RowLabeled label="Invocation" value={personName(m?.openingPrayer)} dense />
+        <RowLabeled label="Opening Prayer" value={personName(m?.openingPrayer)} dense />
       </Group>
 
       <Group>
@@ -115,7 +115,7 @@ export function LegacyConductingCopy({
           <ScriptLine dense>
             Thank the pianist / chorister and earlier participants. Introduce{" "}
             <strong className="not-italic">{speaker2}</strong>, then mention the closing hymn and
-            benediction.
+            closing prayer.
           </ScriptLine>
         )}
       </Group>
@@ -127,7 +127,7 @@ export function LegacyConductingCopy({
           title={m?.closingHymn?.title}
           dense
         />
-        <RowLabeled label="Benediction" value={personName(m?.benediction)} dense />
+        <RowLabeled label="Closing Prayer" value={personName(m?.benediction)} dense />
       </Group>
     </>
   );

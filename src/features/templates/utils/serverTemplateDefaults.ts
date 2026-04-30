@@ -58,7 +58,7 @@ export const DEFAULT_BISHOP_REPLY_EMAIL = [
 /** Twilio SMS body sent when a bishop first invites a prayer-giver.
  *  Mirrors the speaker-side wording with prayer phrasing in place of
  *  "speak". `{{prayerType}}` resolves to "opening prayer" or
- *  "benediction" per the prayer participant's role. */
+ *  "closing prayer" per the prayer participant's role. */
 export const DEFAULT_PRAYER_INITIAL_INVITATION_SMS =
   "{{inviterName}} ({{wardName}}) has invited you to give the {{prayerType}} on {{assignedDate}}. " +
   "Read the full invitation: {{inviteUrl}}. Reply STOP to unsubscribe.";

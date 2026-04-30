@@ -22,8 +22,8 @@ import type { PrayerRole, SpeakerStatus } from "@/lib/types";
 import { formatShortSunday } from "@/features/schedule/utils/dateFormat";
 
 const ROLE_TITLE: Record<PrayerRole, string> = {
-  opening: "Opening prayer",
-  benediction: "Closing prayer",
+  opening: "Opening Prayer",
+  benediction: "Closing Prayer",
 };
 
 /** Per-row Assign + Invite page for a prayer slot. Route:

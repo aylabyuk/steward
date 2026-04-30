@@ -10,7 +10,7 @@
  *   {{prayerGiverName}}, {{prayerType}}, {{date}}, {{wardName}},
  *   {{inviterName}}, {{today}}
  *
- * `{{prayerType}}` resolves to "opening prayer" or "benediction"
+ * `{{prayerType}}` resolves to "opening prayer" or "closing prayer"
  * depending on which slot the bishop is inviting.
  */
 

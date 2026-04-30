@@ -84,7 +84,7 @@ const conducting = stringify([
   agendaRow("1", "Announcements", "announcements"),
 
   agendaRow("2", "Opening hymn", "openingHymn"),
-  subRow("Invocation", "openingPrayer"),
+  subRow("Opening Prayer", "openingPrayer"),
 
   agendaRow("3", "Ward business", "wardBusiness"),
   subRow("Stake business", "stakeBusiness"),
@@ -101,7 +101,7 @@ const conducting = stringify([
   cueRow("Thank the previous speaker; mention the closing hymn that follows."),
 
   agendaRow("8", "Closing hymn", "closingHymn"),
-  subRow("Benediction", "benediction"),
+  subRow("Closing Prayer", "benediction"),
 ]);
 
 const congregation = stringify([
@@ -121,7 +121,7 @@ const congregation = stringify([
   h(3, text("Opening")),
   ul(
     li(p(bold("Opening hymn: "), chip("openingHymn"))),
-    li(p(bold("Invocation: "), chip("openingPrayer"))),
+    li(p(bold("Opening Prayer: "), chip("openingPrayer"))),
   ),
 
   h(3, text("Sacrament")),
@@ -139,7 +139,7 @@ const congregation = stringify([
   h(3, text("Closing")),
   ul(
     li(p(bold("Closing hymn: "), chip("closingHymn"))),
-    li(p(bold("Benediction: "), chip("benediction"))),
+    li(p(bold("Closing Prayer: "), chip("benediction"))),
   ),
 ]);
 

@@ -59,8 +59,8 @@ describe("checkMeetingReadiness", () => {
   it("separates 'missing' (no assignment) from 'unconfirmed' (assigned but not confirmed)", () => {
     const draft: Assignment = { person: { name: "Bob" }, confirmed: false };
     const r = checkMeetingReadiness({ ...complete, openingPrayer: draft }, twoSpeakers, "regular");
-    expect(r.missing).not.toContain("Opening prayer — not assigned");
-    expect(r.unconfirmed).toContain("Opening prayer — not confirmed");
+    expect(r.missing).not.toContain("Opening Prayer — not assigned");
+    expect(r.unconfirmed).toContain("Opening Prayer — not confirmed");
     expect(r.ready).toBe(false);
   });
 
@@ -91,8 +91,8 @@ describe("checkMeetingReadiness", () => {
     expect(r.missing).toContain("Closing hymn");
     expect(r.missing).toContain("Presiding — not assigned");
     expect(r.missing).toContain("Conducting — not assigned");
-    expect(r.missing).toContain("Opening prayer — not assigned");
-    expect(r.missing).toContain("Benediction — not assigned");
+    expect(r.missing).toContain("Opening Prayer — not assigned");
+    expect(r.missing).toContain("Closing Prayer — not assigned");
     expect(r.missing).toContain("Pianist — not assigned");
     expect(r.missing).toContain("Chorister — not assigned");
     expect(r.missing).toContain("Sacrament bread — not assigned");

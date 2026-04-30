@@ -26,7 +26,7 @@ const ROLE_LABEL: Record<PrayerRole, string> = {
 };
 
 const ROLE_SUBTITLE: Record<PrayerRole, string> = {
-  opening: "Invocation",
+  opening: "Opening Prayer",
   benediction: "Closing Prayer",
 };
 
