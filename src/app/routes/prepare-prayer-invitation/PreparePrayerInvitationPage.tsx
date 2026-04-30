@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useMeeting } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { usePrayerLetterTemplate } from "@/features/templates/hooks/usePrayerLetterTemplate";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
+import { EmbedLetterView } from "@/features/embed/EmbedLetterView";
+import { useEmbedAuthBootstrap } from "@/features/embed/useEmbedAuthBootstrap";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { isValidEmail } from "@/lib/email";
 import { type PrayerRole, prayerRoleSchema } from "@/lib/types";
@@ -18,6 +20,9 @@ import { PrepareInvitationPageMessage } from "../PrepareInvitationPageMessage";
 
 export function PreparePrayerInvitationPage() {
   const { date, role: roleParam } = useParams<{ date: string; role: string }>();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get("embed") === "ios";
+  const embedAuth = useEmbedAuthBootstrap();
   const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
@@ -101,6 +106,11 @@ export function PreparePrayerInvitationPage() {
         backToSchedule
       />
     );
+  }
+
+  if (isEmbed) {
+    // biome-ignore format: single line keeps the page under the 150-LOC cap
+    return <EmbedLetterView authStatus={embedAuth} form={form} date={date} wardName={wardName} vars={vars} />;
   }
 
   const hasEmail = isValidEmail(prayerGiverEmail);

@@ -18,6 +18,11 @@ interface Props {
   /** Speaker / ward values to bake into chips + `{{tokens}}` before
    *  rendering. Omit to render the raw template content. */
   vars?: Readonly<Record<string, string>>;
+  /** iOS WebView embed mode — drops the "editing is desktop-only"
+   *  notice strip since there's no desktop alternative to suggest, and
+   *  fills the entire parent so the host page can render edge-to-edge
+   *  without surrounding chrome. */
+  embed?: boolean;
 }
 
 /** Mobile, read-only letter preview. Renders the saved letter inside
@@ -34,6 +39,7 @@ export function MobileLetterPreview({
   footerMarkdown,
   editorStateJson,
   vars,
+  embed,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const fitScale = useFitScale(containerRef, LETTER_CANVAS_WIDTH_PX);
@@ -54,9 +60,11 @@ export function MobileLetterPreview({
 
   return (
     <div className="flex flex-col h-full bg-parchment">
-      <div className="shrink-0 w-full bg-walnut text-chalk text-center font-mono text-[11px] uppercase tracking-[0.16em] py-2 px-4">
-        Editing is desktop-only — open this on a laptop to customize this letter.
-      </div>
+      {!embed && (
+        <div className="shrink-0 w-full bg-walnut text-chalk text-center font-mono text-[11px] uppercase tracking-[0.16em] py-2 px-4">
+          Editing is desktop-only — open this on a laptop to customize this letter.
+        </div>
+      )}
       <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden select-none">
         <TransformWrapper
           key={fitScale}

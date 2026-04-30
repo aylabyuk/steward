@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
+import { EmbedLetterView } from "@/features/embed/EmbedLetterView";
+import { useEmbedAuthBootstrap } from "@/features/embed/useEmbedAuthBootstrap";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { useSpeakerLetterTemplate } from "@/features/templates/hooks/useSpeakerLetterTemplate";
@@ -16,6 +18,9 @@ import { computeSendValidation } from "./utils/prepareInvitationValidation";
 
 export function PrepareInvitationPage() {
   const { date, speakerId } = useParams<{ date: string; speakerId: string }>();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get("embed") === "ios";
+  const embedAuth = useEmbedAuthBootstrap();
   const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
@@ -91,6 +96,11 @@ export function PrepareInvitationPage() {
         backToSchedule
       />
     );
+  }
+
+  if (isEmbed) {
+    // biome-ignore format: single line keeps the page under the 150-LOC cap
+    return <EmbedLetterView authStatus={embedAuth} form={form} date={date} wardName={wardName} vars={vars} />;
   }
 
   const { email, hasEmail } = computeSendValidation(speaker.data);
