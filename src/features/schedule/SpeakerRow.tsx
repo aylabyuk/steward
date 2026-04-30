@@ -1,6 +1,7 @@
 import { SpeakerChatLauncher } from "@/features/invitations/SpeakerChatLauncher";
 import { SpeakerStatusMenu } from "@/features/schedule/SpeakerStatusMenu/SpeakerStatusMenu";
 import { updateSpeaker } from "@/features/speakers/utils/speakerActions";
+import { speakerTopicForDisplay } from "@/features/speakers/utils/topicDisplay";
 import { Link } from "@/lib/nav";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -41,9 +42,9 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-sans text-sm font-semibold text-walnut truncate">{speaker.name}</div>
-          {speaker.topic && (
-            <div className="font-serif italic text-sm text-walnut-2 truncate">{speaker.topic}</div>
-          )}
+          <div className="font-serif italic text-sm text-walnut-2 truncate">
+            {speakerTopicForDisplay(speaker.topic)}
+          </div>
         </div>
       </Link>
       <SpeakerStatusMenu

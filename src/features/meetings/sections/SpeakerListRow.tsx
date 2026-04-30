@@ -1,4 +1,5 @@
 import { SpeakerChatLauncher } from "@/features/invitations/SpeakerChatLauncher";
+import { speakerTopicForDisplay } from "@/features/speakers/utils/topicDisplay";
 import type { WithId } from "@/hooks/_sub";
 import type { Speaker } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -81,7 +82,7 @@ export function SpeakerListRow({
           {s.data.name}
         </div>
         <div className="font-serif italic text-[13px] text-walnut-2 mt-0.5 truncate">
-          {s.data.topic || <span className="text-walnut-3 not-italic">No topic assigned</span>}
+          {speakerTopicForDisplay(s.data.topic)}
         </div>
       </div>
       <div className="flex items-center gap-2.5">
