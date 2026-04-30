@@ -87,7 +87,6 @@ export function MobileSundayHeader(props: Props) {
             currentType={type}
             locked={props.hasConfirmedSpeaker}
             nonMeetingSundays={props.nonMeetingSundays}
-            showPlanActions
           />
         </div>
       </div>

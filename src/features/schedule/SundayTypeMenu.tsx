@@ -12,21 +12,9 @@ interface Props {
   currentType: MeetingType;
   locked: boolean;
   nonMeetingSundays: readonly NonMeetingSunday[];
-  /** When true, surface "Plan speakers" / "Plan prayers" actions at
-   *  the top of the menu. Used by the mobile list view, where hover-
-   *  revealed plan links don't translate. Desktop cards keep their
-   *  inline plan links and leave this off. */
-  showPlanActions?: boolean;
 }
 
-export function SundayTypeMenu({
-  wardId,
-  date,
-  currentType,
-  locked,
-  nonMeetingSundays,
-  showPlanActions = false,
-}: Props) {
+export function SundayTypeMenu({ wardId, date, currentType, locked, nonMeetingSundays }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -77,14 +65,7 @@ export function SundayTypeMenu({
           role="menu"
           className="absolute right-0 mt-1.5 min-w-50 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-20 animate-[menuIn_120ms_ease-out]"
         >
-          <SundayMenuOptions
-            date={date}
-            currentType={currentType}
-            locked={locked}
-            showPlanActions={showPlanActions}
-            onSelect={handleSelect}
-            onClose={() => setOpen(false)}
-          />
+          <SundayMenuOptions currentType={currentType} locked={locked} onSelect={handleSelect} />
         </div>
       )}
       {isMobile && (
@@ -96,14 +77,7 @@ export function SundayTypeMenu({
             <span className="text-walnut-3 mx-2">·</span>
             <span className="text-walnut-2">{formatCountdown(date)}</span>
           </div>
-          <SundayMenuOptions
-            date={date}
-            currentType={currentType}
-            locked={locked}
-            showPlanActions={showPlanActions}
-            onSelect={handleSelect}
-            onClose={() => setOpen(false)}
-          />
+          <SundayMenuOptions currentType={currentType} locked={locked} onSelect={handleSelect} />
         </MobileBottomSheet>
       )}
     </div>

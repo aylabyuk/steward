@@ -1,5 +1,6 @@
 import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
 import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticipant";
+import { Link } from "@/lib/nav";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { InvitationStatus, PrayerRole } from "@/lib/types";
 import { EmptyRosterRow } from "./EmptyRosterRow";
@@ -58,13 +59,18 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
 
   return (
     <li className="flex items-center gap-3 h-16 border-b border-border last:border-b-0">
-      <div className="flex-1 min-w-0">
-        <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
-        <div className="font-serif italic text-sm text-walnut-2 truncate">
-          {ROLE_SUBTITLE[role]}
+      <Link
+        to={`/week/${date}/prayer/${role}/assign`}
+        className="flex items-center gap-3 flex-1 min-w-0 hover:bg-parchment-2 transition-colors -mx-1 px-1 rounded-sm"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
+          <div className="font-serif italic text-sm text-walnut-2 truncate">
+            {ROLE_SUBTITLE[role]}
+          </div>
         </div>
-      </div>
-      <StatusIndicator status={status} />
+        <StatusIndicator status={status} />
+      </Link>
       <PrayerChatLauncher
         wardId={wardId}
         date={date}
