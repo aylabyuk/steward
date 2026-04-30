@@ -11,15 +11,21 @@ has zero existing bishopric members — only the Admin SDK can break the chicken
 
 ### Against the local emulator
 
+The `bootstrap-ward:emulator` script is the same as `bootstrap-ward`
+but bakes in the `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST` /
+`GCLOUD_PROJECT=steward-dev-5e4dc` env vars so the Admin SDK routes to
+the local emulator instead of the real Firebase project. Without them
+the Admin SDK falls through to Application Default Credentials and
+tries to hit production `identitytoolkit.googleapis.com`. The project
+id matches `.firebaserc`'s `default` and the iOS app's
+`GoogleService-Info.plist` so all three surfaces share one namespace.
+
 ```sh
 # In one terminal
 pnpm emulators
 
 # In another
-FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
-FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
-GCLOUD_PROJECT=demo-steward \
-pnpm bootstrap-ward \
+pnpm bootstrap-ward:emulator \
   --ward-id stv1 \
   --ward-name "Steve's Ward" \
   --bishop-email bishop@example.com \
