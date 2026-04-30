@@ -19,6 +19,13 @@ interface Props {
   /** Called when a bubble's inline edit form saves. The thread
    *  forwards to Twilio `Message.updateBody`. */
   onEditMessage?: (sid: string, nextBody: string) => Promise<void> | void;
+  /** Current viewer's Twilio identity — drives reaction-chip
+   *  highlighting and gates the React menu. Null while the chat is
+   *  still connecting. */
+  currentIdentity?: string | null;
+  /** Toggle a reaction on a bubble. Forwarded down to
+   *  ConversationBubble. */
+  onToggleReaction?: (sid: string, emoji: string) => Promise<void> | void;
 }
 
 /** Renders one author's run of consecutive messages as a connected
@@ -31,6 +38,8 @@ export function ConversationGroup({
   permissions,
   onRequestDelete,
   onEditMessage,
+  currentIdentity,
+  onToggleReaction,
 }: Props): React.ReactElement {
   const last = group.messages.at(-1)!;
   const timestamp = last.dateCreated?.toLocaleTimeString(undefined, {
@@ -76,11 +85,15 @@ export function ConversationGroup({
                 position={bubblePositionOf(i, group.messages.length)}
                 canEdit={canEdit}
                 canDelete={canDelete}
+                {...(currentIdentity ? { currentIdentity } : {})}
                 {...(canEdit && onEditMessage
                   ? { onEdit: (nextBody: string) => onEditMessage(m.sid, nextBody) }
                   : {})}
                 {...(canDelete && onRequestDelete
                   ? { onDelete: () => onRequestDelete(m.sid) }
+                  : {})}
+                {...(currentIdentity && onToggleReaction
+                  ? { onToggleReaction: (emoji: string) => onToggleReaction(m.sid, emoji) }
                   : {})}
               />
             );

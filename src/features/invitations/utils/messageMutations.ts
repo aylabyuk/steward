@@ -1,4 +1,5 @@
 import type { Conversation, Message } from "@twilio/conversations";
+import { mergeReactionsIntoAttributes, parseReactions, toggleReaction } from "./reactions";
 
 /** Look up a Twilio Message by sid. Pulls the most recent 1000
  *  messages — the edit/delete affordances are gated to the last five
@@ -32,4 +33,28 @@ export async function updateMessageBody(
   if (!conversation) throw new Error("Conversation not connected.");
   const message = await findMessage(conversation, sid);
   await message.updateBody(nextBody);
+}
+
+/** Toggle a reaction on a message. Reads the current attributes,
+ *  flips the (emoji, identity) pair via `toggleReaction`, and
+ *  writes the merged blob back via `updateAttributes` — Twilio
+ *  doesn't expose a patch API, so this is read-merge-write.
+ *  Last-write-wins on simultaneous taps from different clients
+ *  (acceptable for the small bishopric audience). */
+export async function toggleMessageReaction(
+  conversation: Conversation | null,
+  sid: string,
+  identity: string,
+  emoji: string,
+): Promise<void> {
+  if (!conversation) throw new Error("Conversation not connected.");
+  const message = await findMessage(conversation, sid);
+  const raw =
+    message.attributes && typeof message.attributes === "object"
+      ? (message.attributes as Record<string, unknown>)
+      : null;
+  const current = parseReactions(raw);
+  const next = toggleReaction(current, emoji, identity);
+  const merged = mergeReactionsIntoAttributes(next, raw);
+  await message.updateAttributes(merged);
 }

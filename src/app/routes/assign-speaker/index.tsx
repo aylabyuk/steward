@@ -1,0 +1,1 @@
+export { AssignSpeakerPage } from "./AssignSpeakerPage";

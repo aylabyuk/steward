@@ -66,8 +66,9 @@ describe("SundayCard", () => {
     expect(heading).toBeInTheDocument();
   });
 
-  it("shows Plan speakers link", () => {
+  it("shows Assign Speaker pills on empty rows", () => {
     renderCard();
-    expect(screen.getByText("Plan speakers")).toBeInTheDocument();
+    // 4 empty speaker slots all render as Assign pills.
+    expect(screen.getAllByText("Assign Speaker").length).toBeGreaterThan(0);
   });
 });

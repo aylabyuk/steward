@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useLongPress } from "./hooks/useLongPress";
 import { cn } from "@/lib/cn";
-import { BubbleActions } from "./BubbleActions";
-import { BubbleEditForm } from "./BubbleEditForm";
+import { BubbleSurface } from "./BubbleSurface";
 import type { ChatMessage } from "./hooks/useConversation";
+import { ReactionChips } from "./ReactionChips";
 
 export type BubblePosition = "single" | "first" | "middle" | "last";
 
@@ -14,20 +14,6 @@ export function bubblePositionOf(index: number, total: number): BubblePosition {
   return "middle";
 }
 
-const THEIRS_RADIUS: Record<BubblePosition, string> = {
-  single: "rounded-[18px]",
-  first: "rounded-[18px] rounded-bl-[4px]",
-  middle: "rounded-r-[18px] rounded-l-[4px]",
-  last: "rounded-[18px] rounded-tl-[4px]",
-};
-
-const MINE_RADIUS: Record<BubblePosition, string> = {
-  single: "rounded-[18px]",
-  first: "rounded-[18px] rounded-br-[4px]",
-  middle: "rounded-l-[18px] rounded-r-[4px]",
-  last: "rounded-[18px] rounded-tr-[4px]",
-};
-
 interface Props {
   message: ChatMessage;
   mine: boolean;
@@ -36,6 +22,14 @@ interface Props {
   canDelete?: boolean;
   onEdit?: (nextBody: string) => Promise<void> | void;
   onDelete?: () => Promise<void> | void;
+  /** Current viewer's Twilio identity. Drives the React menu's
+   *  "your reactions are checked" state and the chip highlight on
+   *  emojis you've already reacted with. Reactions are available to
+   *  any signed-in identity, no edit-window gate. */
+  currentIdentity?: string;
+  /** Toggle a reaction on this bubble. The parent does the Twilio
+   *  read-merge-write via `toggleMessageReaction`. */
+  onToggleReaction?: (emoji: string) => Promise<void> | void;
 }
 
 /** A single Messenger-style speech bubble. Long-press the bubble to
@@ -50,9 +44,10 @@ export function ConversationBubble({
   canDelete,
   onEdit,
   onDelete,
+  currentIdentity,
+  onToggleReaction,
 }: Props): React.ReactElement {
   const responseType = message.attributes?.responseType as "yes" | "no" | undefined;
-  const radius = mine ? MINE_RADIUS[position] : THEIRS_RADIUS[position];
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.body);
   const [saving, setSaving] = useState(false);
@@ -61,7 +56,8 @@ export function ConversationBubble({
 
   const editAvailable = Boolean(canEdit && onEdit);
   const deleteAvailable = Boolean(canDelete && onDelete);
-  const actionsAvailable = editAvailable || deleteAvailable;
+  const reactAvailable = Boolean(currentIdentity && onToggleReaction);
+  const actionsAvailable = editAvailable || deleteAvailable || reactAvailable;
 
   const { pressing, bind } = useLongPress({
     enabled: actionsAvailable && !editing,
@@ -101,48 +97,40 @@ export function ConversationBubble({
           {responseType === "yes" ? "Response · Yes" : "Response · No"}
         </span>
       )}
-      <div className="relative">
-        {editing ? (
-          <BubbleEditForm
-            draft={draft}
-            setDraft={setDraft}
-            onCancel={() => setEditing(false)}
-            onSave={save}
-            saving={saving}
-            mine={mine}
-            textareaRef={textareaRef}
-          />
-        ) : (
-          <div
-            {...(actionsAvailable ? bind : {})}
-            className={cn(
-              "px-3.5 py-2 text-[14px] leading-snug whitespace-pre-wrap wrap-break-word shadow-[0_1px_0_rgba(35,24,21,0.04)] min-w-0",
-              radius,
-              mine
-                ? "bg-bordeaux text-parchment"
-                : "bg-parchment-2 border border-border text-walnut",
-              responseType === "yes" && "border-success border-2",
-              responseType === "no" && "border-bordeaux border-2",
-              actionsAvailable &&
-                "select-none transition-[transform,box-shadow] duration-500 ease-out touch-manipulation",
-              pressing && "scale-[0.97] shadow-[0_0_0_3px_rgba(193,140,35,0.55)]",
-            )}
-          >
-            {message.body}
-          </div>
-        )}
-        <BubbleActions
-          open={menuOpen}
-          mine={mine}
-          canEdit={editAvailable}
-          canDelete={deleteAvailable}
-          onClose={() => setMenuOpen(false)}
-          onEdit={() => setEditing(true)}
-          onDelete={() => {
-            if (onDelete) void onDelete();
-          }}
-        />
-      </div>
+      <BubbleSurface
+        message={message}
+        mine={mine}
+        position={position}
+        {...(responseType ? { responseType } : {})}
+        editing={editing}
+        draft={draft}
+        saving={saving}
+        pressing={pressing}
+        menuOpen={menuOpen}
+        actionsAvailable={actionsAvailable}
+        editAvailable={editAvailable}
+        deleteAvailable={deleteAvailable}
+        reactAvailable={reactAvailable}
+        {...(currentIdentity ? { currentIdentity } : {})}
+        reactions={message.reactions}
+        bind={bind}
+        textareaRef={textareaRef}
+        setDraft={setDraft}
+        onCancelEdit={() => setEditing(false)}
+        onSave={save}
+        onMenuClose={() => setMenuOpen(false)}
+        onMenuEdit={() => setEditing(true)}
+        onMenuDelete={() => {
+          if (onDelete) void onDelete();
+        }}
+        {...(onToggleReaction ? { onToggleReaction } : {})}
+      />
+      <ReactionChips
+        message={message}
+        mine={mine}
+        {...(currentIdentity ? { currentIdentity } : {})}
+        {...(onToggleReaction ? { onToggleReaction } : {})}
+      />
       {message.dateUpdated &&
         message.dateCreated &&
         message.dateUpdated.getTime() > message.dateCreated.getTime() && (

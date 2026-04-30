@@ -1,9 +1,10 @@
 import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
 import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticipant";
+import { Link } from "@/lib/nav";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import type { InvitationStatus, PrayerRole } from "@/lib/types";
-import { cn } from "@/lib/cn";
 import { EmptyRosterRow } from "./EmptyRosterRow";
+import { StatusIndicator } from "./StatusIndicator";
 
 interface Props {
   /** Lightweight inline name from `meeting.{role}.person.name`. The
@@ -16,13 +17,6 @@ interface Props {
   hideEmpty?: boolean;
 }
 
-const STATE_CLS: Record<InvitationStatus, string> = {
-  planned: "bg-parchment-2 text-walnut-2 border-border",
-  invited: "bg-brass-soft/40 text-brass-deep border-brass-soft",
-  confirmed: "bg-success-soft text-success border-success-soft",
-  declined: "bg-danger-soft text-bordeaux border-danger-soft",
-};
-
 const ROLE_LABEL: Record<PrayerRole, string> = {
   opening: "OP",
   benediction: "CP",
@@ -30,14 +24,20 @@ const ROLE_LABEL: Record<PrayerRole, string> = {
 
 const ROLE_SUBTITLE: Record<PrayerRole, string> = {
   opening: "Invocation",
-  benediction: "Benediction",
+  benediction: "Closing Prayer",
+};
+
+const ROLE_ASSIGN_LABEL: Record<PrayerRole, string> = {
+  opening: "Assign Opening Prayer",
+  benediction: "Assign Closing Prayer",
 };
 
 const ROLE_WIDTH_CLS = "w-6";
 
 /** Sunday-card row for a prayer slot. Mirrors `SpeakerRow`'s rhythm:
- *  role label, name, status pill, chat launcher. Falls back to
- *  `EmptyRosterRow` when no name is set so unfilled prayer slots
+ *  name primary, role label as italic-serif subtitle (parity with the
+ *  speaker row's topic line), status pill, chat launcher. Falls back
+ *  to `EmptyRosterRow` when no name is set so unfilled prayer slots
  *  share their height + look with the speaker placeholder slots. */
 export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
@@ -47,30 +47,30 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
 
   if (!name) {
     if (hideEmpty) return null;
-    return <EmptyRosterRow leadingLabel={ROLE_LABEL[role]} leadingWidthCls={ROLE_WIDTH_CLS} />;
+    return (
+      <EmptyRosterRow
+        leadingLabel={ROLE_LABEL[role]}
+        leadingWidthCls={ROLE_WIDTH_CLS}
+        label={ROLE_ASSIGN_LABEL[role]}
+        to={`/week/${date}/prayer/${role}/assign`}
+      />
+    );
   }
 
   return (
     <li className="flex items-center gap-3 h-16 border-b border-border last:border-b-0">
-      <div
-        className={`font-mono text-[10.5px] tracking-[0.08em] text-brass-deep shrink-0 ${ROLE_WIDTH_CLS}`}
+      <Link
+        to={`/week/${date}/prayer/${role}/assign`}
+        className="flex items-center gap-3 flex-1 min-w-0 hover:bg-parchment-2 transition-colors -mx-1 px-1 rounded-sm"
       >
-        {ROLE_LABEL[role]}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
-        <div className="font-serif italic text-sm text-walnut-2 truncate">
-          {ROLE_SUBTITLE[role]}
+        <div className="flex-1 min-w-0">
+          <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
+          <div className="font-serif italic text-sm text-walnut-2 truncate">
+            {ROLE_SUBTITLE[role]}
+          </div>
         </div>
-      </div>
-      <div
-        className={cn(
-          "font-mono text-[9.5px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded-full border whitespace-nowrap",
-          STATE_CLS[status],
-        )}
-      >
-        {status}
-      </div>
+        <StatusIndicator status={status} />
+      </Link>
       <PrayerChatLauncher
         wardId={wardId}
         date={date}

@@ -32,6 +32,8 @@ export function MobileSundayBody({ date, meeting, speakers }: Props) {
             <EmptyRosterRow
               key={`empty-speaker-${slot}`}
               leadingLabel={String(slot).padStart(2, "0")}
+              label="Assign Speaker"
+              to={`/week/${date}/speaker/new/assign`}
             />
           );
         })}

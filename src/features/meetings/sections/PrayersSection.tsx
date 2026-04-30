@@ -1,6 +1,6 @@
 import type { Assignment, NonMeetingSunday, PrayerRole, SacramentMeeting } from "@/lib/types";
 import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
-import { SpeakerStatusChip } from "@/features/plan-speakers/SpeakerStatusChip";
+import { SpeakerStatusChip } from "@/features/speakers/SpeakerStatusChip";
 import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticipant";
 import { AssignRow } from "../program/AssignRow";
 import { ProgramSection } from "../program/ProgramSection";

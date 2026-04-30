@@ -1,0 +1,1 @@
+export { AssignPrayerPage } from "./AssignPrayerPage";

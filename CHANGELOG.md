@@ -7,6 +7,128 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.18.0] — 2026-04-30
+
+An iOS-parity port: native-iOS interaction wins land back in the PWA.
+The biggest piece is the wholesale replacement of the multi-step Plan
+Speakers/Prayers wizard with a per-row Assign + Invite flow — the
+schedule rows themselves are now the entry point. Chat gains
+long-press bubble reactions, kind-aware quick-response copy for
+prayer assignments, a 24-hour edit/delete window, and a tombstone
+notice when messages are removed. Mobile schedule gets a hero
+treatment, jump-back button, status dots, and chalk card surfaces.
+
+### Added
+
+- **Per-row Assign + Invite flow** — every empty or filled speaker
+  and prayer row on the schedule is the entry point for assigning
+  that slot. Empty rows render a tappable Assign pill ("Assign
+  Speaker", "Assign Opening Prayer", "Assign Closing Prayer"); tap
+  opens a single-screen `AssignSlotForm`. Continue persists and
+  routes to `/prepare` for invite send (Send Email / Send SMS /
+  Print / Mark Invited toolbar); Save as Planned commits without
+  inviting and returns to /schedule. Edit-mode exposes Delete with
+  the existing type-to-confirm dialog. New routes:
+  `/week/:date/speaker/new/assign`, `/week/:date/speaker/:id/assign`,
+  `/week/:date/prayer/:role/assign`.
+- **Chat-bubble reactions** — long-press a chat bubble to surface a
+  reaction palette (👍 ❤️ 🙏 ✅ 😊 😮); tap to toggle. Chips render
+  overlapping the bubble's bottom edge with bg-chalk + drop shadow,
+  count if > 1, viewer's own reactions get a tinted ring. Reactions
+  are stored as Twilio message attributes under the `reactions` key
+  and are pure metadata — a reacted message is still subject to the
+  usual edit/delete rules.
+- **Hero card on mobile schedule** — first card gets a bordeaux
+  uppercase eyebrow above the date, larger date typography, and a
+  kind-aware "X of Y confirmed" rollup line beneath. 1.5pt bordeaux
+  stroke replaces the muted walnut border.
+- **Floating jump-back button** on mobile — Messages-style 52px
+  circle fades in bottom-center when the hero scrolls out of view.
+  Tap → smooth scroll to hero. Earns its weight on the 16-week
+  horizon when the bishop scrolls down to plan a future Sunday.
+- **Status indicator dots on mobile rows** — 8px tinted dot on
+  speaker + prayer rows below `md`; desktop keeps the uppercase
+  mono pill. ARIA label preserves the status word for screen
+  readers.
+- **Chalk card surfaces between mobile meeting blocks** — each
+  `MobileSundayBlock` wraps in `bg-chalk border rounded-lg
+  shadow-elev-1` so meetings read as discrete cards. The previous
+  sticky parchment date strip is gone — the card edge is the
+  per-meeting anchor.
+- **Status menu in chat** — replaces the 4-segment status pill
+  strip with a tappable badge that opens a 4-item dropdown
+  (checkmark on active, destructive styling on Mark as Declined).
+  Friction transitions still gate through `computeConfirmCopy`.
+- **Tombstone notice on message deletion** — after a successful
+  Twilio message remove, a centered "Message removed by X · Apr 28"
+  system message is posted to the thread (kind: `message-deleted`).
+  Both bishop and speaker delete paths post tombstones; the
+  tombstone itself can't be re-deleted.
+- **Inline status banner** — `InvitationStatusBanner` drops the
+  full-bleed tone fill. The status badge sits inline with the
+  message text on a single row; reason quote, last-seen, and
+  provenance lines render only when present, each on its own row;
+  Apply CTA gets its own right-aligned row.
+
+### Changed
+
+- **Wizard replaced by per-row flow** — the multi-step Plan
+  Speakers / Plan Prayers wizard is removed entirely (routes
+  `/plan/:date` and `/plan/:date/prayers`, plus the
+  `src/features/plan-speakers/` and `src/features/plan-prayers/`
+  directories). Per-row commits one slot at a time; multi-row
+  batch save is sunset. The "Plan speakers / Plan prayers" link
+  cluster is gone from `SundayCardBody` / `SundayCardSpecial`,
+  and the kebab-menu Plan-actions section is dropped from
+  `SundayMenuOptions`. Resend semantics are preserved via
+  `InvitationLinkActions` inside the chat drawer.
+- **Message edit/delete window 30m → 24h** — covers "I just
+  realized I sent the wrong date" without enabling rewriting last
+  week's history. The recent-5 same-side cap stays as the
+  structural guard against selective deep-history rewriting.
+- **Quick-response copy is kind-aware** — speaker prompts read
+  "Can you speak on…" / "Yes, I can speak"; prayer prompts read
+  "Can you offer the [opening / closing] prayer on…" / "Yes, I
+  can offer the prayer". Decline copy stays kind-agnostic. Affects
+  the live UI and the audit trail (Twilio body lives forever on
+  both sides).
+- **Stake / General cards drop OP & CP rows** — the centered
+  stamp alone communicates "no local program"; empty prayer rows
+  confused the bishop. Fast Sunday keeps both rows.
+- **PrayerRow drops the leading "OP / CP" tag** — the role label
+  ("Invocation" / "Closing Prayer") is now the italic-serif
+  subtitle under the name, mirroring `SpeakerRow`'s name + topic
+  line.
+- **Compact mobile date badge** — `kindLabel.compact` carries
+  "Stake Conf." / "General Conf." / "Fast Sun." so the date
+  headline stays on one line at phone widths; desktop reads
+  `kind.badge` as before.
+- **Reaction popover is one capsule** — emoji palette + icon-only
+  Edit / Delete actions with a thin vertical divider, replacing
+  the earlier stacked palette + actions-card layout.
+
+### Fixed
+
+- **Cross-author reactions no longer fail with "User unauthorized
+  for command"** — the `configure-conversation-roles` script now
+  grants `editAnyMessageAttributes` (alongside the previously
+  granted `editAnyMessage`). Twilio splits body edits and
+  attribute edits into separate permissions; the reaction toggle
+  is a `setAttributes` call. The script is idempotent but needs
+  to be re-run against any service that already had the prior
+  version applied.
+- **Prayer-flavoured quick-response copy** for prayer slots
+  (previously every kind got speaker-flavoured "Yes, I can speak"
+  copy — misleading on the live UI and worse in the chat history).
+
+### Infrastructure
+
+- **CI on develop unblocked** — clear 8 oxlint max-lines + sort
+  errors that surfaced when the rules tightened. Pure refactors
+  extracting `BubbleActionsIcons`, `ReactionChips`, `BubbleSurface`,
+  `ThreadItemList`, and `useSpeakerChatLifecycle`; no behaviour
+  change.
+
 ## [0.17.0] — 2026-04-27
 
 A native-feel pass on navigation. Mobile gets iOS-style stacked page
@@ -1974,7 +2096,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/aylabyuk/steward/releases/tag/v0.18.0
 [0.17.0]: https://github.com/aylabyuk/steward/releases/tag/v0.17.0
 [0.16.1]: https://github.com/aylabyuk/steward/releases/tag/v0.16.1
 [0.16.0]: https://github.com/aylabyuk/steward/releases/tag/v0.16.0

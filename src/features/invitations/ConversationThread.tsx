@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useMinuteTick } from "./hooks/useMinuteTick";
 import { cn } from "@/lib/cn";
-import { ConversationGroup } from "./ConversationGroup";
 import { JumpToLatest } from "./JumpToLatest";
-import { SystemNotice } from "./SystemNotice";
-import { DayDivider, UnreadDivider } from "./ThreadDividers";
+import { ThreadItemList } from "./ThreadItemList";
 import { buildMessagePermissions, findLastMineIndex } from "./utils/messageActions";
 import { buildThreadItems } from "./utils/threadItems";
 import type { AuthorMap, ChatMessage } from "./hooks/useConversation";
@@ -33,6 +31,10 @@ interface Props {
    *  action isn't wired into the embedding chat). */
   onEditMessage?: (sid: string, nextBody: string) => Promise<void> | void;
   onDeleteMessage?: (sid: string) => Promise<void> | void;
+  /** Toggle a reaction on a bubble. When omitted, the reaction
+   *  affordance stays hidden — even if `currentIdentity` is set —
+   *  matching the existing edit/delete-handler-required pattern. */
+  onToggleReaction?: (sid: string, emoji: string) => Promise<void> | void;
 }
 
 /** Bubble list styled after Messenger. Consecutive messages by the
@@ -49,6 +51,7 @@ export function ConversationThread({
   fillHeight,
   onEditMessage,
   onDeleteMessage,
+  onToggleReaction,
 }: Props): React.ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
@@ -141,26 +144,15 @@ export function ConversationThread({
           setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 32);
         }}
       >
-        {items.map((item) => {
-          if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
-          if (item.kind === "unread") return <UnreadDivider key={item.key} />;
-          if (item.kind === "system")
-            return <SystemNotice key={item.key} body={item.body} status={item.status} />;
-          return (
-            <ConversationGroup
-              key={item.key}
-              group={item.group}
-              readByOther={
-                item.group.mine &&
-                readByOtherAt !== null &&
-                item.group.messages.some((m) => m.index === readByOtherAt)
-              }
-              permissions={permissions}
-              {...(onEditMessage ? { onEditMessage } : {})}
-              {...(onDeleteMessage ? { onRequestDelete: setPendingDeleteSid } : {})}
-            />
-          );
-        })}
+        <ThreadItemList
+          items={items}
+          permissions={permissions}
+          currentIdentity={currentIdentity}
+          readByOtherAt={readByOtherAt}
+          {...(onEditMessage ? { onEditMessage } : {})}
+          {...(onDeleteMessage ? { onRequestDelete: setPendingDeleteSid } : {})}
+          {...(onToggleReaction ? { onToggleReaction } : {})}
+        />
       </div>
       {!atBottom && <JumpToLatest unseenCount={unseenCount} onJump={jumpToBottom} />}
       <ConfirmDialog

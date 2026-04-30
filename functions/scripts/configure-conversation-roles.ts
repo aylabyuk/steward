@@ -1,12 +1,13 @@
 import twilio from "twilio";
 
 /** One-off admin script: grants the Twilio Conversations service's
- *  default "channel user" role the `editAnyMessage` permission so
- *  any participant in a conversation (bishopric member OR speaker)
- *  can update the attributes of any message, not just messages they
- *  authored. The chat UI uses message attributes to persist emoji
- *  reactions — without this, a speaker reacting to a bishop's
- *  message (or vice-versa) silently fails with a 403.
+ *  default "channel user" role two cross-author permissions —
+ *  `editAnyMessage` (other-author body edits, used by the bishopric
+ *  ↔ speaker edit affordance) and `editAnyMessageAttributes`
+ *  (other-author attribute edits, used by emoji reactions). Without
+ *  the second, a bishop reacting to a speaker's reply (or vice
+ *  versa) trips Twilio with `User unauthorized for command` because
+ *  the default role only grants `editOwnMessageAttributes`.
  *
  *  Security tradeoff: `editAnyMessage` also allows body edits, not
  *  just attributes. Twilio does not expose a narrower permission.
@@ -17,8 +18,8 @@ import twilio from "twilio";
  *  in this context.
  *
  *  Idempotent: a second run is a no-op. Replaces the role's
- *  permission list wholesale, so we fetch first, union with
- *  editAnyMessage, and write back.
+ *  permission list wholesale, so we fetch first, union with the
+ *  required permissions, and write back.
  *
  *  Run from the functions workspace:
  *    TWILIO_ACCOUNT_SID=AC... \
@@ -57,15 +58,19 @@ async function main(): Promise<void> {
   }
 
   const current = new Set(channelUser.permissions);
-  if (current.has("editAnyMessage")) {
-    console.log(`channel user (${channelUser.sid}) already has editAnyMessage — no-op.`);
+  const required = ["editAnyMessage", "editAnyMessageAttributes"] as const;
+  const missing = required.filter((p) => !current.has(p));
+  if (missing.length === 0) {
+    console.log(`channel user (${channelUser.sid}) already has ${required.join(" + ")} — no-op.`);
     return;
   }
-  current.add("editAnyMessage");
+  for (const permission of missing) current.add(permission);
   const next = [...current];
 
   await service.roles(channelUser.sid).update({ permission: next });
-  console.log(`channel user (${channelUser.sid}) updated. Permissions:`);
+  console.log(
+    `channel user (${channelUser.sid}) updated. Added: ${missing.join(", ")}. All permissions:`,
+  );
   console.log(`  ${next.toSorted().join(", ")}`);
 }
 

@@ -1,4 +1,3 @@
-import { Link } from "@/lib/nav";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useSundayInvitationsSummary } from "@/features/invitations/hooks/useSundayInvitationsSummary";
 import { leadTimeSeverity } from "@/features/speakers/utils/leadTime";
@@ -6,8 +5,9 @@ import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/type
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel, type KindVariant } from "./utils/kindLabel";
-import { formatShortDate, formatCountdown } from "./utils/dateFormat";
-import { SundayTypeMenu } from "./SundayTypeMenu";
+import { formatCountdown } from "./utils/dateFormat";
+import { MobileSundayHeader } from "./MobileSundayHeader";
+import { MobileSundayHeroSummary } from "./MobileSundayHeroSummary";
 import { SundayCardSpecial } from "./SundayCardSpecial";
 import { MobileSundayBody } from "./MobileSundayBody";
 
@@ -18,19 +18,18 @@ const ROW_BG: Record<KindVariant, string> = {
   general: "bg-chalk bg-[linear-gradient(180deg,rgba(139,46,42,0.05),rgba(139,46,42,0.01))]",
 };
 
-const BADGE_CLS: Record<KindVariant, string> = {
-  regular: "",
-  fast: "text-brass-deep border-brass-soft bg-[rgba(224,190,135,0.22)]",
-  stake: "text-bordeaux border-danger-soft bg-danger-soft",
-  general: "text-bordeaux border-danger-soft bg-danger-soft",
-};
-
 interface Props {
   date: string;
   meeting: SacramentMeeting | null;
   fallbackType: MeetingType;
   leadTimeDays: number;
   nonMeetingSundays: readonly NonMeetingSunday[];
+  /** First card across the schedule. Renders the hero treatment:
+   *  bordeaux-eyebrow countdown above the date, larger date typography,
+   *  per-kind summary line ("X of Y confirmed") below, and a 1.5pt
+   *  bordeaux stroke on the chalk surface. Only mobile passes this —
+   *  desktop has no equivalent affordance. */
+  isHero?: boolean;
 }
 
 export function MobileSundayBlock({
@@ -39,6 +38,7 @@ export function MobileSundayBlock({
   fallbackType,
   leadTimeDays,
   nonMeetingSundays,
+  isHero = false,
 }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const type = meeting?.meetingType ?? fallbackType;
@@ -48,56 +48,38 @@ export function MobileSundayBlock({
   const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
   const urgent = leadTimeSeverity(new Date(), date, leadTimeDays) === "urgent";
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
+  const countdown = cancelled ? "Cancelled" : formatCountdown(date);
 
   return (
-    <article className={cn("border-b border-border", ROW_BG[kind.variant])}>
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-2.5 bg-parchment/95 backdrop-blur-sm border-b border-border">
-        <div className="flex items-baseline gap-2 flex-1 min-w-0">
-          <Link
-            to={`/week/${date}`}
-            className={cn(
-              "font-display font-semibold text-walnut leading-none text-xl shrink-0",
-              cancelled && "line-through text-walnut-3",
-            )}
-          >
-            {formatShortDate(date)}
-          </Link>
-          <span
-            className={cn(
-              "font-mono text-[10px] tracking-[0.08em] uppercase truncate",
-              urgent ? "text-bordeaux font-semibold" : "text-walnut-3",
-            )}
-          >
-            {cancelled ? "Cancelled" : formatCountdown(date)}
-          </span>
-          {needsApply && !cancelled && (
-            <span
-              aria-label="Speaker response awaiting your review"
-              className="inline-block w-2 h-2 rounded-full bg-bordeaux shrink-0"
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {kind.badge && (
-            <span
-              className={cn(
-                "font-mono text-[9.5px] uppercase tracking-[0.16em] px-2 py-0.75 border rounded-full whitespace-nowrap",
-                BADGE_CLS[kind.variant],
-              )}
-            >
-              {kind.badge}
-            </span>
-          )}
-          <SundayTypeMenu
-            wardId={wardId}
-            date={date}
-            currentType={type}
-            locked={hasConfirmedSpeaker}
-            nonMeetingSundays={nonMeetingSundays}
-            showPlanActions
-          />
-        </div>
-      </div>
+    <article
+      className={cn(
+        "rounded-lg overflow-hidden border shadow-[0_1px_2px_rgba(58,37,25,0.06)]",
+        ROW_BG[kind.variant],
+        isHero ? "border-bordeaux/70 border-[1.5px]" : "border-border",
+      )}
+    >
+      <MobileSundayHeader
+        date={date}
+        type={type}
+        kind={kind}
+        cancelled={cancelled}
+        countdown={countdown}
+        urgent={urgent}
+        needsApply={needsApply}
+        hasConfirmedSpeaker={hasConfirmedSpeaker}
+        wardId={wardId}
+        nonMeetingSundays={nonMeetingSundays}
+        isHero={isHero}
+      />
+
+      {isHero && !cancelled && (
+        <MobileSundayHeroSummary
+          date={date}
+          variant={kind.variant}
+          speakers={speakers}
+          meeting={meeting}
+        />
+      )}
 
       <Body
         cancelled={cancelled}
