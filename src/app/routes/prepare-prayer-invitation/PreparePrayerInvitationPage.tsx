@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useMeeting } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
@@ -19,6 +19,7 @@ import { PrepareInvitationPageMessage } from "../PrepareInvitationPageMessage";
 
 export function PreparePrayerInvitationPage() {
   const { date, role: roleParam } = useParams<{ date: string; role: string }>();
+  const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
   const authUser = useAuthStore((s) => s.user);
@@ -97,8 +98,8 @@ export function PreparePrayerInvitationPage() {
     return (
       <PrepareInvitationPageMessage
         title="Invitation sent"
-        body="The prayer-giver has been notified. This tab will close on its own."
-        close
+        body="The prayer-giver has been notified."
+        backToSchedule
       />
     );
   }
@@ -133,7 +134,7 @@ export function PreparePrayerInvitationPage() {
         role={role}
         email={prayerGiverEmail}
         hasEmail={hasEmail}
-        onCancel={() => window.close()}
+        onCancel={() => navigate("/schedule")}
         {...toolbarProps}
       />
       <div className="flex-1 min-h-0 lg:overflow-hidden">

@@ -1,4 +1,4 @@
-import { doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
+import { deleteField, doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import { ensureMeetingDoc } from "@/features/meetings/utils/ensureMeetingDoc";
 import { db } from "@/lib/firebase";
 import type { InvitationStatus, NonMeetingSunday, PrayerRole } from "@/lib/types";
@@ -102,6 +102,38 @@ export async function upsertPrayerParticipant(
       );
       await batch.commit();
     }
+    reportSaved();
+  } catch (e) {
+    reportSaveError(e);
+    throw e;
+  }
+}
+
+/** Unassign the prayer-giver from a slot. The slot itself is intrinsic
+ *  to the meeting (every sacrament meeting has an opening prayer + a
+ *  benediction) so there's nothing to remove from the schedule — but
+ *  the participant doc + the inline mirror's `person` need to go so
+ *  the slot reads as empty again. We delete the participant doc whole
+ *  rather than clearing fields piecemeal: `prayerParticipantSchema`
+ *  requires `name.min(1)`, so a partial reset would surface as a
+ *  Zod error in `usePrayerParticipant`. */
+export async function clearPrayerParticipant(
+  wardId: string,
+  date: string,
+  role: PrayerRole,
+): Promise<void> {
+  reportSaving();
+  try {
+    const participantRef = doc(db, "wards", wardId, "meetings", date, "prayers", role);
+    const meetingRef = doc(db, "wards", wardId, "meetings", date);
+    const batch = writeBatch(db);
+    batch.delete(participantRef);
+    batch.set(
+      meetingRef,
+      { [MEETING_FIELD[role]]: { person: deleteField(), confirmed: false } },
+      { merge: true },
+    );
+    await batch.commit();
     reportSaved();
   } catch (e) {
     reportSaveError(e);

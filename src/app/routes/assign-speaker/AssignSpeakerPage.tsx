@@ -7,12 +7,14 @@ import {
 } from "@/features/assign-slot/AssignSlotForm";
 import { AssignSlotHeader } from "@/features/assign-slot/AssignSlotHeader";
 import { persistAssignSpeaker } from "@/features/assign-slot/utils/persistAssignSpeaker";
-import { deleteSpeaker } from "@/features/speakers/utils/speakerActions";
+import { deleteSpeaker, updateSpeaker } from "@/features/speakers/utils/speakerActions";
 import { useSpeakers } from "@/hooks/useMeeting";
+import { useWardMembers } from "@/hooks/useWardMembers";
 import { useWardSettings } from "@/hooks/useWardSettings";
+import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { useNavigate } from "@/lib/nav";
-import type { SpeakerRole } from "@/lib/types";
+import type { SpeakerRole, SpeakerStatus } from "@/lib/types";
 import { formatShortSunday } from "@/features/schedule/utils/dateFormat";
 
 const DEFAULT_ROLE: SpeakerRole = "Member";
@@ -28,6 +30,8 @@ export function AssignSpeakerPage() {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const ward = useWardSettings();
   const speakers = useSpeakers(date ?? null);
+  const members = useWardMembers();
+  const currentUserUid = useAuthStore((s) => s.user?.uid);
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -106,6 +110,16 @@ export function AssignSpeakerPage() {
     }
   }
 
+  async function onStatusChange(next: SpeakerStatus) {
+    if (!existing) return;
+    setError(null);
+    try {
+      await updateSpeaker(wardId!, date!, existing.id, { status: next });
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   return (
     <main className="min-h-dvh bg-parchment flex flex-col">
       <AssignSlotHeader
@@ -118,7 +132,17 @@ export function AssignSpeakerPage() {
         busy={busy}
         error={error}
         onSubmit={onSubmit}
-        {...(existing ? { onDelete, deleting } : {})}
+        {...(existing
+          ? {
+              onDelete,
+              deleting,
+              onStatusChange,
+              members,
+              currentUserUid,
+              ...(existing.data.statusSource ? { currentStatusSource: existing.data.statusSource } : {}),
+              ...(existing.data.statusSetBy ? { currentStatusSetBy: existing.data.statusSetBy } : {}),
+            }
+          : {})}
       />
     </main>
   );

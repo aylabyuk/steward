@@ -37,6 +37,6 @@ export const sendSpeakerInvitation = onCall(
       return rotateInvitationLink(input, origin);
     }
     const fromNumberMode = resolveCallerFromNumberMode(auth, input.useTestingNumber);
-    return createFreshInvitation(input, origin, fromNumberMode);
+    return createFreshInvitation(input, origin, fromNumberMode, auth.uid);
   },
 );

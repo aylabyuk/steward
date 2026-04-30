@@ -6,22 +6,35 @@ interface Props {
   open: boolean;
   speakerName: string;
   speakerStatus: SpeakerStatus;
+  /** Speaker slots are deleted outright; prayer slots are intrinsic
+   *  to a meeting and can only be unassigned, so the verb shifts to
+   *  "Remove" + the slot is described as a prayer-giver. Defaults to
+   *  "speaker" to keep existing call-sites unchanged. */
+  kind?: "speaker" | "prayer";
   busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-const STATUS_WARNING: Partial<Record<SpeakerStatus, string>> = {
+const SPEAKER_STATUS_WARNING: Partial<Record<SpeakerStatus, string>> = {
   invited:
     "This speaker has already been invited. Deleting will not retract the invitation already sent — you'll need to message them directly.",
   confirmed:
     "This speaker has already CONFIRMED for this Sunday. Deleting will leave them expecting to speak unless you reach out separately.",
 };
 
+const PRAYER_STATUS_WARNING: Partial<Record<SpeakerStatus, string>> = {
+  invited:
+    "This prayer-giver has already been invited. Removing them will not retract the invitation already sent — you'll need to message them directly.",
+  confirmed:
+    "This prayer-giver has already CONFIRMED for this Sunday. Removing them will leave them expecting to pray unless you reach out separately.",
+};
+
 export function DeleteSpeakerConfirm({
   open,
   speakerName,
   speakerStatus,
+  kind = "speaker",
   busy,
   onConfirm,
   onCancel,
@@ -48,7 +61,15 @@ export function DeleteSpeakerConfirm({
 
   const target = speakerName.trim();
   const matches = typed.trim().toLowerCase() === target.toLowerCase() && target.length > 0;
-  const warning = STATUS_WARNING[speakerStatus];
+  const warning =
+    kind === "prayer" ? PRAYER_STATUS_WARNING[speakerStatus] : SPEAKER_STATUS_WARNING[speakerStatus];
+  const titleVerb = kind === "prayer" ? "Remove" : "Delete";
+  const bodyText =
+    kind === "prayer"
+      ? "This unassigns the prayer-giver from this Sunday's slot."
+      : "This removes the speaker from this Sunday's plan.";
+  const confirmLabel = kind === "prayer" ? "Remove prayer-giver" : "Delete speaker";
+  const busyLabel = kind === "prayer" ? "Removing…" : "Deleting…";
 
   return (
     <div
@@ -65,10 +86,10 @@ export function DeleteSpeakerConfirm({
           id="delete-speaker-title"
           className="font-display text-[19px] font-semibold text-walnut mb-1.5"
         >
-          Delete {speakerName}?
+          {titleVerb} {speakerName}?
         </h2>
         <p className="font-serif text-[14px] text-walnut-2 leading-relaxed mb-4">
-          This removes the speaker from this Sunday's plan. To confirm, type{" "}
+          {bodyText} To confirm, type{" "}
           <strong className="text-walnut font-semibold">{speakerName}</strong> below.
         </p>
 
@@ -104,7 +125,7 @@ export function DeleteSpeakerConfirm({
             disabled={!matches || busy}
             className="rounded-md border border-bordeaux bg-bordeaux px-3.5 py-2 font-sans text-[13px] font-semibold text-chalk hover:bg-bordeaux-deep disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {busy ? "Deleting…" : "Delete speaker"}
+            {busy ? busyLabel : confirmLabel}
           </button>
         </div>
       </div>
