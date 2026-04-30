@@ -59,7 +59,7 @@ describe("reactions", () => {
       };
       const ordered = orderedReactionEntries(r).map((e) => e.emoji);
       expect(ordered.slice(0, 2)).toEqual(["❤️", "🙏"]);
-      expect(ordered.slice(2)).toEqual(["🌟", "🌷"].sort());
+      expect(ordered.slice(2)).toEqual(["🌟", "🌷"].toSorted());
     });
   });
 

@@ -61,7 +61,7 @@ export function orderedReactionEntries(
   });
   const unknown = Object.keys(r)
     .filter((e) => !REACTION_PALETTE.includes(e))
-    .sort()
+    .toSorted()
     .flatMap((emoji) => {
       const identities = r[emoji];
       return identities && identities.length > 0 ? [{ emoji, identities }] : [];
@@ -103,7 +103,7 @@ export function mergeReactionsIntoAttributes(
   reactions: Reactions,
   attrs: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> {
-  const next: Record<string, unknown> = { ...(attrs ?? {}) };
+  const next: Record<string, unknown> = { ...attrs };
   if (isReactionsNonEmpty(reactions)) {
     next["reactions"] = reactions;
   } else {
