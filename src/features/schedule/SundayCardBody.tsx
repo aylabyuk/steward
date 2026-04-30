@@ -1,4 +1,3 @@
-import { Link } from "@/lib/nav";
 import type { SacramentMeeting, Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
 import { EmptyRosterRow } from "./EmptyRosterRow";
@@ -30,6 +29,8 @@ export function SundayCardBody({ speakers, date, meeting }: Props) {
             <EmptyRosterRow
               key={`empty-speaker-${slot}`}
               leadingLabel={String(slot).padStart(2, "0")}
+              label="Assign Speaker"
+              to={`/week/${date}/speaker/new/assign`}
             />
           );
         })}
@@ -46,35 +47,6 @@ export function SundayCardBody({ speakers, date, meeting }: Props) {
           inlineName={meeting?.benediction?.person?.name ?? ""}
         />
       </ul>
-      <div className="flex flex-wrap gap-x-5 gap-y-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-        <PlanLink to={`/plan/${date}`} label="Plan speakers" />
-        <PlanLink to={`/plan/${date}/prayers`} label="Plan prayers" />
-      </div>
     </div>
-  );
-}
-
-function PlanLink({ to, label }: { to: string; label: string }) {
-  return (
-    <Link
-      to={to}
-      className="inline-flex items-center gap-1.5 text-[13px] font-sans font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors py-1.5"
-    >
-      <span className="w-4 h-4 border border-bordeaux rounded-sm flex items-center justify-center">
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      </span>
-      {label}
-    </Link>
   );
 }

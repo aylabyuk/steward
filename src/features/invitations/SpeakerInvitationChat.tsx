@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { useMemo } from "react";
 import { BuiltByCredit } from "@/components/BuiltByCredit";
 import { inviteAuth } from "@/lib/firebase";
+import type { SpeakerStatus } from "@/lib/types";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { QuickActionButtons } from "./QuickActionButtons";
@@ -11,10 +11,11 @@ import { TypingIndicator } from "./TypingIndicator";
 import { useConversation } from "./hooks/useConversation";
 import { useFirstUnreadIndex } from "./hooks/useFirstUnreadIndex";
 import { useReadHorizon } from "./hooks/useReadHorizon";
+import { useSpeakerChatLifecycle } from "./hooks/useSpeakerChatLifecycle";
 import { useTypingParticipants } from "./hooks/useTypingParticipants";
-import { useSpeakerHeartbeat } from "./hooks/useSpeakerHeartbeat";
 import { useTwilioChat } from "./TwilioChatProvider";
 import { writeSpeakerResponse } from "./utils/invitationActions";
+import { postMessageDeletedNotice } from "./utils/messageDeletedNotice";
 import { removeMessage, toggleMessageReaction, updateMessageBody } from "./utils/messageMutations";
 import { buildSpeakerAuthorMap } from "./utils/speakerAuthorMap";
 
@@ -41,10 +42,8 @@ interface Props {
   responseAnswer?: "yes" | "no" | null;
   /** Mirror of the speaker doc's current status, written onto the
    *  invitation by the bishop's client when they confirm / decline.
-   *  Takes precedence over `responseAnswer` in the banner so a
-   *  speaker who said yes but then asked to bow out (and the bishop
-   *  flipped status to declined) sees the accurate outcome. */
-  currentStatus?: import("@/lib/types").SpeakerStatus | null;
+   *  Takes precedence over `responseAnswer` in the banner. */
+  currentStatus?: SpeakerStatus | null;
   /** When present, the chat's header renders a small close affordance
    *  that invokes this callback. Used by the invite page's floating
    *  drawer so the speaker can dismiss the chat back over the letter. */
@@ -63,43 +62,18 @@ interface Props {
  *  Firebase custom-token session on the isolated `inviteAuth`, so
  *  every write here is authorized; no modal gate needed. */
 export function SpeakerInvitationChat(props: Props): React.ReactElement {
-  const [user, setUser] = useState<User | null>(inviteAuth.currentUser);
   const twilio = useTwilioChat();
   const { messages, conversation, authors, loading } = useConversation(props.conversationSid);
   const firstUnreadIndex = useFirstUnreadIndex(conversation);
   const readHorizon = useReadHorizon(conversation, twilio.identity);
   const typing = useTypingParticipants(conversation, twilio.identity);
-
-  useEffect(() => onAuthStateChanged(inviteAuth, setUser), []);
-  useSpeakerHeartbeat({
+  const user = useSpeakerChatLifecycle({
     wardId: props.wardId,
     invitationId: props.invitationId,
-    enabled: Boolean(user),
+    conversation,
+    messageCount: messages.length,
+    twilio,
   });
-
-  // Kick off the Twilio client as soon as the chat mounts so prior
-  // messages load before the speaker taps Send. Without this, the
-  // conversation pane would stay empty until the first interaction
-  // and the first send attempt would race the connect and throw
-  // "Not connected."
-  useEffect(() => {
-    if (twilio.status !== "idle") return;
-    void twilio.connect({
-      wardId: props.wardId,
-      invitationId: props.invitationId,
-      useInviteApp: true,
-    });
-  }, [twilio, props.wardId, props.invitationId]);
-
-  // Clear the speaker's unread horizon whenever they're viewing the
-  // chat and new messages land. Drives the page-level "New message"
-  // banner down to quiet once the speaker has actually seen the
-  // bishopric's reply — without this, the banner stays lit even
-  // after the drawer has been opened.
-  useEffect(() => {
-    if (!conversation || messages.length === 0) return;
-    void conversation.setAllMessagesRead();
-  }, [conversation, messages.length]);
 
   const resolvedAuthors = useMemo(
     () =>
@@ -144,6 +118,11 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     });
   }
 
+  async function onDelete(sid: string) {
+    await removeMessage(conversation, sid);
+    await postMessageDeletedNotice(conversation, props.speakerName);
+  }
+
   return (
     <section
       className={
@@ -153,14 +132,12 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
       }
     >
       <SpeakerChatHeader onClose={props.onClose} />
-
       <SpeakerResponseBanner
         answer={props.responseAnswer}
         meetingDate={props.meetingDate}
         {...(props.currentStatus !== undefined ? { currentStatus: props.currentStatus } : {})}
         {...(props.kind ? { kind: props.kind } : {})}
       />
-
       <ConversationThread
         messages={messages}
         currentIdentity={twilio.identity}
@@ -169,7 +146,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
         {...(props.fillHeight ? { fillHeight: true } : {})}
-        onDeleteMessage={(sid) => removeMessage(conversation, sid)}
+        onDeleteMessage={onDelete}
         onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
         {...(twilio.identity
           ? {
@@ -178,9 +155,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
             }
           : {})}
       />
-
       <TypingIndicator typingIdentities={typing} authors={resolvedAuthors} />
-
       {!props.hasResponse && (
         <QuickActionButtons
           conversation={conversation}
@@ -190,13 +165,11 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
           {...(props.kind ? { kind: props.kind } : {})}
         />
       )}
-
       <ConversationComposer
         conversation={conversation}
         ensureReady={ensureReady}
         placeholder="Reply to the bishopric…"
       />
-
       <div className="flex justify-center py-2 px-4 border-t border-border">
         <BuiltByCredit />
       </div>

@@ -2,7 +2,8 @@ import type { Conversation } from "@twilio/conversations";
 import { doc, updateDoc } from "firebase/firestore";
 import { formatShortSunday } from "@/features/schedule/utils/dateFormat";
 import { db } from "@/lib/firebase";
-import type { SpeakerStatus } from "@/lib/types";
+import type { SpeakerInvitation, SpeakerStatus } from "@/lib/types";
+import { assigneeAction } from "./slotKindCopy";
 
 /** Wording for the neutral status-change messages. Kept free of
  *  "the bishopric" framing so the line reads as a calm record update
@@ -10,10 +11,19 @@ import type { SpeakerStatus } from "@/lib/types";
  *  system notice in the thread, not attributed to any participant.
  *  The meeting date is substituted in place of the ambiguous "this
  *  Sunday" so the line is unambiguous for a speaker scrolling back
- *  through an older thread. */
-function bodyFor(status: "confirmed" | "declined", meetingDateIso: string): string {
+ *  through an older thread. Confirmed copy switches between
+ *  "speaking" and "offering the prayer" by slot kind; decline copy
+ *  stays kind-agnostic since the existing wording doesn't reference
+ *  the role. */
+function bodyFor(
+  status: "confirmed" | "declined",
+  meetingDateIso: string,
+  kind: SpeakerInvitation["kind"],
+): string {
   const when = formatShortSunday(meetingDateIso);
-  if (status === "confirmed") return `Assignment confirmed — thank you for speaking on ${when}.`;
+  if (status === "confirmed") {
+    return `Assignment confirmed — thank you for ${assigneeAction(kind)} on ${when}.`;
+  }
   return `Assignment updated to declined. Thank you for letting us know.`;
 }
 
@@ -43,8 +53,11 @@ export async function noteBishopStatusChange(args: {
   meetingDate: string;
   status: SpeakerStatus;
   conversation: Conversation | null;
+  /** Slot kind discriminator from the invitation. Selects between
+   *  "speaking" (default) and "offering the prayer" verbiage. */
+  slotKind?: SpeakerInvitation["kind"];
 }): Promise<void> {
-  const { wardId, invitationId, meetingDate, status, conversation } = args;
+  const { wardId, invitationId, meetingDate, status, conversation, slotKind } = args;
   await updateDoc(doc(db, "wards", wardId, "speakerInvitations", invitationId), {
     currentSpeakerStatus: status,
   }).catch((err) => {
@@ -55,7 +68,7 @@ export async function noteBishopStatusChange(args: {
   });
   if (status !== "confirmed" && status !== "declined") return;
   if (!conversation) return;
-  const body = bodyFor(status, meetingDate);
+  const body = bodyFor(status, meetingDate, slotKind);
   const attributes: StatusChangeAttributes = { kind: "status-change", status };
   try {
     await conversation.sendMessage(body, attributes);

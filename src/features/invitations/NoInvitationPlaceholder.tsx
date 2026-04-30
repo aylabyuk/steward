@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { SpeakerStatusPills } from "@/features/schedule/SpeakerStatusPills";
+import { SpeakerStatusMenu } from "@/features/schedule/SpeakerStatusMenu";
 import { statusProvenanceLabel } from "@/features/schedule/utils/statusProvenance";
 import { upsertPrayerParticipant } from "@/features/prayers/utils/prayerActions";
 import { updateSpeaker } from "@/features/speakers/utils/speakerActions";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
-import { cn } from "@/lib/cn";
 import type { PrayerRole, Speaker, SpeakerStatus } from "@/lib/types";
-import { statusStripBg } from "./utils/statusStripBg";
 
 interface Props {
   wardId: string;
@@ -74,13 +72,8 @@ export function NoInvitationPlaceholder({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-chalk">
-      <div
-        className={cn(
-          "px-4 py-3.5 border-b border-border",
-          statusStripBg(speaker.status ?? "planned"),
-        )}
-      >
-        <SpeakerStatusPills
+      <div className="px-4 py-3 border-b border-border">
+        <SpeakerStatusMenu
           status={speaker.status ?? "planned"}
           onChange={onStatusChange}
           currentStatusSource={speaker.statusSource}
@@ -89,7 +82,7 @@ export function NoInvitationPlaceholder({
           currentUserUid={user?.uid}
         />
         {provenance && (
-          <p className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-walnut-3 -mt-1">
+          <p className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-walnut-3 mt-1.5">
             {provenance}
           </p>
         )}

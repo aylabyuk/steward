@@ -20,14 +20,7 @@ export const EMPTY_REACTIONS: Reactions = Object.freeze({});
 
 /** Fixed 6-emoji palette. Single source of truth for the
  *  cross-platform set — neither client should hard-code its own. */
-export const REACTION_PALETTE: readonly string[] = [
-  "👍",
-  "❤️",
-  "🙏",
-  "✅",
-  "😊",
-  "😮",
-];
+export const REACTION_PALETTE: readonly string[] = ["👍", "❤️", "🙏", "✅", "😊", "😮"];
 
 export function isReactionsNonEmpty(r: Reactions): boolean {
   return Object.keys(r).length > 0;
@@ -68,7 +61,7 @@ export function orderedReactionEntries(
   });
   const unknown = Object.keys(r)
     .filter((e) => !REACTION_PALETTE.includes(e))
-    .sort()
+    .toSorted()
     .flatMap((emoji) => {
       const identities = r[emoji];
       return identities && identities.length > 0 ? [{ emoji, identities }] : [];
@@ -110,7 +103,7 @@ export function mergeReactionsIntoAttributes(
   reactions: Reactions,
   attrs: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> {
-  const next: Record<string, unknown> = { ...(attrs ?? {}) };
+  const next: Record<string, unknown> = { ...attrs };
   if (isReactionsNonEmpty(reactions)) {
     next["reactions"] = reactions;
   } else {

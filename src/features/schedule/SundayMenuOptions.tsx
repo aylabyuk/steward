@@ -1,33 +1,23 @@
 import type { MeetingType } from "@/lib/types";
 import { TYPE_LABELS } from "@/features/meetings/utils/meetingLabels";
 import { cn } from "@/lib/cn";
-import { SundayMenuPlanActions } from "./SundayMenuPlanActions";
 
 const TYPES: readonly MeetingType[] = ["regular", "fast", "stake", "general"];
 
 interface Props {
-  date: string;
   currentType: MeetingType;
   locked: boolean;
-  showPlanActions: boolean;
   onSelect: (type: MeetingType) => void;
-  onClose: () => void;
 }
 
-/** Inner content of the SundayTypeMenu: Plan actions (mobile only) +
- *  Sunday-type radio + locked notice. Rendered inside either the
- *  desktop popover or the mobile bottom sheet. */
-export function SundayMenuOptions({
-  date,
-  currentType,
-  locked,
-  showPlanActions,
-  onSelect,
-  onClose,
-}: Props) {
+/** Inner content of the SundayTypeMenu — Sunday-type radio + locked
+ *  notice. Rendered inside either the desktop popover or the mobile
+ *  bottom sheet. The card-level "Plan speakers / Plan prayers"
+ *  entries that previously lived at the top are gone — empty rows
+ *  are now the entry point for the per-row Assign + Invite flow. */
+export function SundayMenuOptions({ currentType, locked, onSelect }: Props) {
   return (
     <>
-      {showPlanActions && <SundayMenuPlanActions date={date} onSelect={onClose} />}
       <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-walnut-3 px-2.5 pt-1.5 pb-1">
         Sunday type
       </div>

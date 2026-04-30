@@ -8,10 +8,12 @@ export interface MessageGroup {
   messages: readonly ChatMessage[];
 }
 
+export type SystemTone = "success" | "danger" | "neutral";
+
 export type ThreadItem =
   | { kind: "day"; key: string; label: string }
   | { kind: "unread"; key: string }
-  | { kind: "system"; key: string; body: string; status: "confirmed" | "declined" }
+  | { kind: "system"; key: string; body: string; tone: SystemTone }
   | { kind: "group"; key: string; group: MessageGroup };
 
 export interface BuildOpts {
@@ -45,16 +47,22 @@ export function buildThreadItems(opts: BuildOpts): ThreadItem[] {
       items.push({ kind: "day", key: `day-${day}`, label: dayLabel(m.dateCreated, now) });
       lastDay = day;
     }
-    // Status-change messages render as a centered system notice —
-    // no author bubble, no grouping. Posted by the bishop's client
-    // under their uid but displayed as a neutral system event.
+    // Structural messages render as centered system notices — no
+    // author bubble, no grouping. Posted by participant clients but
+    // displayed as neutral thread events.
     if (m.attributes && m.attributes.kind === "status-change") {
       const status = m.attributes.status;
       if (status === "confirmed" || status === "declined") {
         pushGroup();
-        items.push({ kind: "system", key: m.sid, body: m.body, status });
+        const tone: SystemTone = status === "confirmed" ? "success" : "danger";
+        items.push({ kind: "system", key: m.sid, body: m.body, tone });
         continue;
       }
+    }
+    if (m.attributes && m.attributes.kind === "message-deleted") {
+      pushGroup();
+      items.push({ kind: "system", key: m.sid, body: m.body, tone: "neutral" });
+      continue;
     }
     const mine = m.author === currentIdentity;
     if (

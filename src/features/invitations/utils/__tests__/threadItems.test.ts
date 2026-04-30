@@ -86,4 +86,55 @@ describe("buildThreadItems", () => {
     });
     expect(items.map((i) => i.kind)).not.toContain("unread");
   });
+
+  it("renders status-change messages as system notices with success/danger tone", () => {
+    const d = new Date("2026-04-22T10:00:00");
+    const confirmed: ChatMessage = {
+      sid: "s1",
+      index: 0,
+      author: "uid:b",
+      body: "Confirmed.",
+      dateCreated: d,
+      attributes: { kind: "status-change", status: "confirmed" },
+    };
+    const declined: ChatMessage = {
+      sid: "s2",
+      index: 1,
+      author: "uid:b",
+      body: "Declined.",
+      dateCreated: d,
+      attributes: { kind: "status-change", status: "declined" },
+    };
+    const items = buildThreadItems({
+      messages: [confirmed, declined],
+      currentIdentity: null,
+      authors: emptyAuthors,
+      now: d,
+    });
+    const sys = items.filter((i) => i.kind === "system");
+    expect(sys).toHaveLength(2);
+    expect(sys[0]).toMatchObject({ tone: "success" });
+    expect(sys[1]).toMatchObject({ tone: "danger" });
+  });
+
+  it("renders message-deleted tombstones as neutral system notices", () => {
+    const d = new Date("2026-04-22T10:00:00");
+    const tombstone: ChatMessage = {
+      sid: "t1",
+      index: 0,
+      author: "uid:b",
+      body: "Message removed by Bishop John · Apr 22",
+      dateCreated: d,
+      attributes: { kind: "message-deleted" },
+    };
+    const items = buildThreadItems({
+      messages: [tombstone],
+      currentIdentity: null,
+      authors: emptyAuthors,
+      now: d,
+    });
+    const sys = items.filter((i) => i.kind === "system");
+    expect(sys).toHaveLength(1);
+    expect(sys[0]).toMatchObject({ tone: "neutral" });
+  });
 });

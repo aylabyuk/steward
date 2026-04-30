@@ -1,4 +1,3 @@
-import { Link } from "@/lib/nav";
 import type { SacramentMeeting } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import type { KindVariant } from "./utils/kindLabel";
@@ -10,8 +9,10 @@ interface Props {
   description: string;
   date: string;
   meeting: SacramentMeeting | null;
-  /** Mobile list view surfaces "Plan prayers" inside the kebab menu;
-   *  set true to suppress the redundant inline link. */
+  /** @deprecated Retained for back-compat with existing call sites
+   *  but no longer affects rendering — the card-level "Plan prayers"
+   *  link cluster was removed; per-row Assign pills cover the
+   *  entry to the prayer flow now. */
   hidePlanLink?: boolean;
 }
 
@@ -29,14 +30,7 @@ const STAMP_LABEL_CLS: Record<KindVariant, string> = {
   general: "text-bordeaux",
 };
 
-export function SundayCardSpecial({
-  variant,
-  stampLabel,
-  description,
-  date,
-  meeting,
-  hidePlanLink = false,
-}: Props) {
+export function SundayCardSpecial({ variant, stampLabel, description, date, meeting }: Props) {
   return (
     <div className="flex flex-1 flex-col px-4 pt-3 pb-4">
       <div className="flex items-center gap-2.5 pb-1">
@@ -62,39 +56,19 @@ export function SundayCardSpecial({
       <p className="font-serif italic text-[13.5px] text-walnut-2 leading-[1.5] mt-1.5 mb-3">
         {description}
       </p>
-      <ul className="list-none m-0 p-0 mb-2 mt-auto border-t border-border pt-1">
-        <PrayerRow
-          role="opening"
-          date={date}
-          inlineName={meeting?.openingPrayer?.person?.name ?? ""}
-        />
-        <PrayerRow
-          role="benediction"
-          date={date}
-          inlineName={meeting?.benediction?.person?.name ?? ""}
-        />
-      </ul>
-      {!hidePlanLink && (
-        <Link
-          to={`/plan/${date}/prayers`}
-          className="inline-flex items-center gap-1.5 text-[13px] font-sans font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors py-1.5 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
-        >
-          <span className="w-4 h-4 border border-bordeaux rounded-sm flex items-center justify-center">
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </span>
-          Plan prayers
-        </Link>
+      {variant === "fast" && (
+        <ul className="list-none m-0 p-0 mb-2 mt-auto border-t border-border pt-1">
+          <PrayerRow
+            role="opening"
+            date={date}
+            inlineName={meeting?.openingPrayer?.person?.name ?? ""}
+          />
+          <PrayerRow
+            role="benediction"
+            date={date}
+            inlineName={meeting?.benediction?.person?.name ?? ""}
+          />
+        </ul>
       )}
     </div>
   );

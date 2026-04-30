@@ -61,9 +61,7 @@ async function main(): Promise<void> {
   const required = ["editAnyMessage", "editAnyMessageAttributes"] as const;
   const missing = required.filter((p) => !current.has(p));
   if (missing.length === 0) {
-    console.log(
-      `channel user (${channelUser.sid}) already has ${required.join(" + ")} — no-op.`,
-    );
+    console.log(`channel user (${channelUser.sid}) already has ${required.join(" + ")} — no-op.`);
     return;
   }
   for (const permission of missing) current.add(permission);
