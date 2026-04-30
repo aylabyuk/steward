@@ -3,7 +3,6 @@ import { useParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
@@ -124,7 +123,7 @@ export function PrepareInvitationPage() {
         onCancel={() => window.close()}
         {...toolbarProps}
       />
-      <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
+      <div className="flex-1 min-h-0 lg:overflow-hidden">
         {form.hydrated ? (
           <PrepareInvitationLetterTab
             initialJson={form.initialJson}
@@ -136,12 +135,15 @@ export function PrepareInvitationPage() {
             onInitial={form.captureInitial}
             resetKey={form.resetKey}
             vars={vars}
-            previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
           />
         ) : (
-          <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
+          <p className="px-5 sm:px-8 pt-5 pb-4 font-serif italic text-[14px] text-walnut-3">
+            Loading letter…
+          </p>
         )}
-        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
+        {form.error && (
+          <p className="px-5 sm:px-8 mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>
+        )}
       </div>
     </main>
   );

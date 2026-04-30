@@ -25,7 +25,8 @@
     "emulators": "firebase emulators:start --only auth,firestore,functions,pubsub --import=./emulator-data --export-on-exit ./emulator-data",
     "dev:functions": "pnpm --filter @steward/functions build:watch",
     "bootstrap-ward": "tsx scripts/bootstrap-ward.ts",
-    "add-member": "tsx scripts/add-member.ts"
+    "add-member": "tsx scripts/add-member.ts",
+    "sweep-orphan-invitations": "tsx scripts/sweep-orphan-invitations.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

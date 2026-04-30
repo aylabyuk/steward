@@ -21,12 +21,15 @@ interface Props {
   onSendSms: (phone: string) => void;
 }
 
-/** Sticky page header for the Prepare Invitation page: title block on
- *  the left, Cancel (X) on the right, centered toolbar below. */
+/** Sticky page header for the Prepare Invitation page. Hosts the
+ *  title block, Cancel (X), and the action bar at every breakpoint —
+ *  on desktop the bar sits flush right next to the title; on mobile
+ *  it stacks below. iOS pattern parity: a clearly labeled
+ *  "Send Invitation" primary CTA is always above-the-fold. */
 export function PrepareInvitationHeader(props: Props) {
   return (
-    <header className="sticky top-0 z-20 shrink-0 flex flex-col gap-3 border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
-      <div className="flex items-start justify-between gap-3">
+    <header className="sticky top-0 z-20 shrink-0 flex flex-col gap-3 lg:gap-0 border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
+      <div className="flex items-start justify-between gap-3 lg:gap-6">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
             Prepare invitation
@@ -38,15 +41,28 @@ export function PrepareInvitationHeader(props: Props) {
             {props.hasEmail ? `Will be emailed to ${props.email}.` : "No email on file."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={props.onCancel}
-          aria-label="Cancel and close tab"
-          title="Cancel"
-          className="shrink-0 -mr-1 rounded-md p-2 text-walnut-3 hover:text-bordeaux hover:bg-parchment-2 focus:outline-none focus:ring-2 focus:ring-bordeaux/30"
-        >
-          <RemoveIcon />
-        </button>
+        <div className="hidden lg:flex shrink-0 items-center gap-2">
+          <PrepareInvitationActionBar
+            busy={props.busy}
+            canSend={props.canSend}
+            canSendReason={props.canSendReason}
+            canSms={props.canSms}
+            canSmsReason={props.canSmsReason}
+            hasOverride={props.hasOverride}
+            speakerName={props.speakerName}
+            speakerEmail={props.speakerEmail}
+            speakerPhone={props.speakerPhone}
+            onRevert={props.onRevert}
+            onMarkInvited={props.onMarkInvited}
+            onPrint={props.onPrint}
+            onSend={props.onSend}
+            onSendSms={props.onSendSms}
+          />
+          <CancelButton onClick={props.onCancel} />
+        </div>
+        <div className="lg:hidden">
+          <CancelButton onClick={props.onCancel} />
+        </div>
       </div>
       <div className="lg:hidden flex justify-center">
         <PrepareInvitationActionBar
@@ -67,5 +83,19 @@ export function PrepareInvitationHeader(props: Props) {
         />
       </div>
     </header>
+  );
+}
+
+function CancelButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Cancel and close tab"
+      title="Cancel"
+      className="shrink-0 -mr-1 rounded-md p-2 text-walnut-3 hover:text-bordeaux hover:bg-parchment-2 focus:outline-none focus:ring-2 focus:ring-bordeaux/30"
+    >
+      <RemoveIcon />
+    </button>
   );
 }

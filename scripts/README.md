@@ -80,6 +80,26 @@ pnpm tsx scripts/_reset-ward.ts stv1
 Positional arg is the ward id; defaults to `stv1`. **Never run this against
 a real production project.**
 
+## sweep-orphan-invitations
+
+Each `sendSpeakerInvitation` call creates a brand-new
+`speakerInvitations/{autoId}` doc and rewires the speaker / prayer's
+`invitationId`. Prior invitation docs become orphans whose old SMS/email
+links keep resolving to stale content. This sweep deletes every
+`speakerInvitations/*` doc that no speaker / prayer currently references.
+
+Dry-run by default; pass `--commit` to actually delete.
+
+```sh
+# Dry-run against the local emulator
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
+GCLOUD_PROJECT=demo-steward \
+pnpm sweep-orphan-invitations --ward stv1
+
+# Commit against prod
+pnpm sweep-orphan-invitations --ward stv1 --project steward-prod-65a36 --commit
+```
+
 ## configure-conversation-roles (functions workspace)
 
 One-off Twilio admin: grants the default "channel user" conversation

@@ -67,50 +67,54 @@ export function PrepareInvitationActionBar({
   const printHandler = printTriggersMarkInvited ? () => setPending("printAndMarkInvited") : onPrint;
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="inline-flex isolate rounded-md shadow-[0_1px_0_rgba(35,24,21,0.08)]">
-        <GroupBtn
-          position="first"
-          label={hasOverride ? "Clear per-speaker override" : "Revert to ward default"}
-          indicator={hasOverride}
-          onClick={() => setPending("revert")}
-          disabled={busy}
-        >
-          <RevertIcon />
-        </GroupBtn>
-        <GroupBtn
-          position="mid"
-          label="Mark invited only"
-          onClick={() => setPending("markInvited")}
-          disabled={busy}
-        >
-          <CheckIcon />
-        </GroupBtn>
-        <GroupBtn
-          position="mid"
-          label={printTriggersMarkInvited ? "Print letter and mark invited" : "Print letter"}
-          onClick={printHandler}
-          disabled={busy}
-        >
-          <PrintIcon />
-        </GroupBtn>
-        <GroupBtn
-          position="mid"
-          label="Send SMS"
-          onClick={() => setPendingSend("sms")}
-          disabled={busy}
-        >
-          <SmsIcon />
-        </GroupBtn>
-        <GroupBtn
-          position="last"
-          label="Send email"
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="flex items-center gap-2">
+        <div className="inline-flex isolate rounded-md shadow-[0_1px_0_rgba(35,24,21,0.08)]">
+          <GroupBtn
+            position="first"
+            label={hasOverride ? "Clear per-speaker override" : "Revert to ward default"}
+            indicator={hasOverride}
+            onClick={() => setPending("revert")}
+            disabled={busy}
+          >
+            <RevertIcon />
+          </GroupBtn>
+          <GroupBtn
+            position="mid"
+            label="Mark invited only"
+            onClick={() => setPending("markInvited")}
+            disabled={busy}
+          >
+            <CheckIcon />
+          </GroupBtn>
+          <GroupBtn
+            position="mid"
+            label={printTriggersMarkInvited ? "Print letter and mark invited" : "Print letter"}
+            onClick={printHandler}
+            disabled={busy}
+          >
+            <PrintIcon />
+          </GroupBtn>
+          <GroupBtn
+            position="last"
+            label="Send SMS"
+            onClick={() => setPendingSend("sms")}
+            disabled={busy}
+          >
+            <SmsIcon />
+          </GroupBtn>
+        </div>
+        <button
+          type="button"
           onClick={() => setPendingSend("email")}
           disabled={busy}
-          primary
+          aria-label="Send Invitation"
+          title="Send Invitation"
+          className="inline-flex items-center gap-2 rounded-md border border-bordeaux-deep bg-bordeaux px-3.5 py-2 sm:px-4 sm:py-2.5 text-chalk font-sans text-[13px] font-semibold tracking-[0.01em] shadow-[0_1px_0_rgba(35,24,21,0.08)] transition-colors hover:bg-bordeaux-deep focus:outline-none focus:ring-2 focus:ring-bordeaux/40 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-bordeaux"
         >
           <SendIcon />
-        </GroupBtn>
+          <span>Send Invitation</span>
+        </button>
       </div>
       {hint && (
         <span className="font-serif italic text-[11px] sm:text-[11.5px] text-walnut-3">{hint}</span>
