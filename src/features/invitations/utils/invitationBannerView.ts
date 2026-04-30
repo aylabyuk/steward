@@ -1,4 +1,5 @@
 import type { Speaker, SpeakerInvitation } from "@/lib/types";
+import { assigneeNoun } from "./slotKindCopy";
 
 export interface BannerView {
   message: string;
@@ -18,15 +19,19 @@ export interface BannerView {
  *       hasn't acknowledged) surface the Apply affordance.
  *    3. Expiry falls through when there's no response and the status
  *       is still invited/planned.
- *    4. Plain "waiting for reply" / "not yet invited" fallback. */
+ *    4. Plain "waiting for reply" / "not yet invited" fallback.
+ *
+ *  All copy is kind-aware: prayer-giver chats read "Prayer giver…"
+ *  while speaker chats keep the original "Speaker…" wording. */
 export function deriveBannerView(speaker: Speaker, invitation: SpeakerInvitation): BannerView {
   const expired = isExpired(invitation.expiresAt);
   const response = invitation.response;
   const status = speaker.status ?? "planned";
+  const noun = assigneeNoun(invitation.kind);
 
   if (status === "confirmed") {
     return {
-      message: "Speaker has accepted the assignment",
+      message: `${noun} has accepted the assignment`,
       bg: "bg-gradient-to-br from-success-soft to-success-soft/60",
       text: "text-success",
       showApply: false,
@@ -35,7 +40,7 @@ export function deriveBannerView(speaker: Speaker, invitation: SpeakerInvitation
   }
   if (status === "declined") {
     return {
-      message: "Speaker declined the invitation",
+      message: `${noun} declined the invitation`,
       bg: "bg-gradient-to-br from-danger-soft to-danger-soft/60",
       text: "text-bordeaux",
       showApply: false,
@@ -44,7 +49,7 @@ export function deriveBannerView(speaker: Speaker, invitation: SpeakerInvitation
   }
   if (response?.answer === "yes" && !response.acknowledgedAt) {
     return {
-      message: "Speaker has accepted the assignment, but you need to confirm first.",
+      message: `${noun} has accepted the assignment, but you need to confirm first.`,
       bg: "bg-gradient-to-br from-warning-soft to-warning-soft/60",
       text: "text-brass-deep",
       showApply: true,
@@ -53,7 +58,7 @@ export function deriveBannerView(speaker: Speaker, invitation: SpeakerInvitation
   }
   if (response?.answer === "no" && !response.acknowledgedAt) {
     return {
-      message: "Speaker has declined. Acknowledge to update the schedule.",
+      message: `${noun} has declined. Acknowledge to update the schedule.`,
       bg: "bg-gradient-to-br from-danger-soft to-danger-soft/60",
       text: "text-bordeaux",
       showApply: true,
@@ -62,7 +67,7 @@ export function deriveBannerView(speaker: Speaker, invitation: SpeakerInvitation
   }
   if (expired) {
     return {
-      message: "Invitation expired before the speaker replied.",
+      message: `Invitation expired before the ${noun.toLowerCase()} replied.`,
       bg: "bg-gradient-to-br from-parchment-2 to-parchment",
       text: "text-walnut-2",
       showApply: false,
@@ -71,7 +76,7 @@ export function deriveBannerView(speaker: Speaker, invitation: SpeakerInvitation
   }
   if (status === "invited") {
     return {
-      message: "Waiting for speaker's reply.",
+      message: `Waiting for ${noun.toLowerCase()}'s reply.`,
       bg: "bg-gradient-to-br from-warning-soft to-warning-soft/60",
       text: "text-brass-deep",
       showApply: false,
@@ -99,20 +104,25 @@ function isExpired(value: unknown): boolean {
 
 /** Format the speaker's last-seen heartbeat for the chat read-receipt
  *  line. Buckets: live (< 2 min, 1× heartbeat cadence of slack),
- *  minutes-ago (< 1 h), same-day clock time, other-day short date. */
-export function formatLastSeen(value: unknown): string | null {
+ *  minutes-ago (< 1 h), same-day clock time, other-day short date.
+ *  Kind-aware so prayer chats read "Prayer giver last seen". */
+export function formatLastSeen(
+  value: unknown,
+  kind: SpeakerInvitation["kind"] = "speaker",
+): string | null {
   const ts = value as Partial<FirestoreTimestampLike> | undefined;
   if (!ts || typeof ts.toDate !== "function") return null;
   const seenAt = ts.toDate();
   const ageMs = Date.now() - seenAt.getTime();
-  if (ageMs < 2 * 60_000) return "Speaker is viewing the chat now";
+  const noun = assigneeNoun(kind);
+  if (ageMs < 2 * 60_000) return `${noun} is viewing the chat now`;
   if (ageMs < 60 * 60_000) {
     const mins = Math.round(ageMs / 60_000);
-    return `Speaker last seen · ${mins} min ago`;
+    return `${noun} last seen · ${mins} min ago`;
   }
   const sameDay = new Date().toDateString() === seenAt.toDateString();
   if (sameDay) {
-    return `Speaker last seen · ${seenAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
+    return `${noun} last seen · ${seenAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
   }
-  return `Speaker last seen · ${seenAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+  return `${noun} last seen · ${seenAt.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 }

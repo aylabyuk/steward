@@ -78,14 +78,14 @@ export function MobileSundayBlock({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {kind.badge && (
+          {kind.compact && (
             <span
               className={cn(
                 "font-mono text-[9.5px] uppercase tracking-[0.16em] px-2 py-0.75 border rounded-full whitespace-nowrap",
                 BADGE_CLS[kind.variant],
               )}
             >
-              {kind.badge}
+              {kind.compact}
             </span>
           )}
           <SundayTypeMenu

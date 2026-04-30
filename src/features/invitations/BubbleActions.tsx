@@ -94,9 +94,7 @@ export function BubbleActions({
               }}
               className={cn(
                 "rounded-full text-[18px] leading-none w-8 h-8 flex items-center justify-center transition-colors",
-                mineReaction
-                  ? "bg-danger-soft ring-1 ring-bordeaux/40"
-                  : "hover:bg-parchment-2",
+                mineReaction ? "bg-danger-soft ring-1 ring-bordeaux/40" : "hover:bg-parchment-2",
               )}
             >
               {emoji}

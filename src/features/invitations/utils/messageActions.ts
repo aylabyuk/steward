@@ -108,6 +108,7 @@ function isStructural(m: ChatMessage): boolean {
   if (!m.attributes) return false;
   if (m.attributes.kind === "status-change") return true;
   if (m.attributes.kind === "invitation") return true;
+  if (m.attributes.kind === "message-deleted") return true;
   if (m.attributes.responseType === "yes" || m.attributes.responseType === "no") return true;
   return false;
 }

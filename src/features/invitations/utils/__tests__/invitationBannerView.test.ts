@@ -111,4 +111,26 @@ describe("formatLastSeen", () => {
       /10 min ago/,
     );
   });
+
+  it("prayer kind switches noun", () => {
+    expect(formatLastSeen({ toDate: () => new Date(Date.now() - 10 * 60_000) }, "prayer")).toMatch(
+      /Prayer giver last seen/,
+    );
+  });
+});
+
+describe("deriveBannerView — kind awareness", () => {
+  it("prayer kind reads as Prayer giver", () => {
+    const inv = invitationWith();
+    (inv as { kind?: string }).kind = "prayer";
+    const view = deriveBannerView(speakerWith("confirmed"), inv);
+    expect(view.message).toMatch(/Prayer giver/);
+  });
+
+  it("prayer kind waiting copy", () => {
+    const inv = invitationWith();
+    (inv as { kind?: string }).kind = "prayer";
+    const view = deriveBannerView(speakerWith("invited"), inv);
+    expect(view.message).toMatch(/Waiting for prayer giver/);
+  });
 });

@@ -15,6 +15,7 @@ import { useTypingParticipants } from "./hooks/useTypingParticipants";
 import { useSpeakerHeartbeat } from "./hooks/useSpeakerHeartbeat";
 import { useTwilioChat } from "./TwilioChatProvider";
 import { writeSpeakerResponse } from "./utils/invitationActions";
+import { postMessageDeletedNotice } from "./utils/messageDeletedNotice";
 import { removeMessage, toggleMessageReaction, updateMessageBody } from "./utils/messageMutations";
 import { buildSpeakerAuthorMap } from "./utils/speakerAuthorMap";
 
@@ -144,6 +145,11 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
     });
   }
 
+  async function onDelete(sid: string) {
+    await removeMessage(conversation, sid);
+    await postMessageDeletedNotice(conversation, props.speakerName);
+  }
+
   return (
     <section
       className={
@@ -169,7 +175,7 @@ export function SpeakerInvitationChat(props: Props): React.ReactElement {
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
         {...(props.fillHeight ? { fillHeight: true } : {})}
-        onDeleteMessage={(sid) => removeMessage(conversation, sid)}
+        onDeleteMessage={onDelete}
         onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
         {...(twilio.identity
           ? {

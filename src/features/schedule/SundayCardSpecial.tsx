@@ -62,19 +62,21 @@ export function SundayCardSpecial({
       <p className="font-serif italic text-[13.5px] text-walnut-2 leading-[1.5] mt-1.5 mb-3">
         {description}
       </p>
-      <ul className="list-none m-0 p-0 mb-2 mt-auto border-t border-border pt-1">
-        <PrayerRow
-          role="opening"
-          date={date}
-          inlineName={meeting?.openingPrayer?.person?.name ?? ""}
-        />
-        <PrayerRow
-          role="benediction"
-          date={date}
-          inlineName={meeting?.benediction?.person?.name ?? ""}
-        />
-      </ul>
-      {!hidePlanLink && (
+      {variant === "fast" && (
+        <ul className="list-none m-0 p-0 mb-2 mt-auto border-t border-border pt-1">
+          <PrayerRow
+            role="opening"
+            date={date}
+            inlineName={meeting?.openingPrayer?.person?.name ?? ""}
+          />
+          <PrayerRow
+            role="benediction"
+            date={date}
+            inlineName={meeting?.benediction?.person?.name ?? ""}
+          />
+        </ul>
+      )}
+      {variant === "fast" && !hidePlanLink && (
         <Link
           to={`/plan/${date}/prayers`}
           className="inline-flex items-center gap-1.5 text-[13px] font-sans font-semibold text-bordeaux hover:text-bordeaux-deep transition-colors py-1.5 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"

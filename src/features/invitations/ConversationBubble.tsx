@@ -4,11 +4,7 @@ import { cn } from "@/lib/cn";
 import { BubbleActions } from "./BubbleActions";
 import { BubbleEditForm } from "./BubbleEditForm";
 import type { ChatMessage } from "./hooks/useConversation";
-import {
-  isReactionsNonEmpty,
-  orderedReactionEntries,
-  reactionIncludes,
-} from "./utils/reactions";
+import { isReactionsNonEmpty, orderedReactionEntries, reactionIncludes } from "./utils/reactions";
 
 export type BubblePosition = "single" | "first" | "middle" | "last";
 

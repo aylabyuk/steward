@@ -150,7 +150,7 @@ export function ConversationThread({
           if (item.kind === "day") return <DayDivider key={item.key} label={item.label} />;
           if (item.kind === "unread") return <UnreadDivider key={item.key} />;
           if (item.kind === "system")
-            return <SystemNotice key={item.key} body={item.body} status={item.status} />;
+            return <SystemNotice key={item.key} body={item.body} tone={item.tone} />;
           return (
             <ConversationGroup
               key={item.key}

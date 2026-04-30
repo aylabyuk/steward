@@ -30,14 +30,15 @@ const ROLE_LABEL: Record<PrayerRole, string> = {
 
 const ROLE_SUBTITLE: Record<PrayerRole, string> = {
   opening: "Invocation",
-  benediction: "Benediction",
+  benediction: "Closing Prayer",
 };
 
 const ROLE_WIDTH_CLS = "w-6";
 
 /** Sunday-card row for a prayer slot. Mirrors `SpeakerRow`'s rhythm:
- *  role label, name, status pill, chat launcher. Falls back to
- *  `EmptyRosterRow` when no name is set so unfilled prayer slots
+ *  name primary, role label as italic-serif subtitle (parity with the
+ *  speaker row's topic line), status pill, chat launcher. Falls back
+ *  to `EmptyRosterRow` when no name is set so unfilled prayer slots
  *  share their height + look with the speaker placeholder slots. */
 export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
@@ -52,11 +53,6 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
 
   return (
     <li className="flex items-center gap-3 h-16 border-b border-border last:border-b-0">
-      <div
-        className={`font-mono text-[10.5px] tracking-[0.08em] text-brass-deep shrink-0 ${ROLE_WIDTH_CLS}`}
-      >
-        {ROLE_LABEL[role]}
-      </div>
       <div className="flex-1 min-w-0">
         <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
         <div className="font-serif italic text-sm text-walnut-2 truncate">

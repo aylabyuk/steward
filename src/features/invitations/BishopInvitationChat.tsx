@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { upsertPrayerParticipant } from "@/features/prayers/utils/prayerActions";
 import { updateSpeaker } from "@/features/speakers/utils/speakerActions";
-import type { PrayerRole } from "@/lib/types";
 import { useWardMembers } from "@/hooks/useWardMembers";
 import { useAuthStore } from "@/stores/authStore";
-import type { Speaker, SpeakerInvitation, SpeakerStatus } from "@/lib/types";
+import type { PrayerRole, Speaker, SpeakerInvitation, SpeakerStatus } from "@/lib/types";
 import { ConversationComposer } from "./ConversationComposer";
 import { ConversationThread } from "./ConversationThread";
 import { InvitationStatusBanner } from "./InvitationStatusBanner";
 import { TypingIndicator } from "./TypingIndicator";
 import { applyResponseToSpeaker } from "./utils/invitationActions";
 import { callIssueSpeakerSession } from "./utils/invitationsCallable";
+import { postMessageDeletedNotice } from "./utils/messageDeletedNotice";
 import { removeMessage, toggleMessageReaction, updateMessageBody } from "./utils/messageMutations";
 import { noteBishopStatusChange } from "./utils/statusChangeNotice";
 import { useBishopAuthors } from "./hooks/useBishopAuthors";
@@ -79,6 +79,7 @@ export function BishopInvitationChat({
         meetingDate: date,
         status: next,
         conversation,
+        slotKind: invitation.kind,
       });
     } catch (err) {
       setApplyError((err as Error).message);
@@ -129,6 +130,12 @@ export function BishopInvitationChat({
     }
   }
 
+  async function onDelete(sid: string) {
+    await removeMessage(conversation, sid);
+    const me = members.data.find((m) => m.id === user?.uid)?.data.displayName ?? "Bishopric";
+    await postMessageDeletedNotice(conversation, me);
+  }
+
   return (
     <section className="bg-chalk flex-1 flex flex-col min-h-0 overflow-hidden">
       <InvitationStatusBanner
@@ -150,7 +157,7 @@ export function BishopInvitationChat({
         firstUnreadIndex={firstUnreadIndex}
         readHorizonIndex={readHorizon}
         fillHeight
-        onDeleteMessage={(sid) => removeMessage(conversation, sid)}
+        onDeleteMessage={onDelete}
         onEditMessage={(sid, next) => updateMessageBody(conversation, sid, next)}
         {...(twilio.identity
           ? {

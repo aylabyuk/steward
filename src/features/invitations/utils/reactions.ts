@@ -20,14 +20,7 @@ export const EMPTY_REACTIONS: Reactions = Object.freeze({});
 
 /** Fixed 6-emoji palette. Single source of truth for the
  *  cross-platform set — neither client should hard-code its own. */
-export const REACTION_PALETTE: readonly string[] = [
-  "👍",
-  "❤️",
-  "🙏",
-  "✅",
-  "😊",
-  "😮",
-];
+export const REACTION_PALETTE: readonly string[] = ["👍", "❤️", "🙏", "✅", "😊", "😮"];
 
 export function isReactionsNonEmpty(r: Reactions): boolean {
   return Object.keys(r).length > 0;
