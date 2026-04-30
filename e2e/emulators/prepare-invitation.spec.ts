@@ -188,6 +188,34 @@ test.describe("Prepare Invitation page", () => {
     ).toBeLessThanOrEqual(1);
   });
 
+  test("prayer prepare page also surfaces the Send CTA + edge-to-edge toolbar", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/week/${MEETING_DATE}/prayer/${PRAYER_ROLE}/prepare`);
+    await expect(page.getByRole("heading", { name: "Brother Pray" })).toBeVisible({
+      timeout: 10_000,
+    });
+    const cta = page.getByRole("button", { name: /send invitation/i });
+    await expect(cta).toBeVisible();
+    expect(
+      await cta.evaluate((el) => Boolean(el.closest("header"))),
+      "prayer CTA must live in the page header",
+    ).toBe(true);
+    const toolbar = page.locator(".tb-toolbar").first();
+    await expect(toolbar).toBeVisible({ timeout: 10_000 });
+    const rect = await toolbar.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { left: r.left, right: r.right };
+    });
+    const vpWidth = page.viewportSize()?.width ?? 0;
+    expect(rect.left, "prayer toolbar left should hit viewport edge").toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(rect.right - vpWidth),
+      "prayer toolbar right should hit viewport edge",
+    ).toBeLessThanOrEqual(1);
+  });
+
   test("bishop's edits persist to letterOverride.editorStateJson before any send", async ({
     page,
   }) => {

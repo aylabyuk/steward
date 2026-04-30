@@ -136,7 +136,7 @@ export function PreparePrayerInvitationPage() {
         onCancel={() => window.close()}
         {...toolbarProps}
       />
-      <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
+      <div className="flex-1 min-h-0 lg:overflow-hidden">
         {form.hydrated ? (
           <PrepareInvitationLetterTab
             initialJson={form.initialJson}
@@ -150,9 +150,13 @@ export function PreparePrayerInvitationPage() {
             vars={vars}
           />
         ) : (
-          <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
+          <p className="px-5 sm:px-8 pt-5 pb-4 font-serif italic text-[14px] text-walnut-3">
+            Loading letter…
+          </p>
         )}
-        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
+        {form.error && (
+          <p className="px-5 sm:px-8 mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>
+        )}
       </div>
     </main>
   );
