@@ -145,4 +145,3 @@ export async function createFreshInvitation(
 
   return { mode: "fresh", token: docRef.id, conversationSid, deliveryRecord };
 }
-

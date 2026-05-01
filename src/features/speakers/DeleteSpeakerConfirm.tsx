@@ -62,7 +62,9 @@ export function DeleteSpeakerConfirm({
   const target = speakerName.trim();
   const matches = typed.trim().toLowerCase() === target.toLowerCase() && target.length > 0;
   const warning =
-    kind === "prayer" ? PRAYER_STATUS_WARNING[speakerStatus] : SPEAKER_STATUS_WARNING[speakerStatus];
+    kind === "prayer"
+      ? PRAYER_STATUS_WARNING[speakerStatus]
+      : SPEAKER_STATUS_WARNING[speakerStatus];
   const titleVerb = kind === "prayer" ? "Remove" : "Delete";
   const bodyText =
     kind === "prayer"

@@ -72,5 +72,4 @@ describe("PrepareInvitationActionBar — SMS", () => {
     await userEvent.click(cancelBtns[cancelBtns.length - 1]!);
     expect(onSendSms).not.toHaveBeenCalled();
   });
-
 });

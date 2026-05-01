@@ -47,9 +47,7 @@ export async function stampParticipantInvited(input: StampInput): Promise<void> 
 
   if (isPrayer) {
     if (!prayerRole) return;
-    const participantRef = db.doc(
-      `wards/${wardId}/meetings/${meetingDate}/prayers/${prayerRole}`,
-    );
+    const participantRef = db.doc(`wards/${wardId}/meetings/${meetingDate}/prayers/${prayerRole}`);
     const meetingField = prayerRole === "opening" ? "openingPrayer" : "benediction";
     const batch = db.batch();
     batch.set(
@@ -67,11 +65,7 @@ export async function stampParticipantInvited(input: StampInput): Promise<void> 
       },
       { merge: true },
     );
-    batch.set(
-      meetingRef,
-      { [meetingField]: { person: { name: speakerName } } },
-      { merge: true },
-    );
+    batch.set(meetingRef, { [meetingField]: { person: { name: speakerName } } }, { merge: true });
     await batch.commit();
     return;
   }

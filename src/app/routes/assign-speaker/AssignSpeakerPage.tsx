@@ -139,8 +139,12 @@ export function AssignSpeakerPage() {
               onStatusChange,
               members,
               currentUserUid,
-              ...(existing.data.statusSource ? { currentStatusSource: existing.data.statusSource } : {}),
-              ...(existing.data.statusSetBy ? { currentStatusSetBy: existing.data.statusSetBy } : {}),
+              ...(existing.data.statusSource
+                ? { currentStatusSource: existing.data.statusSource }
+                : {}),
+              ...(existing.data.statusSetBy
+                ? { currentStatusSetBy: existing.data.statusSetBy }
+                : {}),
             }
           : {})}
       />
