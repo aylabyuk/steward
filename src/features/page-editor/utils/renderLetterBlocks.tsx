@@ -65,6 +65,25 @@ export function renderSignature(node: { closing?: string; signatory?: string }, 
   );
 }
 
+/** Mirrors `AssignedSundayCalloutView` (the editor decorator) so the
+ *  PDF / invite-landing / iOS-embed paths render the same gradient
+ *  brass callout the bishop sees while authoring. */
+export function renderAssignedSundayCallout(key: string, assignedDate: string | null | undefined) {
+  return (
+    <div
+      key={key}
+      className="my-5 px-6 py-4 bg-linear-to-b from-brass-soft/15 to-brass-soft/5 border-l-2 border-brass rounded-r-md"
+    >
+      <div className="font-mono text-[9.5px] tracking-[0.22em] uppercase text-brass-deep mb-2">
+        Assigned Sunday
+      </div>
+      <div className="font-display text-[22px] italic text-walnut">
+        {assignedDate ?? "Assigned Sunday — set per speaker"}
+      </div>
+    </div>
+  );
+}
+
 export function renderImage(
   node: { src?: string; alt?: string; widthPct?: number; caption?: string },
   key: string,
