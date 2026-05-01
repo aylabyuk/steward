@@ -142,19 +142,13 @@ sequenceDiagram
     rect rgb(255,255,235)
     Note over Bishop,SpkPhone: Phase 7 — Bishop replies in chat (later)
     Bishop->>Twilio: Conversation message
-    Twilio->>Fn: onTwilioWebhook
-    par Notify speaker
-        Fn->>Fn: Check speaker heartbeat (online?)
-        alt offline (>120s)
-            Fn->>Fn: Rotate token (no daily cap)
-            Fn->>Twilio: SMS w/ fresh invite URL
-            Twilio->>SpkPhone: SMS: bishop replied
-            Fn->>SG: Email: bishop replied
-            SG->>SpkEmail: Inbox
-        else online
-            Note over Fn: Skip SMS — speaker is reading chat live
-        end
-    and Notify other bishopric
+    par Native SMS bridge
+        Twilio->>SpkPhone: SMS to speaker's bound number
+        Note over Twilio,SpkPhone: Twilio Conversations broadcasts the<br/>chat message to the speaker's<br/>SMS-bound participant — single<br/>combined participant suppresses<br/>echo back to web sender
+    and Webhook fans out
+        Twilio->>Fn: onTwilioWebhook
+        Fn->>SG: Email: bishop replied
+        SG->>SpkEmail: Inbox
         Fn->>FCM: Push to other active bishopric
     end
     end
@@ -185,6 +179,7 @@ sequenceDiagram
 The diagrams omit a few branches that exist in the code but would clutter the picture. Pointers for when you need them:
 
 - **Quiet hours / timezone filtering on FCM pushes** — applied per-recipient inside `notifyBishopricOfResponse` and the reply-push helpers.
+- **Single combined speaker participant** — the speaker's chat identity and SMS messagingBinding live on a single Twilio Conversations participant (not two separate ones). Twilio uses this to suppress echoes back to the web-side sender when the speaker submits a Yes/No from the invite page.
 - **Per-template variable interpolation** (`{{speakerName}}`, `{{topic}}`, `{{wardName}}`, …) — handled by `messageTemplates.ts` in `functions/src/`.
 - **Speaker vs prayer template keys** — every notification lookup branches on `kind` to pick the right template (e.g. `speakerResponseAccepted` vs `prayerResponseAccepted`). Parity was finished in commit `8660a98`.
 - **Twilio Conversation cleanup on re-send** — `freshInvitation.ts` deletes any prior Conversation for the same (ward, speaker, meeting) before creating a new one.

@@ -7,6 +7,79 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.20.1] — 2026-05-01
+
+Same-day follow-up to v0.20.0. Restores SMS bridging that broke under
+prod retest after PR #217 — a participant-model bug where the
+speaker's chat identity and SMS messagingBinding lived on two
+separate Twilio Conversations participants. The split caused the
+speaker's web-side Yes/No answer to echo back to their own phone as
+SMS, and made every bishop chat reply arrive twice (Twilio native
+broadcast plus Steward's wrapped notification SMS). Combined into a
+single participant per speaker so Twilio de-dupes correctly. Same
+release also refreshes the invitation SMS + email copy to address
+the recipient by name and direct replies into the in-app chat
+instead of plain SMS.
+
+### Changed
+
+- **Invitation SMS + email copy refreshed** — speakers and prayer
+  participants are now greeted by name (`{{speakerName}}`),
+  speakers see their topic on the body line (with the project's
+  standard "Topic of Choice" fallback when no topic is set), and
+  the CTA leads recipients into the in-app chat instead of replying
+  via SMS. Lower per-message Twilio cost on back-and-forth replies
+  + richer context for the bishopric. Defaults updated server-side
+  + on the client mirror in `src/features/templates/utils/`; the
+  drift check in `messageTemplates.test.ts` still asserts the two
+  sides match.
+
+### Fixed
+
+- **Speaker SMS reply landing in the wrong chat** — Twilio enforces
+  uniqueness on `(phone, proxyAddress)` pairs across all active
+  conversations, but `cleanupPriorConversations` only cleared
+  bindings scoped to the same `(speakerId, meetingDate)`. Repeated
+  invites to the same phone with different speakers (family-shared
+  phones, test churn) left a stale binding owning the routing —
+  inbound SMS replies arrived in the wrong (older) conversation.
+  New `freePhoneBindingConflicts` helper walks
+  `participantConversations.list({ address })` and removes any
+  conflicting binding before the new participant is created.
+- **"Yes, I can speak." echoed back to speakers via SMS** — when
+  the speaker submitted Yes/No on the web invite page, the chat
+  message authored by their chat-identity participant got broadcast
+  by Twilio to the SMS-only participant — Twilio couldn't tell
+  they were the same human. Speakers received their own answer
+  back on their phone. Combined the chat identity and SMS binding
+  onto a single participant via the new `addSpeakerParticipant`
+  helper; Twilio now suppresses the echo automatically.
+- **"Unknown" displayName on SMS-originated messages in the bishop
+  chat** — the SMS-only participant carried no `attributes`, so
+  the bishop's chat UI couldn't resolve a name for the speaker on
+  inbound SMS. The combined participant now carries the
+  `displayName` + `role` attributes alongside the binding.
+- **Duplicate bishop-reply SMS arriving on the speaker's phone** —
+  pre-PR-217 the speaker had no SMS binding, so Steward's
+  `smsSpeaker` was the only path for bishop chat messages to reach
+  the speaker via SMS. PR-217 changed that — Twilio Conversations
+  now natively broadcasts bishop messages to the speaker's
+  SMS-bound participant. `smsSpeaker` became a duplicate.
+  Removed it from the bishop-reply branch in `onTwilioWebhook`;
+  `emailSpeaker` and `pushToBishopric` still run.
+  Side effect: Steward no longer rotates the token + sends a
+  fresh URL on each bishop reply. Speakers re-enter the chat via
+  their original invite URL or the existing rotation self-heal
+  (presenting a consumed token triggers a fresh-URL SMS).
+
+### Infrastructure
+
+- **`docs/invitation-flow.md` Phase 7 updated** to reflect the
+  Twilio-native SMS bridge (in parallel with the webhook fan-out)
+  rather than Steward's prior wrapped-SMS step. Added a note in
+  the simplified-out callout describing the combined-participant
+  rationale.
+
 ## [0.20.0] — 2026-05-01
 
 Security + reliability cycle. Speaker SMS replies now actually bridge
@@ -2387,7 +2460,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.20.1...HEAD
+[0.20.1]: https://github.com/aylabyuk/steward/releases/tag/v0.20.1
 [0.20.0]: https://github.com/aylabyuk/steward/releases/tag/v0.20.0
 [0.19.0]: https://github.com/aylabyuk/steward/releases/tag/v0.19.0
 [0.18.0]: https://github.com/aylabyuk/steward/releases/tag/v0.18.0
