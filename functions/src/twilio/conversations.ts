@@ -83,6 +83,48 @@ export async function addSmsParticipant(
   return p.sid;
 }
 
+/** Frees the speaker phone's existing SMS binding(s) on this
+ *  Conversations service before a new conversation tries to claim it.
+ *  Twilio enforces uniqueness on (address, proxyAddress) pairs across
+ *  all active conversations — without this cleanup, the second
+ *  `addSmsParticipant` call for the same phone fails and inbound SMS
+ *  routes to whichever conversation already owns the binding (often
+ *  not the most recent one).
+ *
+ *  Real-world cases this catches:
+ *  - Family-shared phone: the bishop sent invite to spouse A, then to
+ *    spouse B. Most-recent-invite wins for SMS routing on that phone.
+ *  - Test/staging churn: repeated invites to the same phone with
+ *    different speakerIds (so `cleanupPriorConversations` doesn't
+ *    catch them via its speakerId+meetingDate filter).
+ *  - Stale state: any conversation orphaned by an earlier deploy
+ *    error or manual cleanup that left bindings behind.
+ *
+ *  Removes only the SMS participant, not the whole conversation —
+ *  the prior chat history (web side, bishopric identities) survives
+ *  and remains viewable by the bishop. */
+export async function freePhoneBindingConflicts(
+  speakerPhoneE164: string,
+  twilioFromNumber: string,
+): Promise<void> {
+  const svc = service();
+  const conflicts = await svc.participantConversations.list({ address: speakerPhoneE164 });
+  for (const c of conflicts) {
+    const binding = c.participantMessagingBinding as
+      | { address?: string; proxy_address?: string; type?: string }
+      | undefined;
+    if (
+      binding?.type !== "sms" ||
+      binding.address !== speakerPhoneE164 ||
+      binding.proxy_address !== twilioFromNumber
+    ) {
+      continue;
+    }
+    if (!c.conversationSid || !c.participantSid) continue;
+    await svc.conversations(c.conversationSid).participants(c.participantSid).remove();
+  }
+}
+
 export interface PostMessageInput {
   conversationSid: string;
   author: string;

@@ -56,7 +56,12 @@ export async function tryEmail(
       wardName: args.wardName,
       inviterName: args.inviterName,
       inviteUrl: args.inviteUrl,
-      ...(args.topic ? { topic: args.topic } : {}),
+      // Speaker template references `{{topic}}`; coerce to the
+      // project's standard "Topic of Choice" fallback (matches the
+      // schedule + program-editor surfaces from v0.19.0) when the
+      // speaker hasn't been assigned a specific topic. Harmless for
+      // prayer emails — their template doesn't reference `{{topic}}`.
+      topic: args.topic ?? "Topic of Choice",
       ...(args.prayerType ? { prayerType: args.prayerType } : {}),
     };
     const messageId = await sendEmail({
@@ -78,13 +83,26 @@ export async function tryEmail(
 
 async function buildInitialInvitationSms(
   wardId: string,
-  vars: Pick<EmailArgs, "inviterName" | "wardName" | "assignedDate" | "inviteUrl"> & {
+  vars: Pick<
+    EmailArgs,
+    "speakerName" | "inviterName" | "wardName" | "assignedDate" | "inviteUrl"
+  > & {
     prayerType?: string;
+    topic?: string;
   },
 ): Promise<string> {
   const key = vars.prayerType ? "prayerInitialInvitationSms" : "initialInvitationSms";
   const template = await readMessageTemplate(getFirestore(), wardId, key);
-  return interpolate(template, vars);
+  // Speaker SMS template references `{{topic}}`; coerce to the
+  // project's standard "Topic of Choice" fallback so the rendered
+  // SMS reads naturally when the speaker has no specific topic. The
+  // prayer SMS template doesn't reference `{{topic}}`, so the
+  // fallback value is unused on that path.
+  const interpolationVars = {
+    ...vars,
+    topic: vars.topic ?? "Topic of Choice",
+  };
+  return interpolate(template, interpolationVars);
 }
 
 export async function trySms(
@@ -118,6 +136,11 @@ export async function sendInvitationSms(args: {
   assignedDate: string;
   speakerName: string;
   inviteUrl: string;
+  /** Speaker's assigned topic — interpolated into `{{topic}}` in the
+   *  speaker SMS template. Optional: when unset, `buildInitialInvitationSms`
+   *  applies the project's "Topic of Choice" fallback. Unused on the
+   *  prayer SMS template path (which doesn't reference `{{topic}}`). */
+  topic?: string;
   fromMode?: FromNumberMode;
 }): Promise<{ providerId: string }> {
   const body = await buildInitialInvitationSms(args.wardId, args);
