@@ -2,6 +2,7 @@
  *  of `renderLetterState` to keep the entry file under the per-file
  *  LOC cap. Each function maps one DecoratorNode's serialized shape
  *  to its read-only React presentation. */
+import { isSafeImageSrc } from "./sanitize";
 
 export function renderLetterhead(
   node: { eyebrow?: string; title?: string; subtitle?: string },
@@ -88,7 +89,10 @@ export function renderImage(
   node: { src?: string; alt?: string; widthPct?: number; caption?: string },
   key: string,
 ) {
-  if (!node.src) return null;
+  // `data:image/svg+xml,...` and other non-allowlisted schemes drop
+  // through here — sanitize.ts allows http(s), same-origin paths, and
+  // base64 raster data URLs. Falsy / rejected sources render nothing.
+  if (!isSafeImageSrc(node.src)) return null;
   return (
     <figure
       key={key}
