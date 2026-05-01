@@ -88,13 +88,6 @@ export function PrayerLetterTemplatePage(): React.ReactElement {
               System default — save to lock in
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => window.close()}
-            className="shrink-0 rounded-md border border-border-strong bg-chalk px-3 py-1.5 font-sans text-[12.5px] font-semibold text-walnut-2 hover:bg-parchment-2"
-          >
-            Close
-          </button>
         </div>
       </header>
 

@@ -3,10 +3,11 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 
 /** Templates → Program templates section. The conducting + congregation
  *  program editors share a dedicated full-viewport page (Lexical with
- *  variable chips and a live preview), so this section is a CTA card
- *  that links out in a new tab. The CTA is disabled on phone-class
- *  viewports — the editor itself shows a "Desktop only" notice if
- *  the user reaches the URL another way. */
+ *  variable chips), so this section is a CTA card that navigates to
+ *  the editor (same tab; the editor's own back arrow returns here).
+ *  The CTA is disabled on phone-class viewports — the editor itself
+ *  shows a "Desktop only" notice if the user reaches the URL another
+ *  way. */
 export function ProgramTemplatesSection(): React.ReactElement {
   const isMobile = useIsMobile();
   return (
@@ -36,46 +37,24 @@ export function ProgramTemplatesSection(): React.ReactElement {
         <p className="font-serif text-[13.5px] text-walnut-2 max-w-md">
           {isMobile
             ? "Open this on a laptop or tablet — the editor lays out the program at print size."
-            : "Editor opens in a dedicated tab with a side-by-side preview using sample meeting data."}
+            : "Edit the conducting and congregation copies. Variable chips render against sample meeting data so the editor reads as the printed page."}
         </p>
         {isMobile ? (
           <span
             aria-disabled="true"
-            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border bg-parchment-2 text-walnut-3 cursor-not-allowed"
+            className="inline-flex items-center shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border bg-parchment-2 text-walnut-3 cursor-not-allowed"
           >
             Open editor
-            <NewTabIcon />
           </span>
         ) : (
           <Link
             to="/settings/templates/programs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] transition-colors"
+            className="inline-flex items-center shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] transition-colors"
           >
             Open editor
-            <NewTabIcon />
           </Link>
         )}
       </div>
     </section>
-  );
-}
-
-function NewTabIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M7 17L17 7M7 7h10v10" />
-    </svg>
   );
 }

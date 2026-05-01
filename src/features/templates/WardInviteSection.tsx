@@ -44,6 +44,17 @@ export function WardInviteSection(): React.ReactElement {
   const canEdit = Boolean(me?.data.active);
   const wardName = ward.data?.name ?? "";
 
+  const sampleVars = useMemo<Record<string, string>>(
+    () => ({
+      inviteeName: "Brother Dan Joe",
+      wardName: wardName || "Your Ward",
+      inviterName: me?.data.displayName ?? "Bishop",
+      calling: "executive secretary",
+      role: "clerk",
+    }),
+    [wardName, me?.data.displayName],
+  );
+
   const preview = useMemo(
     () =>
       renderWardInviteMessage(
@@ -89,7 +100,7 @@ export function WardInviteSection(): React.ReactElement {
       <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
         Preview — sample data
       </div>
-      <pre className="rounded-md border border-border bg-parchment-2/60 p-4 font-serif text-[13px] text-walnut-2 leading-relaxed whitespace-pre-wrap break-words min-h-24">
+      <pre className="rounded-md border border-border bg-parchment-2/60 p-4 font-serif text-[13px] text-walnut-2 leading-relaxed whitespace-pre-wrap wrap-break-word min-h-24">
         {preview}
       </pre>
     </aside>
@@ -103,13 +114,13 @@ export function WardInviteSection(): React.ReactElement {
         title="Ward invitation message"
         description={DESCRIPTION}
         variables={VARIABLES}
+        sampleVars={sampleVars}
         editorLabel="Invitation greeting"
         canEdit={canEdit}
         saving={saving}
         error={error}
         body={body}
         defaultBody={DEFAULT_WARD_INVITE_BODY}
-        previewNode={previewNode}
         onBodyChange={setBody}
         onSave={handleSave}
         onReset={() => setBody(DEFAULT_WARD_INVITE_BODY)}
@@ -131,12 +142,14 @@ export function WardInviteSection(): React.ReactElement {
         title="Ward invitation message"
         description={DESCRIPTION}
         variables={VARIABLES}
+        sampleVars={sampleVars}
         editorLabel="Invitation greeting"
         canEdit={canEdit}
         saving={saving}
         error={error}
         body={body}
         defaultBody={DEFAULT_WARD_INVITE_BODY}
+        dirty={body !== bodyBeforeEdit}
         onChange={setBody}
         onSave={handleSave}
         onCancel={cancelEditor}

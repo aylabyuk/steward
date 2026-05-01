@@ -2,12 +2,12 @@ import { Link } from "@/lib/nav";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
 /** Templates → Speaker invitation letter section. The letter editor
- *  needs the full viewport for its 8.5×11 preview, so this section
- *  is a CTA card that links out to the standalone editor in a new
- *  tab. Keeps the combined Templates page coherent without cramping
- *  the preview. The CTA is disabled on phone-class viewports — the
- *  editor itself shows a "Desktop only" notice if the user gets there
- *  another way (typed URL, deep link from elsewhere). */
+ *  needs the full viewport for its 8.5×11 preview, so this section is
+ *  a CTA card that links out to the standalone editor (same tab; the
+ *  editor's own back arrow returns here). The CTA is disabled on
+ *  phone-class viewports — the editor itself shows a "Desktop only"
+ *  notice if the user gets there another way (typed URL, deep link
+ *  from elsewhere). */
 export function SpeakerLetterSection(): React.ReactElement {
   const isMobile = useIsMobile();
   return (
@@ -29,54 +29,32 @@ export function SpeakerLetterSection(): React.ReactElement {
         Speaker invitation letter
       </h2>
       <p className="font-serif italic text-[14px] text-walnut-2 mb-5">
-        The printable letter rendered on the speaker's invitation page. Edits open in a dedicated
-        tab so the 8.5 × 11 preview has the viewport it needs.
+        The printable letter rendered on the speaker's invitation page. The editor lays out the
+        letter at print size (8.5 × 11), so it opens as a full-viewport page.
       </p>
 
       <div className="flex items-center justify-between gap-4 p-4 rounded-md border border-border bg-parchment/70">
         <p className="font-serif text-[13.5px] text-walnut-2 max-w-md">
           {isMobile
             ? "Open this on a laptop or tablet — the editor lays out the letter at print size (8.5 × 11)."
-            : "Edit the body, footer, and signature of the printed invitation. A live preview shows the letter as speakers will see it."}
+            : "Edit the body, footer, and signature of the printed invitation. The editor itself shows the letter as speakers will see it."}
         </p>
         {isMobile ? (
           <span
             aria-disabled="true"
-            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border bg-parchment-2 text-walnut-3 cursor-not-allowed"
+            className="inline-flex items-center shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-border bg-parchment-2 text-walnut-3 cursor-not-allowed"
           >
             Open editor
-            <NewTabIcon />
           </span>
         ) : (
           <Link
             to="/settings/templates/speaker-letter"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] transition-colors"
+            className="inline-flex items-center shrink-0 font-sans text-[13px] font-semibold px-3.5 py-1.5 rounded-md border border-walnut bg-walnut text-parchment hover:bg-ink shadow-[0_1px_0_rgba(35,24,21,0.18)] transition-colors"
           >
             Open editor
-            <NewTabIcon />
           </Link>
         )}
       </div>
     </section>
-  );
-}
-
-function NewTabIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M7 17L17 7M7 7h10v10" />
-    </svg>
   );
 }

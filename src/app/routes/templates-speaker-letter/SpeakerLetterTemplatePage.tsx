@@ -65,10 +65,10 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
       <header className="shrink-0 border-b border-border bg-chalk px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1 min-w-0">
           <Link
-            to="/schedule"
+            to="/settings/templates"
             className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-brass-deep hover:text-walnut"
           >
-            ← Schedule
+            ← Templates
           </Link>
           <h1 className="font-display text-[22px] sm:text-[26px] font-semibold text-walnut leading-tight">
             Speaker invitation letter
@@ -81,13 +81,6 @@ export function SpeakerLetterTemplatePage(): React.ReactElement {
               System default — save to lock in
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => window.close()}
-            className="shrink-0 rounded-md border border-border-strong bg-chalk px-3 py-1.5 font-sans text-[12.5px] font-semibold text-walnut-2 hover:bg-parchment-2"
-          >
-            Close
-          </button>
         </div>
       </header>
 

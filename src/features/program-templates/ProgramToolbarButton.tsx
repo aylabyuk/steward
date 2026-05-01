@@ -1,13 +1,10 @@
 import { cn } from "@/lib/cn";
 
 interface Props {
-  label: string;
+  label: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   active?: boolean;
-  italic?: boolean;
-  bold?: boolean;
-  underline?: boolean;
   ariaLabel: string;
   ariaPressed?: boolean;
 }
@@ -23,9 +20,6 @@ export function ProgramToolbarButton({
   onClick,
   disabled,
   active,
-  italic,
-  bold,
-  underline,
   ariaLabel,
   ariaPressed,
 }: Props) {
@@ -36,13 +30,7 @@ export function ProgramToolbarButton({
       aria-pressed={ariaPressed}
       disabled={disabled}
       onClick={onClick}
-      className={cn(
-        BTN,
-        bold && "font-semibold",
-        italic && "italic",
-        underline && "underline",
-        active && BTN_ACTIVE,
-      )}
+      className={cn(BTN, active && BTN_ACTIVE)}
     >
       {label}
     </button>

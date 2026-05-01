@@ -46,20 +46,21 @@ export function SpeakerEmailSection(): React.ReactElement {
   const canEdit = Boolean(me?.data.active);
   const wardName = ward.data?.name ?? "";
 
+  const sampleVars = useMemo(
+    () => ({
+      speakerName: "Brother Dan Joe",
+      date: "Sunday, April 26, 2026",
+      wardName: wardName || "Your Ward",
+      inviterName: me?.data.displayName ?? "Bishop",
+      topic: "repentance and the grace of Christ",
+      inviteUrl: SAMPLE_URL,
+    }),
+    [wardName, me?.data.displayName],
+  );
+
   const preview = useMemo(
-    () =>
-      renderSpeakerEmailBody(
-        {
-          speakerName: "Brother Dan Joe",
-          date: "Sunday, April 26, 2026",
-          wardName: wardName || "Your Ward",
-          inviterName: me?.data.displayName ?? "Bishop",
-          topic: "repentance and the grace of Christ",
-          inviteUrl: SAMPLE_URL,
-        },
-        { override: body, template: null },
-      ),
-    [body, wardName, me?.data.displayName],
+    () => renderSpeakerEmailBody(sampleVars, { override: body, template: null }),
+    [body, sampleVars],
   );
 
   async function handleSave() {
@@ -92,7 +93,7 @@ export function SpeakerEmailSection(): React.ReactElement {
       <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-walnut-3">
         Preview — sample data
       </div>
-      <pre className="rounded-md border border-border bg-parchment-2/60 p-4 font-serif text-[13px] text-walnut-2 leading-relaxed whitespace-pre-wrap break-words min-h-24">
+      <pre className="rounded-md border border-border bg-parchment-2/60 p-4 font-serif text-[13px] text-walnut-2 leading-relaxed whitespace-pre-wrap wrap-break-word min-h-24">
         {preview}
       </pre>
     </aside>
@@ -106,13 +107,13 @@ export function SpeakerEmailSection(): React.ReactElement {
         title="Speaker invitation email"
         description={DESCRIPTION}
         variables={VARIABLES}
+        sampleVars={sampleVars}
         editorLabel="Email body"
         canEdit={canEdit}
         saving={saving}
         error={error}
         body={body}
         defaultBody={DEFAULT_SPEAKER_EMAIL_BODY}
-        previewNode={previewNode}
         onBodyChange={setBody}
         onSave={handleSave}
         onReset={() => setBody(DEFAULT_SPEAKER_EMAIL_BODY)}
@@ -134,12 +135,14 @@ export function SpeakerEmailSection(): React.ReactElement {
         title="Speaker invitation email"
         description={DESCRIPTION}
         variables={VARIABLES}
+        sampleVars={sampleVars}
         editorLabel="Email body"
         canEdit={canEdit}
         saving={saving}
         error={error}
         body={body}
         defaultBody={DEFAULT_SPEAKER_EMAIL_BODY}
+        dirty={body !== bodyBeforeEdit}
         onChange={setBody}
         onSave={handleSave}
         onCancel={cancelEditor}
