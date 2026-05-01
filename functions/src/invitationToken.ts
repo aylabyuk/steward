@@ -45,3 +45,17 @@ export function phoneLast4(e164: string | undefined): string | null {
   if (digits.length < 4) return null;
   return digits.slice(-4);
 }
+
+/** Mask the capability-token segment in any invite URL embedded in a
+ *  string. Used to keep dev SMS / email stub log entries from carrying
+ *  a working token into Cloud Logging — production sends don't log the
+ *  body at all, but the stubs do (so the emulator can show what was
+ *  "sent"), and a logged URL is a usable credential until consumed.
+ *
+ *  Pattern: `/invite/speaker/{wardId}/{invitationId}/{token}` becomes
+ *  `/invite/speaker/{wardId}/{invitationId}/<redacted>`. Multiple URLs
+ *  in the same string are all redacted. Strings without an invite URL
+ *  pass through unchanged. */
+export function redactInviteUrls(s: string): string {
+  return s.replace(/(\/invite\/speaker\/[^/\s]+\/[^/\s]+\/)[A-Za-z0-9_-]+/g, "$1<redacted>");
+}

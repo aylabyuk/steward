@@ -1,4 +1,5 @@
 import { logger } from "firebase-functions/v2";
+import { redactInviteUrls } from "../invitationToken.js";
 import { getTwilioClient } from "./client.js";
 import { resolveFromNumber, type FromNumberMode } from "./fromNumber.js";
 
@@ -24,8 +25,17 @@ export interface SendSmsInput {
  *  (chat JWTs, participants) still uses real Twilio creds. */
 export async function sendSmsDirect({ to, body, fromMode }: SendSmsInput): Promise<string> {
   if (process.env.STEWARD_DEV_STUB_SMS === "true") {
-    const url = body.match(/https?:\/\/\S+/)?.[0];
-    logger.info("[SMS stub] would send", { to, body, fromMode: fromMode ?? "production" });
+    // Mask the capability token in any invite URL before logging —
+    // a logged URL is a usable credential until the speaker consumes
+    // it. The body still shows everything else (template variables,
+    // phrasing) so the emulator log remains useful for debugging.
+    const safeBody = redactInviteUrls(body);
+    const url = safeBody.match(/https?:\/\/\S+/)?.[0];
+    logger.info("[SMS stub] would send", {
+      to,
+      body: safeBody,
+      fromMode: fromMode ?? "production",
+    });
     if (url) logger.info("[SMS stub] invite URL →", url);
     return `SM_stub_${Date.now()}`;
   }

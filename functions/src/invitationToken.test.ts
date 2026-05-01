@@ -3,6 +3,7 @@ import {
   generateInvitationToken,
   hashInvitationToken,
   phoneLast4,
+  redactInviteUrls,
   rotationBucketKey,
   ROTATION_DAILY_CAP,
   tokenHashMatches,
@@ -83,5 +84,46 @@ describe("ROTATION_DAILY_CAP", () => {
   it("is a positive integer", () => {
     expect(Number.isInteger(ROTATION_DAILY_CAP)).toBe(true);
     expect(ROTATION_DAILY_CAP).toBeGreaterThan(0);
+  });
+});
+
+describe("redactInviteUrls", () => {
+  it("masks the token segment of an invite URL", () => {
+    const url = "https://steward-app.ca/invite/speaker/ward1/inv1/abc123XYZ_-token";
+    expect(redactInviteUrls(url)).toBe(
+      "https://steward-app.ca/invite/speaker/ward1/inv1/<redacted>",
+    );
+  });
+
+  it("works inline in a longer SMS body", () => {
+    const body =
+      "Hi Sebastian — please respond at https://steward-app.ca/invite/speaker/w1/i1/secret-token-zzz. Thanks!";
+    expect(redactInviteUrls(body)).toBe(
+      "Hi Sebastian — please respond at https://steward-app.ca/invite/speaker/w1/i1/<redacted>. Thanks!",
+    );
+  });
+
+  it("redacts every URL when multiple appear in the same string", () => {
+    const body = "Old: https://x/invite/speaker/w/i/aaa New: https://x/invite/speaker/w/j/bbb End.";
+    expect(redactInviteUrls(body)).toBe(
+      "Old: https://x/invite/speaker/w/i/<redacted> New: https://x/invite/speaker/w/j/<redacted> End.",
+    );
+  });
+
+  it("leaves strings without an invite URL unchanged", () => {
+    expect(redactInviteUrls("Plain text body, no URL.")).toBe("Plain text body, no URL.");
+    expect(redactInviteUrls("https://example.com/other/path/abc")).toBe(
+      "https://example.com/other/path/abc",
+    );
+  });
+
+  it("preserves the URL prefix (origin + invitation path)", () => {
+    // Operators reading logs should still see which invitation the
+    // entry refers to — only the trailing token is masked.
+    const out = redactInviteUrls(
+      "https://steward-app.ca/invite/speaker/eglinton/abc123/secrettoken",
+    );
+    expect(out).toContain("/invite/speaker/eglinton/abc123/");
+    expect(out).not.toContain("secrettoken");
   });
 });

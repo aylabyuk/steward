@@ -1,5 +1,6 @@
 import sgMail from "@sendgrid/mail";
 import { logger } from "firebase-functions/v2";
+import { redactInviteUrls } from "../invitationToken.js";
 
 /** In local dev the Firebase emulator sets `FUNCTIONS_EMULATOR=true`.
  *  We use that as the single signal to stub SendGrid delivery — real
@@ -40,13 +41,18 @@ export interface EmailInput {
 
 export async function sendEmail(input: EmailInput): Promise<string | null> {
   if (isStubbed()) {
+    // Slice first, then redact — a 400-char preview commonly contains
+    // the invite URL with a working token. Production sends don't log
+    // the body at all; the stub is dev-only but Cloud Logging still
+    // ingests it.
+    const textPreview = redactInviteUrls(input.text.slice(0, 400));
     logger.info("[sendgrid:stub] email captured (not sent)", {
       to: input.to,
       cc: input.cc,
       replyTo: input.replyTo,
       fromDisplayName: input.fromDisplayName,
       subject: input.subject,
-      textPreview: input.text.slice(0, 400),
+      textPreview,
     });
     return `stub-${Date.now()}`;
   }
