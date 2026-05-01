@@ -51,6 +51,9 @@ Thumbs.db
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 
+# Local-only working notes (kept on disk, never committed)
+*.local.md
+
 # Vercel
 .vercel
 
