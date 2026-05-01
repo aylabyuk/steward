@@ -83,15 +83,35 @@ export const DEFAULT_PRAYER_RESPONSE_DECLINED =
 export const DEFAULT_PRAYER_BISHOPRIC_RESPONSE_RECEIPT =
   "{{speakerName}} {{verb}} the invitation to give the {{prayerType}} on {{assignedDate}}.";
 
+/** Speaker-side SMS confirmation when the speaker accepts on the web invite page. */
+export const DEFAULT_SPEAKER_RESPONSE_ACCEPTED_SMS =
+  "Thanks {{speakerName}} — your acceptance to speak on {{assignedDate}} is recorded. — {{wardName}}";
+
+/** Speaker-side SMS confirmation when the speaker declines on the web invite page. */
+export const DEFAULT_SPEAKER_RESPONSE_DECLINED_SMS =
+  "Thanks {{speakerName}} — your decline of the speaking invitation for {{assignedDate}} is recorded. — {{wardName}}";
+
+/** Prayer-side SMS confirmation when the speaker accepts. */
+export const DEFAULT_PRAYER_RESPONSE_ACCEPTED_SMS =
+  "Thanks {{speakerName}} — your acceptance to give the {{prayerType}} on {{assignedDate}} is recorded. — {{wardName}}";
+
+/** Prayer-side SMS confirmation when the speaker declines. */
+export const DEFAULT_PRAYER_RESPONSE_DECLINED_SMS =
+  "Thanks {{speakerName}} — your decline of the {{prayerType}} for {{assignedDate}} is recorded. — {{wardName}}";
+
 export const DEFAULT_MESSAGE_TEMPLATES: Record<MessageTemplateKey, string> = {
   initialInvitationSms: DEFAULT_INITIAL_INVITATION_SMS,
   speakerResponseAccepted: DEFAULT_SPEAKER_RESPONSE_ACCEPTED,
   speakerResponseDeclined: DEFAULT_SPEAKER_RESPONSE_DECLINED,
+  speakerResponseAcceptedSms: DEFAULT_SPEAKER_RESPONSE_ACCEPTED_SMS,
+  speakerResponseDeclinedSms: DEFAULT_SPEAKER_RESPONSE_DECLINED_SMS,
   bishopricResponseReceipt: DEFAULT_BISHOPRIC_RESPONSE_RECEIPT,
   bishopReplySms: DEFAULT_BISHOP_REPLY_SMS,
   bishopReplyEmail: DEFAULT_BISHOP_REPLY_EMAIL,
   prayerInitialInvitationSms: DEFAULT_PRAYER_INITIAL_INVITATION_SMS,
   prayerResponseAccepted: DEFAULT_PRAYER_RESPONSE_ACCEPTED,
   prayerResponseDeclined: DEFAULT_PRAYER_RESPONSE_DECLINED,
+  prayerResponseAcceptedSms: DEFAULT_PRAYER_RESPONSE_ACCEPTED_SMS,
+  prayerResponseDeclinedSms: DEFAULT_PRAYER_RESPONSE_DECLINED_SMS,
   prayerBishopricResponseReceipt: DEFAULT_PRAYER_BISHOPRIC_RESPONSE_RECEIPT,
 };
