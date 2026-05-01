@@ -17,6 +17,7 @@ export type TokenDecision =
       newToken: string;
       speakerPhone: string | undefined;
       speakerName: string;
+      speakerTopic: string | undefined;
       inviterName: string;
       wardName: string;
       assignedDate: string;
@@ -72,6 +73,7 @@ export async function decideTokenAction(
       newToken,
       speakerPhone: data.speakerPhone,
       speakerName: data.speakerName,
+      speakerTopic: data.speakerTopic,
       inviterName: data.inviterName,
       wardName: data.wardName,
       assignedDate: data.assignedDate,

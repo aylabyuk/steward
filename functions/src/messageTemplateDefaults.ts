@@ -12,9 +12,13 @@
  * `messageTemplates.ts`.
  */
 
-export const DEFAULT_INITIAL_INVITATION_SMS =
-  "{{inviterName}} ({{wardName}}) has invited you to speak on {{assignedDate}}. " +
-  "Read the full invitation: {{inviteUrl}}. Reply STOP to unsubscribe.";
+export const DEFAULT_INITIAL_INVITATION_SMS = [
+  "Hi {{speakerName}} — {{inviterName}} ({{wardName}}) invites you to speak on {{assignedDate}}. Topic: {{topic}}.",
+  "",
+  "Tap to read the full letter and reply via chat (richer than SMS, and the bishopric prefers to keep the conversation in one place): {{inviteUrl}}",
+  "",
+  "Reply STOP to opt out.",
+].join("\n");
 
 export const DEFAULT_SPEAKER_RESPONSE_ACCEPTED =
   "You accepted the invitation to speak on {{assignedDate}}. Thank you.";
@@ -38,9 +42,13 @@ export const DEFAULT_BISHOP_REPLY_EMAIL = [
   "— {{wardName}}",
 ].join("\n");
 
-export const DEFAULT_PRAYER_INITIAL_INVITATION_SMS =
-  "{{inviterName}} ({{wardName}}) has invited you to give the {{prayerType}} on {{assignedDate}}. " +
-  "Read the full invitation: {{inviteUrl}}. Reply STOP to unsubscribe.";
+export const DEFAULT_PRAYER_INITIAL_INVITATION_SMS = [
+  "Hi {{speakerName}} — {{inviterName}} ({{wardName}}) invites you to give the {{prayerType}} on {{assignedDate}}.",
+  "",
+  "Tap to read the full letter and reply via chat (richer than SMS, and the bishopric prefers to keep the conversation in one place): {{inviteUrl}}",
+  "",
+  "Reply STOP to opt out.",
+].join("\n");
 
 export const DEFAULT_PRAYER_RESPONSE_ACCEPTED =
   "You accepted the invitation to give the {{prayerType}} on {{assignedDate}}. Thank you.";

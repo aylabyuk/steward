@@ -14,7 +14,9 @@ import { interpolate } from "./messageTemplates.js";
 
 export const DEFAULT_SPEAKER_EMAIL_BODY = `Dear {{speakerName}},
 
-We have prayerfully considered the needs of our ward and feel inspired to invite you to speak in sacrament meeting on {{date}}. The full invitation letter — including our suggested topic and length — is at the link below. Please let a member of the bishopric know if this Sunday works for you, or if you would prefer a different date.
+We have prayerfully considered the needs of our ward and feel inspired to invite you to speak in sacrament meeting on {{date}}. Suggested topic: {{topic}}.
+
+The full invitation letter is at the link below. Please use the chat on that page to reply directly to the bishopric — it keeps everything in one thread and is the most reliable way for us to follow up.
 
 {{inviteUrl}}
 
@@ -24,7 +26,9 @@ With gratitude,
 
 export const DEFAULT_PRAYER_EMAIL_BODY = `Dear {{speakerName}},
 
-We have prayerfully considered the needs of our ward and feel inspired to invite you to give the {{prayerType}} in sacrament meeting on {{date}}. The full invitation letter is at the link below. Please let a member of the bishopric know if this Sunday works for you, or if you would prefer a different date.
+We have prayerfully considered the needs of our ward and feel inspired to invite you to give the {{prayerType}} in sacrament meeting on {{date}}.
+
+The full invitation letter is at the link below. Please use the chat on that page to reply directly to the bishopric — it keeps everything in one thread and is the most reliable way for us to follow up.
 
 {{inviteUrl}}
 
