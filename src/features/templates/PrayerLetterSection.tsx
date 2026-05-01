@@ -3,9 +3,8 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 
 /** Templates → Prayer invitation letter section. Sits beside the
  *  speaker letter card with a distinct visual treatment so the
- *  bishop can tell the two surfaces apart at a glance:
- *  walnut-toned eyebrow ("Prayer · Template"), a small ❖ ornament
- *  next to the heading, and a parchment-2 inner panel (vs the
+ *  bishop can tell the two surfaces apart at a glance: walnut-toned
+ *  eyebrow ("Prayer · Template") + a parchment-2 inner panel (vs the
  *  parchment-tinted speaker card). */
 export function PrayerLetterSection(): React.ReactElement {
   const isMobile = useIsMobile();
@@ -24,13 +23,7 @@ export function PrayerLetterSection(): React.ReactElement {
           </span>
         )}
       </div>
-      <h2 className="font-display text-[22px] font-semibold text-walnut mb-1 flex items-center gap-2">
-        <span
-          aria-hidden
-          className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-brass-soft text-brass-deep text-[12px]"
-        >
-          ❖
-        </span>
+      <h2 className="font-display text-[22px] font-semibold text-walnut mb-1">
         Prayer invitation letter
       </h2>
       <p className="font-serif italic text-[14px] text-walnut-2 mb-5">

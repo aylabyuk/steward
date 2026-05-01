@@ -122,6 +122,7 @@ export async function createFreshInvitation(
     assignedDate: input.assignedDate,
     wardName: input.wardName,
     inviteUrl,
+    ...(input.speakerTopic ? { topic: input.speakerTopic } : {}),
     ...(prayerType ? { prayerType } : {}),
   };
 
@@ -129,6 +130,7 @@ export async function createFreshInvitation(
   if (wantsEmail) {
     deliveryRecord.push(
       await tryEmail(
+        input.wardId,
         {
           speakerEmail: input.speakerEmail!,
           inviterName: input.inviterName,

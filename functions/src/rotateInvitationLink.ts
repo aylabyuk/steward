@@ -117,6 +117,7 @@ async function deliverIfRequested(
   if (input.channels.includes("email") && invitation.speakerEmail) {
     out.push(
       await tryEmail(
+        input.wardId,
         {
           speakerEmail: invitation.speakerEmail,
           inviterName: invitation.inviterName,
