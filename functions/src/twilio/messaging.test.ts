@@ -25,8 +25,9 @@ describe("sendSmsDirect dev stub", () => {
     expect(messagesCreate).not.toHaveBeenCalled();
   });
 
-  it("calls Twilio when STEWARD_DEV_STUB_SMS is absent", async () => {
+  it("calls Twilio with raw from number when no messaging service configured", async () => {
     delete process.env.STEWARD_DEV_STUB_SMS;
+    delete process.env.TWILIO_MESSAGING_SERVICE_SID;
     process.env.TWILIO_FROM_NUMBER = "+15550000000";
     messagesCreate.mockResolvedValue({ sid: "SMreal" });
     const sid = await sendSmsDirect({ to: "+15551234567", body: "hello" });
@@ -38,12 +39,38 @@ describe("sendSmsDirect dev stub", () => {
     });
   });
 
-  it("throws if TWILIO_FROM_NUMBER missing in non-stub mode", async () => {
+  it("routes through messagingServiceSid when TWILIO_MESSAGING_SERVICE_SID is set (production)", async () => {
     delete process.env.STEWARD_DEV_STUB_SMS;
+    process.env.TWILIO_FROM_NUMBER = "+15550000000";
+    process.env.TWILIO_MESSAGING_SERVICE_SID = "MGabc123";
+    messagesCreate.mockResolvedValue({ sid: "SMservice" });
+    const sid = await sendSmsDirect({ to: "+15551234567", body: "hello" });
+    expect(sid).toBe("SMservice");
+    expect(messagesCreate).toHaveBeenCalledWith({
+      to: "+15551234567",
+      messagingServiceSid: "MGabc123",
+      body: "hello",
+    });
+    // No raw `from` when routing through the service.
+    expect(messagesCreate.mock.calls[0]?.[0]).not.toHaveProperty("from");
+  });
+
+  it("throws if TWILIO_FROM_NUMBER missing in non-stub mode without messaging service", async () => {
+    delete process.env.STEWARD_DEV_STUB_SMS;
+    delete process.env.TWILIO_MESSAGING_SERVICE_SID;
     delete process.env.TWILIO_FROM_NUMBER;
     await expect(sendSmsDirect({ to: "+15551234567", body: "hi" })).rejects.toThrow(
       /TWILIO_FROM_NUMBER/,
     );
+  });
+
+  it("does NOT require TWILIO_FROM_NUMBER when messaging service is set", async () => {
+    delete process.env.STEWARD_DEV_STUB_SMS;
+    delete process.env.TWILIO_FROM_NUMBER;
+    process.env.TWILIO_MESSAGING_SERVICE_SID = "MGabc123";
+    messagesCreate.mockResolvedValue({ sid: "SMservice" });
+    const sid = await sendSmsDirect({ to: "+15551234567", body: "hi" });
+    expect(sid).toBe("SMservice");
   });
 
   it("uses TWILIO_FROM_NUMBER_TESTING when fromMode is 'testing'", async () => {

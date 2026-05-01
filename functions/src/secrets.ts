@@ -26,6 +26,21 @@ export const TWILIO_FROM_NUMBER = defineSecret("TWILIO_FROM_NUMBER");
  *  wrong number. */
 export const TWILIO_FROM_NUMBER_TESTING = defineSecret("TWILIO_FROM_NUMBER_TESTING");
 
+/** Optional Messaging Service SID. When set, production-mode SMS
+ *  sends route through the service (Twilio picks the actual sender
+ *  from the pool attached to the service) instead of the raw
+ *  TWILIO_FROM_NUMBER. The service-level "Disable Inbound and
+ *  Outbound Message Body Logging" toggle then applies — Twilio
+ *  redacts message bodies in its retained logs after delivery,
+ *  bounding the lifetime of any logged invitation URL.
+ *
+ *  Add the same TWILIO_FROM_NUMBER as a sender on the service so
+ *  Twilio has a number to send from. Testing-mode sends still use
+ *  TWILIO_FROM_NUMBER_TESTING directly — the testing number isn't
+ *  in the service's pool and doesn't need the same retention
+ *  treatment. */
+export const TWILIO_MESSAGING_SERVICE_SID = defineSecret("TWILIO_MESSAGING_SERVICE_SID");
+
 /** Public origin of the web app (e.g. https://steward-app.ca) —
  *  used by Cloud Functions to build invite URLs in outbound
  *  correspondence. Runtime-configurable, not a secret. */
@@ -43,6 +58,7 @@ export const TWILIO_SECRETS = [
   TWILIO_CONVERSATIONS_SERVICE_SID,
   TWILIO_FROM_NUMBER,
   TWILIO_FROM_NUMBER_TESTING,
+  TWILIO_MESSAGING_SERVICE_SID,
 ];
 
 // SendGrid (SENDGRID_API_KEY / INVITATION_FROM_EMAIL) is intentionally
