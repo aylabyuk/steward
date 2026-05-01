@@ -1,8 +1,11 @@
 import { SpeakerChatLauncher } from "@/features/invitations/SpeakerChatLauncher";
+import { SpeakerStatusMenu } from "@/features/schedule/SpeakerStatusMenu/SpeakerStatusMenu";
+import { updateSpeaker } from "@/features/speakers/utils/speakerActions";
+import { speakerTopicForDisplay } from "@/features/speakers/utils/topicDisplay";
 import { Link } from "@/lib/nav";
+import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import type { Speaker } from "@/lib/types";
-import { StatusIndicator } from "./StatusIndicator";
+import type { Speaker, SpeakerStatus } from "@/lib/types";
 
 interface Props {
   number: number;
@@ -14,14 +17,20 @@ interface Props {
   date: string;
 }
 
-/** Filled speaker row. The body (number, name, topic, status) is a
- *  Link to the per-row Assign + Invite edit page so the bishop can
- *  update name / topic / role / contact and continue through to the
- *  Prepare Invitation toolbar. The chat launcher is a sibling tap
- *  target outside the link so it stays separately tappable. */
+/** Filled speaker row. The body (number, name, topic) is a Link to the
+ *  per-row Assign + Invite edit page; the status menu and chat
+ *  launcher are sibling tap targets outside the link so opening
+ *  either doesn't navigate. */
 export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
-  const status = speaker.status ?? "planned";
+  const status: SpeakerStatus = speaker.status ?? "planned";
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
+  const currentUserUid = useAuthStore((s) => s.user?.uid);
+
+  async function onStatusChange(next: SpeakerStatus) {
+    if (!wardId) return;
+    await updateSpeaker(wardId, date, speakerId, { status: next });
+  }
+
   return (
     <li className="flex items-center gap-3 h-16 border-b border-border last:border-b-0">
       <Link
@@ -33,12 +42,18 @@ export function SpeakerRow({ number, speaker, speakerId, date }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-sans text-sm font-semibold text-walnut truncate">{speaker.name}</div>
-          {speaker.topic && (
-            <div className="font-serif italic text-sm text-walnut-2 truncate">{speaker.topic}</div>
-          )}
+          <div className="font-serif italic text-sm text-walnut-2 truncate">
+            {speakerTopicForDisplay(speaker.topic)}
+          </div>
         </div>
-        <StatusIndicator status={status} />
       </Link>
+      <SpeakerStatusMenu
+        status={status}
+        onChange={onStatusChange}
+        {...(speaker.statusSource ? { currentStatusSource: speaker.statusSource } : {})}
+        {...(speaker.statusSetBy ? { currentStatusSetBy: speaker.statusSetBy } : {})}
+        {...(currentUserUid !== undefined ? { currentUserUid } : {})}
+      />
       <SpeakerChatLauncher wardId={wardId} date={date} speaker={speaker} speakerId={speakerId} />
     </li>
   );

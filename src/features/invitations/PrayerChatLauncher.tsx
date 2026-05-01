@@ -18,8 +18,8 @@ interface Props {
 }
 
 const ROLE_LABEL: Record<PrayerRole, string> = {
-  opening: "Opening prayer",
-  benediction: "Benediction",
+  opening: "Opening Prayer",
+  benediction: "Closing Prayer",
 };
 
 /** Chat-launcher icon for a prayer-giver row, parallel to

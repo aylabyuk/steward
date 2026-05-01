@@ -1,9 +1,10 @@
 import type { WithId } from "@/hooks/_sub";
 import type { SacramentMeeting, Speaker, Ward } from "@/lib/types";
+import { speakerTopicForDisplay } from "@/features/speakers/utils/topicDisplay";
 import { formatLongDate, midLabel, orderedSpeakers, personName } from "./programData";
 
 function speakerLabel(s: { name: string; topic: string | null }): string {
-  return s.topic ? `${s.name} — ${s.topic}` : s.name;
+  return `${s.name} — ${speakerTopicForDisplay(s.topic)}`;
 }
 
 function hymnLabel(h: { number?: number; title?: string } | undefined): string {

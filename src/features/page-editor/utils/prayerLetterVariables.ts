@@ -6,7 +6,7 @@ import type { LetterVariable } from "./letterVariables";
  *  The 4 context tokens (`date`, `wardName`, `inviterName`, `today`)
  *  carry over identically.
  *
- *  `prayerType` resolves to "opening prayer" or "benediction" based
+ *  `prayerType` resolves to "opening prayer" or "closing prayer" based
  *  on the prayer participant's role at render / send time. */
 export const PRAYER_LETTER_VARIABLES: readonly LetterVariable[] = [
   {

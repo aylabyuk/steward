@@ -1,10 +1,13 @@
 import { PrayerChatLauncher } from "@/features/invitations/PrayerChatLauncher";
 import { usePrayerParticipant } from "@/features/prayers/hooks/usePrayerParticipant";
+import { upsertPrayerParticipant } from "@/features/prayers/utils/prayerActions";
+import { SpeakerStatusMenu } from "@/features/schedule/SpeakerStatusMenu/SpeakerStatusMenu";
+import { useWardSettings } from "@/hooks/useWardSettings";
 import { Link } from "@/lib/nav";
+import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import type { InvitationStatus, PrayerRole } from "@/lib/types";
+import type { InvitationStatus, PrayerRole, SpeakerStatus } from "@/lib/types";
 import { EmptyRosterRow } from "./EmptyRosterRow";
-import { StatusIndicator } from "./StatusIndicator";
 
 interface Props {
   /** Lightweight inline name from `meeting.{role}.person.name`. The
@@ -23,7 +26,7 @@ const ROLE_LABEL: Record<PrayerRole, string> = {
 };
 
 const ROLE_SUBTITLE: Record<PrayerRole, string> = {
-  opening: "Invocation",
+  opening: "Opening Prayer",
   benediction: "Closing Prayer",
 };
 
@@ -41,6 +44,8 @@ const ROLE_WIDTH_CLS = "w-6";
  *  share their height + look with the speaker placeholder slots. */
 export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
+  const ward = useWardSettings();
+  const currentUserUid = useAuthStore((s) => s.user?.uid);
   const { data: participant } = usePrayerParticipant(date, role);
   const name = participant?.name?.trim() || inlineName.trim();
   const status: InvitationStatus = participant?.status ?? "planned";
@@ -57,6 +62,14 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
     );
   }
 
+  async function onStatusChange(next: SpeakerStatus) {
+    if (!wardId) return;
+    await upsertPrayerParticipant(wardId, date, role, {
+      status: next,
+      nonMeetingSundays: ward.data?.settings.nonMeetingSundays ?? [],
+    });
+  }
+
   return (
     <li className="flex items-center gap-3 h-16 border-b border-border last:border-b-0">
       <Link
@@ -69,8 +82,14 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
             {ROLE_SUBTITLE[role]}
           </div>
         </div>
-        <StatusIndicator status={status} />
       </Link>
+      <SpeakerStatusMenu
+        status={status}
+        onChange={onStatusChange}
+        {...(participant?.statusSource ? { currentStatusSource: participant.statusSource } : {})}
+        {...(participant?.statusSetBy ? { currentStatusSetBy: participant.statusSetBy } : {})}
+        {...(currentUserUid !== undefined ? { currentUserUid } : {})}
+      />
       <PrayerChatLauncher
         wardId={wardId}
         date={date}

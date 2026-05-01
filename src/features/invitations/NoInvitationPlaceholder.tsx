@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { SpeakerStatusMenu } from "@/features/schedule/SpeakerStatusMenu";
 import { statusProvenanceLabel } from "@/features/schedule/utils/statusProvenance";
 import { upsertPrayerParticipant } from "@/features/prayers/utils/prayerActions";
@@ -38,6 +39,7 @@ export function NoInvitationPlaceholder({
   kind = "speaker",
   onNavigate,
 }: Props): React.ReactElement {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const members = useWardMembers();
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -49,12 +51,8 @@ export function NoInvitationPlaceholder({
   const provenance = statusProvenanceLabel(speaker, members);
 
   function openPrepare() {
-    // Open in a new tab to match the rest of the app (SpeakerLockedBand
-    // uses the same pattern). The Prepare page's own Cancel button
-    // calls window.close(), which only works when the page was opened
-    // via window.open — same-tab navigation would break that button.
-    window.open(prepareHref, "_blank", "noopener,noreferrer");
     onNavigate?.();
+    navigate(prepareHref);
   }
 
   async function onStatusChange(next: SpeakerStatus) {

@@ -66,11 +66,48 @@ async function signUpUser(email: string, password: string): Promise<SeededUser> 
         body: JSON.stringify({ email, password, returnSecureToken: true }),
       },
     );
-    if (!signIn.ok)
-      throw new Error(
-        `signIn (after EMAIL_EXISTS) failed: ${signIn.status} ${await signIn.text()}`,
-      );
-    const data = (await signIn.json()) as { localId: string; idToken: string };
+    if (signIn.ok) {
+      const data = (await signIn.json()) as { localId: string; idToken: string };
+      return { uid: data.localId, email, password, idToken: data.idToken };
+    }
+    // Stale local emulator state: the email exists with a different
+    // password from a prior session. Reset it via the emulator-only
+    // signInWithIdp surrogate isn't available here, so drop the
+    // account and recreate. Targeted DELETE — only the colliding
+    // account, never a mass wipe.
+    const lookup = await fetch(
+      `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FAKE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: "Bearer owner" },
+        body: JSON.stringify({ email: [email] }),
+      },
+    );
+    if (lookup.ok) {
+      const found = (await lookup.json()) as { users?: Array<{ localId: string }> };
+      const localId = found.users?.[0]?.localId;
+      if (localId) {
+        await fetch(
+          `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:delete?key=${FAKE_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: "Bearer owner" },
+            body: JSON.stringify({ localId }),
+          },
+        );
+      }
+    }
+    const retry = await fetch(
+      `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FAKE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      },
+    );
+    if (!retry.ok)
+      throw new Error(`signUp retry (after stale-account reset) failed: ${retry.status}`);
+    const data = (await retry.json()) as { localId: string; idToken: string };
     return { uid: data.localId, email, password, idToken: data.idToken };
   }
   throw new Error(`signUp failed: ${resp.status} ${await resp.text()}`);

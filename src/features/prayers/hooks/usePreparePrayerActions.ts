@@ -69,6 +69,14 @@ export function usePreparePrayerActions(args: Args) {
     channels: ("email" | "sms")[],
     contactOverride?: { email?: string; phone?: string },
   ): Promise<void> {
+    // Refuse to send before the editor has hydrated its initial state.
+    // Without `letterStateJson` the snapshot is written without
+    // `editorStateJson` and the prayer-giver's landing page falls back
+    // to the legacy chrome — losing any letterhead / signature /
+    // callout edits. Mirrors the speaker-side guard.
+    if (form.letterStateJson === null) {
+      throw new Error("Letter is still loading — please wait a moment and try again.");
+    }
     const resolvedEmail = (contactOverride?.email ?? args.prayerGiverEmail).trim();
     const resolvedPhone = (contactOverride?.phone ?? args.prayerGiverPhone).trim();
     const patch: { email?: string; phone?: string } = {};

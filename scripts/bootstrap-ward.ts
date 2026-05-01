@@ -9,6 +9,11 @@ interface Args {
   bishopCalling: "bishop" | "first_counselor" | "second_counselor";
   timezone: string;
   project?: string;
+  /** Password for the bishop's auth user. Optional — only meaningful
+   *  for local-emulator runs that need to sign in via the email +
+   *  password form on the Login page. Prod runs leave this unset and
+   *  the user signs in via Google. */
+  bishopPassword?: string;
 }
 
 function parseCli(): Args {
@@ -19,6 +24,7 @@ function parseCli(): Args {
       "bishop-email": { type: "string" },
       "bishop-name": { type: "string" },
       "bishop-calling": { type: "string", default: "bishop" },
+      "bishop-password": { type: "string" },
       timezone: { type: "string", default: "UTC" },
       project: { type: "string" },
     },
@@ -47,16 +53,27 @@ function parseCli(): Args {
     bishopCalling: calling,
     timezone: values.timezone as string,
     project: values.project,
+    ...(values["bishop-password"] ? { bishopPassword: values["bishop-password"] } : {}),
   };
 }
 
-async function resolveBishopUid(email: string, displayName: string): Promise<string> {
+async function resolveBishopUid(
+  email: string,
+  displayName: string,
+  password: string | undefined,
+): Promise<string> {
   try {
     const existing = await admin.auth().getUserByEmail(email);
+    if (password) {
+      await admin.auth().updateUser(existing.uid, { password });
+      console.log(`Updated password for existing Auth user ${existing.uid} (${email})`);
+    }
     return existing.uid;
   } catch (error) {
     if ((error as { code?: string }).code !== "auth/user-not-found") throw error;
-    const created = await admin.auth().createUser({ email, displayName });
+    const created = await admin
+      .auth()
+      .createUser({ email, displayName, ...(password ? { password } : {}) });
     console.log(`Created Auth user ${created.uid} for ${email}`);
     return created.uid;
   }
@@ -84,7 +101,7 @@ async function main() {
     projectId: args.project ?? process.env.GCLOUD_PROJECT ?? "steward-dev-5e4dc",
   });
 
-  const uid = await resolveBishopUid(args.bishopEmail, args.bishopName);
+  const uid = await resolveBishopUid(args.bishopEmail, args.bishopName, args.bishopPassword);
   const db = admin.firestore();
 
   const wardRef = db.collection("wards").doc(args.wardId);

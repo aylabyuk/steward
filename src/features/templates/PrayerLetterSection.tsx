@@ -43,7 +43,7 @@ export function PrayerLetterSection(): React.ReactElement {
         <p className="font-serif text-[13.5px] text-walnut-2 max-w-md">
           {isMobile
             ? "Open this on a laptop or tablet — the editor lays out the letter at print size (8.5 × 11)."
-            : "Edit the body, footer, and signature of the prayer-giver invitation. Variables resolve to opening prayer or benediction depending on the slot."}
+            : "Edit the body, footer, and signature of the prayer-giver invitation. Variables resolve to opening prayer or closing prayer depending on the slot."}
         </p>
         {isMobile ? (
           <span

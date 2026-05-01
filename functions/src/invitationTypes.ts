@@ -66,5 +66,5 @@ export function invitationPrayerType(
   invitation: Pick<SpeakerInvitationShape, "kind" | "prayerRole">,
 ): string | undefined {
   if (invitation.kind !== "prayer" || !invitation.prayerRole) return undefined;
-  return invitation.prayerRole === "opening" ? "opening prayer" : "benediction";
+  return invitation.prayerRole === "opening" ? "opening prayer" : "closing prayer";
 }

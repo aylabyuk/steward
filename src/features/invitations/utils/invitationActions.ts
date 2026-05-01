@@ -59,7 +59,8 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
   if (!answer) throw new Error("No response to apply.");
 
   const newStatus: "confirmed" | "declined" = answer === "yes" ? "confirmed" : "declined";
-  const subcollection = data.kind === "prayer" ? "prayers" : "speakers";
+  const isPrayer = data.kind === "prayer";
+  const subcollection = isPrayer ? "prayers" : "speakers";
   const participantRef = doc(
     db,
     "wards",
@@ -81,5 +82,23 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
     statusSetBy: input.bishopUid,
     statusSetAt: serverTimestamp(),
   });
+
+  // Prayer kind also mirrors `confirmed` onto the inline meeting
+  // assignment row so the printed program template (which reads
+  // `meeting.openingPrayer` / `meeting.benediction`, not the
+  // participant doc) stays in sync. Speakers don't carry an inline
+  // `confirmed` mirror — their schedule pill reads the speaker doc
+  // directly.
+  if (isPrayer) {
+    const role = data.speakerRef.speakerId;
+    const meetingField = role === "opening" ? "openingPrayer" : "benediction";
+    const meetingRef = doc(db, "wards", input.wardId, "meetings", data.speakerRef.meetingDate);
+    batch.set(
+      meetingRef,
+      { [meetingField]: { confirmed: newStatus === "confirmed" } },
+      { merge: true },
+    );
+  }
+
   await batch.commit();
 }

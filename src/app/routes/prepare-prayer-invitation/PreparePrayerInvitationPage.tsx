@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useMeeting } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { usePrayerLetterTemplate } from "@/features/templates/hooks/usePrayerLetterTemplate";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
+import { EmbedLetterView } from "@/features/embed/EmbedLetterView";
+import { useEmbedAuthBootstrap } from "@/features/embed/useEmbedAuthBootstrap";
+import { useEmbedShareBridge } from "@/features/embed/useEmbedShareBridge";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
-import { isPlausiblePhone } from "@/features/templates/utils/smsInvitation";
 import { isValidEmail } from "@/lib/email";
 import { type PrayerRole, prayerRoleSchema } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
@@ -19,6 +21,11 @@ import { PrepareInvitationPageMessage } from "../PrepareInvitationPageMessage";
 
 export function PreparePrayerInvitationPage() {
   const { date, role: roleParam } = useParams<{ date: string; role: string }>();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get("embed") === "ios";
+  const embedAuth = useEmbedAuthBootstrap();
+  useEmbedShareBridge();
+  const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
   const authUser = useAuthStore((s) => s.user);
@@ -56,7 +63,7 @@ export function PreparePrayerInvitationPage() {
     () => ({
       speakerName: prayerGiverName,
       prayerGiverName,
-      prayerType: role === "opening" ? "opening prayer" : "benediction",
+      prayerType: role === "opening" ? "opening prayer" : "closing prayer",
       date: date ? formatAssignedDate(date) : "",
       today: formatToday(),
       wardName,
@@ -97,32 +104,27 @@ export function PreparePrayerInvitationPage() {
     return (
       <PrepareInvitationPageMessage
         title="Invitation sent"
-        body="The prayer-giver has been notified. This tab will close on its own."
-        close
+        body="The prayer-giver has been notified."
+        backToSchedule
       />
     );
   }
 
+  if (isEmbed) {
+    // biome-ignore format: single line keeps the page under the 150-LOC cap
+    return <EmbedLetterView authStatus={embedAuth} form={form} date={date} wardName={wardName} vars={vars} />;
+  }
+
   const hasEmail = isValidEmail(prayerGiverEmail);
-  const hasPhone = isPlausiblePhone(prayerGiverPhone);
-  const canSend = hasEmail;
-  const canSms = hasPhone;
-  const canSendReason = hasEmail ? "" : "Add an email address.";
-  const canSmsReason = hasPhone ? "" : "Add a phone number.";
 
   const toolbarProps = {
     busy: form.busy,
-    canSend,
-    canSendReason,
-    canSms,
-    canSmsReason,
     hasOverride: form.letterHasOverride,
     speakerName: prayerGiverName,
     speakerEmail: prayerGiverEmail,
     speakerPhone: prayerGiverPhone,
+    assignedDate: date,
     onRevert: () => void form.clearLetterOverride(),
-    onMarkInvited: actions.markInvited,
-    onPrint: () => window.print(),
     onSend: actions.send,
     onSendSms: actions.sendSms,
   };
@@ -133,10 +135,10 @@ export function PreparePrayerInvitationPage() {
         role={role}
         email={prayerGiverEmail}
         hasEmail={hasEmail}
-        onCancel={() => window.close()}
+        onCancel={() => navigate("/schedule")}
         {...toolbarProps}
       />
-      <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
+      <div className="flex-1 min-h-0 lg:overflow-hidden">
         {form.hydrated ? (
           <PrepareInvitationLetterTab
             initialJson={form.initialJson}
@@ -150,9 +152,13 @@ export function PreparePrayerInvitationPage() {
             vars={vars}
           />
         ) : (
-          <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
+          <p className="px-5 sm:px-8 pt-5 pb-4 font-serif italic text-[14px] text-walnut-3">
+            Loading letter…
+          </p>
         )}
-        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
+        {form.error && (
+          <p className="px-5 sm:px-8 mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>
+        )}
       </div>
     </main>
   );

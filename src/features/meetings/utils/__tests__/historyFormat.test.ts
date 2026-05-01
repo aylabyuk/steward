@@ -43,7 +43,7 @@ describe("formatHistoryEvent", () => {
         },
       ],
     });
-    expect(out.details[0]).toBe("Opening prayer: Fred (not assigned) → Fred (accepted)");
+    expect(out.details[0]).toBe("Opening Prayer: Fred (not assigned) → Fred (accepted)");
   });
 
   it("formats an approval", () => {

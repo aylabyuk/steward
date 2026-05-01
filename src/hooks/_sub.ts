@@ -56,20 +56,38 @@ export function useDocSnapshot<T>(
     }
     setState({ data: null, loading: true, error: null });
     const ref = doc(db, key);
-    return onSnapshot(
+    // Firestore fires onSnapshot up to twice on first subscribe:
+    // once with `metadata.fromCache: true` (local cache) before the
+    // server response arrives, and again with `fromCache: false` once
+    // it does. When the cache is empty (first visit OR right after a
+    // write that hasn't propagated to the local listener yet) the
+    // cache-miss fire reports `snap.exists() === false` even though
+    // the server may have the doc — defer the cache-miss for a short
+    // window so callers don't seed defaults against a transient false
+    // negative. If the server doesn't disagree within the window,
+    // treat the cache miss as authoritative — otherwise paths that
+    // genuinely don't exist (e.g. a prayer slot the bishop never
+    // promoted) hang at `loading: true` forever and the only way out
+    // is a hard page reload.
+    let cacheMissTimer: ReturnType<typeof setTimeout> | null = null;
+    const clearCacheMissTimer = () => {
+      if (cacheMissTimer !== null) {
+        clearTimeout(cacheMissTimer);
+        cacheMissTimer = null;
+      }
+    };
+    const unsub = onSnapshot(
       ref,
       (snap) => {
-        // Firestore fires onSnapshot up to twice on first subscribe:
-        // once with `metadata.fromCache: true` (local cache) before
-        // the server response arrives, and again with `fromCache:
-        // false` once it does. When the cache is empty (first visit
-        // OR right after a write that hasn't propagated to the local
-        // listener yet) the cache-miss fire reports `snap.exists() ===
-        // false` even though the server has the doc — handing the
-        // caller a transient "no data" state that races against the
-        // authoritative result. Skip those fires so callers only see
-        // a single, authoritative resolution.
-        if (snap.metadata.fromCache && !snap.exists()) return;
+        if (snap.metadata.fromCache && !snap.exists()) {
+          if (cacheMissTimer !== null) return;
+          cacheMissTimer = setTimeout(() => {
+            cacheMissTimer = null;
+            setState((prev) => (prev.loading ? { data: null, loading: false, error: null } : prev));
+          }, 1500);
+          return;
+        }
+        clearCacheMissTimer();
         if (!snap.exists()) {
           setState({ data: null, loading: false, error: null });
           return;
@@ -81,8 +99,15 @@ export function useDocSnapshot<T>(
             : { data: null, loading: false, error: parsed.error },
         );
       },
-      (error) => setState({ data: null, loading: false, error }),
+      (error) => {
+        clearCacheMissTimer();
+        setState({ data: null, loading: false, error });
+      },
     );
+    return () => {
+      clearCacheMissTimer();
+      unsub();
+    };
   }, [key, schema]);
 
   return state;

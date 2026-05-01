@@ -22,10 +22,6 @@ interface Props {
   onInitial: (json: string) => void;
   resetKey: number;
   vars: LetterVars;
-  /** Optional toolbar slot rendered absolute-top-right of the editor
-   *  surface. Phase 2 keeps the existing per-speaker action bar
-   *  composed by the parent. */
-  previewToolbar?: React.ReactNode;
 }
 
 /** Per-speaker letter editor on the prepare-invitation route — same
@@ -43,7 +39,6 @@ export function PrepareInvitationLetterTab({
   onInitial,
   resetKey,
   vars,
-  previewToolbar,
 }: Props) {
   const isMobile = useIsMobile();
   const renderedBody = useMemo(() => interpolate(body, vars), [body, vars]);
@@ -76,19 +71,16 @@ export function PrepareInvitationLetterTab({
             vars={vars}
           />
         ) : (
-          <>
-            {previewToolbar && <div className="absolute top-3 right-3 z-10">{previewToolbar}</div>}
-            <LetterPageEditor
-              key={resetKey}
-              assignedDate={vars.date}
-              initialJson={initialJson}
-              initialMarkdown={initialMarkdown}
-              vars={vars}
-              onChange={onChange}
-              onInitial={onInitial}
-              ariaLabel={`Letter for ${vars.speakerName}`}
-            />
-          </>
+          <LetterPageEditor
+            key={resetKey}
+            assignedDate={vars.date}
+            initialJson={initialJson}
+            initialMarkdown={initialMarkdown}
+            vars={vars}
+            onChange={onChange}
+            onInitial={onInitial}
+            ariaLabel={`Letter for ${vars.speakerName}`}
+          />
         )}
       </div>
     </>
