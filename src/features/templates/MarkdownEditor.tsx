@@ -16,7 +16,6 @@ import {
   TRANSFORMERS,
   type Transformer,
 } from "@lexical/markdown";
-import { FloatingSelectionToolbar } from "@/features/program-templates/FloatingSelectionToolbar";
 import { lexicalTheme } from "@/features/program-templates/utils/lexicalTheme";
 import { ProgramToolbar } from "@/features/program-templates/ProgramToolbar";
 import type { ProgramVariable } from "@/features/program-templates/utils/programVariables";
@@ -94,7 +93,6 @@ export function MarkdownEditor({
         <HistoryPlugin />
         <ListPlugin />
         <LinkPlugin />
-        <FloatingSelectionToolbar />
         <MarkdownOnChange onChange={onChange} />
       </LexicalComposer>
     </div>

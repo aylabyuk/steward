@@ -69,17 +69,9 @@ export function PrayerLetterTemplatePage(): React.ReactElement {
           >
             ← Templates
           </Link>
-          <div className="flex items-center gap-2">
-            <span
-              aria-hidden
-              className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-brass-soft text-brass-deep text-[12px]"
-            >
-              ❖
-            </span>
-            <h1 className="font-display text-[22px] sm:text-[26px] font-semibold text-walnut leading-tight">
-              Prayer invitation letter
-            </h1>
-          </div>
+          <h1 className="font-display text-[22px] sm:text-[26px] font-semibold text-walnut leading-tight">
+            Prayer invitation letter
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           {editor.usingDefault && (
@@ -88,13 +80,6 @@ export function PrayerLetterTemplatePage(): React.ReactElement {
               System default — save to lock in
             </span>
           )}
-          <button
-            type="button"
-            onClick={() => window.close()}
-            className="shrink-0 rounded-md border border-border-strong bg-chalk px-3 py-1.5 font-sans text-[12.5px] font-semibold text-walnut-2 hover:bg-parchment-2"
-          >
-            Close
-          </button>
         </div>
       </header>
 

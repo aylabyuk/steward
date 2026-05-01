@@ -5,36 +5,37 @@ import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { MessageTemplateCardDesktop } from "./MessageTemplateCardDesktop";
 import { MobileTemplateAccordion } from "./MobileTemplateAccordion";
-import { renderSpeakerEmailBody } from "./utils/renderSpeakerEmailBody";
-import { DEFAULT_SPEAKER_EMAIL_BODY } from "./utils/speakerEmailDefaults";
+import { interpolate } from "./utils/interpolate";
+import { DEFAULT_PRAYER_EMAIL_BODY } from "./utils/prayerEmailDefaults";
 import { TemplateEditorModal } from "./TemplateEditorModal";
-import { useSpeakerEmailTemplate } from "./hooks/useSpeakerEmailTemplate";
-import { writeSpeakerEmailTemplate } from "./utils/writeSpeakerEmailTemplate";
+import { usePrayerEmailTemplate } from "./hooks/usePrayerEmailTemplate";
+import { writePrayerEmailTemplate } from "./utils/writePrayerEmailTemplate";
 
 const VARIABLES = [
-  { name: "speakerName", hint: "Display name from the speaker form" },
+  { name: "speakerName", hint: "Display name of the prayer-giver" },
   { name: "date", hint: "Pre-formatted Sunday, e.g. 'Sunday, April 26, 2026'" },
   { name: "wardName", hint: "Your ward name" },
   { name: "inviterName", hint: "Bishop or counselor sending the invitation" },
-  { name: "topic", hint: "Assigned topic (blank if absent)" },
-  { name: "inviteUrl", hint: "Personal invite-page link for the speaker" },
+  { name: "prayerType", hint: "'opening prayer' or 'closing prayer' per role" },
+  { name: "inviteUrl", hint: "Personal invite-page link for the prayer-giver" },
 ] as const;
 
 const SAMPLE_URL = "https://example.com/invite/speaker/your-ward/sample-token";
-const DESCRIPTION = "The body of the invitation email speakers receive when you send via email.";
+const DESCRIPTION =
+  "The body of the invitation email prayer-givers receive when you send via email.";
 
-export function SpeakerEmailSection(): React.ReactElement {
+export function PrayerEmailSection(): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const ward = useWardSettings();
   const me = useCurrentMember();
-  const { data: template, loading } = useSpeakerEmailTemplate();
+  const { data: template, loading } = usePrayerEmailTemplate();
 
-  const [body, setBody] = useState(DEFAULT_SPEAKER_EMAIL_BODY);
+  const [body, setBody] = useState(DEFAULT_PRAYER_EMAIL_BODY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seeded, setSeeded] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [bodyBeforeEdit, setBodyBeforeEdit] = useState(DEFAULT_SPEAKER_EMAIL_BODY);
+  const [bodyBeforeEdit, setBodyBeforeEdit] = useState(DEFAULT_PRAYER_EMAIL_BODY);
 
   useEffect(() => {
     if (loading || seeded) return;
@@ -51,23 +52,20 @@ export function SpeakerEmailSection(): React.ReactElement {
       date: "Sunday, April 26, 2026",
       wardName: wardName || "Your Ward",
       inviterName: me?.data.displayName ?? "Bishop",
-      topic: "repentance and the grace of Christ",
+      prayerType: "opening prayer",
       inviteUrl: SAMPLE_URL,
     }),
     [wardName, me?.data.displayName],
   );
 
-  const preview = useMemo(
-    () => renderSpeakerEmailBody(sampleVars, { override: body, template: null }),
-    [body, sampleVars],
-  );
+  const preview = useMemo(() => interpolate(body, sampleVars), [body, sampleVars]);
 
   async function handleSave() {
     if (!wardId) return;
     setSaving(true);
     setError(null);
     try {
-      await writeSpeakerEmailTemplate(wardId, { bodyMarkdown: body });
+      await writePrayerEmailTemplate(wardId, { bodyMarkdown: body });
       setEditorOpen(false);
     } catch (e) {
       setError(friendlyWriteError(e));
@@ -101,9 +99,9 @@ export function SpeakerEmailSection(): React.ReactElement {
   return (
     <>
       <MessageTemplateCardDesktop
-        sectionId="sec-speaker-email"
+        sectionId="sec-prayer-email"
         eyebrow="Email"
-        title="Speaker invitation email"
+        title="Prayer invitation email"
         description={DESCRIPTION}
         variables={VARIABLES}
         sampleVars={sampleVars}
@@ -112,16 +110,16 @@ export function SpeakerEmailSection(): React.ReactElement {
         saving={saving}
         error={error}
         body={body}
-        defaultBody={DEFAULT_SPEAKER_EMAIL_BODY}
+        defaultBody={DEFAULT_PRAYER_EMAIL_BODY}
         onBodyChange={setBody}
         onSave={handleSave}
-        onReset={() => setBody(DEFAULT_SPEAKER_EMAIL_BODY)}
+        onReset={() => setBody(DEFAULT_PRAYER_EMAIL_BODY)}
         className="hidden sm:block"
       />
       <MobileTemplateAccordion
-        sectionId="sec-speaker-email-m"
+        sectionId="sec-prayer-email-m"
         eyebrow="Email"
-        title="Speaker invitation email"
+        title="Prayer invitation email"
         description={DESCRIPTION}
         preview={previewNode}
         canEdit={canEdit}
@@ -131,7 +129,7 @@ export function SpeakerEmailSection(): React.ReactElement {
       <TemplateEditorModal
         open={editorOpen}
         eyebrow="Email"
-        title="Speaker invitation email"
+        title="Prayer invitation email"
         description={DESCRIPTION}
         variables={VARIABLES}
         sampleVars={sampleVars}
@@ -140,12 +138,12 @@ export function SpeakerEmailSection(): React.ReactElement {
         saving={saving}
         error={error}
         body={body}
-        defaultBody={DEFAULT_SPEAKER_EMAIL_BODY}
+        defaultBody={DEFAULT_PRAYER_EMAIL_BODY}
         dirty={body !== bodyBeforeEdit}
         onChange={setBody}
         onSave={handleSave}
         onCancel={cancelEditor}
-        onReset={() => setBody(DEFAULT_SPEAKER_EMAIL_BODY)}
+        onReset={() => setBody(DEFAULT_PRAYER_EMAIL_BODY)}
       />
     </>
   );
