@@ -90,11 +90,6 @@ jobs:
           node-version: "22"
           cache: "pnpm"
 
-      - uses: actions/setup-java@v5
-        with:
-          distribution: "temurin"
-          java-version: "21"
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -110,14 +105,28 @@ jobs:
       - name: Unit tests (Vitest)
         run: pnpm test
 
-      - name: Rules tests (Firestore emulator)
-        run: pnpm test:rules
-
       - name: Build
         run: pnpm build
 
-      - name: Install Playwright browsers
+      # Cache the downloaded browser binaries (~150MB chromium). Key
+      # invalidates on any pnpm-lock change — coarse but the simplest
+      # signal that picks up Playwright version bumps. On cache hit the
+      # next step skips the download and only runs install-deps for the
+      # apt packages (system deps don't carry across runner images).
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers + deps (cache miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
 
       - name: E2E tests (Playwright)
         run: pnpm test:e2e
@@ -129,6 +138,38 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # Rules tests live in their own job so they parallelise with the
+  # build/e2e critical path. They need Java for the Firebase emulator,
+  # which the rest of the workflow doesn't touch — keeping it isolated
+  # also avoids paying the ~10s setup-java cost on every PR that
+  # doesn't change rules.
+  rules:
+    name: rules · firestore emulator
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Rules tests (Firestore emulator)
+        run: pnpm test:rules
 
   functions:
     name: functions · build · test
