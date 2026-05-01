@@ -41,6 +41,19 @@ export const TWILIO_FROM_NUMBER_TESTING = defineSecret("TWILIO_FROM_NUMBER_TESTI
  *  treatment. */
 export const TWILIO_MESSAGING_SERVICE_SID = defineSecret("TWILIO_MESSAGING_SERVICE_SID");
 
+/** Pinned webhook URL Twilio is configured to call. When set, the
+ *  signature-verification path uses this exact value as the signing
+ *  URL instead of constructing one from request headers. Eliminates
+ *  host-header drift as a silent-failure mode (e.g. a region change
+ *  or custom-domain swap leaving signatures perpetually invalid).
+ *  Set this to the public URL Twilio Console points at — typically
+ *  https://us-central1-<project>.cloudfunctions.net/onTwilioWebhook
+ *  or a custom-domain equivalent. Unset = fall back to constructing
+ *  the URL from `req.host` + `req.originalUrl` (prior behaviour).
+ *  Webhook-only — bound by onTwilioWebhook's `WEBHOOK_SECRETS`,
+ *  intentionally not in the global `TWILIO_SECRETS` bundle. */
+export const TWILIO_WEBHOOK_URL = defineSecret("TWILIO_WEBHOOK_URL");
+
 /** Public origin of the web app (e.g. https://steward-app.ca) —
  *  used by Cloud Functions to build invite URLs in outbound
  *  correspondence. Runtime-configurable, not a secret. */
