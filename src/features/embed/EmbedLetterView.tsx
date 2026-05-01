@@ -61,17 +61,19 @@ export function EmbedLetterView({ authStatus, form, date, wardName, vars }: Prop
     <>
       {/* Hidden 8.5×11 portal that `useEmbedShareBridge` rasterises
        *  into a PDF for the iOS share button. Stays `display: none`
-       *  on screen via `[data-print-only-letter]` styles. */}
-      {form.hydrated && (
-        <PrintOnlyLetter
-          wardName={wardName}
-          assignedDate={assignedDate}
-          today={today}
-          bodyMarkdown={renderedBody}
-          footerMarkdown={renderedFooter}
-          {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
-        />
-      )}
+       *  on screen via `[data-print-only-letter]` styles. Rendered
+       *  unconditionally — same as PrepareInvitationLetterTab — so
+       *  it's available for export even during the brief
+       *  loading-letter window. */}
+      <PrintOnlyLetter
+        wardName={wardName}
+        assignedDate={assignedDate}
+        today={today}
+        bodyMarkdown={renderedBody}
+        footerMarkdown={renderedFooter}
+        {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
+      />
+
       <main className="h-dvh w-dvw bg-parchment overflow-hidden">
         {form.hydrated ? (
           <MobileLetterPreview
