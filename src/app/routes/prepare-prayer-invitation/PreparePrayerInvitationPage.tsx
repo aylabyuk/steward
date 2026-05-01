@@ -7,6 +7,7 @@ import { usePrayerLetterTemplate } from "@/features/templates/hooks/usePrayerLet
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { EmbedLetterView } from "@/features/embed/EmbedLetterView";
 import { useEmbedAuthBootstrap } from "@/features/embed/useEmbedAuthBootstrap";
+import { useEmbedShareBridge } from "@/features/embed/useEmbedShareBridge";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { isValidEmail } from "@/lib/email";
 import { type PrayerRole, prayerRoleSchema } from "@/lib/types";
@@ -23,6 +24,7 @@ export function PreparePrayerInvitationPage() {
   const [searchParams] = useSearchParams();
   const isEmbed = searchParams.get("embed") === "ios";
   const embedAuth = useEmbedAuthBootstrap();
+  useEmbedShareBridge();
   const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();

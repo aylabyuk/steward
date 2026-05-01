@@ -6,6 +6,7 @@ import { useWardSettings } from "@/hooks/useWardSettings";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { EmbedLetterView } from "@/features/embed/EmbedLetterView";
 import { useEmbedAuthBootstrap } from "@/features/embed/useEmbedAuthBootstrap";
+import { useEmbedShareBridge } from "@/features/embed/useEmbedShareBridge";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { useSpeakerLetterTemplate } from "@/features/templates/hooks/useSpeakerLetterTemplate";
@@ -21,6 +22,7 @@ export function PrepareInvitationPage() {
   const [searchParams] = useSearchParams();
   const isEmbed = searchParams.get("embed") === "ios";
   const embedAuth = useEmbedAuthBootstrap();
+  useEmbedShareBridge();
   const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
