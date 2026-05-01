@@ -7,6 +7,128 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.20.0] — 2026-05-01
+
+Security + reliability cycle. Speaker SMS replies now actually bridge
+into the bishop's chat (a long-standing wiring gap), the template
+editor gains audience tabs and a working invitation email path, and a
+batch of Firestore-rule + render-layer hardening lands across the
+invitation flow. CI gets a Playwright cache + parallelised rules job
+to cut wall-clock time on every PR.
+
+### Added
+
+- **Audience tabs in the template editor** — speaker, prayer, and
+  ward-invitee letter templates now share a single editor surface
+  with audience tabs across the top, instead of three separate
+  routes. Prayer-flow gains parity with the speaker-flow editor:
+  same toolbar affordances, same chip behaviour, same revert path.
+- **Invitation email template revived** — the bishop-side invitation
+  email path is back as a first-class template the bishop can
+  customise alongside the SMS one.
+
+### Changed
+
+- **Simplified template editors** — Lucide icons replace the bespoke
+  toolbar SVGs; the inline preview lives directly under the editor
+  (no separate pane); mobile gets a sticky top-bar action layout.
+  Drops the floating selection toolbar from the inline editor — its
+  affordances now live on the always-visible top toolbar instead.
+
+### Fixed
+
+- **Speaker SMS replies now bridge into the bishop's chat.** A
+  long-standing wiring gap in `freshInvitation` meant speakers had a
+  chat-identity participant on their Twilio Conversation but no
+  phone-number messagingBinding — every inbound SMS reply was
+  dropped silently because Twilio had nothing to match against. The
+  call to `addSmsParticipant` is now wired in alongside the existing
+  chat-identity creation, with fail-soft behaviour on Twilio errors.
+  Pre-existing in-flight invitations are not auto-fixed; a fresh
+  resend creates the missing binding.
+- **Portal chat-variable tooltip floats above the toolbar** — the
+  variable-chip explainer no longer gets clipped by the toolbar
+  surface above it.
+
+### Security
+
+- **Tightened Firestore rules on the invitation update path.**
+  `response.acknowledgedAt` is now write-once across both the
+  bishopric and speaker-claim branches — once any active member
+  sets it, subsequent writes can't change or clear it. Speaker-
+  claim writes that touch the response subtree now pin
+  `actorUid` to `request.auth.uid` and only accept `actorEmail`
+  matching the auth token's verified email. Speaker writes are
+  also gated by `tokenExpiresAt` (defence-in-depth alongside the
+  meeting-level `expiresAt` wall).
+- **Speaker session revoked on bishop-driven token rotation.**
+  When the bishop rotates an invitation's capability token, prior
+  Firebase refresh tokens for the speaker are revoked — a session
+  minted from the old token can no longer keep writing past the
+  next ID-token refresh.
+- **Lexical letter renderer allowlists URL schemes + style
+  properties.** `renderLink` accepts only `http(s)://` and same-
+  origin paths (drops `javascript:`, `data:`, protocol-relative,
+  and the rest); `renderImage` adds raster `data:image` to that
+  list and excludes SVG. Inline `style=` declarations narrow to
+  `color`, `backgroundColor`, `fontSize`, `fontFamily` — the set
+  the WYSIWYG toolbar emits today; legitimate CSS function values
+  like `rgb(...)` and `var(...)` still pass through.
+- **Optional `TWILIO_MESSAGING_SERVICE_SID` for outbound SMS.**
+  When set, production-mode `sendSmsDirect` calls route through
+  the Messaging Service (and its sender pool) instead of the raw
+  `TWILIO_FROM_NUMBER`. Lets the service-level "Disable Inbound
+  and Outbound Message Body Logging" toggle apply, bounding the
+  lifetime of any logged invitation URL in Twilio's retained logs.
+  Backwards-compatible — environments without the secret keep the
+  prior raw-from behaviour.
+- **Optional `TWILIO_WEBHOOK_URL` for pinning the signing URL.**
+  The Twilio Conversations webhook signature-verification path
+  pins the URL passed to `validateRequest` to this secret when
+  set, eliminating host-header drift as a silent failure mode
+  (region change, custom-domain swap, unexpected `Host:` header).
+  Verification logic extracted into a pure helper that emits
+  structured `twilio.webhook.signature_failed` log entries with
+  a `reason` label — `missing-header`, `missing-auth-token`, or
+  `invalid` — for Cloud Logging metric + alarm.
+
+### Infrastructure
+
+- **CI Playwright browser cache + parallel rules job.**
+  `~/.cache/ms-playwright` is cached keyed on `pnpm-lock.yaml`; on
+  hit, the ~150MB chromium download is skipped and only system
+  apt deps install. Rules tests (Java 21 + Firebase emulator)
+  moved into their own job to parallelise with the build/e2e
+  critical path. Saves 30–60s per run.
+- **Branch protection on `develop` and `main`** — required CI
+  status checks (lint/format/typecheck/test/build/e2e, rules,
+  functions); admin bypass on for solo-dev workflow;
+  force-pushes and branch deletion blocked.
+- **Invitation-flow documentation** — new
+  [docs/invitation-flow.md](docs/invitation-flow.md) covers the
+  speaker/prayer chat pipeline (bishopric flowchart + engineering
+  sequence diagram); paired `invitation-flow-doc-sync` agent skill
+  + a `PostToolUse` hook that nudges contributors to update the
+  doc when editing files in the invitation flow surface area.
+- **`*.local.md` gitignore pattern** — local-only working notes
+  (private trackers, scratch notes) stay on disk without
+  accidentally landing in commits.
+
+### Operator runbook (post-merge actions)
+
+The `TWILIO_MESSAGING_SERVICE_SID` and `TWILIO_WEBHOOK_URL` secrets
+must be set on the deployed project to activate the new code paths.
+The release workflow handles the deploy; the operator handles the
+secrets:
+
+```bash
+firebase functions:secrets:set TWILIO_MESSAGING_SERVICE_SID --project steward-prod-65a36
+firebase functions:secrets:set TWILIO_WEBHOOK_URL --project steward-prod-65a36
+```
+
+Without them, the functions fall back to prior behaviour (raw
+`from` number for SMS; constructed signing URL for the webhook).
+
 ## [0.19.0] — 2026-04-30
 
 iOS-parity port, continued. The web app now exposes a view-only embed
@@ -2265,7 +2387,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/aylabyuk/steward/releases/tag/v0.20.0
 [0.19.0]: https://github.com/aylabyuk/steward/releases/tag/v0.19.0
 [0.18.0]: https://github.com/aylabyuk/steward/releases/tag/v0.18.0
 [0.17.0]: https://github.com/aylabyuk/steward/releases/tag/v0.17.0
