@@ -29,6 +29,16 @@ export async function sendSmsDirect({ to, body, fromMode }: SendSmsInput): Promi
     if (url) logger.info("[SMS stub] invite URL →", url);
     return `SM_stub_${Date.now()}`;
   }
+  // Production sends prefer the Messaging Service when configured —
+  // routes through Twilio's sender pool and lets the service-level
+  // "Disable Inbound and Outbound Message Body Logging" toggle apply.
+  // Testing-mode sends always use the raw testing number (it's not in
+  // the service's pool and is for ad-hoc maintainer smoke tests).
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+  if (fromMode !== "testing" && messagingServiceSid) {
+    const msg = await getTwilioClient().messages.create({ to, messagingServiceSid, body });
+    return msg.sid;
+  }
   const from = resolveFromNumber(fromMode);
   const msg = await getTwilioClient().messages.create({ to, from, body });
   return msg.sid;
