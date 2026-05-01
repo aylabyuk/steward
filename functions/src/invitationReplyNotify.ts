@@ -1,12 +1,73 @@
-import { logger } from "firebase-functions/v2";
-import { interpolate, readMessageTemplate } from "./messageTemplates.js";
-import { sendEmail } from "./sendgrid/client.js";
 import { getFirestore } from "firebase-admin/firestore";
+import { logger } from "firebase-functions/v2";
+import { rotateTokenForBishopNotification } from "./issueSpeakerSession.helpers.js";
+import { interpolate, readMessageTemplate } from "./messageTemplates.js";
+import { STEWARD_ORIGIN } from "./secrets.js";
+import { buildInviteUrl } from "./sendSpeakerInvitation.helpers.js";
+import { sendEmail } from "./sendgrid/client.js";
+import { sendSmsDirect } from "./twilio/messaging.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 export interface ResolvedInvitation extends SpeakerInvitationShape {
   wardId: string;
   token: string;
+}
+
+/** Max age of the speaker's `speakerLastSeenAt` heartbeat before we
+ *  treat the chat as "closed". The invite page pings every 60s while
+ *  the tab is visible; 2× that cadence gives one missed ping of slack
+ *  before we fall back to SMS. */
+const HEARTBEAT_FRESH_MS = 120_000;
+
+/** Bishop posted → SMS the speaker with a fresh resume link (unless
+ *  the speaker's heartbeat shows they're actively viewing the chat).
+ *  Rotates the invitation's capability token (bishop-initiated, so it
+ *  does NOT count against `tokenRotationsByDay`) and appends the fresh
+ *  URL — the speaker can tap it to re-enter the chat with prior
+ *  messages preserved (same conversationSid). No-op when the invitation
+ *  has no phone on file. */
+export async function smsSpeaker(inv: ResolvedInvitation, body: string): Promise<void> {
+  if (!inv.speakerPhone) return;
+  if (isSpeakerOnline(inv)) return;
+  let inviteUrl: string | null = null;
+  try {
+    const rotated = await rotateTokenForBishopNotification(inv.wardId, inv.token);
+    if (rotated) {
+      const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
+      inviteUrl = buildInviteUrl(origin, inv.wardId, inv.token, rotated.newToken);
+    }
+  } catch (err) {
+    logger.warn("reply SMS token rotation failed — falling back to preview-only", {
+      token: inv.token,
+      err: (err as Error).message,
+    });
+  }
+  const preview = truncate(body, 240);
+  // Rotation-failed path stays hardcoded: it's an error fallback, not
+  // a user-authored message — we don't want a bishopric-edited template
+  // to leak a placeholder `{{inviteUrl}}` token into an SMS.
+  let text: string;
+  if (inviteUrl) {
+    const template = await readMessageTemplate(getFirestore(), inv.wardId, "bishopReplySms");
+    text = interpolate(template, { wardName: inv.wardName, preview, inviteUrl });
+  } else {
+    text = `${inv.inviterName} (Steward): ${preview}`;
+  }
+  try {
+    await sendSmsDirect({
+      to: inv.speakerPhone,
+      body: text,
+      ...(inv.fromNumberMode ? { fromMode: inv.fromNumberMode } : {}),
+    });
+  } catch (err) {
+    logger.error("reply SMS failed", { err: (err as Error).message, token: inv.token });
+  }
+}
+
+function isSpeakerOnline(inv: ResolvedInvitation): boolean {
+  const ts = inv.speakerLastSeenAt;
+  if (!ts) return false;
+  return Date.now() - ts.toMillis() < HEARTBEAT_FRESH_MS;
 }
 
 /** Bishop posted → SendGrid email to the speaker with a preview.

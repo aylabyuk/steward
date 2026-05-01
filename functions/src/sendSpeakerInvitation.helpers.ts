@@ -19,9 +19,7 @@ export async function assertActiveMember(wardId: string, uid: string): Promise<v
 /** Frees the speaker's phone binding from any earlier Twilio
  *  Conversation for this (wardId, speakerId, meetingDate). Twilio
  *  refuses to bind the same (phone, proxy) pair twice, so a re-send
- *  for the same speaker would otherwise fail at the participant
- *  create call. (Cross-speaker phone conflicts are handled by
- *  `freePhoneBindingConflicts` at participant-create time.) */
+ *  for the same speaker would otherwise fail at addSmsParticipant. */
 export interface BishopricSnapshot {
   uid: string;
   displayName: string;
