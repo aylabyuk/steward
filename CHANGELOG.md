@@ -7,6 +7,175 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.19.0] — 2026-04-30
+
+iOS-parity port, continued. The web app now exposes a view-only embed
+of the prepare-invitation letter so the iOS app can WKWebView the
+exact rendered preview, with a JS bridge the host calls to export the
+on-page letter as a PDF for the share sheet. Prepare Invitation gets
+a Send-CTA-in-header treatment and edge-to-edge toolbar matching the
+iOS layout, with a guard against sending before the letter state has
+hydrated. The per-row Assign + Invite flow gains a manual status menu
+that locks the form whenever the slot is past `planned`, and prayer
+quick-confirms now mirror back onto the meeting doc so they print
+correctly. Several quality-of-life fixes: portal-anchored status
+dropdown, deferred cache-miss in `useDocSnapshot`, "Topic of Choice"
+fallback, standardized "Opening Prayer" / "Closing Prayer" copy.
+
+### Added
+
+- **iOS WebView embed of the prepare-invitation letter** — both
+  prepare routes (speaker + prayer) accept `?embed=ios` to render a
+  chromeless, view-only copy of the letter for the iOS app to
+  WKWebView. Auth piggy-backs on a Firebase custom token minted by
+  the existing `issueSpeakerSession` callable's bishopric branch
+  (opt-in `mintWebSession: true`), passed through the URL fragment
+  so it never hits server logs and is scrubbed from the address bar
+  after sign-in. Native pinch/zoom/pan via the existing
+  react-zoom-pan-pinch wrapper.
+- **iOS share-PDF bridge** — `useEmbedShareBridge` installs
+  `window.__ios_exportLetterPdf` while the embed is mounted; the iOS
+  host calls it via `evaluateJavaScript` to rasterize the on-page
+  `PrintOnlyLetter` portal into a base64 PDF (same `letterCanvasToPdf`
+  pipeline the speaker-side ShareToolbar uses). `AuthGate` detects
+  `?embed=ios` and renders `<Outlet />` directly, skipping the
+  sign-out redirect, access-resolution screens, and AppShell wrapper
+  so chrome doesn't bleed into the chromeless letter view.
+- **Manual status menu on the per-row Assign pages and schedule
+  rows** — the existing `SpeakerStatusMenu` is now reachable from
+  `AssignSlotForm` and from each `SpeakerRow` / `PrayerRow` on the
+  schedule (the row body's `<Link>` is kept separate so opening the
+  menu doesn't navigate). Wires into the existing `updateSpeaker` /
+  `upsertPrayerParticipant` audit paths; flipping back to "planned"
+  auto-unlocks the form. Prayer side gains a "Remove" verb +
+  `clearPrayerParticipant` action that deletes the participant doc
+  and clears the inline meeting mirror, symmetric with `deleteSpeaker`.
+
+### Changed
+
+- **Send-CTA-in-header + edge-to-edge toolbar on Prepare Invitation
+  pages** — both speaker and prayer prepare pages now place the action
+  bar in the sticky page header at every breakpoint, with Send
+  promoted to a labeled bordeaux-primary "Send Invitation" button
+  matching iOS `InvitationPreviewView`. The floating absolute toolbar
+  that overlapped the editor is gone, and horizontal padding around
+  the editor surface is dropped so the page-editor toolbar's bottom
+  border runs edge-to-edge. The send path refuses to write a snapshot
+  before `letterStateJson` hydrates, preventing chrome-less invitations
+  from being delivered.
+- **Prepare Invitation toolbar overhaul** — Lucide icons replace the
+  bespoke SVGs; the standalone Print button is gone (Share now hands
+  the letter PDF to the OS share sheet via the same Web Share API
+  path the speaker invite landing uses). The mark-invited (Check)
+  button is removed entirely — status changes now flow exclusively
+  through the new status menu on the assign page. Send Email becomes
+  the secondary text button; Send SMS becomes the primary
+  bordeaux-fill text button (with paper-plane icon) — order swapped
+  to prioritize SMS as the more common bishop hand-off channel. All
+  buttons normalized to `h-9 sm:h-10`.
+- **Locked-form rules on Assign pages** — the assign form locks
+  whenever `seed.status != "planned"`: inputs go read-only, Save /
+  Continue hide, and a "Locked" notice points to the destructive
+  button as the only escape. Prepare Invitation pages now navigate
+  same-window instead of opening a new tab; the success screen
+  routes to /schedule.
+- **"Topic of Choice" fallback when a speaker has no topic** —
+  every surface that renders a speaker's topic line now shows
+  "Topic of Choice" (matching the iOS app since launch) instead of
+  the previous mix of "No topic assigned" / blank / bare-name
+  rendering. Affects the meetings program editor, schedule view,
+  and the print pipeline's template tokens.
+- **Standardized "Opening Prayer" / "Closing Prayer" copy** —
+  bishopric-facing surfaces (schedule rows, prayer assignment pages,
+  prepare-invitation header, print copies, readiness + history
+  formatters, prayer letter variables, prayer SMS body, chat
+  launcher) now uniformly read Title Case "Opening Prayer" /
+  "Closing Prayer" instead of the mixed
+  "Invocation" / "Benediction" / lowercase phrasing. Receipt emails
+  follow suit (`invitationPrayerType` returns "closing prayer" not
+  "benediction"); the `prayerType` template variable resolves to
+  lowercase "opening prayer" / "closing prayer" for sentence fits.
+- **Compact mobile schedule edges** — `MobileScheduleList` swaps its
+  inner `px-4` for `-mx-2` so cards bleed past the AppShell's 16px
+  padding to ~8px from the screen edge; `PageHead`'s bottom border
+  is gated behind `sm:` so the mobile schedule no longer draws a
+  separator between the page header and the first card.
+
+### Fixed
+
+- **Status dropdown on the mobile schedule no longer clipped** —
+  `SpeakerStatusMenu`'s `<ul>` is now portaled to `document.body`
+  and fixed-anchored to the badge's bounding-client rect (recomputed
+  on scroll + resize), so the menu escapes any `overflow:hidden`
+  ancestor (the rounded card surface that was eating the dropdown
+  to a sliver). Near-right-edge case anchors by `right` instead of
+  `left` so the menu stays on-screen.
+- **`useDocSnapshot` no longer hangs on genuinely-missing docs** —
+  the previous "skip the cache-miss fire" guard meant paths that
+  legitimately don't exist (e.g. an unfilled prayer participant
+  slot) sat at "Loading…" forever when the server-confirmed
+  `fromCache: false` fire never arrived. Cache misses are now
+  deferred 1.5s instead of skipped — a server fire within the
+  window supersedes the miss; otherwise the miss is treated as
+  authoritative and loading resolves to `{ data: null, loading:
+  false }`. Covered by four new unit tests.
+- **Speaker yes-reply now mirrors prayer-confirmed onto the
+  meeting doc** — `applyResponseToSpeaker` previously flipped the
+  participant doc's status but never touched
+  `meeting.{role}.confirmed` for prayers, so a speaker-driven
+  prayer confirmation never made it onto the printed program. Now
+  batches a `setDoc(merge)` that mirrors `confirmed=(status ===
+  "confirmed")` for the matching `openingPrayer` / `benediction`
+  field.
+- **Server-side participant stamping for fresh invitations** —
+  `createFreshInvitation` now writes `participant.status="invited"`
+  + audit stamps + `invitationId` / `conversationSid` (and, for
+  prayers, the inline meeting role mirror) inside the call. Fixes
+  the iOS/web closing-prayer divergence where the status flip only
+  happened in whichever client did the post-send upsert, leaving
+  the participant doc stale for clients that skipped that step.
+- **Assigned Sunday callout renders in saved / PDF / embed paths**
+  — the Lexical static walker was returning `null` for the
+  `assigned-sunday-callout` node, so the gradient brass callout
+  disappeared everywhere the snapshot is read (speaker invite
+  landing, PDF/print preview, iOS WebView embed). The walker now
+  threads `assignedDate` through `renderLetterState` and emits the
+  same markup as the live decorator.
+- **`PrintOnlyLetter` portal mounts unconditionally** — the
+  embed's portal was previously gated on `form.hydrated`, so the
+  iOS share bridge could throw "portal not mounted" when the host
+  invoked the export before the letter finished hydrating.
+- **Prepare-invitation success screen routes back to /schedule**
+  — same-window navigation replaces the previous "try to close the
+  tab" path, which silently failed in any non-popup context.
+
+### Infrastructure
+
+- **`scripts/sweep-orphan-invitations.ts`** — clears stale
+  `speakerInvitations/*` docs left behind by prior sends. Dry-run
+  by default; `--commit` to delete.
+- **Emulator-restart helper** — `kill-emulators.sh` force-stops
+  the local Firebase emulator suite by matching command-line
+  patterns (firebase CLI, cloud-firestore-emulator, pubsub-
+  emulator, firebase-tools binary), wired in via the `preemulators`
+  npm hook so `pnpm emulators` always starts from a clean slate.
+  Solves the recurring "Could not start Emulator UI, port taken"
+  error when a previous emulator process didn't shut down
+  cleanly. Earlier port-based kill swept up unrelated macOS
+  launchd services; this version is scoped strictly to Firebase
+  processes.
+- **`pnpm bootstrap-ward:emulator`** — wrapper that bakes in the
+  `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST` /
+  `GCLOUD_PROJECT=steward-dev-5e4dc` env vars so the Admin SDK
+  routes to the local emulator instead of falling through to
+  Application Default Credentials and trying to hit production
+  identitytoolkit. Adds a `--bishop-password` flag (default
+  `test1234`) so the bishop can sign in via the emulator-only
+  email/password form.
+- **CI format check unblocked** — apply biome formatter sweep over
+  six files with trailing-whitespace / line-wrap deltas. No
+  behavior changes.
+
 ## [0.18.0] — 2026-04-30
 
 An iOS-parity port: native-iOS interaction wins land back in the PWA.
@@ -2096,7 +2265,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/aylabyuk/steward/releases/tag/v0.19.0
 [0.18.0]: https://github.com/aylabyuk/steward/releases/tag/v0.18.0
 [0.17.0]: https://github.com/aylabyuk/steward/releases/tag/v0.17.0
 [0.16.1]: https://github.com/aylabyuk/steward/releases/tag/v0.16.1
