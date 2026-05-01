@@ -51,8 +51,8 @@ export function checkMeetingReadiness(
   const personRows: Array<[string, Assignment | undefined]> = [
     ["Presiding", meeting.presiding],
     ["Conducting", meeting.conducting],
-    ["Opening prayer", meeting.openingPrayer],
-    ["Benediction", meeting.benediction],
+    ["Opening Prayer", meeting.openingPrayer],
+    ["Closing Prayer", meeting.benediction],
     ["Chorister", meeting.chorister],
     ["Pianist", meeting.pianist],
     ["Sacrament bread", meeting.sacramentBread],

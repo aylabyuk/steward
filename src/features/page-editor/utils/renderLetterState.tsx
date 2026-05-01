@@ -1,5 +1,6 @@
 import type { SerializedEditorState, SerializedLexicalNode } from "lexical";
 import {
+  renderAssignedSundayCallout,
   renderCallout,
   renderImage,
   renderLetterhead,
@@ -26,7 +27,20 @@ interface SerializedElementNode extends SerializedLexicalNode {
  *  about layout. Variable chips are rendered as the resolved value
  *  the snapshot stores in their `text` field, falling back to the
  *  raw token if not present.*/
-export function renderLetterState(stateJson: string): React.ReactElement | null {
+export interface RenderLetterStateOptions {
+  /** Resolved assigned-Sunday date for the speaker, e.g.
+   *  "Sunday, May 31, 2026". Used to render the
+   *  `assigned-sunday-callout` Lexical decorator block — it stores no
+   *  date in its own JSON, the editor pulls the date from a React
+   *  context (`useAssignedDate()`), and this static walker has no
+   *  access to that context. Pass it explicitly. */
+  assignedDate?: string | null;
+}
+
+export function renderLetterState(
+  stateJson: string,
+  opts: RenderLetterStateOptions = {},
+): React.ReactElement | null {
   let parsed: SerializedEditorState;
   try {
     parsed = JSON.parse(stateJson) as SerializedEditorState;
@@ -34,10 +48,14 @@ export function renderLetterState(stateJson: string): React.ReactElement | null 
     return null;
   }
   const root = parsed.root as SerializedElementNode;
-  return <>{(root.children ?? []).map((c, i) => renderNode(c, `b${i}`))}</>;
+  return <>{(root.children ?? []).map((c, i) => renderNode(c, `b${i}`, opts))}</>;
 }
 
-function renderNode(node: SerializedLexicalNode, key: string): React.ReactNode {
+function renderNode(
+  node: SerializedLexicalNode,
+  key: string,
+  opts: RenderLetterStateOptions,
+): React.ReactNode {
   if (node.type === "text") return renderText(node as SerializedTextNode, key);
   if (node.type === "linebreak") return <br key={key} />;
   const el = node as SerializedElementNode;
@@ -53,36 +71,37 @@ function renderNode(node: SerializedLexicalNode, key: string): React.ReactNode {
     case "horizontalrule":
       return <hr key={key} className="my-4 border-walnut-3/40" />;
     case "paragraph":
-      return renderParagraph(el, key);
+      return renderParagraph(el, key, opts);
     case "heading":
-      return renderHeading(el, key);
+      return renderHeading(el, key, opts);
     case "quote":
       return (
         <blockquote key={key} className="border-l-2 border-brass pl-4 italic text-walnut my-3">
-          {(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`))}
+          {(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts))}
         </blockquote>
       );
     case "list":
-      return renderList(el, key);
+      return renderList(el, key, opts);
     case "listitem":
-      return <li key={key}>{(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`))}</li>;
+      return (
+        <li key={key}>{(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts))}</li>
+      );
     case "link":
-      return renderLink(node as never, key);
+      return renderLink(node as never, key, opts);
     case "variable-chip":
       return renderChip(node as never, key);
     case "assigned-sunday-callout":
-      // Date is interpolated upstream; if the snapshot didn't carry
-      // an explicit value we'd have nothing useful to display, so
-      // we render an empty placeholder rather than a stale token.
-      return null;
+      return renderAssignedSundayCallout(key, opts.assignedDate);
     default:
       return (
-        <span key={key}>{(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`))}</span>
+        <span key={key}>
+          {(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts))}
+        </span>
       );
   }
 }
 
-function renderParagraph(el: SerializedElementNode, key: string) {
+function renderParagraph(el: SerializedElementNode, key: string, opts: RenderLetterStateOptions) {
   const align = elementFormatToTextAlign(el.format);
   // Color + size inherit from LetterCanvas's wrapper so paragraphs
   // match the contenteditable's typography (text-walnut, 16.5px,
@@ -91,15 +110,15 @@ function renderParagraph(el: SerializedElementNode, key: string) {
   // shade lighter than the on-screen view.
   return (
     <p key={key} className={`my-3 ${align}`}>
-      {(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`))}
+      {(el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts))}
     </p>
   );
 }
 
-function renderHeading(el: SerializedElementNode, key: string) {
+function renderHeading(el: SerializedElementNode, key: string, opts: RenderLetterStateOptions) {
   const tag = el.tag ?? "h2";
   const align = elementFormatToTextAlign(el.format);
-  const children = (el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`));
+  const children = (el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts));
   if (tag === "h1")
     return (
       <h1 key={key} className={`font-display text-[26px] mt-4 mb-2 text-walnut ${align}`}>
@@ -119,8 +138,8 @@ function renderHeading(el: SerializedElementNode, key: string) {
   );
 }
 
-function renderList(el: SerializedElementNode, key: string) {
-  const items = (el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`));
+function renderList(el: SerializedElementNode, key: string, opts: RenderLetterStateOptions) {
+  const items = (el.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts));
   if (el.listType === "number")
     return (
       <ol key={key} className="list-decimal pl-7 my-2 text-walnut-2 leading-[1.65]">
@@ -134,7 +153,11 @@ function renderList(el: SerializedElementNode, key: string) {
   );
 }
 
-function renderLink(node: { url?: string; children?: SerializedLexicalNode[] }, key: string) {
+function renderLink(
+  node: { url?: string; children?: SerializedLexicalNode[] },
+  key: string,
+  opts: RenderLetterStateOptions,
+) {
   return (
     <a
       key={key}
@@ -143,7 +166,7 @@ function renderLink(node: { url?: string; children?: SerializedLexicalNode[] }, 
       rel="noopener noreferrer"
       className="underline text-bordeaux hover:text-bordeaux-deep"
     >
-      {(node.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`))}
+      {(node.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts))}
     </a>
   );
 }

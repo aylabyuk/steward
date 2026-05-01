@@ -22,7 +22,7 @@ export function PrayersSection({ wardId, date, meeting, nonMeetingSundays }: Pro
     <ProgramSection id="sec-prayers" label="Prayers">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-7 gap-y-1">
         <PrayerRowGroup
-          label="Opening"
+          label="Opening Prayer"
           role="opening"
           wardId={wardId}
           date={date}
@@ -31,11 +31,11 @@ export function PrayersSection({ wardId, date, meeting, nonMeetingSundays }: Pro
           onChange={(a) => void set("openingPrayer", a)}
         />
         <PrayerRowGroup
-          label="Benediction"
+          label="Closing Prayer"
           role="benediction"
           wardId={wardId}
           date={date}
-          placeholder="Who will give the benediction?"
+          placeholder="Who will give the closing prayer?"
           assignment={meeting?.benediction}
           onChange={(a) => void set("benediction", a)}
         />

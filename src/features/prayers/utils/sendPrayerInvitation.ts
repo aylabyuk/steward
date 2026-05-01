@@ -41,7 +41,7 @@ export async function sendPrayerInvitation(
     const vars = {
       speakerName: input.prayerGiverName,
       prayerGiverName: input.prayerGiverName,
-      prayerType: input.role === "opening" ? "opening prayer" : "benediction",
+      prayerType: input.role === "opening" ? "opening prayer" : "closing prayer",
       date: formatAssignedDate(input.meetingDate),
       today: formatToday(),
       wardName,

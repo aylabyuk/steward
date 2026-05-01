@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { SubState } from "@/hooks/_sub";
-import { SPEAKER_STATUSES, type Member, type SpeakerStatus, type WithId } from "@/lib/types";
+import type { Member, SpeakerStatus, WithId } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import type { StatusSource } from "@/lib/types/meeting";
 import { computeConfirmCopy } from "../utils/speakerStatusConfirmCopy";
+import { SpeakerStatusMenuList } from "./SpeakerStatusMenuList";
+
+type MenuPosition = { top: number; left: number } | { top: number; right: number };
 
 const STATE_LABELS: Record<SpeakerStatus, string> = {
   planned: "Planned",
@@ -53,12 +57,16 @@ export function SpeakerStatusMenu({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<SpeakerStatus | null>(null);
+  const [menuPos, setMenuPos] = useState<MenuPosition | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const inBadge = ref.current?.contains(e.target as Node);
+      const inMenu = menuRef.current?.contains(e.target as Node);
+      if (!inBadge && !inMenu) setOpen(false);
     }
     function onEsc(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -68,6 +76,40 @@ export function SpeakerStatusMenu({
     return () => {
       document.removeEventListener("mousedown", onClick);
       document.removeEventListener("keydown", onEsc);
+    };
+  }, [open]);
+
+  // Portal-positioned menu — anchored to the badge's bounding rect so
+  // the dropdown escapes ancestors with `overflow: hidden` (the
+  // mobile schedule card clips otherwise). When the badge sits near
+  // the right edge of the viewport (typical on mobile, where the
+  // status pill is on the right side of a row), the menu would
+  // overflow right — flip to right-edge anchoring in that case.
+  // Recompute on scroll + resize so the menu tracks the badge.
+  useEffect(() => {
+    if (!open) {
+      setMenuPos(null);
+      return;
+    }
+    const button = ref.current?.querySelector("button");
+    if (!button) return;
+    function update() {
+      const rect = button!.getBoundingClientRect();
+      const top = rect.bottom + 6;
+      // Min menu width = `min-w-44` = 11rem = 176px. 8px viewport gutter.
+      const wouldOverflow = rect.left + 176 > window.innerWidth - 8;
+      setMenuPos(
+        wouldOverflow
+          ? { top, right: Math.max(8, window.innerWidth - rect.right) }
+          : { top, left: rect.left },
+      );
+    }
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
     };
   }, [open]);
 
@@ -109,44 +151,18 @@ export function SpeakerStatusMenu({
         >
           {STATE_LABELS[status]}
         </button>
-        {open && (
-          <ul
-            role="menu"
-            className="absolute left-0 top-full mt-1.5 min-w-44 bg-chalk border border-border rounded-lg shadow-[0_10px_28px_rgba(58,37,25,0.12),0_2px_6px_rgba(58,37,25,0.06)] p-1.5 z-30 list-none m-0 animate-[menuIn_120ms_ease-out]"
-          >
-            {SPEAKER_STATUSES.map((s) => {
-              const active = s === status;
-              const destructive = s === "declined";
-              return (
-                <li key={s} role="none">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => requestChange(s)}
-                    className={cn(
-                      "w-full flex items-center gap-2 font-sans text-[13px] px-3 py-1.5 rounded-sm transition-colors",
-                      destructive
-                        ? "text-bordeaux hover:bg-danger-soft"
-                        : "text-walnut hover:bg-parchment",
-                    )}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        "inline-block w-3.5 text-walnut-3 leading-none",
-                        active && "text-walnut",
-                      )}
-                    >
-                      {active ? "✓" : ""}
-                    </span>
-                    {destructive ? "Mark as Declined" : STATE_LABELS[s]}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
       </div>
+      {open &&
+        menuPos &&
+        createPortal(
+          <SpeakerStatusMenuList
+            ref={menuRef}
+            status={status}
+            position={menuPos}
+            onPick={requestChange}
+          />,
+          document.body,
+        )}
       {pending && copy && (
         <ConfirmDialog
           open

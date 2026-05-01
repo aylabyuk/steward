@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Navigate, Outlet } from "react-router";
+import { Navigate, Outlet, useSearchParams } from "react-router";
 import { AppShell } from "@/app/components/AppShell";
 import { WardPicker } from "@/app/components/WardPicker";
 import { useMemberProfileSync } from "@/app/hooks/useMemberProfileSync";
@@ -32,6 +32,8 @@ export function AuthGate({ appShell = true }: Props) {
   const access = useWardAccess();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const setWardId = useCurrentWardStore((s) => s.setWardId);
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get("embed") === "ios";
   // Silently back-fill the signed-in user's Google profile fields
   // (displayName + photoURL) onto their ward membership docs once
   // access resolves, so avatar bubbles on other screens can render
@@ -45,6 +47,14 @@ export function AuthGate({ appShell = true }: Props) {
       setWardId(null);
     }
   }, [access, setWardId]);
+
+  // Embed mode (iOS WKWebView opening `?embed=ios`): the child page
+  // owns the auth bootstrap (`useEmbedAuthBootstrap` consumes the
+  // fragment token via `signInWithCustomToken`) and renders its own
+  // chromeless letter view. Bypass the gate's sign-out redirect, the
+  // access-resolution screens, and the AppShell wrapper so the embed
+  // experience stays one-screen with no app chrome bleeding through.
+  if (isEmbed) return <Outlet />;
 
   if (status === "loading") return <Loading />;
   if (status === "signed_out") return <Navigate to="/login" replace />;

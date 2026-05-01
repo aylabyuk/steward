@@ -10,33 +10,6 @@ const baseProps = {
   strokeLinejoin: "round" as const,
 };
 
-export function CheckIcon() {
-  return (
-    <svg width="12" height="12" {...baseProps}>
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-
-export function PrintIcon() {
-  return (
-    <svg width="12" height="12" {...baseProps}>
-      <path d="M6 9V2h12v7" />
-      <rect x="3" y="9" width="18" height="9" rx="2" />
-      <path d="M6 14h12v7H6z" />
-    </svg>
-  );
-}
-
-export function SendIcon() {
-  return (
-    <svg width="12" height="12" {...baseProps}>
-      <path d="M22 2L11 13" />
-      <path d="M22 2l-7 20-4-9-9-4 20-7z" />
-    </svg>
-  );
-}
-
 export function RemoveIcon() {
   return (
     <svg width="14" height="14" {...baseProps}>

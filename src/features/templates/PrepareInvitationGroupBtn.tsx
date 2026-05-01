@@ -31,7 +31,7 @@ export function PrepareInvitationGroupBtn({
       aria-label={label}
       title={label}
       className={[
-        "relative inline-flex items-center justify-center px-3 py-2 sm:px-3.5 sm:py-2.5",
+        "relative inline-flex items-center justify-center px-3 sm:px-3.5 h-9 sm:h-10",
         "border transition-colors focus:outline-none focus:z-10 focus:ring-2 focus:ring-bordeaux/30",
         "disabled:opacity-60 disabled:cursor-not-allowed",
         rounded,

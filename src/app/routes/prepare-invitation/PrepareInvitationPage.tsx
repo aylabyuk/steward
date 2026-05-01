@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
+import { EmbedLetterView } from "@/features/embed/EmbedLetterView";
+import { useEmbedAuthBootstrap } from "@/features/embed/useEmbedAuthBootstrap";
+import { useEmbedShareBridge } from "@/features/embed/useEmbedShareBridge";
 import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { useSpeakerLetterTemplate } from "@/features/templates/hooks/useSpeakerLetterTemplate";
@@ -17,6 +19,11 @@ import { computeSendValidation } from "./utils/prepareInvitationValidation";
 
 export function PrepareInvitationPage() {
   const { date, speakerId } = useParams<{ date: string; speakerId: string }>();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get("embed") === "ios";
+  const embedAuth = useEmbedAuthBootstrap();
+  useEmbedShareBridge();
+  const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
   const authUser = useAuthStore((s) => s.user);
@@ -87,31 +94,27 @@ export function PrepareInvitationPage() {
     return (
       <PrepareInvitationPageMessage
         title="Invitation sent"
-        body="The speaker has been notified. This tab will close on its own."
-        close
+        body="The speaker has been notified."
+        backToSchedule
       />
     );
   }
 
-  const { email, hasEmail, canSend, canSendReason, canSms, canSmsReason } = computeSendValidation(
-    speaker.data,
-  );
+  if (isEmbed) {
+    // biome-ignore format: single line keeps the page under the 150-LOC cap
+    return <EmbedLetterView authStatus={embedAuth} form={form} date={date} wardName={wardName} vars={vars} />;
+  }
+
+  const { email, hasEmail } = computeSendValidation(speaker.data);
 
   const toolbarProps = {
     busy: form.busy,
-    canSend,
-    canSendReason,
-    canSms,
-    canSmsReason,
     hasOverride: form.letterHasOverride,
     speakerName: speaker.data.name,
     speakerEmail: speaker.data.email ?? "",
     speakerPhone: speaker.data.phone ?? "",
+    assignedDate: date,
     onRevert: () => void form.clearLetterOverride(),
-    onMarkInvited: actions.markInvited,
-    // Global `@media print` rules pin the preview's LetterCanvas to
-    // the sheet at true 8.5×11 — WYSIWYG, no new route, no re-read.
-    onPrint: () => window.print(),
     onSend: actions.send,
     onSendSms: actions.sendSms,
   };
@@ -121,10 +124,10 @@ export function PrepareInvitationPage() {
       <PrepareInvitationHeader
         email={email}
         hasEmail={hasEmail}
-        onCancel={() => window.close()}
+        onCancel={() => navigate("/schedule")}
         {...toolbarProps}
       />
-      <div className="flex-1 min-h-0 lg:overflow-hidden px-5 sm:px-8 pt-5 pb-4">
+      <div className="flex-1 min-h-0 lg:overflow-hidden">
         {form.hydrated ? (
           <PrepareInvitationLetterTab
             initialJson={form.initialJson}
@@ -136,12 +139,15 @@ export function PrepareInvitationPage() {
             onInitial={form.captureInitial}
             resetKey={form.resetKey}
             vars={vars}
-            previewToolbar={<PrepareInvitationActionBar {...toolbarProps} />}
           />
         ) : (
-          <p className="font-serif italic text-[14px] text-walnut-3">Loading letter…</p>
+          <p className="px-5 sm:px-8 pt-5 pb-4 font-serif italic text-[14px] text-walnut-3">
+            Loading letter…
+          </p>
         )}
-        {form.error && <p className="mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>}
+        {form.error && (
+          <p className="px-5 sm:px-8 mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>
+        )}
       </div>
     </main>
   );

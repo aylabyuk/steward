@@ -20,6 +20,11 @@ interface Request {
   wardId: string;
   invitationId?: string;
   invitationToken?: string;
+  /** Bishopric-only opt-in. When true, the bishopric branch returns
+   *  an extra `firebaseCustomToken` so an iOS WebView embed can sign
+   *  the bishop into the web Firebase Auth context. Ignored on the
+   *  speaker token-exchange path. */
+  mintWebSession?: boolean;
 }
 
 type SpeakerResponse =
@@ -46,14 +51,21 @@ const TOKEN_TTL_SECONDS = 3600;
 export const issueSpeakerSession = onCall(
   { secrets: TWILIO_SECRETS },
   async (request: CallableRequest<Request>): Promise<Response> => {
-    const { wardId, invitationId, invitationToken } = request.data;
+    const { wardId, invitationId, invitationToken, mintWebSession } = request.data;
     if (!wardId) throw new HttpsError("invalid-argument", "wardId required.");
     const auth = request.auth;
 
     if (auth) {
       const member = await loadActiveMember(wardId, auth.uid);
       if (member) {
-        return mintBishopricSession(wardId, auth.uid, member, invitationId, TOKEN_TTL_SECONDS);
+        return mintBishopricSession({
+          wardId,
+          uid: auth.uid,
+          member,
+          invitationId,
+          ttlSeconds: TOKEN_TTL_SECONDS,
+          ...(mintWebSession ? { mintWebSession: true } : {}),
+        });
       }
       if (isSpeakerOfInvitation(auth, invitationId)) {
         return mintSpeakerRefresh(invitationId!);

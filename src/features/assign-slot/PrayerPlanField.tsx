@@ -10,6 +10,7 @@ interface Props {
   inputMode?: "text" | "email" | "tel" | "numeric";
   autoComplete?: string;
   invalid?: boolean;
+  disabled?: boolean;
   /** Helper / error line shown under the field. */
   hint?: string;
 }
@@ -27,6 +28,7 @@ export function PrayerPlanField({
   inputMode,
   autoComplete,
   invalid = false,
+  disabled = false,
   hint,
 }: Props) {
   return (
@@ -42,9 +44,12 @@ export function PrayerPlanField({
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder ?? ""}
+        disabled={disabled}
         aria-invalid={invalid || undefined}
         className={cn(
-          "font-sans text-[14px] px-2.5 py-1.5 bg-parchment border rounded-md text-walnut w-full hover:bg-chalk focus:outline-none focus:bg-chalk focus:ring-2",
+          "font-sans text-[14px] px-2.5 py-1.5 bg-parchment border rounded-md text-walnut w-full focus:outline-none focus:bg-chalk focus:ring-2",
+          "disabled:cursor-not-allowed disabled:bg-parchment-2 disabled:text-walnut-2 disabled:hover:bg-parchment-2",
+          !disabled && "hover:bg-chalk",
           invalid
             ? "border-bordeaux focus:border-bordeaux focus:ring-bordeaux/25"
             : "border-transparent hover:border-border-strong focus:border-bordeaux focus:ring-bordeaux/15",

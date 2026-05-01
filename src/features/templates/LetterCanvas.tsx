@@ -45,7 +45,7 @@ export function LetterCanvas({
   editorStateJson,
   compact,
 }: Props) {
-  const rendered = editorStateJson ? renderLetterState(editorStateJson) : null;
+  const rendered = editorStateJson ? renderLetterState(editorStateJson, { assignedDate }) : null;
   return (
     <div
       className={cn(

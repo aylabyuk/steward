@@ -9,6 +9,7 @@ import {
 } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
 import { invitationPrayerType } from "./invitationTypes.js";
+import { stampParticipantInvited } from "./stampParticipantInvited.js";
 import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type {
   DeliveryEntry,
@@ -20,11 +21,23 @@ import type {
  *  delivers via chosen channels, and returns the new invitationId
  *  plus conversationSid. The rotate path shares helpers but a fresh
  *  send always starts from scratch (prior Twilio conversations for
- *  the same speaker+date get cleaned up). */
+ *  the same speaker+date get cleaned up).
+ *
+ *  Also flips the participant doc's `status` to "invited" + mirrors
+ *  the name onto the inline `meeting.{role}.person` (prayer kind)
+ *  server-side. This is the source-of-truth alignment between iOS
+ *  and web — without it, the participant.status only got updated by
+ *  whichever client did a follow-up `upsertPrayerParticipant` /
+ *  `updateSpeaker` call after the send, and clients that skipped
+ *  that step left the status stale at "planned" while the
+ *  invitation existed. The client-side post-send writes still run
+ *  (idempotent), but the function now guarantees consistency on
+ *  every send regardless of caller. */
 export async function createFreshInvitation(
   input: FreshInvitationRequest,
   origin: string,
   fromNumberMode: FromNumberMode,
+  bishopUid: string,
 ): Promise<FreshInvitationResponse> {
   const db = getFirestore();
   const wantsEmail = input.channels.includes("email") && Boolean(input.speakerEmail);
@@ -83,6 +96,19 @@ export async function createFreshInvitation(
   await addChatParticipant(conversationSid, `speaker:${docRef.id}`, {
     displayName: input.speakerName,
     role: "speaker",
+  });
+
+  await stampParticipantInvited({
+    db,
+    wardId: input.wardId,
+    meetingDate: input.meetingDate,
+    speakerId: input.speakerId,
+    speakerName: input.speakerName,
+    isPrayer,
+    ...(input.prayerRole ? { prayerRole: input.prayerRole } : {}),
+    invitationId: docRef.id,
+    conversationSid,
+    bishopUid,
   });
 
   const inviteUrl = buildInviteUrl(origin, input.wardId, docRef.id, plaintextToken);

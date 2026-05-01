@@ -1,9 +1,9 @@
 import type { SpeakerRole } from "@/lib/types";
 import { SpeakerRolePicker } from "@/features/schedule/SpeakerRolePicker";
-import { PrayerPlanField } from "./PrayerPlanField";
+import { AssignContactFields } from "./AssignContactFields";
 
 const INPUT_CLS =
-  "font-sans text-[14px] px-3 py-2.5 bg-chalk border border-border-strong rounded-md text-walnut w-full transition-colors placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15";
+  "font-sans text-[14px] px-3 py-2.5 bg-chalk border border-border-strong rounded-md text-walnut w-full transition-colors placeholder:text-walnut-3 focus:outline-none focus:border-bordeaux focus:ring-2 focus:ring-bordeaux/15 disabled:bg-parchment-2 disabled:text-walnut-2 disabled:cursor-not-allowed";
 const LABEL_CLS = "font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium";
 
 interface SpeakerFieldProps {
@@ -14,6 +14,7 @@ interface SpeakerFieldProps {
   phone: string;
   emailInvalid: boolean;
   phoneInvalid: boolean;
+  disabled?: boolean;
   onChange: (
     patch: Partial<{
       name: string;
@@ -34,6 +35,7 @@ export function AssignSpeakerFields({
   phone,
   emailInvalid,
   phoneInvalid,
+  disabled = false,
   onChange,
 }: SpeakerFieldProps) {
   return (
@@ -43,10 +45,11 @@ export function AssignSpeakerFields({
           Name <span className="text-bordeaux">*</span>
         </span>
         <input
-          autoFocus
+          autoFocus={!disabled}
           value={name}
           onChange={(e) => onChange({ name: e.target.value })}
           placeholder="e.g. Sister Hannah Reeves"
+          disabled={disabled}
           className={INPUT_CLS}
         />
       </label>
@@ -58,35 +61,24 @@ export function AssignSpeakerFields({
           value={topic}
           onChange={(e) => onChange({ topic: e.target.value })}
           placeholder="e.g. On the still, small voice"
+          disabled={disabled}
           className={INPUT_CLS}
         />
       </label>
       <SpeakerRolePicker
         role={role}
-        readOnly={false}
+        readOnly={disabled}
         onChange={(next) => onChange({ role: next })}
       />
-      <PrayerPlanField
-        label="Email"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        value={email}
-        onChange={(v) => onChange({ email: v })}
-        placeholder="speaker@example.com"
-        invalid={emailInvalid}
-        {...(emailInvalid ? { hint: "Doesn't look like a valid email." } : {})}
-      />
-      <PrayerPlanField
-        label="Phone"
-        type="tel"
-        inputMode="tel"
-        autoComplete="tel"
-        value={phone}
-        onChange={(v) => onChange({ phone: v })}
-        placeholder="+1 555 555 1234"
-        invalid={phoneInvalid}
-        {...(phoneInvalid ? { hint: "Use international format, e.g. +14165551234." } : {})}
+      <AssignContactFields
+        email={email}
+        phone={phone}
+        emailInvalid={emailInvalid}
+        phoneInvalid={phoneInvalid}
+        disabled={disabled}
+        emailPlaceholder="speaker@example.com"
+        onEmailChange={(v) => onChange({ email: v })}
+        onPhoneChange={(v) => onChange({ phone: v })}
       />
     </div>
   );
@@ -98,6 +90,7 @@ interface PrayerFieldProps {
   phone: string;
   emailInvalid: boolean;
   phoneInvalid: boolean;
+  disabled?: boolean;
   onChange: (patch: Partial<{ name: string; email: string; phone: string }>) => void;
 }
 
@@ -109,6 +102,7 @@ export function AssignPrayerFields({
   phone,
   emailInvalid,
   phoneInvalid,
+  disabled = false,
   onChange,
 }: PrayerFieldProps) {
   return (
@@ -118,34 +112,23 @@ export function AssignPrayerFields({
           Name <span className="text-bordeaux">*</span>
         </span>
         <input
-          autoFocus
+          autoFocus={!disabled}
           value={name}
           onChange={(e) => onChange({ name: e.target.value })}
           placeholder="e.g. Brother Marcus Allen"
+          disabled={disabled}
           className={INPUT_CLS}
         />
       </label>
-      <PrayerPlanField
-        label="Email"
-        type="email"
-        inputMode="email"
-        autoComplete="email"
-        value={email}
-        onChange={(v) => onChange({ email: v })}
-        placeholder="prayer-giver@example.com"
-        invalid={emailInvalid}
-        {...(emailInvalid ? { hint: "Doesn't look like a valid email." } : {})}
-      />
-      <PrayerPlanField
-        label="Phone"
-        type="tel"
-        inputMode="tel"
-        autoComplete="tel"
-        value={phone}
-        onChange={(v) => onChange({ phone: v })}
-        placeholder="+1 555 555 1234"
-        invalid={phoneInvalid}
-        {...(phoneInvalid ? { hint: "Use international format, e.g. +14165551234." } : {})}
+      <AssignContactFields
+        email={email}
+        phone={phone}
+        emailInvalid={emailInvalid}
+        phoneInvalid={phoneInvalid}
+        disabled={disabled}
+        emailPlaceholder="prayer-giver@example.com"
+        onEmailChange={(v) => onChange({ email: v })}
+        onPhoneChange={(v) => onChange({ phone: v })}
       />
     </div>
   );

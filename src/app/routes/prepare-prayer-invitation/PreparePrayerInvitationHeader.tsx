@@ -10,29 +10,37 @@ interface Props {
   email: string;
   hasEmail: boolean;
   busy: boolean;
-  canSend: boolean;
-  canSendReason: string | null;
-  canSms: boolean;
-  canSmsReason: string | null;
   hasOverride: boolean;
+  /** Meeting date (ISO YYYY-MM-DD) — threaded to the action bar's
+   *  share path so the generated PDF filename includes it. */
+  assignedDate: string;
   onCancel: () => void;
   onRevert: () => void;
-  onMarkInvited: () => void;
-  onPrint: () => void;
   onSend: (email: string) => void;
   onSendSms: (phone: string) => void;
 }
 
 const ROLE_LABEL: Record<PrayerRole, string> = {
-  opening: "Opening prayer",
-  benediction: "Benediction",
+  opening: "Opening Prayer",
+  benediction: "Closing Prayer",
 };
 
 export function PreparePrayerInvitationHeader(props: Props) {
+  const actionBarProps = {
+    busy: props.busy,
+    hasOverride: props.hasOverride,
+    speakerName: props.speakerName,
+    speakerEmail: props.speakerEmail,
+    speakerPhone: props.speakerPhone,
+    assignedDate: props.assignedDate,
+    onRevert: props.onRevert,
+    onSend: props.onSend,
+    onSendSms: props.onSendSms,
+  };
   return (
-    <header className="sticky top-0 z-20 shrink-0 flex flex-col gap-3 border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-0.5 min-w-0">
+    <header className="sticky top-0 z-20 shrink-0 flex flex-col gap-3 lg:gap-0 border-b border-border bg-chalk px-4 sm:px-8 pt-4 sm:pt-5 pb-3 sm:pb-4">
+      <div className="flex items-start justify-between gap-3 lg:gap-6">
+        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-brass-deep">
             Prepare invitation · {ROLE_LABEL[props.role]}
           </div>
@@ -43,34 +51,28 @@ export function PreparePrayerInvitationHeader(props: Props) {
             {props.hasEmail ? `Will be emailed to ${props.email}.` : "No email on file."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={props.onCancel}
-          aria-label="Cancel and close tab"
-          title="Cancel"
-          className="shrink-0 -mr-1 rounded-md p-2 text-walnut-3 hover:text-bordeaux hover:bg-parchment-2 focus:outline-none focus:ring-2 focus:ring-bordeaux/30"
-        >
-          <RemoveIcon />
-        </button>
+        <div className="hidden lg:block shrink-0">
+          <PrepareInvitationActionBar {...actionBarProps} />
+        </div>
+        <CancelButton onClick={props.onCancel} />
       </div>
       <div className="lg:hidden flex justify-center">
-        <PrepareInvitationActionBar
-          busy={props.busy}
-          canSend={props.canSend}
-          canSendReason={props.canSendReason}
-          canSms={props.canSms}
-          canSmsReason={props.canSmsReason}
-          hasOverride={props.hasOverride}
-          speakerName={props.speakerName}
-          speakerEmail={props.speakerEmail}
-          speakerPhone={props.speakerPhone}
-          onRevert={props.onRevert}
-          onMarkInvited={props.onMarkInvited}
-          onPrint={props.onPrint}
-          onSend={props.onSend}
-          onSendSms={props.onSendSms}
-        />
+        <PrepareInvitationActionBar {...actionBarProps} />
       </div>
     </header>
+  );
+}
+
+function CancelButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Cancel and return to schedule"
+      title="Cancel"
+      className="shrink-0 -mr-1 rounded-md p-2 text-walnut-3 hover:text-bordeaux hover:bg-parchment-2 focus:outline-none focus:ring-2 focus:ring-bordeaux/30"
+    >
+      <RemoveIcon />
+    </button>
   );
 }
