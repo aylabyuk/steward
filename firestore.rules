@@ -110,6 +110,46 @@ service cloud.firestore {
             && noApprovalTampering(oldApprovals, newApprovals));
     }
 
+    // `response.acknowledgedAt` is write-once. Once any active member sets
+    // it (via the bishop's Apply-response action), subsequent updates may
+    // not change or clear it. Closes the receipt-email replay vector — the
+    // onInvitationWrite trigger fires per `null → set` transition, so
+    // freezing the field after first set bounds receipts to one fan-out
+    // per response.
+    function ackOnceOk() {
+      let oldAck = resource.data.get('response', {}).get('acknowledgedAt', null);
+      let newAck = request.resource.data.get('response', {}).get('acknowledgedAt', null);
+      return oldAck == null || oldAck == newAck;
+    }
+
+    // Speaker-claim writes that touch the `response` subtree must pin
+    // `actorUid` to the caller's auth.uid (deterministic per invitation:
+    // `speaker:{wardId}:{invitationId}`) and may only set `actorEmail` to
+    // the auth token's verified email, if any. Capability-token sessions
+    // have no auth email, so they can't claim an actorEmail at all —
+    // closes the audit-trail forgery vector. Heartbeat-only writes (no
+    // `response` in affectedKeys) skip the check.
+    function speakerActorOk() {
+      let affected = request.resource.data.diff(resource.data).affectedKeys();
+      let response = request.resource.data.get('response', {});
+      let actorUid = response.get('actorUid', '');
+      let actorEmail = response.get('actorEmail', '');
+      let authEmail = request.auth.token.get('email', '');
+      return !affected.hasAny(['response'])
+        || (actorUid == request.auth.uid
+            && (actorEmail == '' || actorEmail == authEmail));
+    }
+
+    // Speaker-claim writes also have to clear `tokenExpiresAt` if it's
+    // present — defense-in-depth alongside the meeting-level `expiresAt`.
+    // Older invitations (pre-token-rotation rollout) may not carry the
+    // field; treat absence as no constraint so they continue to honour
+    // the `expiresAt` wall.
+    function speakerTokenLive() {
+      let tokenExp = resource.data.get('tokenExpiresAt', null);
+      return tokenExp == null || request.time < tokenExp;
+    }
+
     match /wards/{wardId} {
       allow read: if isActiveMember(wardId);
       // Settings live on the ward doc; only bishopric can change them.
@@ -142,13 +182,16 @@ service cloud.firestore {
       match /speakerInvitations/{invitationId} {
         allow read: if true;
         allow create, delete: if isActiveMember(wardId);
-        allow update: if isActiveMember(wardId)
+        allow update: if (isActiveMember(wardId) && ackOnceOk())
           || (isSignedIn()
               && request.auth.token.invitationId == invitationId
               && request.auth.token.wardId == wardId
               && request.time < resource.data.expiresAt
+              && speakerTokenLive()
               && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['response', 'speakerLastSeenAt']));
+                  .hasOnly(['response', 'speakerLastSeenAt'])
+              && speakerActorOk()
+              && ackOnceOk());
       }
 
       // Invites: bishopric creates/lists/revokes pending invites keyed by

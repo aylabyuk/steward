@@ -1,5 +1,10 @@
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { addChatParticipant, createConversation } from "./twilio/conversations.js";
+import { logger } from "firebase-functions/v2";
+import {
+  addChatParticipant,
+  addSmsParticipant,
+  createConversation,
+} from "./twilio/conversations.js";
 import {
   addBishopricParticipants,
   buildInviteUrl,
@@ -10,7 +15,7 @@ import {
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
 import { invitationPrayerType } from "./invitationTypes.js";
 import { stampParticipantInvited } from "./stampParticipantInvited.js";
-import type { FromNumberMode } from "./twilio/fromNumber.js";
+import { resolveFromNumber, type FromNumberMode } from "./twilio/fromNumber.js";
 import type {
   DeliveryEntry,
   FreshInvitationRequest,
@@ -98,6 +103,29 @@ export async function createFreshInvitation(
     role: "speaker",
   });
 
+  // Bind the speaker's phone for SMS-to-Conversation bridging — without
+  // this, a speaker's SMS reply has no participant binding to match
+  // and Twilio drops it (the chat-identity participant alone covers
+  // the web-side, not SMS). Fail-soft: if Twilio rejects the binding
+  // (bad phone format, cross-border 10DLC block, etc.) we log and
+  // proceed; the chat still works on the web side and the invite SMS
+  // still gets delivered separately by `trySms` below.
+  if (input.speakerPhone) {
+    try {
+      await addSmsParticipant(
+        conversationSid,
+        input.speakerPhone,
+        resolveFromNumber(fromNumberMode),
+      );
+    } catch (err) {
+      logger.warn("failed to add SMS participant — chat will work web-only", {
+        speakerId: input.speakerId,
+        meetingDate: input.meetingDate,
+        err: (err as Error).message,
+      });
+    }
+  }
+
   await stampParticipantInvited({
     db,
     wardId: input.wardId,
@@ -122,6 +150,7 @@ export async function createFreshInvitation(
     assignedDate: input.assignedDate,
     wardName: input.wardName,
     inviteUrl,
+    ...(input.speakerTopic ? { topic: input.speakerTopic } : {}),
     ...(prayerType ? { prayerType } : {}),
   };
 
@@ -129,6 +158,7 @@ export async function createFreshInvitation(
   if (wantsEmail) {
     deliveryRecord.push(
       await tryEmail(
+        input.wardId,
         {
           speakerEmail: input.speakerEmail!,
           inviterName: input.inviterName,

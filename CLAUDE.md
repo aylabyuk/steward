@@ -108,6 +108,7 @@ entries reference the issue inline as `(#N)`.
 - **[docs/notifications.md](docs/notifications.md)** — push subscribe flow, change notifications, finalization nudges, mention notifications, iOS caveats
 - **[docs/access.md](docs/access.md)** — roles matrix, sign-in allowlist, ward bootstrap, email CC policy
 - **[docs/engineering.md](docs/engineering.md)** — state management, component size limit, lint/format, testing, CI
+- **[docs/invitation-flow.md](docs/invitation-flow.md)** — speaker/prayer invitation flow: bishopric-facing flowchart + engineering sequence diagram (delivery, token rotation, response handling). Keep this in sync when changing the invite pipeline — see the [`invitation-flow-doc-sync`](.claude/skills/invitation-flow-doc-sync.md) skill for the trigger list and decision rules.
 
 ## Decisions (resolved)
 

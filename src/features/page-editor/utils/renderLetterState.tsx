@@ -7,6 +7,7 @@ import {
   renderSignature,
 } from "./renderLetterBlocks";
 import { renderChip, renderText, type SerializedTextNode } from "./renderLetterInline";
+import { isSafeUrl } from "./sanitize";
 
 interface SerializedElementNode extends SerializedLexicalNode {
   children?: SerializedLexicalNode[];
@@ -158,15 +159,19 @@ function renderLink(
   key: string,
   opts: RenderLetterStateOptions,
 ) {
+  // Drop the anchor for non-http(s) / non-same-origin URLs
+  // (`javascript:`, `data:`, …) — render the children as inline text.
+  const kids = (node.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts));
+  if (!isSafeUrl(node.url)) return <span key={key}>{kids}</span>;
   return (
     <a
       key={key}
-      href={node.url ?? "#"}
+      href={node.url}
       target="_blank"
       rel="noopener noreferrer"
       className="underline text-bordeaux hover:text-bordeaux-deep"
     >
-      {(node.children ?? []).map((c, i) => renderNode(c, `${key}.${i}`, opts))}
+      {kids}
     </a>
   );
 }

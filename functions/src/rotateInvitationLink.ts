@@ -1,5 +1,6 @@
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
+import { revokeSpeakerSession } from "./issueSpeakerSession.helpers.js";
 import { buildInviteUrl, tryEmail, trySms } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
@@ -54,6 +55,15 @@ export async function rotateInvitationLink(
     };
 
   await ref.update({ tokenHash, tokenStatus: "active" as const, ...writePatch });
+
+  // A new token means any session minted from the prior token is no
+  // longer the source of truth for this invitation. Revoke the
+  // speaker's refresh tokens so the next ID-token refresh forces them
+  // back through the issueSpeakerSession exchange — only the speaker
+  // tapping the freshly-delivered URL can recover a working session.
+  // Distinct from rotateTokenForBishopNotification, which intentionally
+  // doesn't revoke (the speaker may be actively in chat there).
+  await revokeSpeakerSession(input.wardId, input.invitationId);
 
   const inviteUrl = buildInviteUrl(origin, input.wardId, input.invitationId, plaintextToken);
   const freshInvitation: SpeakerInvitationShape = { ...invitation, ...effectiveContact };
@@ -117,6 +127,7 @@ async function deliverIfRequested(
   if (input.channels.includes("email") && invitation.speakerEmail) {
     out.push(
       await tryEmail(
+        input.wardId,
         {
           speakerEmail: invitation.speakerEmail,
           inviterName: invitation.inviterName,

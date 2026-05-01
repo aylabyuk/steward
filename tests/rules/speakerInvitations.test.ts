@@ -103,12 +103,14 @@ describe("speaker invitation rules", () => {
 
     async function seedWithContext(opts: {
       expiresAt?: Timestamp;
+      tokenExpiresAt?: Timestamp;
       response?: Record<string, unknown>;
     }): Promise<void> {
       await env.withSecurityRulesDisabled(async (ctx) => {
         await setDoc(doc(ctx.firestore(), PATH), {
           ...sample,
           ...(opts.expiresAt !== undefined ? { expiresAt: opts.expiresAt } : {}),
+          ...(opts.tokenExpiresAt !== undefined ? { tokenExpiresAt: opts.tokenExpiresAt } : {}),
           ...(opts.response !== undefined ? { response: opts.response } : {}),
         });
       });
@@ -222,6 +224,88 @@ describe("speaker invitation rules", () => {
       }).firestore();
       await assertFails(updateDoc(doc(db, PATH), { speakerLastSeenAt: serverTimestamp() }));
     });
+
+    it("blocks speaker writes past tokenExpiresAt even if expiresAt is future", async () => {
+      await seedWithContext({ expiresAt: FUTURE, tokenExpiresAt: PAST });
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
+    });
+
+    it("allows speaker writes when tokenExpiresAt is set and in the future", async () => {
+      await seedWithContext({ expiresAt: FUTURE, tokenExpiresAt: FUTURE });
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertSucceeds(updateDoc(doc(db, PATH), { response: sampleResponse }));
+    });
+
+    it("blocks speaker spoofing actorUid (different uid in response)", async () => {
+      await seedWithContext({ expiresAt: FUTURE });
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertFails(
+        updateDoc(doc(db, PATH), {
+          response: { ...sampleResponse, actorUid: "bishop" },
+        }),
+      );
+    });
+
+    it("blocks capability-token speaker (no auth email) from claiming an actorEmail", async () => {
+      await seedWithContext({ expiresAt: FUTURE });
+      // authedAsSpeaker sets only invitationId+wardId+role claims; no email.
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertFails(
+        updateDoc(doc(db, PATH), {
+          response: { ...sampleResponse, actorEmail: "bishop@x.com" },
+        }),
+      );
+    });
+
+    it("blocks speaker writing actorEmail that doesn't match auth.token.email", async () => {
+      await seedWithContext({ expiresAt: FUTURE });
+      // Speaker session minted with verified email; tries to claim a different one.
+      const db = env
+        .authenticatedContext(SPEAKER_UID, {
+          invitationId: INVITATION_ID,
+          wardId: WARD,
+          role: "speaker",
+          email: "speaker@example.com",
+          email_verified: true,
+        })
+        .firestore();
+      await assertFails(
+        updateDoc(doc(db, PATH), {
+          response: { ...sampleResponse, actorEmail: "different@x.com" },
+        }),
+      );
+    });
+
+    it("allows google-signed-in speaker writing matching actorEmail", async () => {
+      await seedWithContext({ expiresAt: FUTURE });
+      const db = env
+        .authenticatedContext(SPEAKER_UID, {
+          invitationId: INVITATION_ID,
+          wardId: WARD,
+          role: "speaker",
+          email: "speaker@example.com",
+          email_verified: true,
+        })
+        .firestore();
+      await assertSucceeds(
+        updateDoc(doc(db, PATH), {
+          response: { ...sampleResponse, actorEmail: "speaker@example.com" },
+        }),
+      );
+    });
   });
 
   describe("update — bishopric acknowledgement path", () => {
@@ -257,6 +341,69 @@ describe("speaker invitation rules", () => {
       });
       const db = authedAs(env, "clerk", "c@x.com").firestore();
       await assertSucceeds(updateDoc(doc(db, PATH), { bodyMarkdown: "edited letter body" }));
+    });
+
+    it("blocks overwriting an existing acknowledgedAt with a different value", async () => {
+      const ackedAt = Timestamp.fromDate(new Date("2026-04-21T10:00:00Z"));
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), PATH), {
+          ...sample,
+          expiresAt: FUTURE,
+          response: {
+            answer: "yes",
+            respondedAt: serverTimestamp(),
+            actorUid: "speaker-uid",
+            acknowledgedAt: ackedAt,
+            acknowledgedBy: "bishop",
+          },
+        });
+      });
+      const db = authedAs(env, "clerk", "c@x.com").firestore();
+      // Different timestamp than what's on the doc.
+      await assertFails(
+        updateDoc(doc(db, PATH), {
+          "response.acknowledgedAt": Timestamp.fromDate(new Date("2026-04-22T10:00:00Z")),
+        }),
+      );
+    });
+
+    it("blocks clearing an existing acknowledgedAt", async () => {
+      const ackedAt = Timestamp.fromDate(new Date("2026-04-21T10:00:00Z"));
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), PATH), {
+          ...sample,
+          expiresAt: FUTURE,
+          response: {
+            answer: "yes",
+            respondedAt: serverTimestamp(),
+            actorUid: "speaker-uid",
+            acknowledgedAt: ackedAt,
+            acknowledgedBy: "bishop",
+          },
+        });
+      });
+      const db = authedAs(env, "bishop", "b@x.com").firestore();
+      await assertFails(updateDoc(doc(db, PATH), { "response.acknowledgedAt": null }));
+    });
+
+    it("allows a content edit that preserves acknowledgedAt unchanged", async () => {
+      const ackedAt = Timestamp.fromDate(new Date("2026-04-21T10:00:00Z"));
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), PATH), {
+          ...sample,
+          expiresAt: FUTURE,
+          response: {
+            answer: "yes",
+            respondedAt: serverTimestamp(),
+            actorUid: "speaker-uid",
+            acknowledgedAt: ackedAt,
+            acknowledgedBy: "bishop",
+          },
+        });
+      });
+      const db = authedAs(env, "bishop", "b@x.com").firestore();
+      // Editing a peer field — acknowledgedAt stays untouched.
+      await assertSucceeds(updateDoc(doc(db, PATH), { bodyMarkdown: "tweaked" }));
     });
   });
 });

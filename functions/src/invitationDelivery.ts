@@ -1,13 +1,33 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
-import { buildEmailHtml, buildEmailText } from "./invitationEmailBody.js";
+import {
+  buildEmailHtmlFromTemplate,
+  buildEmailTextFromTemplate,
+  type EmailKind,
+  type EmailTemplateVars,
+  readEmailTemplate,
+} from "./emailTemplateBody.js";
 import { interpolate, readMessageTemplate } from "./messageTemplates.js";
 import { sendEmail } from "./sendgrid/client.js";
 import { sendSmsDirect } from "./twilio/messaging.js";
 import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type { DeliveryEntry } from "./sendSpeakerInvitation.types.js";
 
-type EmailArgs = Parameters<typeof buildEmailText>[0];
+export interface EmailArgs {
+  speakerName: string;
+  inviterName: string;
+  assignedDate: string;
+  wardName: string;
+  inviteUrl: string;
+  /** Speaker assignment topic (free text). Speaker invitations only;
+   *  exposed so a bishopric-authored email template can reference
+   *  `{{topic}}`. */
+  topic?: string;
+  /** Set for prayer invitations — e.g. "opening prayer" or
+   *  "closing prayer". Drives kind dispatch (speaker vs prayer
+   *  template + subject line) and powers `{{prayerType}}` in the body. */
+  prayerType?: string;
+}
 
 export interface EmailDeliveryParams {
   speakerEmail: string;
@@ -20,20 +40,32 @@ export interface EmailDeliveryParams {
 }
 
 export async function tryEmail(
+  wardId: string,
   params: EmailDeliveryParams,
   args: EmailArgs,
 ): Promise<DeliveryEntry> {
   try {
+    const kind: EmailKind = args.prayerType ? "prayer" : "speaker";
     const subject = args.prayerType
       ? `Prayer invitation — ${params.assignedDate}`
       : `Speaking invitation — ${params.assignedDate}`;
+    const body = await readEmailTemplate(getFirestore(), wardId, kind);
+    const vars: EmailTemplateVars = {
+      speakerName: args.speakerName,
+      date: args.assignedDate,
+      wardName: args.wardName,
+      inviterName: args.inviterName,
+      inviteUrl: args.inviteUrl,
+      ...(args.topic ? { topic: args.topic } : {}),
+      ...(args.prayerType ? { prayerType: args.prayerType } : {}),
+    };
     const messageId = await sendEmail({
       to: params.speakerEmail,
       fromDisplayName: `${params.inviterName} (via Steward)`,
       replyTo: params.replyToEmail,
       subject,
-      text: buildEmailText(args),
-      html: buildEmailHtml(args),
+      text: buildEmailTextFromTemplate(body, vars),
+      html: buildEmailHtmlFromTemplate(body, vars),
     });
     const entry: DeliveryEntry = { channel: "email", status: "sent", at: new Date() };
     if (messageId) entry.providerId = messageId;

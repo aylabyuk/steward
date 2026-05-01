@@ -143,6 +143,22 @@ export const speakerEmailTemplateSchema = z.object({
 export type SpeakerEmailTemplate = z.infer<typeof speakerEmailTemplateSchema>;
 
 /**
+ * Body of the invitation email sent by the Cloud Function when a
+ * bishopric member sends a prayer invitation. Mirrors `speakerEmail`
+ * one-to-one — same `bodyMarkdown` + `updatedAt` shape; the variables
+ * just include `{{prayerType}}` so the same template can phrase
+ * opening vs closing prayer assignments.
+ *
+ * Variables: `{{speakerName}}`, `{{date}}`, `{{wardName}}`,
+ * `{{inviterName}}`, `{{prayerType}}`, `{{inviteUrl}}`.
+ */
+export const prayerEmailTemplateSchema = z.object({
+  bodyMarkdown: z.string(),
+  updatedAt: z.any().optional(),
+});
+export type PrayerEmailTemplate = z.infer<typeof prayerEmailTemplateSchema>;
+
+/**
  * Shared shape for server-side messaging templates (SMS + email
  * bodies sent by Cloud Functions). Each template lives at
  * `wards/{wardId}/templates/{key}` and exposes the same

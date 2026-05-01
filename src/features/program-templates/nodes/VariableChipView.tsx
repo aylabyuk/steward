@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { $getNodeByKey, type NodeKey } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useLetterVars, useLiveValues } from "@/features/page-editor/utils/letterRenderContext";
@@ -34,6 +35,7 @@ export function VariableChipView({ nodeKey, token, format, style }: Props) {
   const liveVars = useLetterVars();
   const isLive = useLiveValues();
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
   const display = liveVars[token] ?? meta?.sample ?? meta?.label ?? token;
 
@@ -60,7 +62,8 @@ export function VariableChipView({ nodeKey, token, format, style }: Props) {
   return (
     <span
       ref={wrapRef}
-      className="group/chip"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{ position: "relative", display: "inline-block" }}
     >
       <button
@@ -76,7 +79,7 @@ export function VariableChipView({ nodeKey, token, format, style }: Props) {
       >
         {wrapWithFormat(display, format)}
       </button>
-      {!open && <ChipTooltip token={token} isLive={isLive} />}
+      {hovered && !open && <ChipTooltip anchorRef={wrapRef} token={token} isLive={isLive} />}
       {open && (
         <VariableChipPicker
           variables={variables}
@@ -89,12 +92,29 @@ export function VariableChipView({ nodeKey, token, format, style }: Props) {
   );
 }
 
-function ChipTooltip({ token, isLive }: { token: string; isLive: boolean }) {
-  return (
+interface TooltipProps {
+  anchorRef: React.RefObject<HTMLElement | null>;
+  token: string;
+  isLive: boolean;
+}
+
+/** Tooltip rendered to `document.body` so it floats above the sticky
+ *  toolbar + any `overflow:hidden` ancestor. Position recomputed from
+ *  the chip's bounding rect on every render while hovered. */
+function ChipTooltip({ anchorRef, token, isLive }: TooltipProps) {
+  const rect = anchorRef.current?.getBoundingClientRect();
+  if (!rect) return null;
+  return createPortal(
     <span
       aria-hidden
-      contentEditable={false}
-      className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-7 z-40 whitespace-nowrap rounded-md bg-walnut text-parchment px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] opacity-0 group-hover/chip:opacity-100 transition-opacity duration-100"
+      style={{
+        position: "fixed",
+        top: rect.top - 28,
+        left: rect.left + rect.width / 2,
+        transform: "translateX(-50%)",
+        zIndex: 80,
+      }}
+      className="pointer-events-none whitespace-nowrap rounded-md bg-walnut text-parchment px-2 py-0.5 font-mono text-[10px] tracking-[0.08em]"
     >
       {isLive ? (
         <span className="text-brass-soft">{`{{${token}}}`}</span>
@@ -103,7 +123,8 @@ function ChipTooltip({ token, isLive }: { token: string; isLive: boolean }) {
           Preview · <span className="text-brass-soft">{`{{${token}}}`}</span>
         </>
       )}
-    </span>
+    </span>,
+    document.body,
   );
 }
 
