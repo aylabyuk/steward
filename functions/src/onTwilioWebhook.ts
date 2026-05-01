@@ -1,7 +1,6 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { onRequest, type Request } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
-import twilio from "twilio";
 import { emailSpeaker, smsSpeaker, type ResolvedInvitation } from "./invitationReplyNotify.js";
 import { pushToBishopric } from "./invitationReplyPush.js";
 import {
@@ -9,7 +8,9 @@ import {
   TWILIO_AUTH_TOKEN,
   TWILIO_CONVERSATIONS_SERVICE_SID,
   TWILIO_FROM_NUMBER,
+  TWILIO_WEBHOOK_URL,
 } from "./secrets.js";
+import { verifyTwilioSignature } from "./twilio/verifyTwilioSignature.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 // SendGrid secrets intentionally omitted — SMS-only v1. emailSpeaker()
@@ -21,6 +22,7 @@ const WEBHOOK_SECRETS = [
   TWILIO_AUTH_TOKEN,
   TWILIO_CONVERSATIONS_SERVICE_SID,
   TWILIO_FROM_NUMBER,
+  TWILIO_WEBHOOK_URL,
 ];
 
 /** Twilio Conversations Service webhook. Wired to this endpoint via
@@ -37,7 +39,8 @@ export const onTwilioWebhook = onRequest(
   { secrets: WEBHOOK_SECRETS },
   async (req, res): Promise<void> => {
     if (!verifySignature(req)) {
-      logger.warn("twilio webhook signature verification failed");
+      // verifyTwilioSignature emits a structured `twilio.webhook.signature_failed`
+      // log with a `reason` label — alarm-able via Cloud Logging metric.
       res.status(403).send("forbidden");
       return;
     }
@@ -84,12 +87,19 @@ export const onTwilioWebhook = onRequest(
 );
 
 function verifySignature(req: Request): boolean {
-  const sig = req.get("X-Twilio-Signature");
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  if (!sig || !authToken) return false;
-  const url = `https://${req.get("host")}${req.originalUrl}`;
-  const params = (req.body ?? {}) as Record<string, string>;
-  return twilio.validateRequest(authToken, sig, url, params);
+  // Prefer the pinned `TWILIO_WEBHOOK_URL` when set — eliminates
+  // host-header drift as a silent failure mode (e.g. region change,
+  // custom-domain swap, unexpected `Host:` header). Falls back to
+  // constructing the URL from the request when unset, preserving the
+  // prior behaviour for environments that haven't configured pinning.
+  const pinnedUrl = process.env.TWILIO_WEBHOOK_URL;
+  const url = pinnedUrl ?? `https://${req.get("host")}${req.originalUrl}`;
+  return verifyTwilioSignature({
+    signature: req.get("X-Twilio-Signature"),
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    url,
+    params: (req.body ?? {}) as Record<string, string>,
+  });
 }
 
 async function findInvitationByConversation(
