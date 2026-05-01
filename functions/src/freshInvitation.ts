@@ -1,11 +1,5 @@
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { logger } from "firebase-functions/v2";
-import {
-  addChatParticipant,
-  addSmsParticipant,
-  createConversation,
-  freePhoneBindingConflicts,
-} from "./twilio/conversations.js";
+import { addChatParticipant, createConversation } from "./twilio/conversations.js";
 import {
   addBishopricParticipants,
   buildInviteUrl,
@@ -16,7 +10,7 @@ import {
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
 import { invitationPrayerType } from "./invitationTypes.js";
 import { stampParticipantInvited } from "./stampParticipantInvited.js";
-import { resolveFromNumber, type FromNumberMode } from "./twilio/fromNumber.js";
+import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type {
   DeliveryEntry,
   FreshInvitationRequest,
@@ -99,35 +93,19 @@ export async function createFreshInvitation(
     createdAt: FieldValue.serverTimestamp(),
   });
 
+  // Speaker is added as a chat-identity participant only — no SMS-only
+  // participant. Inbound speaker SMS replies arrive at the Programmable
+  // Messaging webhook and are relayed into this conversation
+  // server-side by `inboundSmsRelay` (authored as `speaker:{id}`).
+  // Outbound bishop → speaker SMS is server-driven via `smsSpeaker`
+  // ([invitationReplyNotify.ts]). Avoiding the SMS-only participant
+  // sidesteps Twilio's auto-broadcast of chat messages back to the
+  // speaker's phone (the echo behind #227) and the duplicate SMS that
+  // would arrive when both auto-broadcast and `smsSpeaker` ran.
   await addChatParticipant(conversationSid, `speaker:${docRef.id}`, {
     displayName: input.speakerName,
     role: "speaker",
   });
-
-  // Bind the speaker's phone for SMS-to-Conversation bridging — without
-  // this, a speaker's SMS reply has no participant binding to match
-  // and Twilio drops it (the chat-identity participant alone covers
-  // the web-side, not SMS). Twilio enforces uniqueness on
-  // (phone, proxy) pairs across all active conversations, so we free
-  // any existing binding for this phone first — handles family-shared
-  // phones, repeated test invites, and any stale state from prior
-  // errors. Fail-soft: if Twilio rejects after the cleanup (bad phone
-  // format, cross-border block, etc.) we log and proceed; the
-  // chat-identity participant still covers the web side and the invite
-  // SMS still gets delivered separately by `trySms` below.
-  if (input.speakerPhone) {
-    const proxyAddress = resolveFromNumber(fromNumberMode);
-    try {
-      await freePhoneBindingConflicts(input.speakerPhone, proxyAddress);
-      await addSmsParticipant(conversationSid, input.speakerPhone, proxyAddress);
-    } catch (err) {
-      logger.warn("failed to add SMS participant — chat will work web-only", {
-        speakerId: input.speakerId,
-        meetingDate: input.meetingDate,
-        err: (err as Error).message,
-      });
-    }
-  }
 
   await stampParticipantInvited({
     db,
