@@ -21,8 +21,7 @@ const VARIABLES = [
 ] as const;
 
 const SAMPLE_URL = "https://example.com/invite/speaker/your-ward/sample-token";
-const DESCRIPTION =
-  "The body of the invitation email speakers receive when you send via email.";
+const DESCRIPTION = "The body of the invitation email speakers receive when you send via email.";
 
 export function SpeakerEmailSection(): React.ReactElement {
   const wardId = useCurrentWardStore((s) => s.wardId);
