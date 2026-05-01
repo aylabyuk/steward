@@ -1,7 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { onRequest, type Request } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
-import { emailSpeaker, smsSpeaker, type ResolvedInvitation } from "./invitationReplyNotify.js";
+import { emailSpeaker, type ResolvedInvitation } from "./invitationReplyNotify.js";
 import { pushToBishopric } from "./invitationReplyPush.js";
 import {
   TWILIO_ACCOUNT_SID,
@@ -72,12 +72,15 @@ export const onTwilioWebhook = onRequest(
       await pushToBishopric(invitation, body);
     } else if (author.startsWith("uid:")) {
       const senderBishopUid = author.slice("uid:".length);
-      // All three run in parallel. SMS is the primary channel for the
-      // speaker, email is best-effort (no-ops when SendGrid isn't
-      // wired), and the bishop-to-bishop push keeps peer bishopric
-      // members in the loop without re-notifying the sender.
+      // No `smsSpeaker` here: Twilio Conversations natively
+      // broadcasts the bishop's message to the speaker's SMS-bound
+      // participant. The previous wrapped notification SMS (with a
+      // freshly-rotated invite URL) was a duplicate of that native
+      // broadcast — speakers were getting both bubbles for the same
+      // bishop reply. Email + the bishop-to-bishop FCM push still
+      // run in parallel so peers see each other's chat activity even
+      // when not actively viewing the thread.
       await Promise.all([
-        smsSpeaker(invitation, body),
         emailSpeaker(invitation, body),
         pushToBishopric(invitation, body, { senderBishopUid }),
       ]);
