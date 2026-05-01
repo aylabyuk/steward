@@ -4,6 +4,7 @@ import {
   addChatParticipant,
   addSmsParticipant,
   createConversation,
+  freePhoneBindingConflicts,
 } from "./twilio/conversations.js";
 import {
   addBishopricParticipants,
@@ -106,17 +107,19 @@ export async function createFreshInvitation(
   // Bind the speaker's phone for SMS-to-Conversation bridging — without
   // this, a speaker's SMS reply has no participant binding to match
   // and Twilio drops it (the chat-identity participant alone covers
-  // the web-side, not SMS). Fail-soft: if Twilio rejects the binding
-  // (bad phone format, cross-border 10DLC block, etc.) we log and
-  // proceed; the chat still works on the web side and the invite SMS
-  // still gets delivered separately by `trySms` below.
+  // the web-side, not SMS). Twilio enforces uniqueness on
+  // (phone, proxy) pairs across all active conversations, so we free
+  // any existing binding for this phone first — handles family-shared
+  // phones, repeated test invites, and any stale state from prior
+  // errors. Fail-soft: if Twilio rejects after the cleanup (bad phone
+  // format, cross-border block, etc.) we log and proceed; the
+  // chat-identity participant still covers the web side and the invite
+  // SMS still gets delivered separately by `trySms` below.
   if (input.speakerPhone) {
+    const proxyAddress = resolveFromNumber(fromNumberMode);
     try {
-      await addSmsParticipant(
-        conversationSid,
-        input.speakerPhone,
-        resolveFromNumber(fromNumberMode),
-      );
+      await freePhoneBindingConflicts(input.speakerPhone, proxyAddress);
+      await addSmsParticipant(conversationSid, input.speakerPhone, proxyAddress);
     } catch (err) {
       logger.warn("failed to add SMS participant — chat will work web-only", {
         speakerId: input.speakerId,
