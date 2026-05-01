@@ -1,5 +1,18 @@
 {
   "enabledPlugins": {
     "agent-skills@addy-agent-skills": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/invitation-flow-doc-reminder.sh"
+          }
+        ]
+      }
+    ]
   }
 }
