@@ -26,6 +26,21 @@ export const TWILIO_FROM_NUMBER = defineSecret("TWILIO_FROM_NUMBER");
  *  wrong number. */
 export const TWILIO_FROM_NUMBER_TESTING = defineSecret("TWILIO_FROM_NUMBER_TESTING");
 
+/** Optional Messaging Service SID. When set, production-mode SMS
+ *  sends route through the service (Twilio picks the actual sender
+ *  from the pool attached to the service) instead of the raw
+ *  TWILIO_FROM_NUMBER. The service-level "Disable Inbound and
+ *  Outbound Message Body Logging" toggle then applies — Twilio
+ *  redacts message bodies in its retained logs after delivery,
+ *  bounding the lifetime of any logged invitation URL.
+ *
+ *  Add the same TWILIO_FROM_NUMBER as a sender on the service so
+ *  Twilio has a number to send from. Testing-mode sends still use
+ *  TWILIO_FROM_NUMBER_TESTING directly — the testing number isn't
+ *  in the service's pool and doesn't need the same retention
+ *  treatment. */
+export const TWILIO_MESSAGING_SERVICE_SID = defineSecret("TWILIO_MESSAGING_SERVICE_SID");
+
 /** Pinned webhook URL Twilio is configured to call. When set, the
  *  signature-verification path uses this exact value as the signing
  *  URL instead of constructing one from request headers. Eliminates
@@ -34,7 +49,9 @@ export const TWILIO_FROM_NUMBER_TESTING = defineSecret("TWILIO_FROM_NUMBER_TESTI
  *  Set this to the public URL Twilio Console points at — typically
  *  https://us-central1-<project>.cloudfunctions.net/onTwilioWebhook
  *  or a custom-domain equivalent. Unset = fall back to constructing
- *  the URL from `req.host` + `req.originalUrl` (prior behaviour). */
+ *  the URL from `req.host` + `req.originalUrl` (prior behaviour).
+ *  Webhook-only — bound by onTwilioWebhook's `WEBHOOK_SECRETS`,
+ *  intentionally not in the global `TWILIO_SECRETS` bundle. */
 export const TWILIO_WEBHOOK_URL = defineSecret("TWILIO_WEBHOOK_URL");
 
 /** Public origin of the web app (e.g. https://steward-app.ca) —
@@ -54,6 +71,7 @@ export const TWILIO_SECRETS = [
   TWILIO_CONVERSATIONS_SERVICE_SID,
   TWILIO_FROM_NUMBER,
   TWILIO_FROM_NUMBER_TESTING,
+  TWILIO_MESSAGING_SERVICE_SID,
 ];
 
 // SendGrid (SENDGRID_API_KEY / INVITATION_FROM_EMAIL) is intentionally
