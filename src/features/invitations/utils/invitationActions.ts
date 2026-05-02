@@ -125,7 +125,13 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
     if (isPrayer) {
       const role = parentData.speakerRef.speakerId;
       const meetingField = role === "opening" ? "openingPrayer" : "benediction";
-      const meetingRef = doc(db, "wards", input.wardId, "meetings", parentData.speakerRef.meetingDate);
+      const meetingRef = doc(
+        db,
+        "wards",
+        input.wardId,
+        "meetings",
+        parentData.speakerRef.meetingDate,
+      );
       tx.set(
         meetingRef,
         { [meetingField]: { confirmed: newStatus === "confirmed" } },

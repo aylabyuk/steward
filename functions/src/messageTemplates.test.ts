@@ -32,9 +32,7 @@ describe("interpolate", () => {
 
 describe("neutralizeMustaches", () => {
   it("breaks `{{` patterns by inserting a space", () => {
-    expect(neutralizeMustaches("hello {{inviteUrl}} world")).toBe(
-      "hello { {inviteUrl}} world",
-    );
+    expect(neutralizeMustaches("hello {{inviteUrl}} world")).toBe("hello { {inviteUrl}} world");
   });
 
   it("does not regex-match a neutralized value when re-fed to interpolate", () => {

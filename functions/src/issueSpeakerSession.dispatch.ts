@@ -58,10 +58,7 @@ export async function handleSpeakerTokenExchange(
   return { status: "rotated", phoneLast4: phoneLast4(decision.speakerPhone) };
 }
 
-async function mintSpeakerSession(
-  wardId: string,
-  invitationId: string,
-): Promise<SpeakerResponse> {
+async function mintSpeakerSession(wardId: string, invitationId: string): Promise<SpeakerResponse> {
   const uid = speakerUid(wardId, invitationId);
   const identity = `speaker:${invitationId}`;
   const customToken = await getAuth().createCustomToken(uid, {

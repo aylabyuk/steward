@@ -53,9 +53,7 @@ export async function rotateInvitationLink(
     // inviterName) stays frozen — only delivery channels refresh. Read
     // is `tx.get` so the live contact lock-step matches the rotation.
     const liveContact =
-      input.channels.length > 0
-        ? await readLiveContactInfo(db, tx, input.wardId, data)
-        : null;
+      input.channels.length > 0 ? await readLiveContactInfo(db, tx, input.wardId, data) : null;
     const writePatch = liveContact ? contactWritePatch(liveContact) : {};
     const effective: Pick<SpeakerInvitationShape, "speakerEmail" | "speakerPhone"> =
       liveContact ?? {
