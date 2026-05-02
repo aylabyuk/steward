@@ -61,7 +61,12 @@ async function main(): Promise<void> {
     `Service ${serviceSid}: scanning ${conversations.length} conversation(s) for SMS-only participants...`,
   );
 
-  const targets: { conversationSid: string; conversationName: string; participantSid: string; address: string }[] = [];
+  const targets: {
+    conversationSid: string;
+    conversationName: string;
+    participantSid: string;
+    address: string;
+  }[] = [];
   for (const c of conversations) {
     const participants = (await service
       .conversations(c.sid)

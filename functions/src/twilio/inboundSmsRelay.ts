@@ -45,13 +45,15 @@ export async function relayInboundSms(
   const candidates = snap.docs
     .map((d) => ({ doc: d, data: d.data() as SpeakerInvitationShape }))
     .filter(({ data }) => !data.expiresAt || data.expiresAt.toMillis() > now)
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       // Sort descending by createdAt (most recent first). Admin SDK
       // doesn't expose createdAt as a typed field on
       // SpeakerInvitationShape (server-stamped FieldValue), so read
       // through the raw doc data.
-      const aMs = (a.data as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
-      const bMs = (b.data as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
+      const aMs =
+        (a.data as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
+      const bMs =
+        (b.data as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
       return bMs - aMs;
     });
   if (candidates.length === 0) return { matched: false, reason: "no-active-invitation" };
