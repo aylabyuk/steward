@@ -1,7 +1,8 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { onRequest, type Request } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
-import { emailSpeaker, type ResolvedInvitation } from "./invitationReplyNotify.js";
+import { loadMergedInvitationByConversation } from "./invitationDocs.js";
+import { emailSpeaker, smsSpeaker, type ResolvedInvitation } from "./invitationReplyNotify.js";
 import { pushToBishopric } from "./invitationReplyPush.js";
 import {
   TWILIO_ACCOUNT_SID,
@@ -10,8 +11,8 @@ import {
   TWILIO_FROM_NUMBER,
   TWILIO_WEBHOOK_URL,
 } from "./secrets.js";
+import { NO_MATCH_TWIML, relayInboundSms } from "./twilio/inboundSmsRelay.js";
 import { verifyTwilioSignature } from "./twilio/verifyTwilioSignature.js";
-import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 // SendGrid secrets intentionally omitted — SMS-only v1. emailSpeaker()
 // already try/catches a missing-key failure, so the webhook still
@@ -25,16 +26,26 @@ const WEBHOOK_SECRETS = [
   TWILIO_WEBHOOK_URL,
 ];
 
-/** Twilio Conversations Service webhook. Wired to this endpoint via
- *  the service's POST-Webhook URL. Fires for every conversation
- *  event; we filter to `onMessageAdded` and fan out:
+/** Twilio webhook endpoint — handles two kinds of inbound:
  *
- *   - `speaker:*` authored → FCM push to active bishopric members
- *   - `uid:*` (bishopric) authored → SMS + email to the speaker,
- *     AND FCM push to other active bishopric members in the ward
- *     (the sender is filtered out)
+ *  1. **Conversations Service post-webhook** (payload has `EventType`).
+ *     Fires on every conversation event; we filter to `onMessageAdded`
+ *     and fan out:
+ *      - `speaker:*` authored → FCM push to active bishopric members
+ *      - `uid:*` (bishopric) authored → SMS + email to the speaker,
+ *        AND FCM push to other active bishopric members in the ward
+ *        (the sender is filtered out)
  *
- *  Post-expiry messages are logged and ignored defensively. */
+ *  2. **Programmable Messaging inbound webhook** (payload has
+ *     `MessageSid` + `From` + `Body`, no `EventType`). Wired via the
+ *     messaging service's `inboundRequestUrl`. Routes the SMS body
+ *     into the matching active speaker invitation's conversation as
+ *     `speaker:{invitationId}` so the bishop sees a normal speaker
+ *     chat message — see [twilio/inboundSmsRelay.ts]. Replaces the
+ *     deleted SMS-only Conversations participant pattern (#227).
+ *
+ *  Post-expiry messages on the Conversations branch are logged and
+ *  ignored defensively. */
 export const onTwilioWebhook = onRequest(
   { secrets: WEBHOOK_SECRETS },
   async (req, res): Promise<void> => {
@@ -44,6 +55,13 @@ export const onTwilioWebhook = onRequest(
       res.status(403).send("forbidden");
       return;
     }
+
+    if (isInboundSmsPayload(req)) {
+      const twiml = await handleInboundSms(req);
+      res.set("Content-Type", "text/xml").status(200).send(twiml);
+      return;
+    }
+
     if (req.body?.EventType !== "onMessageAdded") {
       res.status(200).send("ignored");
       return;
@@ -72,15 +90,12 @@ export const onTwilioWebhook = onRequest(
       await pushToBishopric(invitation, body);
     } else if (author.startsWith("uid:")) {
       const senderBishopUid = author.slice("uid:".length);
-      // No `smsSpeaker` here: Twilio Conversations natively
-      // broadcasts the bishop's message to the speaker's SMS-bound
-      // participant. The previous wrapped notification SMS (with a
-      // freshly-rotated invite URL) was a duplicate of that native
-      // broadcast — speakers were getting both bubbles for the same
-      // bishop reply. Email + the bishop-to-bishop FCM push still
-      // run in parallel so peers see each other's chat activity even
-      // when not actively viewing the thread.
+      // All three run in parallel. SMS is the primary channel for the
+      // speaker, email is best-effort (no-ops when SendGrid isn't
+      // wired), and the bishop-to-bishop push keeps peer bishopric
+      // members in the loop without re-notifying the sender.
       await Promise.all([
+        smsSpeaker(invitation, body),
         emailSpeaker(invitation, body),
         pushToBishopric(invitation, body, { senderBishopUid }),
       ]);
@@ -88,6 +103,40 @@ export const onTwilioWebhook = onRequest(
     res.status(200).send("ok");
   },
 );
+
+/** Programmable Messaging inbound payloads carry `MessageSid` + `From`
+ *  + `Body`, with no `EventType` (that field is Conversations-only).
+ *  Distinguishing on payload shape lets a single endpoint serve both
+ *  Twilio webhook formats without expanding the Cloud Function count. */
+function isInboundSmsPayload(req: Request): boolean {
+  const b = req.body as Record<string, unknown> | undefined;
+  if (!b) return false;
+  if (b.EventType) return false;
+  return typeof b.MessageSid === "string" && typeof b.From === "string";
+}
+
+/** Run the inbound-SMS relay and return the TwiML body to send back.
+ *  Splitting the logic out of the response-emitting code keeps the
+ *  function easy to unit-test (no `Response` type plumbing required). */
+async function handleInboundSms(req: Request): Promise<string> {
+  const body = (req.body?.Body ?? "") as string;
+  const from = req.body.From as string;
+  const result = await relayInboundSms(getFirestore(), from, body);
+  if (result.matched) {
+    // Empty TwiML — handled, but no auto-reply (the bishop sees the
+    // message in chat; the speaker doesn't need a confirmation echo).
+    return "<Response/>";
+  }
+  if (result.reason === "no-active-invitation") {
+    // Genuinely unknown sender — politely tell them this isn't the way.
+    return NO_MATCH_TWIML;
+  }
+  // empty-body or no-conversation: silent empty TwiML.
+  // (We don't want to chastise a speaker for accidentally sending an
+  // empty message; we don't want to leak invitation state by
+  // responding differently when the conversation lookup fails.)
+  return "<Response/>";
+}
 
 function verifySignature(req: Request): boolean {
   // Prefer the pinned `TWILIO_WEBHOOK_URL` when set — eliminates
@@ -108,19 +157,14 @@ function verifySignature(req: Request): boolean {
 async function findInvitationByConversation(
   conversationSid: string,
 ): Promise<ResolvedInvitation | null> {
-  const db = getFirestore();
-  const q = await db
-    .collectionGroup("speakerInvitations")
-    .where("conversationSid", "==", conversationSid)
-    .limit(1)
-    .get();
-  if (q.empty) return null;
-  const d = q.docs[0]!;
-  const wardId = d.ref.path.split("/")[1]!;
-  return { ...(d.data() as SpeakerInvitationShape), wardId, token: d.id };
+  const merged = await loadMergedInvitationByConversation(getFirestore(), conversationSid);
+  if (!merged) return null;
+  // ResolvedInvitation uses `token` for the doc id — keep that name
+  // for back-compat with the existing notify helpers.
+  return { ...merged, token: merged.invitationId };
 }
 
-function isExpired(inv: SpeakerInvitationShape): boolean {
+function isExpired(inv: ResolvedInvitation): boolean {
   if (!inv.expiresAt) return false;
   return inv.expiresAt.toMillis() <= Date.now();
 }

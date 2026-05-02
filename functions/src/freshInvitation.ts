@@ -1,10 +1,5 @@
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { logger } from "firebase-functions/v2";
-import {
-  addSpeakerParticipant,
-  createConversation,
-  freePhoneBindingConflicts,
-} from "./twilio/conversations.js";
+import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { addChatParticipant, createConversation } from "./twilio/conversations.js";
 import {
   addBishopricParticipants,
   buildInviteUrl,
@@ -13,9 +8,14 @@ import {
   trySms,
 } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
-import { invitationPrayerType } from "./invitationTypes.js";
+import { authInvitationPath, createSplitInvitationDocs } from "./invitationDocs.js";
+import {
+  invitationPrayerType,
+  type SpeakerInvitationAuthShape,
+  type SpeakerInvitationPublicShape,
+} from "./invitationTypes.js";
 import { stampParticipantInvited } from "./stampParticipantInvited.js";
-import { resolveFromNumber, type FromNumberMode } from "./twilio/fromNumber.js";
+import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type {
   DeliveryEntry,
   FreshInvitationRequest,
@@ -65,12 +65,10 @@ export async function createFreshInvitation(
   // provided them. Missing fields read as `undefined` downstream,
   // which is what the rest of the code already expects.
   const isPrayer = input.kind === "prayer";
-  const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
+  const expiresTs = Timestamp.fromDate(expiresAt);
+  const parentData: SpeakerInvitationPublicShape & { createdAt: FieldValue } = {
     speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
-    // Persist `kind` only for non-default ("prayer") rows so the doc
-    // shape stays clean for every speaker send. Readers default
-    // missing-field to "speaker" via the Zod schema.
-    ...(isPrayer ? { kind: "prayer", prayerRole: input.prayerRole } : {}),
+    ...(isPrayer ? { kind: "prayer" as const, prayerRole: input.prayerRole } : {}),
     assignedDate: input.assignedDate,
     sentOn: input.sentOn,
     wardName: input.wardName,
@@ -80,72 +78,49 @@ export async function createFreshInvitation(
     bodyMarkdown: input.bodyMarkdown,
     footerMarkdown: input.footerMarkdown,
     ...(input.editorStateJson ? { editorStateJson: input.editorStateJson } : {}),
-    ...(input.speakerEmail ? { speakerEmail: input.speakerEmail } : {}),
-    ...(input.speakerPhone ? { speakerPhone: input.speakerPhone } : {}),
-    expiresAt,
+    expiresAt: expiresTs,
+    conversationSid,
+    createdAt: FieldValue.serverTimestamp(),
+  };
+  // C1 doc-split: token state, contact PII, the bishopric snapshot,
+  // delivery audit, and fromNumberMode all live on the private auth
+  // subdoc gated by Firestore rules. Only the public letter snapshot
+  // + the responseSummary mirror live on the parent.
+  const authData: SpeakerInvitationAuthShape = {
     tokenHash,
     tokenStatus: "active" as const,
-    tokenExpiresAt: expiresAt,
+    tokenExpiresAt: expiresTs,
     tokenRotationsByDay: {},
-    conversationSid,
-    deliveryRecord: [],
+    ...(input.speakerEmail ? { speakerEmail: input.speakerEmail } : {}),
+    ...(input.speakerPhone ? { speakerPhone: input.speakerPhone } : {}),
     bishopricParticipants,
+    deliveryRecord: [],
     // Persist only when non-default — keeps the doc shape clean for
     // every normal send and lets downstream code treat absence as
     // "production". The webhook's smsSpeaker + the rotation path in
     // issueSpeakerSession both read this back.
     ...(fromNumberMode === "testing" ? { fromNumberMode } : {}),
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  };
+  const { invitationId } = await createSplitInvitationDocs(db, input.wardId, parentData, authData);
+  // Match the prior surface: callers downstream (e.g. webhook
+  // signature path, deliveryRecord update) reference `docRef.id`
+  // and the underlying parent doc. We still need the parent-doc ref
+  // for the deliveryRecord write at the bottom — recreate via path.
+  const docRef = db.doc(`wards/${input.wardId}/speakerInvitations/${invitationId}`);
 
-  // Add the speaker as a single participant carrying BOTH the chat
-  // identity AND (when phone on file) the SMS messagingBinding.
-  // Two-participant setups echo the speaker's web-side answer back
-  // to their own phone via SMS — Twilio can't tell the chat-identity
-  // participant and the SMS-binding participant are the same human,
-  // so it broadcasts to all bindings. Combining them on one
-  // participant lets Twilio de-dup automatically.
-  //
-  // Twilio enforces uniqueness on (phone, proxyAddress) across all
-  // active conversations, so free any existing binding for this
-  // phone first. Fail-soft: if the create itself fails (bad phone
-  // format, cross-border 10DLC block, etc.), log and continue with
-  // a chat-only participant — invite SMS still delivers separately
-  // via `trySms` below.
-  const proxyAddress = input.speakerPhone ? resolveFromNumber(fromNumberMode) : undefined;
-  if (input.speakerPhone && proxyAddress) {
-    await freePhoneBindingConflicts(input.speakerPhone, proxyAddress);
-  }
-  try {
-    await addSpeakerParticipant(
-      conversationSid,
-      `speaker:${docRef.id}`,
-      { displayName: input.speakerName, role: "speaker" },
-      input.speakerPhone && proxyAddress
-        ? { speakerPhoneE164: input.speakerPhone, twilioFromNumber: proxyAddress }
-        : undefined,
-    );
-  } catch (err) {
-    logger.warn("failed to add speaker participant with SMS binding — falling back to chat-only", {
-      speakerId: input.speakerId,
-      meetingDate: input.meetingDate,
-      err: (err as Error).message,
-    });
-    // Fallback: at least make the chat side work so the bishop UI
-    // can see the speaker's identity if anything else fires.
-    try {
-      await addSpeakerParticipant(conversationSid, `speaker:${docRef.id}`, {
-        displayName: input.speakerName,
-        role: "speaker",
-      });
-    } catch (chatErr) {
-      logger.warn("chat-only fallback also failed", {
-        speakerId: input.speakerId,
-        meetingDate: input.meetingDate,
-        err: (chatErr as Error).message,
-      });
-    }
-  }
+  // Speaker is added as a chat-identity participant only — no SMS-only
+  // participant. Inbound speaker SMS replies arrive at the Programmable
+  // Messaging webhook and are relayed into this conversation
+  // server-side by `inboundSmsRelay` (authored as `speaker:{id}`).
+  // Outbound bishop → speaker SMS is server-driven via `smsSpeaker`
+  // ([invitationReplyNotify.ts]). Avoiding the SMS-only participant
+  // sidesteps Twilio's auto-broadcast of chat messages back to the
+  // speaker's phone (the echo behind #227) and the duplicate SMS that
+  // would arrive when both auto-broadcast and `smsSpeaker` ran.
+  await addChatParticipant(conversationSid, `speaker:${docRef.id}`, {
+    displayName: input.speakerName,
+    role: "speaker",
+  });
 
   await stampParticipantInvited({
     db,
@@ -192,7 +167,8 @@ export async function createFreshInvitation(
   }
   if (wantsSms)
     deliveryRecord.push(await trySms(input.wardId, input.speakerPhone!, emailArgs, fromNumberMode));
-  await docRef.update({ deliveryRecord });
+  // deliveryRecord is private — write to the auth subdoc.
+  await db.doc(authInvitationPath(input.wardId, docRef.id)).update({ deliveryRecord });
 
   return { mode: "fresh", token: docRef.id, conversationSid, deliveryRecord };
 }

@@ -1,6 +1,6 @@
 {
   "name": "steward",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.30.3",
@@ -28,7 +28,8 @@
     "bootstrap-ward": "tsx scripts/bootstrap-ward.ts",
     "bootstrap-ward:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=steward-dev-5e4dc tsx scripts/bootstrap-ward.ts --bishop-password test1234",
     "add-member": "tsx scripts/add-member.ts",
-    "sweep-orphan-invitations": "tsx scripts/sweep-orphan-invitations.ts"
+    "sweep-orphan-invitations": "tsx scripts/sweep-orphan-invitations.ts",
+    "migrate-invitation-doc-split": "tsx scripts/migrate-invitation-doc-split.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

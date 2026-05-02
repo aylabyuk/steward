@@ -1,6 +1,13 @@
 /** Shared type shape for the speakerInvitation document as seen by
  *  Cloud Functions (Admin SDK). Keeps the webhook + callable free of
- *  importing from the web Zod schema. */
+ *  importing from the web Zod schema.
+ *
+ *  Note (C1 doc-split): the underlying storage is now two docs —
+ *  the public parent at `wards/{wardId}/speakerInvitations/{id}` and
+ *  the private auth subdoc at `…/private/auth`. Loader helpers in
+ *  `invitationDocs.ts` read both and return this merged shape so
+ *  consumers don't need to know about the split. The split only
+ *  matters at write time (helpers below pick the right doc). */
 export interface SpeakerInvitationShape {
   /** Discriminator for which kind of participant this invitation is
    *  for. Default "speaker" (treat absent as speaker for back-compat
@@ -56,7 +63,60 @@ export interface SpeakerInvitationShape {
    *  subsequent SMS for this invitation route through the same
    *  number — see `twilio/fromNumber.ts`. */
   fromNumberMode?: "production" | "testing";
+  /** Public mirror of `response.answer` + `response.respondedAt` so
+   *  the speaker's pre-auth landing page can switch out of "tap
+   *  Yes/No" mode without reading the private subdoc. Written
+   *  atomically with the full response on the subdoc. */
+  responseSummary?: {
+    answer: "yes" | "no";
+    respondedAt: FirebaseFirestore.Timestamp;
+  };
+  bishopricParticipants?: {
+    uid: string;
+    displayName: string;
+    role: "bishopric" | "clerk";
+    email?: string;
+  }[];
+  currentSpeakerStatus?: "planned" | "invited" | "confirmed" | "declined";
 }
+
+/** Fields that live on the public parent doc only. */
+export type SpeakerInvitationPublicShape = Pick<
+  SpeakerInvitationShape,
+  | "kind"
+  | "prayerRole"
+  | "speakerRef"
+  | "assignedDate"
+  | "sentOn"
+  | "wardName"
+  | "speakerName"
+  | "speakerTopic"
+  | "inviterName"
+  | "bodyMarkdown"
+  | "footerMarkdown"
+  | "conversationSid"
+  | "expiresAt"
+  | "responseSummary"
+  | "currentSpeakerStatus"
+>;
+
+/** Fields that live on the private subdoc at
+ *  `…/speakerInvitations/{id}/private/auth`. Subset of the merged
+ *  shape — no overlap with `SpeakerInvitationPublicShape` keys. */
+export type SpeakerInvitationAuthShape = Pick<
+  SpeakerInvitationShape,
+  | "tokenHash"
+  | "tokenStatus"
+  | "tokenExpiresAt"
+  | "tokenRotationsByDay"
+  | "speakerEmail"
+  | "speakerPhone"
+  | "bishopricParticipants"
+  | "response"
+  | "speakerLastSeenAt"
+  | "fromNumberMode"
+  | "deliveryRecord"
+>;
 
 /** User-facing label for a prayer-kind invitation, used to fill the
  *  `{{prayerType}}` token in SMS / email / receipt templates. Returns

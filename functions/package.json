@@ -13,7 +13,8 @@
     "lint": "oxlint",
     "test": "vitest run",
     "deploy": "firebase deploy --only functions",
-    "configure-conversation-roles": "tsx scripts/configure-conversation-roles.ts"
+    "configure-conversation-roles": "tsx scripts/configure-conversation-roles.ts",
+    "sweep-sms-only-participants": "tsx scripts/sweep-sms-only-participants.ts"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
