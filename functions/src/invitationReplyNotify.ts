@@ -1,7 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { rotateTokenForBishopNotification } from "./issueSpeakerSession.helpers.js";
-import { interpolate, readMessageTemplate } from "./messageTemplates.js";
+import { interpolate, neutralizeMustaches, readMessageTemplate } from "./messageTemplates.js";
 import { STEWARD_ORIGIN } from "./secrets.js";
 import { buildInviteUrl } from "./sendSpeakerInvitation.helpers.js";
 import { sendEmail } from "./sendgrid/client.js";
@@ -42,7 +42,11 @@ export async function smsSpeaker(inv: ResolvedInvitation, body: string): Promise
       err: (err as Error).message,
     });
   }
-  const preview = truncate(body, 240);
+  // `body` is bishop-authored chat content; neutralize any `{{...}}`
+  // before it reaches `interpolate` so a future change to recursive
+  // substitution can't surprise us by expanding chat tokens against
+  // the surrounding vars dict (notably leaking `inviteUrl`).
+  const preview = neutralizeMustaches(truncate(body, 240));
   // Rotation-failed path stays hardcoded: it's an error fallback, not
   // a user-authored message — we don't want a bishopric-edited template
   // to leak a placeholder `{{inviteUrl}}` token into an SMS.
@@ -82,7 +86,11 @@ function isSpeakerOnline(inv: ResolvedInvitation): boolean {
  *  them at their SMS instead. */
 export async function emailSpeaker(inv: ResolvedInvitation, body: string): Promise<void> {
   if (!inv.speakerEmail) return;
-  const preview = truncate(body, 180);
+  // Neutralize chat-author `{{...}}` before interpolation — same
+  // rationale as smsSpeaker above. The plain-text body is escaped via
+  // textToParagraphHtml for HTML-context rendering; this guards the
+  // template-substitution context.
+  const preview = neutralizeMustaches(truncate(body, 180));
   const template = await readMessageTemplate(getFirestore(), inv.wardId, "bishopReplyEmail");
   const text = interpolate(template, {
     inviterName: inv.inviterName,

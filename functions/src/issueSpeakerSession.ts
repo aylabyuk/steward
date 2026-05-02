@@ -1,20 +1,14 @@
-import { getAuth } from "firebase-admin/auth";
-import { logger } from "firebase-functions/v2";
 import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
-import { STEWARD_ORIGIN, TWILIO_SECRETS } from "./secrets.js";
+import { TWILIO_SECRETS } from "./secrets.js";
 import { issueChatToken } from "./twilio/token.js";
-import { phoneLast4 } from "./invitationToken.js";
-import { buildInviteUrl, sendInvitationSms } from "./sendSpeakerInvitation.helpers.js";
-import {
-  decideTokenAction,
-  revokeSpeakerSession,
-  speakerUid,
-} from "./issueSpeakerSession.helpers.js";
+import { handleSpeakerTokenExchange } from "./issueSpeakerSession.dispatch.js";
+import { callerIp, logRateLimited, rateLimitOk } from "./rateLimit.js";
 import {
   loadActiveMember,
   mintBishopricSession,
   type BishopricSessionResponse,
 } from "./bishopricSession.js";
+import { TOKEN_TTL_SECONDS, type SpeakerResponse } from "./issueSpeakerSession.types.js";
 
 interface Request {
   wardId: string;
@@ -27,21 +21,21 @@ interface Request {
   mintWebSession?: boolean;
 }
 
-type SpeakerResponse =
-  | {
-      status: "ready";
-      firebaseCustomToken: string;
-      twilioToken: string;
-      identity: string;
-      expiresInSeconds: number;
-    }
-  | { status: "rotated"; phoneLast4: string | null }
-  | { status: "rate-limited" }
-  | { status: "invalid" };
-
 type Response = SpeakerResponse | BishopricSessionResponse;
 
-const TOKEN_TTL_SECONDS = 3600;
+/** Per-IP rate limit on the speaker token-exchange surface. Combined
+ *  with App Check (which blocks non-app callers entirely) this is a
+ *  best-effort backstop — picked to comfortably accommodate a real
+ *  speaker iterating through retries (refresh, re-tap link) while
+ *  cutting off scripted bursts. */
+const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+
+/** Server-side App Check enforcement is gated by env so the operator
+ *  can ship the client-side init first, observe metrics for missing /
+ *  failing tokens, and then flip the flag once real traffic looks
+ *  healthy. Set `APP_CHECK_ENFORCED=true` on the function to enable. */
+const enforceAppCheck = process.env.APP_CHECK_ENFORCED === "true";
 
 /** Exchanges an invitation capability token for a Firebase custom
  *  token + Twilio Conversations JWT. Replaces the prior OTP-based
@@ -49,8 +43,23 @@ const TOKEN_TTL_SECONDS = 3600;
  *  signal, so possession of the URL token proves identity directly.
  *  Full decision tree lives in `issueSpeakerSession.helpers.ts`. */
 export const issueSpeakerSession = onCall(
-  { secrets: TWILIO_SECRETS },
+  { secrets: TWILIO_SECRETS, enforceAppCheck },
   async (request: CallableRequest<Request>): Promise<Response> => {
+    const ip = callerIp(request.rawRequest);
+    if (
+      !rateLimitOk({
+        bucketKey: `issueSpeakerSession:${ip}`,
+        max: RATE_LIMIT_MAX,
+        windowMs: RATE_LIMIT_WINDOW_MS,
+      })
+    ) {
+      logRateLimited("issueSpeakerSession", ip);
+      // Reuse the existing speaker-shape "rate-limited" status so the
+      // landing page renders its existing rate-limit UI without a
+      // separate error branch.
+      return { status: "rate-limited" } as SpeakerResponse;
+    }
+
     const { wardId, invitationId, invitationToken, mintWebSession } = request.data;
     if (!wardId) throw new HttpsError("invalid-argument", "wardId required.");
     const auth = request.auth;
@@ -97,67 +106,6 @@ function mintSpeakerRefresh(invitationId: string): SpeakerResponse {
   return {
     status: "ready",
     firebaseCustomToken: "",
-    twilioToken,
-    identity,
-    expiresInSeconds: TOKEN_TTL_SECONDS,
-  };
-}
-
-async function handleSpeakerTokenExchange(
-  wardId: string,
-  invitationId: string,
-  presentedToken: string,
-): Promise<SpeakerResponse> {
-  const decision = await decideTokenAction(wardId, invitationId, presentedToken);
-  if (decision.kind === "invalid") return { status: "invalid" };
-  if (decision.kind === "rate-limited") return { status: "rate-limited" };
-  if (decision.kind === "consume") {
-    return mintSpeakerSession(wardId, invitationId);
-  }
-
-  await revokeSpeakerSession(wardId, invitationId);
-  if (decision.speakerPhone) {
-    try {
-      const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
-      await sendInvitationSms({
-        wardId,
-        speakerPhone: decision.speakerPhone,
-        inviterName: decision.inviterName,
-        wardName: decision.wardName,
-        assignedDate: decision.assignedDate,
-        speakerName: decision.speakerName,
-        inviteUrl: buildInviteUrl(origin, wardId, invitationId, decision.newToken),
-        ...(decision.speakerTopic ? { topic: decision.speakerTopic } : {}),
-        ...(decision.fromNumberMode ? { fromMode: decision.fromNumberMode } : {}),
-      });
-    } catch (err) {
-      logger.error("rotation SMS send failed", {
-        wardId,
-        invitationId,
-        err: (err as Error).message,
-      });
-    }
-  } else {
-    logger.warn("rotation with no speakerPhone — client shows contact-bishopric fallback", {
-      wardId,
-      invitationId,
-    });
-  }
-  return { status: "rotated", phoneLast4: phoneLast4(decision.speakerPhone) };
-}
-
-async function mintSpeakerSession(wardId: string, invitationId: string): Promise<SpeakerResponse> {
-  const uid = speakerUid(wardId, invitationId);
-  const identity = `speaker:${invitationId}`;
-  const customToken = await getAuth().createCustomToken(uid, {
-    invitationId,
-    wardId,
-    role: "speaker",
-  });
-  const twilioToken = issueChatToken({ identity, ttlSeconds: TOKEN_TTL_SECONDS });
-  return {
-    status: "ready",
-    firebaseCustomToken: customToken,
     twilioToken,
     identity,
     expiresInSeconds: TOKEN_TTL_SECONDS,

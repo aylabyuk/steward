@@ -81,6 +81,19 @@ export const onTwilioWebhook = onRequest(
       res.status(200).send("no-match");
       return;
     }
+    if (!conversationWardIdMatches(req, invitation)) {
+      // Defensive cross-tenant check: the conversation SID came from
+      // Twilio (signature-verified), but the wardId we route on came
+      // from Firestore. If Twilio reports `ConversationAttributes` and
+      // its `wardId` disagrees with the Firestore-derived wardId, we
+      // refuse to fan out — somebody has the wrong record.
+      logger.warn("conversation wardId mismatch — ignoring", {
+        conversationSid,
+        derivedWardId: invitation.wardId,
+      });
+      res.status(200).send("wardId-mismatch");
+      return;
+    }
     if (isExpired(invitation)) {
       res.status(200).send("expired");
       return;
@@ -167,4 +180,25 @@ async function findInvitationByConversation(
 function isExpired(inv: ResolvedInvitation): boolean {
   if (!inv.expiresAt) return false;
   return inv.expiresAt.toMillis() <= Date.now();
+}
+
+/** Cross-check the wardId Twilio reports on `ConversationAttributes`
+ *  against the wardId we derived from the Firestore lookup. Twilio
+ *  Conversations post-webhooks include the conversation-level
+ *  attributes JSON we set at create time
+ *  (`{ wardId, speakerId }`). When the field is present and matches,
+ *  we proceed. When it's absent (older conversations, or a Twilio
+ *  webhook config that opts out) we proceed too — falling back to
+ *  the Firestore-derived wardId, the prior behaviour. We only refuse
+ *  when both are present and disagree. */
+function conversationWardIdMatches(req: Request, inv: ResolvedInvitation): boolean {
+  const raw = (req.body?.ConversationAttributes ?? "") as string;
+  if (!raw) return true;
+  try {
+    const parsed = JSON.parse(raw) as { wardId?: unknown };
+    if (typeof parsed.wardId !== "string") return true;
+    return parsed.wardId === inv.wardId;
+  } catch {
+    return true;
+  }
 }

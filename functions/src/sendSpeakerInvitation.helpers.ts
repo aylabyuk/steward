@@ -1,7 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
-import { addChatParticipant, deleteConversation } from "./twilio/conversations.js";
+import { addChatParticipant, closeConversation } from "./twilio/conversations.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 import type { MemberDoc } from "./types.js";
 
@@ -60,11 +60,13 @@ export async function addBishopricParticipants(
   return added;
 }
 
-/** Deletes any Twilio Conversation tied to a previous invitation for
+/** Archives any Twilio Conversation tied to a previous invitation for
  *  the same (wardId, speakerId, meetingDate). Hygiene for re-sends:
- *  prevents orphan conversations from accumulating in the Conversations
- *  service when a bishop replaces an invitation. Failures per-SID are
- *  logged and swallowed so one stale SID doesn't block the rest. */
+ *  prevents orphan conversations from accepting new messages while
+ *  preserving the prior thread for audit. Closed conversations stay
+ *  visible in the Twilio Console (prefixed with `[archived]`) but
+ *  reject new messages. Failures per-SID are logged and swallowed so
+ *  one stale SID doesn't block the rest. */
 export async function cleanupPriorConversations(
   wardId: string,
   speakerId: string,
@@ -80,9 +82,9 @@ export async function cleanupPriorConversations(
     .filter((s): s is string => Boolean(s));
   for (const sid of sids) {
     try {
-      await deleteConversation(sid);
+      await closeConversation(sid);
     } catch (err) {
-      logger.warn("failed to delete prior conversation", { sid, err: (err as Error).message });
+      logger.warn("failed to archive prior conversation", { sid, err: (err as Error).message });
     }
   }
 }
