@@ -170,3 +170,4 @@ export async function revokeSpeakerSession(wardId: string, invitationId: string)
 export function speakerUid(wardId: string, invitationId: string): string {
   return `speaker:${wardId}:${invitationId}`;
 }
+
