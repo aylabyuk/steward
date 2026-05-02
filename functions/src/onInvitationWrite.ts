@@ -8,6 +8,7 @@ import {
   fetchActiveBishopricEmails,
   sendBishopricReceipt,
   sendSpeakerReceipt,
+  sendSpeakerReceiptSms,
 } from "./onInvitationWrite.helpers.js";
 import { STEWARD_ORIGIN } from "./secrets.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
@@ -58,6 +59,7 @@ export const onInvitationWrite = onDocumentWritten(
         // allSettled keeps both sides running to completion.
         const results = await Promise.allSettled([
           sendSpeakerReceipt(after, bishopric, headerTemplate),
+          sendSpeakerReceiptSms(db, wardId, after),
           notifyBishopricOfResponse(db, wardId, invitationId, before, after),
         ]);
         for (const r of results) {

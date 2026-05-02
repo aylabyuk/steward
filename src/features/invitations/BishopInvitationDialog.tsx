@@ -52,12 +52,12 @@ export function BishopInvitationDialog({
 }: Props): React.ReactElement | null {
   const isMobile = useIsMobile();
   const contentRef = useRef<HTMLDivElement | null>(null);
-  // Keyboard-aware sizing only applies on the mobile bottom sheet.
+  // Keyboard-aware sizing only applies on the mobile fullscreen sheet.
   // Desktop is `inset-y-0 right-0` and never collides with the soft
   // keyboard.
   useKeyboardAwareViewport(contentRef, isMobile && open);
   const contentClass = isMobile
-    ? "fixed bottom-0 left-0 right-0 z-60 mt-24 flex h-[85dvh] flex-col rounded-t-[18px] border-t border-x border-border-strong bg-chalk shadow-elev-3 outline-none"
+    ? "fixed inset-0 z-60 flex flex-col bg-chalk shadow-elev-3 outline-none"
     : "fixed inset-y-0 right-0 z-60 flex w-[min(28rem,100vw)] flex-col bg-chalk shadow-elev-3 border-l border-border-strong outline-none";
   return (
     <Drawer.Root

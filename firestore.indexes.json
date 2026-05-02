@@ -7,6 +7,14 @@
         { "fieldPath": "email", "order": "ASCENDING" },
         { "fieldPath": "active", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "speakerInvitations",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "speakerPhone", "order": "ASCENDING" },
+        { "fieldPath": "tokenStatus", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

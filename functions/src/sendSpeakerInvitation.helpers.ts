@@ -16,12 +16,6 @@ export async function assertActiveMember(wardId: string, uid: string): Promise<v
   }
 }
 
-/** Frees the speaker's phone binding from any earlier Twilio
- *  Conversation for this (wardId, speakerId, meetingDate). Twilio
- *  refuses to bind the same (phone, proxy) pair twice, so a re-send
- *  for the same speaker would otherwise fail at the participant
- *  create call. (Cross-speaker phone conflicts are handled by
- *  `freePhoneBindingConflicts` at participant-create time.) */
 export interface BishopricSnapshot {
   uid: string;
   displayName: string;
@@ -66,6 +60,11 @@ export async function addBishopricParticipants(
   return added;
 }
 
+/** Deletes any Twilio Conversation tied to a previous invitation for
+ *  the same (wardId, speakerId, meetingDate). Hygiene for re-sends:
+ *  prevents orphan conversations from accumulating in the Conversations
+ *  service when a bishop replaces an invitation. Failures per-SID are
+ *  logged and swallowed so one stale SID doesn't block the rest. */
 export async function cleanupPriorConversations(
   wardId: string,
   speakerId: string,

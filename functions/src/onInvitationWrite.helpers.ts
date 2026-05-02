@@ -1,6 +1,9 @@
 import { logger } from "firebase-functions/v2";
 import { buildBishopricReceipt, buildSpeakerReceipt } from "./invitationReceiptContent.js";
+import { invitationPrayerType } from "./invitationTypes.js";
+import { interpolate, readMessageTemplate } from "./messageTemplates.js";
 import { sendEmail } from "./sendgrid/client.js";
+import { sendSmsDirect } from "./twilio/messaging.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 import type { MemberDoc } from "./types.js";
 
@@ -50,6 +53,50 @@ export async function sendSpeakerReceipt(
     html: content.html,
     ...(bishopric.length > 0 ? { cc: bishopric.map((b) => b.email) } : {}),
   });
+}
+
+/** Send a short SMS receipt to the speaker confirming their response.
+ *  Complements `sendSpeakerReceipt` (email) on the same response
+ *  transition; SMS is the primary channel since most speakers reach
+ *  the chat via the SMS link. No-ops when the invitation has no
+ *  phone on file. Failures are logged and swallowed — the email leg
+ *  is the source-of-truth notification, this is a courtesy. */
+export async function sendSpeakerReceiptSms(
+  db: FirebaseFirestore.Firestore,
+  wardId: string,
+  invitation: SpeakerInvitationShape,
+): Promise<void> {
+  if (!invitation.speakerPhone) return;
+  const answer = invitation.response?.answer;
+  if (answer !== "yes" && answer !== "no") return;
+  const isPrayer = invitation.kind === "prayer";
+  const key = isPrayer
+    ? answer === "yes"
+      ? "prayerResponseAcceptedSms"
+      : "prayerResponseDeclinedSms"
+    : answer === "yes"
+      ? "speakerResponseAcceptedSms"
+      : "speakerResponseDeclinedSms";
+  const template = await readMessageTemplate(db, wardId, key);
+  const prayerType = invitationPrayerType(invitation);
+  const body = interpolate(template, {
+    speakerName: invitation.speakerName,
+    assignedDate: invitation.assignedDate,
+    wardName: invitation.wardName,
+    ...(prayerType ? { prayerType } : {}),
+  });
+  try {
+    await sendSmsDirect({
+      to: invitation.speakerPhone,
+      body,
+      ...(invitation.fromNumberMode ? { fromMode: invitation.fromNumberMode } : {}),
+    });
+  } catch (err) {
+    logger.error("speaker receipt SMS failed", {
+      err: (err as Error).message,
+      speakerName: invitation.speakerName,
+    });
+  }
 }
 
 export async function sendBishopricReceipt(

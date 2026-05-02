@@ -1,10 +1,5 @@
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { logger } from "firebase-functions/v2";
-import {
-  addSpeakerParticipant,
-  createConversation,
-  freePhoneBindingConflicts,
-} from "./twilio/conversations.js";
+import { addChatParticipant, createConversation } from "./twilio/conversations.js";
 import {
   addBishopricParticipants,
   buildInviteUrl,
@@ -15,7 +10,7 @@ import {
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
 import { invitationPrayerType } from "./invitationTypes.js";
 import { stampParticipantInvited } from "./stampParticipantInvited.js";
-import { resolveFromNumber, type FromNumberMode } from "./twilio/fromNumber.js";
+import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type {
   DeliveryEntry,
   FreshInvitationRequest,
@@ -98,54 +93,19 @@ export async function createFreshInvitation(
     createdAt: FieldValue.serverTimestamp(),
   });
 
-  // Add the speaker as a single participant carrying BOTH the chat
-  // identity AND (when phone on file) the SMS messagingBinding.
-  // Two-participant setups echo the speaker's web-side answer back
-  // to their own phone via SMS — Twilio can't tell the chat-identity
-  // participant and the SMS-binding participant are the same human,
-  // so it broadcasts to all bindings. Combining them on one
-  // participant lets Twilio de-dup automatically.
-  //
-  // Twilio enforces uniqueness on (phone, proxyAddress) across all
-  // active conversations, so free any existing binding for this
-  // phone first. Fail-soft: if the create itself fails (bad phone
-  // format, cross-border 10DLC block, etc.), log and continue with
-  // a chat-only participant — invite SMS still delivers separately
-  // via `trySms` below.
-  const proxyAddress = input.speakerPhone ? resolveFromNumber(fromNumberMode) : undefined;
-  if (input.speakerPhone && proxyAddress) {
-    await freePhoneBindingConflicts(input.speakerPhone, proxyAddress);
-  }
-  try {
-    await addSpeakerParticipant(
-      conversationSid,
-      `speaker:${docRef.id}`,
-      { displayName: input.speakerName, role: "speaker" },
-      input.speakerPhone && proxyAddress
-        ? { speakerPhoneE164: input.speakerPhone, twilioFromNumber: proxyAddress }
-        : undefined,
-    );
-  } catch (err) {
-    logger.warn("failed to add speaker participant with SMS binding — falling back to chat-only", {
-      speakerId: input.speakerId,
-      meetingDate: input.meetingDate,
-      err: (err as Error).message,
-    });
-    // Fallback: at least make the chat side work so the bishop UI
-    // can see the speaker's identity if anything else fires.
-    try {
-      await addSpeakerParticipant(conversationSid, `speaker:${docRef.id}`, {
-        displayName: input.speakerName,
-        role: "speaker",
-      });
-    } catch (chatErr) {
-      logger.warn("chat-only fallback also failed", {
-        speakerId: input.speakerId,
-        meetingDate: input.meetingDate,
-        err: (chatErr as Error).message,
-      });
-    }
-  }
+  // Speaker is added as a chat-identity participant only — no SMS-only
+  // participant. Inbound speaker SMS replies arrive at the Programmable
+  // Messaging webhook and are relayed into this conversation
+  // server-side by `inboundSmsRelay` (authored as `speaker:{id}`).
+  // Outbound bishop → speaker SMS is server-driven via `smsSpeaker`
+  // ([invitationReplyNotify.ts]). Avoiding the SMS-only participant
+  // sidesteps Twilio's auto-broadcast of chat messages back to the
+  // speaker's phone (the echo behind #227) and the duplicate SMS that
+  // would arrive when both auto-broadcast and `smsSpeaker` ran.
+  await addChatParticipant(conversationSid, `speaker:${docRef.id}`, {
+    displayName: input.speakerName,
+    role: "speaker",
+  });
 
   await stampParticipantInvited({
     db,
