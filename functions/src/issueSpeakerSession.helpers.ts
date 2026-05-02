@@ -58,10 +58,30 @@ export async function decideTokenAction(
       return { kind: "consume" };
     }
 
+    // Structured signal for alarm-able metrics. The label distinguishes
+    // a normal expired-token rotation from a presented-after-consumption
+    // event (someone tapping the same SMS link twice, or replay attempts).
+    // Cloud Logging filter: jsonPayload.event="invitation.consumed_token_presented"
+    logger.info("invitation.consumed_token_presented", {
+      event: "invitation.consumed_token_presented",
+      wardId,
+      invitationId,
+      reason: expired ? "expired" : "consumed",
+    });
+
     const bucket = rotationBucketKey(now);
     const counts = data.tokenRotationsByDay ?? {};
     const todayCount = counts[bucket] ?? 0;
     if (todayCount >= ROTATION_DAILY_CAP) {
+      // Alarm-able label: jsonPayload.event="invitation.rate_limited"
+      logger.warn("invitation.rate_limited", {
+        event: "invitation.rate_limited",
+        wardId,
+        invitationId,
+        bucket,
+        count: todayCount,
+        cap: ROTATION_DAILY_CAP,
+      });
       return { kind: "rate-limited" };
     }
 
