@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_MESSAGE_TEMPLATES } from "./messageTemplateDefaults.js";
-import { interpolate, readMessageTemplate } from "./messageTemplates.js";
+import { interpolate, neutralizeMustaches, readMessageTemplate } from "./messageTemplates.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLIENT_DEFAULTS_PATH = resolve(
@@ -27,6 +27,29 @@ describe("interpolate", () => {
   it("preserves multi-line bodies", () => {
     const template = "line 1: {{a}}\n\nline 3: {{b}}";
     expect(interpolate(template, { a: "x", b: "y" })).toBe("line 1: x\n\nline 3: y");
+  });
+});
+
+describe("neutralizeMustaches", () => {
+  it("breaks `{{` patterns by inserting a space", () => {
+    expect(neutralizeMustaches("hello {{inviteUrl}} world")).toBe(
+      "hello { {inviteUrl}} world",
+    );
+  });
+
+  it("does not regex-match a neutralized value when re-fed to interpolate", () => {
+    const preview = neutralizeMustaches("see {{inviteUrl}}");
+    const out = interpolate("preview: {{preview}}", { preview, inviteUrl: "SECRET" });
+    expect(out).toBe("preview: see { {inviteUrl}}");
+    expect(out).not.toContain("SECRET");
+  });
+
+  it("leaves text without mustaches untouched", () => {
+    expect(neutralizeMustaches("plain text — no braces")).toBe("plain text — no braces");
+  });
+
+  it("neutralizes every occurrence", () => {
+    expect(neutralizeMustaches("{{a}} and {{b}}")).toBe("{ {a}} and { {b}}");
   });
 });
 

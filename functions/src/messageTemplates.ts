@@ -15,6 +15,21 @@ export function interpolate(template: string, vars: Readonly<Record<string, stri
 }
 
 /**
+ * Neutralize `{{...}}` patterns inside untrusted chat content before
+ * piping it into `interpolate` as a template variable. JS `replace` is
+ * single-pass, so a `{{inviteUrl}}` substring inside a `preview` value
+ * lands as literal text today — but a future change to recursive
+ * interpolation would silently start substituting from the surrounding
+ * vars dict and could leak the rotated invite URL or other context-
+ * specific values into a chat-author-controlled position. Replacing
+ * `{{` with `{ {` (space) keeps the visible intent while breaking the
+ * regex match unconditionally.
+ */
+export function neutralizeMustaches(s: string): string {
+  return s.replace(/\{\{/g, "{ {");
+}
+
+/**
  * Fetches the body of a ward's server-side messaging template from
  * Firestore. Falls back to the hardcoded default when no doc has
  * been written yet (or when the doc is malformed). Never throws —
