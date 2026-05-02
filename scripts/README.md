@@ -126,3 +126,34 @@ pnpm --filter @steward/functions configure-conversation-roles
 
 Idempotent. Run once per Twilio service (dev + prod each have their own
 Conversations service SID).
+
+## sweep-sms-only-participants (functions workspace)
+
+One-time migration: removes every SMS-only participant
+(`messagingBinding` set, `identity` null) from every conversation in
+the configured Conversations service. Required at the v0.20.2 deploy
+step — older invitations (pre-c9dc4a9) still carry SMS-only participants
+that Twilio's auto-bridge keeps routing inbound to. After v0.20.2 the
+inbound path is the messaging-service `inboundRequestUrl` →
+`onTwilioWebhook` → `inboundSmsRelay`. Without this sweep, Twilio
+double-routes inbound SMS (auto-bridge to the old conversation AND
+the relay to the new one), so the bishop sees the same message in
+two different chatboxes.
+
+Dry-run by default. Pass `--commit` to actually remove.
+
+```sh
+# Dry-run against prod
+TWILIO_ACCOUNT_SID=AC... \
+TWILIO_AUTH_TOKEN=... \
+TWILIO_CONVERSATIONS_SERVICE_SID=IS4f27eebffb094603938ad543cfb280d8 \
+pnpm --filter @steward/functions sweep-sms-only-participants
+
+# Commit
+TWILIO_ACCOUNT_SID=AC... \
+TWILIO_AUTH_TOKEN=... \
+TWILIO_CONVERSATIONS_SERVICE_SID=IS4f27eebffb094603938ad543cfb280d8 \
+pnpm --filter @steward/functions sweep-sms-only-participants --commit
+```
+
+Idempotent: a second run finds nothing to remove.
