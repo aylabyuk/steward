@@ -1,7 +1,8 @@
 import { type Firestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { postMessage } from "./conversations.js";
-import type { SpeakerInvitationShape } from "../invitationTypes.js";
+import { AUTH_DOC_ID } from "../invitationDocs.js";
+import type { SpeakerInvitationAuthShape, SpeakerInvitationShape } from "../invitationTypes.js";
 
 export type RelayResult =
   | { matched: true; conversationSid: string; invitationId: string; messageSid: string }
@@ -34,39 +35,57 @@ export async function relayInboundSms(
   const trimmed = body.trim();
   if (!trimmed) return { matched: false, reason: "empty-body" };
 
-  const snap = await db
-    .collectionGroup("speakerInvitations")
+  // C1 doc-split: `speakerPhone` + `tokenStatus` live on the auth
+  // subdoc at `…/private/{AUTH_DOC_ID}`. Query the auth subcollection
+  // group and join back to each parent (for `expiresAt`, `createdAt`,
+  // `conversationSid`) in code. Filter to docs whose id matches the
+  // auth doc id so we don't pick up unrelated `private` subcollections
+  // that may exist elsewhere in the codebase later.
+  const authSnap = await db
+    .collectionGroup("private")
     .where("speakerPhone", "==", from)
     .where("tokenStatus", "==", "active")
     .get();
-  if (snap.empty) return { matched: false, reason: "no-active-invitation" };
+  if (authSnap.empty) return { matched: false, reason: "no-active-invitation" };
 
   const now = Date.now();
-  const candidates = snap.docs
-    .map((d) => ({ doc: d, data: d.data() as SpeakerInvitationShape }))
-    .filter(({ data }) => !data.expiresAt || data.expiresAt.toMillis() > now)
+  const parentReads = await Promise.all(
+    authSnap.docs
+      .filter((d) => d.id === AUTH_DOC_ID)
+      .map(async (authDoc) => {
+        const parentRef = authDoc.ref.parent.parent;
+        if (!parentRef) return null;
+        const parentSnap = await parentRef.get();
+        if (!parentSnap.exists) return null;
+        const parentData = parentSnap.data() as SpeakerInvitationShape;
+        const authData = authDoc.data() as SpeakerInvitationAuthShape;
+        return { parentSnap, parentData, authData };
+      }),
+  );
+  const candidates = parentReads
+    .filter((c): c is NonNullable<typeof c> => c !== null)
+    .filter(({ parentData }) => !parentData.expiresAt || parentData.expiresAt.toMillis() > now)
     .toSorted((a, b) => {
-      // Sort descending by createdAt (most recent first). Admin SDK
-      // doesn't expose createdAt as a typed field on
-      // SpeakerInvitationShape (server-stamped FieldValue), so read
-      // through the raw doc data.
+      // Sort descending by createdAt (most recent first). Server-
+      // stamped FieldValue isn't typed on SpeakerInvitationShape, so
+      // read through the raw doc data.
       const aMs =
-        (a.data as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
+        (a.parentData as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
       const bMs =
-        (b.data as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
+        (b.parentData as { createdAt?: FirebaseFirestore.Timestamp }).createdAt?.toMillis() ?? 0;
       return bMs - aMs;
     });
   if (candidates.length === 0) return { matched: false, reason: "no-active-invitation" };
 
   const winner = candidates[0]!;
-  const conversationSid = winner.data.conversationSid;
+  const conversationSid = winner.parentData.conversationSid;
   if (!conversationSid) {
     logger.warn("matched invitation has no conversationSid", {
-      invitationId: winner.doc.id,
+      invitationId: winner.parentSnap.id,
     });
     return { matched: false, reason: "no-conversation" };
   }
-  const invitationId = winner.doc.id;
+  const invitationId = winner.parentSnap.id;
   const messageSid = await postMessage({
     conversationSid,
     author: `speaker:${invitationId}`,

@@ -1,4 +1,4 @@
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { addChatParticipant, createConversation } from "./twilio/conversations.js";
 import {
   addBishopricParticipants,
@@ -8,7 +8,12 @@ import {
   trySms,
 } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
-import { invitationPrayerType } from "./invitationTypes.js";
+import { authInvitationPath, createSplitInvitationDocs } from "./invitationDocs.js";
+import {
+  invitationPrayerType,
+  type SpeakerInvitationAuthShape,
+  type SpeakerInvitationPublicShape,
+} from "./invitationTypes.js";
 import { stampParticipantInvited } from "./stampParticipantInvited.js";
 import type { FromNumberMode } from "./twilio/fromNumber.js";
 import type {
@@ -60,12 +65,10 @@ export async function createFreshInvitation(
   // provided them. Missing fields read as `undefined` downstream,
   // which is what the rest of the code already expects.
   const isPrayer = input.kind === "prayer";
-  const docRef = await db.collection(`wards/${input.wardId}/speakerInvitations`).add({
+  const expiresTs = Timestamp.fromDate(expiresAt);
+  const parentData: SpeakerInvitationPublicShape & { createdAt: FieldValue } = {
     speakerRef: { meetingDate: input.meetingDate, speakerId: input.speakerId },
-    // Persist `kind` only for non-default ("prayer") rows so the doc
-    // shape stays clean for every speaker send. Readers default
-    // missing-field to "speaker" via the Zod schema.
-    ...(isPrayer ? { kind: "prayer", prayerRole: input.prayerRole } : {}),
+    ...(isPrayer ? { kind: "prayer" as const, prayerRole: input.prayerRole } : {}),
     assignedDate: input.assignedDate,
     sentOn: input.sentOn,
     wardName: input.wardName,
@@ -75,23 +78,35 @@ export async function createFreshInvitation(
     bodyMarkdown: input.bodyMarkdown,
     footerMarkdown: input.footerMarkdown,
     ...(input.editorStateJson ? { editorStateJson: input.editorStateJson } : {}),
-    ...(input.speakerEmail ? { speakerEmail: input.speakerEmail } : {}),
-    ...(input.speakerPhone ? { speakerPhone: input.speakerPhone } : {}),
-    expiresAt,
+    expiresAt: expiresTs,
+    conversationSid,
+    createdAt: FieldValue.serverTimestamp(),
+  };
+  // C1 doc-split: token state, contact PII, the bishopric snapshot,
+  // delivery audit, and fromNumberMode all live on the private auth
+  // subdoc gated by Firestore rules. Only the public letter snapshot
+  // + the responseSummary mirror live on the parent.
+  const authData: SpeakerInvitationAuthShape = {
     tokenHash,
     tokenStatus: "active" as const,
-    tokenExpiresAt: expiresAt,
+    tokenExpiresAt: expiresTs,
     tokenRotationsByDay: {},
-    conversationSid,
-    deliveryRecord: [],
+    ...(input.speakerEmail ? { speakerEmail: input.speakerEmail } : {}),
+    ...(input.speakerPhone ? { speakerPhone: input.speakerPhone } : {}),
     bishopricParticipants,
+    deliveryRecord: [],
     // Persist only when non-default — keeps the doc shape clean for
     // every normal send and lets downstream code treat absence as
     // "production". The webhook's smsSpeaker + the rotation path in
     // issueSpeakerSession both read this back.
     ...(fromNumberMode === "testing" ? { fromNumberMode } : {}),
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  };
+  const { invitationId } = await createSplitInvitationDocs(db, input.wardId, parentData, authData);
+  // Match the prior surface: callers downstream (e.g. webhook
+  // signature path, deliveryRecord update) reference `docRef.id`
+  // and the underlying parent doc. We still need the parent-doc ref
+  // for the deliveryRecord write at the bottom — recreate via path.
+  const docRef = db.doc(`wards/${input.wardId}/speakerInvitations/${invitationId}`);
 
   // Speaker is added as a chat-identity participant only — no SMS-only
   // participant. Inbound speaker SMS replies arrive at the Programmable
@@ -152,7 +167,8 @@ export async function createFreshInvitation(
   }
   if (wantsSms)
     deliveryRecord.push(await trySms(input.wardId, input.speakerPhone!, emailArgs, fromNumberMode));
-  await docRef.update({ deliveryRecord });
+  // deliveryRecord is private — write to the auth subdoc.
+  await db.doc(authInvitationPath(input.wardId, docRef.id)).update({ deliveryRecord });
 
   return { mode: "fresh", token: docRef.id, conversationSid, deliveryRecord };
 }

@@ -79,7 +79,8 @@ sequenceDiagram
     Fn->>Twilio: Create Conversation, add bishopric + speaker chat-identity
     Note right of Twilio: Speaker is added as chat-identity ONLY<br/>(speaker:{id}). No SMS-only participant —<br/>inbound SMS is relayed server-side instead<br/>(see Phase 4). Avoids Twilio's chat→SMS<br/>auto-broadcast echo and duplicate bishop-<br/>reply SMS. (#227)
     Fn->>Fn: Generate token, hash it (SHA-256)
-    Fn->>FS: Write speakerInvitations/{id}<br/>{ tokenHash, conversationSid, letter snapshot }
+    Fn->>FS: Atomic batch — public parent + private auth subdoc:<br/>parent  speakerInvitations/{id} ← letter snapshot, conversationSid, expiresAt<br/>subdoc  …/{id}/private/auth ← tokenHash, contact PII, bishopric, deliveryRecord, fromNumberMode
+    Note right of FS: Doc split for security audit C1.<br/>Public parent is world-readable so the<br/>landing page can render without auth.<br/>Private subdoc is gated by Firestore rules<br/>(speaker custom-claim or active bishopric).
     Fn->>FS: Stamp participant: status="invited"
     par Email channel
         Fn->>SG: Send invitation email (template + invite URL)
@@ -194,6 +195,44 @@ sequenceDiagram
 | Receipt emails + response push | [functions/src/onInvitationWrite.ts](../functions/src/onInvitationWrite.ts), [functions/src/invitationResponseNotify.ts](../functions/src/invitationResponseNotify.ts) |
 | Twilio reply webhook (Conversations + Messaging) | [functions/src/onTwilioWebhook.ts](../functions/src/onTwilioWebhook.ts) |
 | Inbound SMS → chat relay | [functions/src/twilio/inboundSmsRelay.ts](../functions/src/twilio/inboundSmsRelay.ts) |
+| Doc-split helpers (parent + auth subdoc reads/writes) | [functions/src/invitationDocs.ts](../functions/src/invitationDocs.ts) |
+| Migration: fold private fields off existing parents | [scripts/migrate-invitation-doc-split.ts](../scripts/migrate-invitation-doc-split.ts) |
+
+---
+
+## Storage shape — public parent vs private auth subdoc
+
+Two Firestore docs back every invitation, written atomically at send
+time. The public parent stays world-readable so the speaker landing
+page renders without auth; the private subdoc is gated by Firestore
+rules.
+
+**Public parent** at `wards/{wardId}/speakerInvitations/{id}` — letter
+snapshot fields (`speakerName`, `assignedDate`, `wardName`,
+`inviterName`, `bodyMarkdown`, `footerMarkdown`, `editorStateJson`,
+`speakerTopic`, `kind`, `prayerRole`, `speakerRef`), `expiresAt`,
+`createdAt`, `conversationSid`, `currentSpeakerStatus`, plus a tiny
+`responseSummary` (`answer` + `respondedAt`) so the pre-auth banner
+can switch out of "tap Yes/No" mode without reading the private
+subdoc.
+
+**Private auth subdoc** at `wards/{wardId}/speakerInvitations/{id}/private/auth` —
+sensitive state: `tokenHash`, `tokenStatus`, `tokenExpiresAt`,
+`tokenRotationsByDay`, `speakerEmail`, `speakerPhone`,
+`bishopricParticipants` (with email), the full `response` object
+(`reason`, `actorUid`, `actorEmail`, `acknowledgedAt`,
+`acknowledgedBy`), `speakerLastSeenAt`, `fromNumberMode`,
+`deliveryRecord`. Read-allowed for the speaker only after
+`issueSpeakerSession` mints a Firebase custom token with matching
+`invitationId` + `wardId` claims, OR for an active bishopric/clerk.
+Update is even tighter — see [firestore.rules](../firestore.rules).
+
+The merged `SpeakerInvitation` shape callers consume is built by
+loading both halves: server callers go through `invitationDocs.ts`'
+`loadMergedInvitation` / `loadMergedInvitationByConversation`; client
+hooks (`useSpeakerInvitation`, `useLatestInvitation`) subscribe to
+both and merge in component state. Closes the C1 finding from the
+2026-05-01 security audit.
 
 ---
 

@@ -9,7 +9,7 @@
       ]
     },
     {
-      "collectionGroup": "speakerInvitations",
+      "collectionGroup": "private",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         { "fieldPath": "speakerPhone", "order": "ASCENDING" },

@@ -13,7 +13,9 @@ import {
 import { STEWARD_ORIGIN } from "./secrets.js";
 import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
-/** Fires receipt emails on authoritative response transitions:
+/** Fires on writes to the private auth subdoc at
+ *  `wards/{wardId}/speakerInvitations/{invitationId}/private/auth`
+ *  (post C1 doc-split). Handles authoritative response transitions:
  *   - `response.answer` appears or flips → speaker receipt (to speaker,
  *      CC bishopric) + FCM push to the bishopric.
  *   - `response.acknowledgedAt` appears → bishopric receipt (to bishopric).
@@ -28,16 +30,27 @@ import type { SpeakerInvitationShape } from "./invitationTypes.js";
  *  Other writes (token rotation, delivery-record updates, heartbeats)
  *  are classified as no-ops and return early. */
 export const onInvitationWrite = onDocumentWritten(
-  "wards/{wardId}/speakerInvitations/{invitationId}",
+  "wards/{wardId}/speakerInvitations/{invitationId}/private/{authDoc}",
   async (event) => {
-    const before = event.data?.before.data() as SpeakerInvitationShape | undefined;
-    const after = event.data?.after.data() as SpeakerInvitationShape | undefined;
-    const change = classifyInvitationChange(before, after);
-    if (!change.fireSpeaker && !change.fireBishopric) return;
-    if (!after) return;
+    if (event.params.authDoc !== "auth") return;
+    // Trigger fires on the auth subdoc; merge with the public parent
+    // so downstream helpers see the same shape they did pre-split.
+    const beforeAuth = event.data?.before.data() as SpeakerInvitationShape | undefined;
+    const afterAuth = event.data?.after.data() as SpeakerInvitationShape | undefined;
 
     const { wardId, invitationId } = event.params;
     const db = getFirestore();
+    const parentSnap = await db.doc(`wards/${wardId}/speakerInvitations/${invitationId}`).get();
+    const parent = (parentSnap.exists ? parentSnap.data() : undefined) as
+      | SpeakerInvitationShape
+      | undefined;
+    const before: SpeakerInvitationShape | undefined =
+      beforeAuth || parent ? ({ ...parent, ...beforeAuth } as SpeakerInvitationShape) : undefined;
+    const after: SpeakerInvitationShape | undefined =
+      afterAuth || parent ? ({ ...parent, ...afterAuth } as SpeakerInvitationShape) : undefined;
+    const change = classifyInvitationChange(before, after);
+    if (!change.fireSpeaker && !change.fireBishopric) return;
+    if (!after) return;
     const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
     try {
       const bishopric = await fetchActiveBishopricEmails(db, wardId);

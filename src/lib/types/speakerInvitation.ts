@@ -6,7 +6,16 @@ import { z } from "zod";
  * URL can read the doc (rule: `allow read: if true`); the doc ID is
  * unguessable, and a separate capability token in the URL authorizes
  * speaker sign-in (validated by the issueSpeakerSession callable
- * against the `tokenHash` on this doc).
+ * against `tokenHash` on the private subdoc — see
+ * `speakerInvitationAuth.ts` and the C1 doc-split fix).
+ *
+ * Sensitive fields — token state, speaker contact PII, the bishopric
+ * roster snapshot, the full response object, presence heartbeat,
+ * delivery audit, and the testing-number marker — moved into a
+ * private subdoc at `…/private/auth`. The parent doc keeps only the
+ * letter snapshot (so the speaker landing page can render without
+ * auth) plus a tiny `responseSummary` denorm so the post-response
+ * UI can switch out of "tap Yes/No" mode without authenticating.
  *
  * Snapshotting means the speaker keeps the exact letter they were
  * sent, even if the ward edits the template later.
@@ -41,9 +50,27 @@ export const speakerInvitationStaffSchema = z.object({
 });
 export type SpeakerInvitationStaff = z.infer<typeof speakerInvitationStaffSchema>;
 
+/** Public mirror of the speaker's response — only the two fields the
+ *  pre-auth landing page needs to switch out of "tap Yes/No" mode.
+ *  Written atomically with the full private response (which carries
+ *  reason text, actor identity, and acknowledgement audit). */
+export const speakerInvitationResponseSummarySchema = z.object({
+  answer: z.enum(["yes", "no"]),
+  respondedAt: z.any(),
+});
+export type SpeakerInvitationResponseSummary = z.infer<
+  typeof speakerInvitationResponseSummarySchema
+>;
+
 /** Captured the first time the speaker taps Yes or No on the web side.
  *  SMS-only speakers who just text their answer back won't populate this
- *  — the bishop reads the thread and decides manually. */
+ *  — the bishop reads the thread and decides manually.
+ *
+ *  @deprecated The full shape moved to the private subdoc as
+ *  `speakerInvitationResponsePrivateSchema`; the parent doc keeps only
+ *  `speakerInvitationResponseSummarySchema`. Retained here so existing
+ *  consumers of the merged client view still typecheck during the
+ *  migration window. */
 export const speakerInvitationResponseSchema = z.object({
   answer: z.enum(["yes", "no"]),
   reason: z.string().optional(),
@@ -106,63 +133,23 @@ export const speakerInvitationSchema = z.object({
   editorStateJson: z.string().optional(),
   createdAt: z.any().optional(),
 
-  /** Snapshotted at send time so Firestore rules + Cloud Functions can
-   *  gate writes without reading the live speaker doc. A signed-in
-   *  Google account can only write the response subtree when its
-   *  verified email matches (case-insensitive). Absent = speaker has no
-   *  email on file, web-side response is disabled for this invitation. */
-  speakerEmail: z.string().optional(),
-  speakerPhone: z.string().optional(),
-
   /** Monday 00:00 local to the sender, written once at send time.
    *  Rules reject speaker-side writes past this; reads stay open so the
    *  bishopric can still review archived threads. */
   expiresAt: z.any().optional(),
 
-  /** SHA-256 (hex) of the capability token that authorizes speaker
-   *  sign-in. Plaintext token never lands in Firestore — only in the
-   *  invitation URL delivered to the speaker's phone/email. On
-   *  consumption the hash stays (so presenting the dead link can
-   *  trigger rotation); rotation overwrites this with a fresh hash. */
-  tokenHash: z.string().optional(),
-  /** "active" after issue or rotation; "consumed" after a successful
-   *  issueSpeakerSession exchange. A consumed token can't mint a
-   *  session, but presenting it still triggers rotation (subject to
-   *  the daily cap). */
-  tokenStatus: z.enum(["active", "consumed"]).optional(),
-  /** Hard wall for session exchange. Mirrors `expiresAt` on
-   *  freshly-issued invitations; rotation doesn't extend it (once the
-   *  meeting is past, the invitation is dead). */
-  tokenExpiresAt: z.any().optional(),
-  /** Visitor-triggered rotations per `yyyy-mm-dd`. Capped at 3/day
-   *  per invitation to bound Twilio cost exposure if a link leaks. */
-  tokenRotationsByDay: z.record(z.string(), z.number()).optional(),
-
   /** Twilio Conversation SID. Primary key the chat clients bootstrap
    *  against. Missing on pre-#16 invitations — those render read-only
-   *  letters with no chat pane. */
+   *  letters with no chat pane. Public so the speaker invite page can
+   *  bootstrap the Twilio client without reading the private subdoc. */
   conversationSid: z.string().optional(),
 
-  /** Delivery outcome(s) captured at send time. Populated by the
-   *  sendSpeakerInvitation callable; displayed on the Prepare page as
-   *  a small per-channel status strip. */
-  deliveryRecord: z.array(speakerInvitationDeliverySchema).default([]),
-
-  /** Active bishopric/clerk snapshot at send time. Used by the
-   *  speaker's public invite page to label message bubbles by real
-   *  name without needing to read the ward members collection. */
-  bishopricParticipants: z.array(speakerInvitationStaffSchema).default([]),
-
-  /** Populated by the speaker's Yes/No tap; acknowledged by the bishop
-   *  via the Apply-response action. */
-  response: speakerInvitationResponseSchema.optional(),
-
-  /** Heartbeat written by the speaker's invite page (every 60s while
-   *  the tab is visible + authenticated). The bishop-reply webhook
-   *  reads this to decide whether to send an SMS-with-resume-link: if
-   *  the heartbeat is fresh the speaker is presumed to be looking at
-   *  the chat live and we stay quiet. */
-  speakerLastSeenAt: z.any().optional(),
+  /** Public mirror of the speaker's response — only `answer` +
+   *  `respondedAt` so the landing page can switch out of "tap Yes/No"
+   *  mode without authenticating. The full response (reason, actor
+   *  identity, acknowledgement audit) lives on the private subdoc.
+   *  Written atomically with the private response. */
+  responseSummary: speakerInvitationResponseSummarySchema.optional(),
 
   /** Mirror of the underlying speaker doc's status, kept on the
    *  invitation so the speaker-side page can render status-aware
@@ -173,11 +160,37 @@ export const speakerInvitationSchema = z.object({
    *  invitations — the speaker page treats that as unchanged. */
   currentSpeakerStatus: z.enum(["planned", "invited", "confirmed", "declined"]).optional(),
 
-  /** Picks the outbound SMS proxy number for this thread. Set to
-   *  "testing" only when an allowlisted dev-mode caller sent the
-   *  invitation; otherwise omitted (treated as "production"). The
-   *  webhook + rotation paths read this back so every SMS in the
-   *  thread routes through the same number. */
+  // ---------------------------------------------------------------
+  // The fields below were public until the C1 doc-split fix. They're
+  // marked `.optional()` here so Zod parses still succeed against
+  // pre-migration parent docs (which carried these directly), but
+  // every code path now reads/writes them through the private subdoc.
+  // The migration script `scripts/migrate-invitation-doc-split.ts`
+  // moves them off the parent. Once the migration has run for every
+  // ward and we're confident there are no pre-migration parents in
+  // the wild, drop these fields entirely.
+  // ---------------------------------------------------------------
+  /** @deprecated moved to private subdoc (`speakerInvitationAuth.ts`). */
+  speakerEmail: z.string().optional(),
+  /** @deprecated moved to private subdoc. */
+  speakerPhone: z.string().optional(),
+  /** @deprecated moved to private subdoc. */
+  tokenHash: z.string().optional(),
+  /** @deprecated moved to private subdoc. */
+  tokenStatus: z.enum(["active", "consumed"]).optional(),
+  /** @deprecated moved to private subdoc. */
+  tokenExpiresAt: z.any().optional(),
+  /** @deprecated moved to private subdoc. */
+  tokenRotationsByDay: z.record(z.string(), z.number()).optional(),
+  /** @deprecated moved to private subdoc. */
+  deliveryRecord: z.array(speakerInvitationDeliverySchema).default([]),
+  /** @deprecated moved to private subdoc. */
+  bishopricParticipants: z.array(speakerInvitationStaffSchema).default([]),
+  /** @deprecated moved to private subdoc; only `responseSummary` (above) lives on the public doc. */
+  response: speakerInvitationResponseSchema.optional(),
+  /** @deprecated moved to private subdoc. */
+  speakerLastSeenAt: z.any().optional(),
+  /** @deprecated moved to private subdoc. */
   fromNumberMode: z.enum(["production", "testing"]).optional(),
 });
 export type SpeakerInvitation = z.infer<typeof speakerInvitationSchema>;
