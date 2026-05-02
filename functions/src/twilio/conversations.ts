@@ -74,13 +74,33 @@ export interface PostMessageInput {
   attributes?: Record<string, unknown>;
 }
 
-/** Hard-deletes a Twilio Conversation by SID. Used by
- *  `cleanupPriorConversations` to remove orphan conversations from
- *  prior re-sends for the same speaker+date so they don't accumulate
- *  in the Conversations service. Safe to call on an already-deleted
- *  SID: Twilio returns 404 which we let bubble. */
+/** Hard-deletes a Twilio Conversation by SID. Retained for explicit
+ *  full-purge use cases (none in the current code path — see
+ *  `closeConversation` for the resend-cleanup path). Safe to call on
+ *  an already-deleted SID: Twilio returns 404 which we let bubble. */
 export async function deleteConversation(conversationSid: string): Promise<void> {
   await service().conversations(conversationSid).remove();
+}
+
+/** Archive a Twilio Conversation: set its `state` to `closed` and
+ *  prefix the friendly name with `[archived]`. Closed conversations
+ *  stop accepting new messages but the history remains in the
+ *  Conversations service for audit purposes. Used by
+ *  `cleanupPriorConversations` so a re-send doesn't destroy the
+ *  prior thread — the speaker (in their fresh invitation) sees a new
+ *  conversation under a new SID, while bishopric record-keeping
+ *  retains the closed thread. */
+export async function closeConversation(conversationSid: string): Promise<void> {
+  const convo = service().conversations(conversationSid);
+  // Fetch the current friendlyName so we can prefix it idempotently
+  // (avoids `[archived] [archived] ...` if cleanup runs twice for any
+  // reason, e.g. retry).
+  const current = await convo.fetch();
+  const prefix = "[archived] ";
+  const friendlyName = current.friendlyName?.startsWith(prefix)
+    ? current.friendlyName
+    : `${prefix}${current.friendlyName ?? ""}`.trim();
+  await convo.update({ state: "closed", friendlyName });
 }
 
 export async function postMessage(input: PostMessageInput): Promise<string> {
