@@ -1,6 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { onRequest, type Request } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
+import { loadMergedInvitationByConversation } from "./invitationDocs.js";
 import { emailSpeaker, smsSpeaker, type ResolvedInvitation } from "./invitationReplyNotify.js";
 import { pushToBishopric } from "./invitationReplyPush.js";
 import {
@@ -12,7 +13,6 @@ import {
 } from "./secrets.js";
 import { NO_MATCH_TWIML, relayInboundSms } from "./twilio/inboundSmsRelay.js";
 import { verifyTwilioSignature } from "./twilio/verifyTwilioSignature.js";
-import type { SpeakerInvitationShape } from "./invitationTypes.js";
 
 // SendGrid secrets intentionally omitted — SMS-only v1. emailSpeaker()
 // already try/catches a missing-key failure, so the webhook still
@@ -157,19 +157,14 @@ function verifySignature(req: Request): boolean {
 async function findInvitationByConversation(
   conversationSid: string,
 ): Promise<ResolvedInvitation | null> {
-  const db = getFirestore();
-  const q = await db
-    .collectionGroup("speakerInvitations")
-    .where("conversationSid", "==", conversationSid)
-    .limit(1)
-    .get();
-  if (q.empty) return null;
-  const d = q.docs[0]!;
-  const wardId = d.ref.path.split("/")[1]!;
-  return { ...(d.data() as SpeakerInvitationShape), wardId, token: d.id };
+  const merged = await loadMergedInvitationByConversation(getFirestore(), conversationSid);
+  if (!merged) return null;
+  // ResolvedInvitation uses `token` for the doc id — keep that name
+  // for back-compat with the existing notify helpers.
+  return { ...merged, token: merged.invitationId };
 }
 
-function isExpired(inv: SpeakerInvitationShape): boolean {
+function isExpired(inv: ResolvedInvitation): boolean {
   if (!inv.expiresAt) return false;
   return inv.expiresAt.toMillis() <= Date.now();
 }
