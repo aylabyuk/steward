@@ -1,5 +1,10 @@
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
+import {
+  authInvitationPath,
+  loadMergedInvitation,
+  updateAuth,
+} from "./invitationDocs.js";
 import { revokeSpeakerSession } from "./issueSpeakerSession.helpers.js";
 import { buildInviteUrl, tryEmail, trySms } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
@@ -24,10 +29,8 @@ export async function rotateInvitationLink(
   origin: string,
 ): Promise<RotateInvitationResponse> {
   const db = getFirestore();
-  const ref = db.doc(`wards/${input.wardId}/speakerInvitations/${input.invitationId}`);
-  const snap = await ref.get();
-  if (!snap.exists) throw new HttpsError("not-found", "Invitation not found.");
-  const invitation = snap.data() as SpeakerInvitationShape;
+  const invitation = await loadMergedInvitation(db, input.wardId, input.invitationId);
+  if (!invitation) throw new HttpsError("not-found", "Invitation not found.");
   const expiresAtMillis = invitation.expiresAt?.toMillis();
   if (typeof expiresAtMillis === "number" && expiresAtMillis < Date.now()) {
     throw new HttpsError(
@@ -54,7 +57,13 @@ export async function rotateInvitationLink(
       ...(invitation.speakerPhone ? { speakerPhone: invitation.speakerPhone } : {}),
     };
 
-  await ref.update({ tokenHash, tokenStatus: "active" as const, ...writePatch });
+  // C1 doc-split: token state + speaker contact PII are on the auth
+  // subdoc now; this whole rotation patch goes to that doc.
+  await updateAuth(db, input.wardId, input.invitationId, {
+    tokenHash,
+    tokenStatus: "active" as const,
+    ...writePatch,
+  });
 
   // A new token means any session minted from the prior token is no
   // longer the source of truth for this invitation. Revoke the
@@ -69,7 +78,7 @@ export async function rotateInvitationLink(
   const freshInvitation: SpeakerInvitationShape = { ...invitation, ...effectiveContact };
   const deliveryRecord = await deliverIfRequested(input, freshInvitation, inviteUrl);
   if (deliveryRecord.length > 0) {
-    await ref.update({
+    await db.doc(authInvitationPath(input.wardId, input.invitationId)).update({
       deliveryRecord: [...(invitation.deliveryRecord ?? []), ...deliveryRecord],
     });
   }

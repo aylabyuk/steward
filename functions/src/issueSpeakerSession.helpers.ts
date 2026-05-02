@@ -1,6 +1,7 @@
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
+import { txGetMerged } from "./invitationDocs.js";
 import {
   generateInvitationToken,
   hashInvitationToken,
@@ -35,11 +36,14 @@ export async function decideTokenAction(
   invitationId: string,
   presentedToken: string,
 ): Promise<TokenDecision> {
-  const ref = getFirestore().doc(`wards/${wardId}/speakerInvitations/${invitationId}`);
-  return getFirestore().runTransaction(async (tx): Promise<TokenDecision> => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) return { kind: "invalid" };
-    const data = snap.data() as SpeakerInvitationShape;
+  const db = getFirestore();
+  return db.runTransaction(async (tx): Promise<TokenDecision> => {
+    // C1 doc-split: token state lives on the auth subdoc; the public
+    // letter fields stay on the parent. txGetMerged loads both inside
+    // the transaction and returns the merged shape so the rest of the
+    // logic doesn't need to know about the split.
+    const { authRef, data } = await txGetMerged(db, tx, wardId, invitationId);
+    if (!data) return { kind: "invalid" };
     if (!data.tokenHash) return { kind: "invalid" };
     if (!tokenHashMatches(presentedToken, data.tokenHash)) {
       return { kind: "invalid" };
@@ -50,7 +54,7 @@ export async function decideTokenAction(
       data.tokenExpiresAt instanceof Timestamp && data.tokenExpiresAt.toMillis() <= now.getTime();
 
     if (data.tokenStatus === "active" && !expired) {
-      tx.update(ref, { tokenStatus: "consumed" });
+      tx.update(authRef, { tokenStatus: "consumed" });
       return { kind: "consume" };
     }
 
@@ -63,7 +67,7 @@ export async function decideTokenAction(
 
     const newToken = generateInvitationToken();
     const newHash = hashInvitationToken(newToken);
-    tx.update(ref, {
+    tx.update(authRef, {
       tokenHash: newHash,
       tokenStatus: "active",
       [`tokenRotationsByDay.${bucket}`]: FieldValue.increment(1),
@@ -98,18 +102,17 @@ export async function rotateTokenForBishopNotification(
   wardId: string,
   invitationId: string,
 ): Promise<{ newToken: string; speakerPhone: string | undefined } | null> {
-  const ref = getFirestore().doc(`wards/${wardId}/speakerInvitations/${invitationId}`);
-  return getFirestore().runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists) return null;
-    const data = snap.data() as SpeakerInvitationShape;
+  const db = getFirestore();
+  return db.runTransaction(async (tx) => {
+    const { authRef, data } = await txGetMerged(db, tx, wardId, invitationId);
+    if (!data) return null;
     const now = Date.now();
     if (data.tokenExpiresAt instanceof Timestamp && data.tokenExpiresAt.toMillis() <= now) {
       return null;
     }
     const newToken = generateInvitationToken();
     const newHash = hashInvitationToken(newToken);
-    tx.update(ref, { tokenHash: newHash, tokenStatus: "active" as const });
+    tx.update(authRef, { tokenHash: newHash, tokenStatus: "active" as const });
     return { newToken, speakerPhone: data.speakerPhone };
   });
 }
