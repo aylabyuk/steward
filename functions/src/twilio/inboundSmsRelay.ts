@@ -2,10 +2,7 @@ import { type Firestore } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 import { postMessage } from "./conversations.js";
 import { AUTH_DOC_ID } from "../invitationDocs.js";
-import type {
-  SpeakerInvitationAuthShape,
-  SpeakerInvitationShape,
-} from "../invitationTypes.js";
+import type { SpeakerInvitationAuthShape, SpeakerInvitationShape } from "../invitationTypes.js";
 
 export type RelayResult =
   | { matched: true; conversationSid: string; invitationId: string; messageSid: string }

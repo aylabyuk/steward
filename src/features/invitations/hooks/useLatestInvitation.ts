@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  where,
-  type DocumentData,
-} from "firebase/firestore";
+import { collection, doc, onSnapshot, query, where, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { speakerInvitationSchema, type SpeakerInvitation } from "@/lib/types";
 

@@ -132,9 +132,7 @@ function buildResponseSummary(data: Record<string, unknown>): {
   answer: "yes" | "no";
   respondedAt: unknown;
 } | null {
-  const response = data["response"] as
-    | { answer?: "yes" | "no"; respondedAt?: unknown }
-    | undefined;
+  const response = data["response"] as { answer?: "yes" | "no"; respondedAt?: unknown } | undefined;
   if (!response?.answer || !response.respondedAt) return null;
   return { answer: response.answer, respondedAt: response.respondedAt };
 }

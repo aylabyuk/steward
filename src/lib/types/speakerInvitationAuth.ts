@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  speakerInvitationDeliverySchema,
-  speakerInvitationStaffSchema,
-} from "./speakerInvitation";
+import { speakerInvitationDeliverySchema, speakerInvitationStaffSchema } from "./speakerInvitation";
 
 // Re-export the public response-summary schema for callers that load
 // both halves of the split — keeps the import surface from the
@@ -104,17 +101,12 @@ export const speakerInvitationAuthSchema = z.object({
   fromNumberMode: z.enum(["production", "testing"]).optional(),
 
   /** Delivery outcome(s) captured at send time + on rotation. */
-  deliveryRecord: z
-    .array(speakerInvitationDeliverySchema)
-    .default([]),
+  deliveryRecord: z.array(speakerInvitationDeliverySchema).default([]),
 });
 export type SpeakerInvitationAuth = z.infer<typeof speakerInvitationAuthSchema>;
 
 /** Stable subcollection path. Single doc named `auth` so rules can
  *  match the exact ID rather than wildcarding the whole subcollection. */
 export const SPEAKER_INVITATION_AUTH_DOC = "auth" as const;
-export const speakerInvitationAuthPath = (
-  wardId: string,
-  invitationId: string,
-): string =>
+export const speakerInvitationAuthPath = (wardId: string, invitationId: string): string =>
   `wards/${wardId}/speakerInvitations/${invitationId}/private/${SPEAKER_INVITATION_AUTH_DOC}`;

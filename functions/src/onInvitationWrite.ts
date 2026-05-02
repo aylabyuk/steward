@@ -40,16 +40,14 @@ export const onInvitationWrite = onDocumentWritten(
 
     const { wardId, invitationId } = event.params;
     const db = getFirestore();
-    const parentSnap = await db
-      .doc(`wards/${wardId}/speakerInvitations/${invitationId}`)
-      .get();
+    const parentSnap = await db.doc(`wards/${wardId}/speakerInvitations/${invitationId}`).get();
     const parent = (parentSnap.exists ? parentSnap.data() : undefined) as
       | SpeakerInvitationShape
       | undefined;
     const before: SpeakerInvitationShape | undefined =
-      beforeAuth || parent ? { ...(parent ?? {}), ...(beforeAuth ?? {}) } as SpeakerInvitationShape : undefined;
+      beforeAuth || parent ? ({ ...parent, ...beforeAuth } as SpeakerInvitationShape) : undefined;
     const after: SpeakerInvitationShape | undefined =
-      afterAuth || parent ? { ...(parent ?? {}), ...(afterAuth ?? {}) } as SpeakerInvitationShape : undefined;
+      afterAuth || parent ? ({ ...parent, ...afterAuth } as SpeakerInvitationShape) : undefined;
     const change = classifyInvitationChange(before, after);
     if (!change.fireSpeaker && !change.fireBishopric) return;
     if (!after) return;

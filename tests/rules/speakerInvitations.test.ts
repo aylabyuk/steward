@@ -185,9 +185,7 @@ describe("speakerInvitations rules — public parent doc", () => {
     it("active bishop can write currentSpeakerStatus mirror", async () => {
       await seedSplit(env);
       const db = authedAs(env, "bishop", "b@x.com").firestore();
-      await assertSucceeds(
-        updateDoc(doc(db, PARENT_PATH), { currentSpeakerStatus: "confirmed" }),
-      );
+      await assertSucceeds(updateDoc(doc(db, PARENT_PATH), { currentSpeakerStatus: "confirmed" }));
     });
   });
 });
@@ -282,9 +280,7 @@ describe("speakerInvitations rules — private auth subdoc", () => {
         invitationId: INVITATION_ID,
         wardId: WARD,
       }).firestore();
-      await assertSucceeds(
-        updateDoc(doc(db, AUTH_PATH), { speakerLastSeenAt: serverTimestamp() }),
-      );
+      await assertSucceeds(updateDoc(doc(db, AUTH_PATH), { speakerLastSeenAt: serverTimestamp() }));
     });
 
     it("speaker writing tokenHash on auth subdoc fails (not in hasOnly)", async () => {

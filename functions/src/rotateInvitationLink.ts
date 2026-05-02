@@ -1,10 +1,6 @@
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
-import {
-  authInvitationPath,
-  loadMergedInvitation,
-  updateAuth,
-} from "./invitationDocs.js";
+import { authInvitationPath, loadMergedInvitation, updateAuth } from "./invitationDocs.js";
 import { revokeSpeakerSession } from "./issueSpeakerSession.helpers.js";
 import { buildInviteUrl, tryEmail, trySms } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";

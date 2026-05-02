@@ -75,8 +75,7 @@ function InviteLandingContent({
   // carries a `responseSummary` denorm (answer + respondedAt) so the
   // pre-auth banner can still gate correctly. Either signal counts.
   const hasResponse = Boolean(invitation.response || invitation.responseSummary);
-  const responseAnswer =
-    invitation.response?.answer ?? invitation.responseSummary?.answer ?? null;
+  const responseAnswer = invitation.response?.answer ?? invitation.responseSummary?.answer ?? null;
   // Derived attention state: what, if anything, should nudge the
   // speaker toward the chat right now. Banner + FAB both key off this
   // so they emerge and vanish together. When the drawer is open the

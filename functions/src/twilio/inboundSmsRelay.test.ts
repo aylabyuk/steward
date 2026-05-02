@@ -82,7 +82,11 @@ describe("relayInboundSms", () => {
     const db = makeDb([
       {
         id: "expired1",
-        parent: { conversationSid: "CHexpired", expiresAt: past, createdAt: ts(Date.now() - 600_000) },
+        parent: {
+          conversationSid: "CHexpired",
+          expiresAt: past,
+          createdAt: ts(Date.now() - 600_000),
+        },
         auth: { speakerPhone: "+14155551111", tokenStatus: "active" },
       },
     ]);

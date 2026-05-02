@@ -1,4 +1,4 @@
-import { doc, getDoc, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db, inviteDb } from "@/lib/firebase";
 
 export interface SpeakerResponseInput {
@@ -23,13 +23,7 @@ export interface SpeakerResponseInput {
  *  isolated `inviteAuth` session's ID token (with invitationId
  *  claim). */
 export async function writeSpeakerResponse(input: SpeakerResponseInput): Promise<void> {
-  const parentRef = doc(
-    inviteDb,
-    "wards",
-    input.wardId,
-    "speakerInvitations",
-    input.invitationId,
-  );
+  const parentRef = doc(inviteDb, "wards", input.wardId, "speakerInvitations", input.invitationId);
   const authRef = doc(parentRef, "private", "auth");
   const respondedAt = serverTimestamp();
   const batch = writeBatch(inviteDb);
@@ -81,8 +75,7 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
   // Read response from auth subdoc; fall back to the public summary
   // (and pre-migration `response` on parent) so apply still works
   // mid-migration.
-  const answer =
-    authData?.response?.answer ?? parentData.responseSummary?.answer;
+  const answer = authData?.response?.answer ?? parentData.responseSummary?.answer;
   if (!answer) throw new Error("No response to apply.");
   const data = parentData;
 

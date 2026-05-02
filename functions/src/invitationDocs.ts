@@ -63,10 +63,7 @@ export async function loadMergedInvitation(
   invitationId: string,
 ): Promise<SpeakerInvitationShape | null> {
   const parentRef = db.doc(publicInvitationPath(wardId, invitationId));
-  const [parentSnap, authSnap] = await Promise.all([
-    parentRef.get(),
-    authDocRef(parentRef).get(),
-  ]);
+  const [parentSnap, authSnap] = await Promise.all([parentRef.get(), authDocRef(parentRef).get()]);
   if (!parentSnap.exists) return null;
   const parent = parentSnap.data() as SpeakerInvitationShape;
   const auth = (authSnap.exists ? (authSnap.data() as SpeakerInvitationAuthShape) : {}) as
@@ -81,10 +78,7 @@ export async function loadMergedInvitation(
 export async function loadMergedInvitationByConversation(
   db: Firestore,
   conversationSid: string,
-): Promise<
-  | (SpeakerInvitationShape & { wardId: string; invitationId: string })
-  | null
-> {
+): Promise<(SpeakerInvitationShape & { wardId: string; invitationId: string }) | null> {
   const q = await db
     .collectionGroup("speakerInvitations")
     .where("conversationSid", "==", conversationSid)

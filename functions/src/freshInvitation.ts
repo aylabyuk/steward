@@ -101,12 +101,7 @@ export async function createFreshInvitation(
     // issueSpeakerSession both read this back.
     ...(fromNumberMode === "testing" ? { fromNumberMode } : {}),
   };
-  const { invitationId } = await createSplitInvitationDocs(
-    db,
-    input.wardId,
-    parentData,
-    authData,
-  );
+  const { invitationId } = await createSplitInvitationDocs(db, input.wardId, parentData, authData);
   // Match the prior surface: callers downstream (e.g. webhook
   // signature path, deliveryRecord update) reference `docRef.id`
   // and the underlying parent doc. We still need the parent-doc ref
