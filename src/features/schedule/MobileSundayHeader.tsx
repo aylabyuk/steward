@@ -19,7 +19,6 @@ interface Props {
   cancelled: boolean;
   countdown: string;
   urgent: boolean;
-  needsApply: boolean;
   hasConfirmedSpeaker: boolean;
   wardId: string;
   nonMeetingSundays: readonly NonMeetingSunday[];
@@ -33,7 +32,7 @@ interface Props {
  *  one inline row. Extracted from MobileSundayBlock to keep that file
  *  under the 150-line component limit. */
 export function MobileSundayHeader(props: Props) {
-  const { date, type, kind, cancelled, countdown, urgent, needsApply, isHero } = props;
+  const { date, type, kind, cancelled, countdown, urgent, isHero } = props;
   return (
     <div className={cn("px-4 py-2.5 border-b border-border", isHero && "py-3")}>
       {isHero && (
@@ -62,12 +61,6 @@ export function MobileSundayHeader(props: Props) {
             >
               {countdown}
             </span>
-          )}
-          {needsApply && !cancelled && (
-            <span
-              aria-label="Speaker response awaiting your review"
-              className="inline-block w-2 h-2 rounded-full bg-bordeaux shrink-0"
-            />
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">

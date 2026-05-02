@@ -1,5 +1,4 @@
 import { useSpeakers } from "@/hooks/useMeeting";
-import { useSundayInvitationsSummary } from "@/features/invitations/hooks/useSundayInvitationsSummary";
 import { leadTimeSeverity } from "@/features/speakers/utils/leadTime";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -45,7 +44,6 @@ export function MobileSundayBlock({
   const kind = kindLabel(type);
   const cancelled = Boolean(meeting?.cancellation?.cancelled);
   const { data: speakers } = useSpeakers(date);
-  const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
   const urgent = leadTimeSeverity(new Date(), date, leadTimeDays) === "urgent";
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
   const countdown = cancelled ? "Cancelled" : formatCountdown(date);
@@ -65,7 +63,6 @@ export function MobileSundayBlock({
         cancelled={cancelled}
         countdown={countdown}
         urgent={urgent}
-        needsApply={needsApply}
         hasConfirmedSpeaker={hasConfirmedSpeaker}
         wardId={wardId}
         nonMeetingSundays={nonMeetingSundays}
