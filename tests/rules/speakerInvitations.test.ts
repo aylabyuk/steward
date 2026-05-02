@@ -4,14 +4,26 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, serverTimestamp, setDoc, Timestamp, updateDoc } from "firebase/firestore";
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { authedAs, authedAsSpeaker, createTestEnv, seedMember, seedWard } from "./_helpers";
 
 const WARD = "w1";
 const INVITATION_ID = "ABC123abcDEF456";
-const PATH = `wards/${WARD}/speakerInvitations/${INVITATION_ID}`;
+const PARENT_PATH = `wards/${WARD}/speakerInvitations/${INVITATION_ID}`;
+const AUTH_PATH = `${PARENT_PATH}/private/auth`;
+const SPEAKER_UID = `speaker:${WARD}:${INVITATION_ID}`;
+const FUTURE = Timestamp.fromDate(new Date("2099-12-31T00:00:00Z"));
+const PAST = Timestamp.fromDate(new Date("2000-01-01T00:00:00Z"));
 
-const sample = {
+const sampleParent = {
   speakerRef: { meetingDate: "2026-04-26", speakerId: "s1" },
   assignedDate: "Sunday, April 26, 2026",
   sentOn: "April 21, 2026",
@@ -21,15 +33,36 @@ const sample = {
   inviterName: "Bishop Paul",
   bodyMarkdown: "Dear Sebastian Tan, …",
   footerMarkdown: "And all things whatsoever …",
+  expiresAt: FUTURE,
 };
 
-async function seedInvitation(env: RulesTestEnvironment) {
+const sampleAuth = {
+  tokenHash: "abc",
+  tokenStatus: "active" as const,
+  tokenExpiresAt: FUTURE,
+  speakerEmail: "speaker@example.com",
+  speakerPhone: "+15551234567",
+  bishopricParticipants: [],
+  deliveryRecord: [],
+};
+
+async function seedSplit(
+  env: RulesTestEnvironment,
+  opts: {
+    parent?: Partial<typeof sampleParent>;
+    auth?: Partial<typeof sampleAuth> & {
+      response?: Record<string, unknown>;
+      speakerLastSeenAt?: unknown;
+    };
+  } = {},
+) {
   await env.withSecurityRulesDisabled(async (ctx) => {
-    await setDoc(doc(ctx.firestore(), PATH), sample);
+    await setDoc(doc(ctx.firestore(), PARENT_PATH), { ...sampleParent, ...opts.parent });
+    await setDoc(doc(ctx.firestore(), AUTH_PATH), { ...sampleAuth, ...opts.auth });
   });
 }
 
-describe("speaker invitation rules", () => {
+describe("speakerInvitations rules — public parent doc", () => {
   let env: RulesTestEnvironment;
   beforeAll(async () => {
     env = await createTestEnv();
@@ -44,311 +77,281 @@ describe("speaker invitation rules", () => {
     await seedMember(env, { wardId: WARD, uid: "clerk", email: "c@x.com", role: "clerk" });
   });
 
-  describe("read (public)", () => {
-    it("lets an anonymous user read the invitation by doc ID", async () => {
-      await seedInvitation(env);
+  describe("read", () => {
+    it("anonymous user can read the parent doc", async () => {
+      await seedSplit(env);
       const db = env.unauthenticatedContext().firestore();
-      await assertSucceeds(
-        import("firebase/firestore").then(({ getDoc }) => getDoc(doc(db, PATH))),
-      );
+      await assertSucceeds(getDoc(doc(db, PARENT_PATH)));
     });
 
-    it("lets a signed-in non-member read the invitation by doc ID", async () => {
-      await seedInvitation(env);
+    it("signed-in non-member can read the parent doc", async () => {
+      await seedSplit(env);
       const db = authedAs(env, "stranger", "s@x.com").firestore();
-      await assertSucceeds(
-        import("firebase/firestore").then(({ getDoc }) => getDoc(doc(db, PATH))),
-      );
+      await assertSucceeds(getDoc(doc(db, PARENT_PATH)));
     });
   });
 
-  describe("write (bishopric / clerk only)", () => {
-    it("lets an active bishopric member send an invitation", async () => {
+  describe("create / delete", () => {
+    it("active bishopric member can create the parent doc", async () => {
       const db = authedAs(env, "bishop", "b@x.com").firestore();
-      await assertSucceeds(setDoc(doc(db, PATH), sample));
+      await assertSucceeds(setDoc(doc(db, PARENT_PATH), sampleParent));
     });
 
-    it("lets an active clerk send an invitation", async () => {
+    it("active clerk can create the parent doc", async () => {
       const db = authedAs(env, "clerk", "c@x.com").firestore();
-      await assertSucceeds(setDoc(doc(db, PATH), sample));
+      await assertSucceeds(setDoc(doc(db, PARENT_PATH), sampleParent));
     });
 
-    it("blocks an anonymous user from creating an invitation", async () => {
+    it("anonymous create blocked", async () => {
       const db = env.unauthenticatedContext().firestore();
-      await assertFails(setDoc(doc(db, PATH), sample));
+      await assertFails(setDoc(doc(db, PARENT_PATH), sampleParent));
     });
 
-    it("blocks a signed-in non-member from creating an invitation", async () => {
+    it("non-member create blocked", async () => {
       const db = authedAs(env, "stranger", "s@x.com").firestore();
-      await assertFails(setDoc(doc(db, PATH), sample));
+      await assertFails(setDoc(doc(db, PARENT_PATH), sampleParent));
     });
 
-    it("lets an active member delete their ward's invitation", async () => {
-      await seedInvitation(env);
+    it("active member can delete the parent doc", async () => {
+      await seedSplit(env);
       const db = authedAs(env, "clerk", "c@x.com").firestore();
-      await assertSucceeds(deleteDoc(doc(db, PATH)));
+      await assertSucceeds(deleteDoc(doc(db, PARENT_PATH)));
     });
 
-    it("blocks an anonymous user from deleting the invitation", async () => {
-      await seedInvitation(env);
+    it("anonymous delete blocked", async () => {
+      await seedSplit(env);
       const db = env.unauthenticatedContext().firestore();
-      await assertFails(deleteDoc(doc(db, PATH)));
+      await assertFails(deleteDoc(doc(db, PARENT_PATH)));
     });
   });
 
-  describe("update — speaker self-response path (claim-based)", () => {
-    const FUTURE = Timestamp.fromDate(new Date("2099-12-31T00:00:00Z"));
-    const PAST = Timestamp.fromDate(new Date("2000-01-01T00:00:00Z"));
-    const SPEAKER_UID = `speaker:${WARD}:${INVITATION_ID}`;
+  describe("update — speaker may only write responseSummary", () => {
+    it("speaker can write responseSummary on the parent", async () => {
+      await seedSplit(env);
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertSucceeds(
+        updateDoc(doc(db, PARENT_PATH), {
+          responseSummary: { answer: "yes", respondedAt: serverTimestamp() },
+        }),
+      );
+    });
 
-    async function seedWithContext(opts: {
-      expiresAt?: Timestamp;
-      tokenExpiresAt?: Timestamp;
-      response?: Record<string, unknown>;
-    }): Promise<void> {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), PATH), {
-          ...sample,
-          ...(opts.expiresAt !== undefined ? { expiresAt: opts.expiresAt } : {}),
-          ...(opts.tokenExpiresAt !== undefined ? { tokenExpiresAt: opts.tokenExpiresAt } : {}),
-          ...(opts.response !== undefined ? { response: opts.response } : {}),
-        });
-      });
-    }
+    it("speaker writing bodyMarkdown on the parent fails (not in hasOnly)", async () => {
+      await seedSplit(env);
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertFails(updateDoc(doc(db, PARENT_PATH), { bodyMarkdown: "tampered" }));
+    });
 
+    it("speaker writing responseSummary past expiresAt fails", async () => {
+      await seedSplit(env, { parent: { expiresAt: PAST } });
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertFails(
+        updateDoc(doc(db, PARENT_PATH), {
+          responseSummary: { answer: "yes", respondedAt: serverTimestamp() },
+        }),
+      );
+    });
+
+    it("speaker with mismatched invitationId claim blocked", async () => {
+      await seedSplit(env);
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: "other",
+        wardId: WARD,
+      }).firestore();
+      await assertFails(
+        updateDoc(doc(db, PARENT_PATH), {
+          responseSummary: { answer: "yes", respondedAt: serverTimestamp() },
+        }),
+      );
+    });
+  });
+
+  describe("update — bishopric path", () => {
+    it("active bishop can edit letter content (e.g. bodyMarkdown)", async () => {
+      await seedSplit(env);
+      const db = authedAs(env, "clerk", "c@x.com").firestore();
+      await assertSucceeds(updateDoc(doc(db, PARENT_PATH), { bodyMarkdown: "edited" }));
+    });
+
+    it("active bishop can write currentSpeakerStatus mirror", async () => {
+      await seedSplit(env);
+      const db = authedAs(env, "bishop", "b@x.com").firestore();
+      await assertSucceeds(
+        updateDoc(doc(db, PARENT_PATH), { currentSpeakerStatus: "confirmed" }),
+      );
+    });
+  });
+});
+
+describe("speakerInvitations rules — private auth subdoc", () => {
+  let env: RulesTestEnvironment;
+  beforeAll(async () => {
+    env = await createTestEnv();
+  });
+  afterAll(async () => {
+    await env.cleanup();
+  });
+  beforeEach(async () => {
+    await env.clearFirestore();
+    await seedWard(env, WARD);
+    await seedMember(env, { wardId: WARD, uid: "bishop", email: "b@x.com", role: "bishopric" });
+    await seedMember(env, { wardId: WARD, uid: "clerk", email: "c@x.com", role: "clerk" });
+  });
+
+  describe("read", () => {
+    it("anonymous user CANNOT read the auth subdoc — the C1 gate", async () => {
+      await seedSplit(env);
+      const db = env.unauthenticatedContext().firestore();
+      await assertFails(getDoc(doc(db, AUTH_PATH)));
+    });
+
+    it("signed-in non-member CANNOT read the auth subdoc", async () => {
+      await seedSplit(env);
+      const db = authedAs(env, "stranger", "s@x.com").firestore();
+      await assertFails(getDoc(doc(db, AUTH_PATH)));
+    });
+
+    it("active bishop can read the auth subdoc", async () => {
+      await seedSplit(env);
+      const db = authedAs(env, "bishop", "b@x.com").firestore();
+      await assertSucceeds(getDoc(doc(db, AUTH_PATH)));
+    });
+
+    it("active clerk can read the auth subdoc", async () => {
+      await seedSplit(env);
+      const db = authedAs(env, "clerk", "c@x.com").firestore();
+      await assertSucceeds(getDoc(doc(db, AUTH_PATH)));
+    });
+
+    it("speaker with matching invitationId+wardId claim can read the auth subdoc", async () => {
+      await seedSplit(env);
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: WARD,
+      }).firestore();
+      await assertSucceeds(getDoc(doc(db, AUTH_PATH)));
+    });
+
+    it("speaker with mismatched invitationId claim CANNOT read", async () => {
+      await seedSplit(env);
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: "other",
+        wardId: WARD,
+      }).firestore();
+      await assertFails(getDoc(doc(db, AUTH_PATH)));
+    });
+
+    it("speaker with mismatched wardId claim CANNOT read", async () => {
+      await seedSplit(env);
+      const db = authedAsSpeaker(env, SPEAKER_UID, {
+        invitationId: INVITATION_ID,
+        wardId: "other",
+      }).firestore();
+      await assertFails(getDoc(doc(db, AUTH_PATH)));
+    });
+  });
+
+  describe("update — speaker self-write path", () => {
     const sampleResponse = {
       answer: "yes" as const,
       respondedAt: serverTimestamp(),
       actorUid: SPEAKER_UID,
     };
 
-    it("lets a speaker with matching invitationId + wardId claims write the response", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
+    it("speaker writes response to auth subdoc", async () => {
+      await seedSplit(env);
       const db = authedAsSpeaker(env, SPEAKER_UID, {
         invitationId: INVITATION_ID,
         wardId: WARD,
       }).firestore();
-      await assertSucceeds(updateDoc(doc(db, PATH), { response: sampleResponse }));
+      await assertSucceeds(updateDoc(doc(db, AUTH_PATH), { response: sampleResponse }));
     });
 
-    it("blocks a speaker whose invitationId claim points to a different doc", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: "other-invitation",
-        wardId: WARD,
-      }).firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks a speaker whose wardId claim doesn't match the path", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: INVITATION_ID,
-        wardId: "other-ward",
-      }).firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks a signed-in user with no speaker claims (bishopric email path only)", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = authedAs(env, "stranger", "s@x.com").firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks an unauthenticated caller", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = env.unauthenticatedContext().firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks writes after expiresAt has passed", async () => {
-      await seedWithContext({ expiresAt: PAST });
-      const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: INVITATION_ID,
-        wardId: WARD,
-      }).firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks speaker-side edits to any field outside `response`", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: INVITATION_ID,
-        wardId: WARD,
-      }).firestore();
-      await assertFails(updateDoc(doc(db, PATH), { bodyMarkdown: "tampered letter body" }));
-    });
-
-    it("blocks speaker-side edits that touch response AND a forbidden field", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: INVITATION_ID,
-        wardId: WARD,
-      }).firestore();
-      await assertFails(
-        updateDoc(doc(db, PATH), {
-          response: sampleResponse,
-          speakerName: "Fake Name",
-        }),
-      );
-    });
-
-    it("lets a speaker write the speakerLastSeenAt heartbeat", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: INVITATION_ID,
-        wardId: WARD,
-      }).firestore();
-      await assertSucceeds(updateDoc(doc(db, PATH), { speakerLastSeenAt: serverTimestamp() }));
-    });
-
-    it("lets a speaker write response + speakerLastSeenAt together", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
+    it("speaker writes speakerLastSeenAt to auth subdoc", async () => {
+      await seedSplit(env);
       const db = authedAsSpeaker(env, SPEAKER_UID, {
         invitationId: INVITATION_ID,
         wardId: WARD,
       }).firestore();
       await assertSucceeds(
-        updateDoc(doc(db, PATH), {
-          response: sampleResponse,
-          speakerLastSeenAt: serverTimestamp(),
-        }),
+        updateDoc(doc(db, AUTH_PATH), { speakerLastSeenAt: serverTimestamp() }),
       );
     });
 
-    it("blocks speaker heartbeat past expiry", async () => {
-      await seedWithContext({ expiresAt: PAST });
+    it("speaker writing tokenHash on auth subdoc fails (not in hasOnly)", async () => {
+      await seedSplit(env);
       const db = authedAsSpeaker(env, SPEAKER_UID, {
         invitationId: INVITATION_ID,
         wardId: WARD,
       }).firestore();
-      await assertFails(updateDoc(doc(db, PATH), { speakerLastSeenAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, AUTH_PATH), { tokenHash: "tampered" }));
     });
 
-    it("blocks speaker writes past tokenExpiresAt even if expiresAt is future", async () => {
-      await seedWithContext({ expiresAt: FUTURE, tokenExpiresAt: PAST });
+    it("speaker writes past tokenExpiresAt fail", async () => {
+      await seedSplit(env, { auth: { tokenExpiresAt: PAST } });
       const db = authedAsSpeaker(env, SPEAKER_UID, {
         invitationId: INVITATION_ID,
         wardId: WARD,
       }).firestore();
-      await assertFails(updateDoc(doc(db, PATH), { response: sampleResponse }));
+      await assertFails(updateDoc(doc(db, AUTH_PATH), { response: sampleResponse }));
     });
 
-    it("allows speaker writes when tokenExpiresAt is set and in the future", async () => {
-      await seedWithContext({ expiresAt: FUTURE, tokenExpiresAt: FUTURE });
-      const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: INVITATION_ID,
-        wardId: WARD,
-      }).firestore();
-      await assertSucceeds(updateDoc(doc(db, PATH), { response: sampleResponse }));
-    });
-
-    it("blocks speaker spoofing actorUid (different uid in response)", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
+    it("speaker spoofing actorUid fails", async () => {
+      await seedSplit(env);
       const db = authedAsSpeaker(env, SPEAKER_UID, {
         invitationId: INVITATION_ID,
         wardId: WARD,
       }).firestore();
       await assertFails(
-        updateDoc(doc(db, PATH), {
+        updateDoc(doc(db, AUTH_PATH), {
           response: { ...sampleResponse, actorUid: "bishop" },
         }),
       );
     });
 
-    it("blocks capability-token speaker (no auth email) from claiming an actorEmail", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      // authedAsSpeaker sets only invitationId+wardId+role claims; no email.
+    it("speaker mismatched-claim write fails", async () => {
+      await seedSplit(env);
       const db = authedAsSpeaker(env, SPEAKER_UID, {
-        invitationId: INVITATION_ID,
+        invitationId: "other",
         wardId: WARD,
       }).firestore();
-      await assertFails(
-        updateDoc(doc(db, PATH), {
-          response: { ...sampleResponse, actorEmail: "bishop@x.com" },
-        }),
-      );
-    });
-
-    it("blocks speaker writing actorEmail that doesn't match auth.token.email", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      // Speaker session minted with verified email; tries to claim a different one.
-      const db = env
-        .authenticatedContext(SPEAKER_UID, {
-          invitationId: INVITATION_ID,
-          wardId: WARD,
-          role: "speaker",
-          email: "speaker@example.com",
-          email_verified: true,
-        })
-        .firestore();
-      await assertFails(
-        updateDoc(doc(db, PATH), {
-          response: { ...sampleResponse, actorEmail: "different@x.com" },
-        }),
-      );
-    });
-
-    it("allows google-signed-in speaker writing matching actorEmail", async () => {
-      await seedWithContext({ expiresAt: FUTURE });
-      const db = env
-        .authenticatedContext(SPEAKER_UID, {
-          invitationId: INVITATION_ID,
-          wardId: WARD,
-          role: "speaker",
-          email: "speaker@example.com",
-          email_verified: true,
-        })
-        .firestore();
-      await assertSucceeds(
-        updateDoc(doc(db, PATH), {
-          response: { ...sampleResponse, actorEmail: "speaker@example.com" },
-        }),
-      );
+      await assertFails(updateDoc(doc(db, AUTH_PATH), { response: sampleResponse }));
     });
   });
 
-  describe("update — bishopric acknowledgement path", () => {
-    const SPEAKER_EMAIL = "speaker@example.com";
-    const FUTURE = Timestamp.fromDate(new Date("2099-12-31T00:00:00Z"));
-
-    it("lets an active bishop acknowledge a response (writes acknowledgedAt + status)", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), PATH), {
-          ...sample,
-          speakerEmail: SPEAKER_EMAIL,
-          expiresAt: FUTURE,
+  describe("update — bishopric ack path (ackOnceOk)", () => {
+    it("active bishop writes acknowledgedAt", async () => {
+      await seedSplit(env, {
+        auth: {
           response: {
             answer: "yes",
             respondedAt: serverTimestamp(),
             actorUid: "speaker-uid",
-            actorEmail: SPEAKER_EMAIL,
           },
-        });
+        },
       });
       const db = authedAs(env, "bishop", "b@x.com").firestore();
       await assertSucceeds(
-        updateDoc(doc(db, PATH), {
+        updateDoc(doc(db, AUTH_PATH), {
           "response.acknowledgedAt": serverTimestamp(),
           "response.acknowledgedBy": "bishop",
         }),
       );
     });
 
-    it("lets an active bishop edit any field (letter body, etc.) — full update path", async () => {
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), PATH), sample);
-      });
-      const db = authedAs(env, "clerk", "c@x.com").firestore();
-      await assertSucceeds(updateDoc(doc(db, PATH), { bodyMarkdown: "edited letter body" }));
-    });
-
     it("blocks overwriting an existing acknowledgedAt with a different value", async () => {
       const ackedAt = Timestamp.fromDate(new Date("2026-04-21T10:00:00Z"));
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), PATH), {
-          ...sample,
-          expiresAt: FUTURE,
+      await seedSplit(env, {
+        auth: {
           response: {
             answer: "yes",
             respondedAt: serverTimestamp(),
@@ -356,54 +359,32 @@ describe("speaker invitation rules", () => {
             acknowledgedAt: ackedAt,
             acknowledgedBy: "bishop",
           },
-        });
+        },
       });
-      const db = authedAs(env, "clerk", "c@x.com").firestore();
-      // Different timestamp than what's on the doc.
+      const db = authedAs(env, "bishop", "b@x.com").firestore();
       await assertFails(
-        updateDoc(doc(db, PATH), {
+        updateDoc(doc(db, AUTH_PATH), {
           "response.acknowledgedAt": Timestamp.fromDate(new Date("2026-04-22T10:00:00Z")),
         }),
       );
     });
+  });
 
-    it("blocks clearing an existing acknowledgedAt", async () => {
-      const ackedAt = Timestamp.fromDate(new Date("2026-04-21T10:00:00Z"));
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), PATH), {
-          ...sample,
-          expiresAt: FUTURE,
-          response: {
-            answer: "yes",
-            respondedAt: serverTimestamp(),
-            actorUid: "speaker-uid",
-            acknowledgedAt: ackedAt,
-            acknowledgedBy: "bishop",
-          },
-        });
-      });
-      const db = authedAs(env, "bishop", "b@x.com").firestore();
-      await assertFails(updateDoc(doc(db, PATH), { "response.acknowledgedAt": null }));
+  describe("create / delete", () => {
+    it("anonymous create blocked", async () => {
+      const db = env.unauthenticatedContext().firestore();
+      await assertFails(setDoc(doc(db, AUTH_PATH), sampleAuth));
     });
 
-    it("allows a content edit that preserves acknowledgedAt unchanged", async () => {
-      const ackedAt = Timestamp.fromDate(new Date("2026-04-21T10:00:00Z"));
-      await env.withSecurityRulesDisabled(async (ctx) => {
-        await setDoc(doc(ctx.firestore(), PATH), {
-          ...sample,
-          expiresAt: FUTURE,
-          response: {
-            answer: "yes",
-            respondedAt: serverTimestamp(),
-            actorUid: "speaker-uid",
-            acknowledgedAt: ackedAt,
-            acknowledgedBy: "bishop",
-          },
-        });
-      });
+    it("active bishop create blocked (Admin SDK only)", async () => {
       const db = authedAs(env, "bishop", "b@x.com").firestore();
-      // Editing a peer field — acknowledgedAt stays untouched.
-      await assertSucceeds(updateDoc(doc(db, PATH), { bodyMarkdown: "tweaked" }));
+      await assertFails(setDoc(doc(db, AUTH_PATH), sampleAuth));
+    });
+
+    it("active bishop delete blocked (Admin SDK only)", async () => {
+      await seedSplit(env);
+      const db = authedAs(env, "bishop", "b@x.com").firestore();
+      await assertFails(deleteDoc(doc(db, AUTH_PATH)));
     });
   });
 });
