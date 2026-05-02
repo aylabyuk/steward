@@ -1,6 +1,6 @@
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
-import { authInvitationPath, loadMergedInvitation, updateAuth } from "./invitationDocs.js";
+import { authInvitationPath, txGetMerged } from "./invitationDocs.js";
 import { revokeSpeakerSession } from "./issueSpeakerSession.helpers.js";
 import { buildInviteUrl, tryEmail, trySms } from "./sendSpeakerInvitation.helpers.js";
 import { generateInvitationToken, hashInvitationToken } from "./invitationToken.js";
@@ -25,50 +25,62 @@ export async function rotateInvitationLink(
   origin: string,
 ): Promise<RotateInvitationResponse> {
   const db = getFirestore();
-  const invitation = await loadMergedInvitation(db, input.wardId, input.invitationId);
-  if (!invitation) throw new HttpsError("not-found", "Invitation not found.");
-  const expiresAtMillis = invitation.expiresAt?.toMillis();
-  if (typeof expiresAtMillis === "number" && expiresAtMillis < Date.now()) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Invitation has expired — start a fresh one instead.",
-    );
-  }
-
   const plaintextToken = generateInvitationToken();
   const tokenHash = hashInvitationToken(plaintextToken);
 
-  // Refresh the speakerEmail + speakerPhone snapshot from the live
-  // speaker doc before we build the delivery payload. Without this,
-  // a bishop correcting a typo in the speaker's phone number and then
-  // hitting Resend would still deliver to the stale number on the
-  // invitation doc. The rest of the letter (name, date, wardName,
-  // inviterName) stays frozen — only delivery channels refresh.
-  const liveContact =
-    input.channels.length > 0 ? await readLiveContactInfo(db, input.wardId, invitation) : null;
-  const writePatch = liveContact ? contactWritePatch(liveContact) : {};
-  const effectiveContact: Pick<SpeakerInvitationShape, "speakerEmail" | "speakerPhone"> =
-    liveContact ?? {
-      ...(invitation.speakerEmail ? { speakerEmail: invitation.speakerEmail } : {}),
-      ...(invitation.speakerPhone ? { speakerPhone: invitation.speakerPhone } : {}),
-    };
+  // Single transaction: read invitation, validate not expired, refresh
+  // contact snapshot from the live speaker doc, revoke any prior
+  // speaker session, and commit the rotation. revokeRefreshTokens is
+  // idempotent so a tx retry is safe. Putting the revoke inside the
+  // tx boundary closes the window where the new token was committed
+  // but the old session was still alive.
+  const { invitation, effectiveContact } = await db.runTransaction(async (tx) => {
+    const { authRef, data } = await txGetMerged(db, tx, input.wardId, input.invitationId);
+    if (!data) throw new HttpsError("not-found", "Invitation not found.");
+    const expiresAtMillis = data.expiresAt?.toMillis();
+    if (typeof expiresAtMillis === "number" && expiresAtMillis < Date.now()) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Invitation has expired — start a fresh one instead.",
+      );
+    }
 
-  // C1 doc-split: token state + speaker contact PII are on the auth
-  // subdoc now; this whole rotation patch goes to that doc.
-  await updateAuth(db, input.wardId, input.invitationId, {
-    tokenHash,
-    tokenStatus: "active" as const,
-    ...writePatch,
+    // Refresh the speakerEmail + speakerPhone snapshot from the live
+    // speaker doc before we build the delivery payload. Without this,
+    // a bishop correcting a typo in the speaker's phone number and then
+    // hitting Resend would still deliver to the stale number on the
+    // invitation doc. The rest of the letter (name, date, wardName,
+    // inviterName) stays frozen — only delivery channels refresh. Read
+    // is `tx.get` so the live contact lock-step matches the rotation.
+    const liveContact =
+      input.channels.length > 0
+        ? await readLiveContactInfo(db, tx, input.wardId, data)
+        : null;
+    const writePatch = liveContact ? contactWritePatch(liveContact) : {};
+    const effective: Pick<SpeakerInvitationShape, "speakerEmail" | "speakerPhone"> =
+      liveContact ?? {
+        ...(data.speakerEmail ? { speakerEmail: data.speakerEmail } : {}),
+        ...(data.speakerPhone ? { speakerPhone: data.speakerPhone } : {}),
+      };
+
+    // L2: revoke before tx.update so the prior session can't outlive
+    // the rotation commit. Same rationale as decideTokenAction's
+    // rotate branch — see issueSpeakerSession.helpers.ts.
+    // Distinct from rotateTokenForBishopNotification, which
+    // intentionally doesn't revoke (the speaker may be actively in
+    // chat there).
+    await revokeSpeakerSession(input.wardId, input.invitationId);
+
+    // C1 doc-split: token state + speaker contact PII are on the auth
+    // subdoc now; this whole rotation patch goes to that doc.
+    tx.update(authRef, {
+      tokenHash,
+      tokenStatus: "active" as const,
+      ...writePatch,
+    });
+
+    return { invitation: data, effectiveContact: effective };
   });
-
-  // A new token means any session minted from the prior token is no
-  // longer the source of truth for this invitation. Revoke the
-  // speaker's refresh tokens so the next ID-token refresh forces them
-  // back through the issueSpeakerSession exchange — only the speaker
-  // tapping the freshly-delivered URL can recover a working session.
-  // Distinct from rotateTokenForBishopNotification, which intentionally
-  // doesn't revoke (the speaker may be actively in chat there).
-  await revokeSpeakerSession(input.wardId, input.invitationId);
 
   const inviteUrl = buildInviteUrl(origin, input.wardId, input.invitationId, plaintextToken);
   const freshInvitation: SpeakerInvitationShape = { ...invitation, ...effectiveContact };
@@ -89,12 +101,13 @@ interface LiveContact {
 
 async function readLiveContactInfo(
   db: FirebaseFirestore.Firestore,
+  tx: FirebaseFirestore.Transaction,
   wardId: string,
   invitation: SpeakerInvitationShape,
 ): Promise<LiveContact | null> {
   const { meetingDate, speakerId } = invitation.speakerRef;
   const speakerRef = db.doc(`wards/${wardId}/meetings/${meetingDate}/speakers/${speakerId}`);
-  const snap = await speakerRef.get();
+  const snap = await tx.get(speakerRef);
   if (!snap.exists) return null;
   const speaker = snap.data() as { email?: string; phone?: string };
   const out: LiveContact = {};

@@ -5,11 +5,7 @@ import { STEWARD_ORIGIN, TWILIO_SECRETS } from "./secrets.js";
 import { issueChatToken } from "./twilio/token.js";
 import { phoneLast4 } from "./invitationToken.js";
 import { buildInviteUrl, sendInvitationSms } from "./sendSpeakerInvitation.helpers.js";
-import {
-  decideTokenAction,
-  revokeSpeakerSession,
-  speakerUid,
-} from "./issueSpeakerSession.helpers.js";
+import { decideTokenAction, speakerUid } from "./issueSpeakerSession.helpers.js";
 import {
   loadActiveMember,
   mintBishopricSession,
@@ -115,7 +111,10 @@ async function handleSpeakerTokenExchange(
     return mintSpeakerSession(wardId, invitationId);
   }
 
-  await revokeSpeakerSession(wardId, invitationId);
+  // L2: session revoke now lives inside `decideTokenAction`'s rotate
+  // branch, so by the time we reach this code path the prior speaker
+  // session is already invalidated. Keeping the call here would just
+  // be a redundant network round-trip.
   if (decision.speakerPhone) {
     try {
       const origin = process.env.STEWARD_ORIGIN ?? STEWARD_ORIGIN.value();
