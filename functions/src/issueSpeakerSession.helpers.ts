@@ -58,15 +58,42 @@ export async function decideTokenAction(
       return { kind: "consume" };
     }
 
+    // Structured signal for alarm-able metrics. The label distinguishes
+    // a normal expired-token rotation from a presented-after-consumption
+    // event (someone tapping the same SMS link twice, or replay attempts).
+    // Cloud Logging filter: jsonPayload.event="invitation.consumed_token_presented"
+    logger.info("invitation.consumed_token_presented", {
+      event: "invitation.consumed_token_presented",
+      wardId,
+      invitationId,
+      reason: expired ? "expired" : "consumed",
+    });
+
     const bucket = rotationBucketKey(now);
     const counts = data.tokenRotationsByDay ?? {};
     const todayCount = counts[bucket] ?? 0;
     if (todayCount >= ROTATION_DAILY_CAP) {
+      // Alarm-able label: jsonPayload.event="invitation.rate_limited"
+      logger.warn("invitation.rate_limited", {
+        event: "invitation.rate_limited",
+        wardId,
+        invitationId,
+        bucket,
+        count: todayCount,
+        cap: ROTATION_DAILY_CAP,
+      });
       return { kind: "rate-limited" };
     }
 
     const newToken = generateInvitationToken();
     const newHash = hashInvitationToken(newToken);
+    // Revoke the prior speaker session inside the same transaction
+    // boundary as the rotation write. revokeRefreshTokens is idempotent,
+    // so a tx retry running it twice is harmless. Keeping the call here
+    // (rather than after `runTransaction` returns) closes the window
+    // where the new token was committed but the old session was still
+    // alive — a leaked link can't keep its session past a rotation.
+    await revokeSpeakerSession(wardId, invitationId);
     tx.update(authRef, {
       tokenHash: newHash,
       tokenStatus: "active",

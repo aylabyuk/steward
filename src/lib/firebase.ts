@@ -1,4 +1,5 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions, type Functions } from "firebase/functions";
@@ -67,6 +68,29 @@ if (import.meta.env.VITE_USE_EMULATORS === "true") {
   connectEmulators(auth, db, functions);
   connectEmulators(inviteAuth, inviteDb, inviteFunctions);
 }
+
+/** App Check initialization — gated on env var so dev/emulator and
+ *  any environment without a configured reCAPTCHA Enterprise key
+ *  continues to work unchanged. Once the operator provisions the key
+ *  in the Firebase Console and sets `VITE_FIREBASE_APPCHECK_SITE_KEY`
+ *  on Vercel, both Firebase apps (main + invite) start attaching App
+ *  Check tokens to all callable / Firestore / FCM requests, blocking
+ *  abuse from non-app sources at the edge. The server-side enforcement
+ *  knob lives on the callable itself (`APP_CHECK_ENFORCED`). */
+const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY as string | undefined;
+let appCheck: AppCheck | undefined;
+let inviteAppCheck: AppCheck | undefined;
+if (appCheckSiteKey && import.meta.env.VITE_USE_EMULATORS !== "true") {
+  appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+  inviteAppCheck = initializeAppCheck(inviteApp, {
+    provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+export { appCheck, inviteAppCheck };
 
 let messagingPromise: Promise<Messaging | null> | null = null;
 

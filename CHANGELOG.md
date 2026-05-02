@@ -7,6 +7,26 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.21.1] — 2026-05-02
+
+Bundled remediation release for the remaining items from the 2026-05-01 invitation-flow audit. PR #233 lands eight findings as separate commits — one High, four Medium, three Low — alongside the audit's Critical (already shipped in v0.21.0). Behaviour-preserving for normal flows; rate-limited callers and `[archived]` Twilio Conversations are the only user-observable surface changes. App Check is wired but gated on operator-side env vars so this release ships in observe-only mode.
+
+### Security
+
+- **Bishop Apply runs in a Firestore transaction (M1).** `applyResponseToSpeaker` now wraps the response read + the auth-subdoc + participant writes in a single `runTransaction`. Two bishopric tabs racing the Apply button can't both pass the "no answer yet" check, and a speaker submitting a response mid-apply can't leave participant.status out of sync with the auth subdoc's `response.answer`. Short-circuits when `response.acknowledgedAt` is already stamped so a second click is a true no-op. (#233)
+- **Chat-author `{{...}}` neutralised before template interpolation (M2).** `interpolate` is single-pass today, but a future change to recursive substitution would let a chat-authored `{{inviteUrl}}` expand against the surrounding vars dict. New `neutralizeMustaches` helper inserts a space (`{{` → `{ {`) on the bishop-authored chat body before it reaches the SMS / email template, breaking the regex unconditionally while keeping the visible intent. Applied at both `smsSpeaker` and `emailSpeaker` call sites. (#233)
+- **Twilio webhook cross-checks `wardId` from `ConversationAttributes` (M6).** The Conversations post-webhook payload includes the conversation-level attributes JSON we set at create time (`{ wardId, speakerId }`). The webhook now compares that `wardId` against the wardId derived from the Firestore lookup; if both are present and disagree, the event is logged + ignored before any fan-out runs. Absent attributes (older conversations) fall through to the prior behaviour. (#233)
+- **Security headers on `/invite/speaker/*` (M7, L1).** Three new response headers on the public speaker route via `vercel.json`: `Referrer-Policy: no-referrer` (so the rotating capability token in the URL doesn't leak to external link targets), `X-Frame-Options: DENY` (block click-jacking via iframe embed), and a `Content-Security-Policy-Report-Only` covering Firebase Auth / Firestore / Identity Toolkit, Twilio Conversations (mcs + tsock), Google reCAPTCHA (App Check), and self-hosted scripts. `frame-ancestors 'none'` mirrors X-Frame-Options for modern browsers. Report-only for now; flip to enforced after a soak window. (#233)
+- **Speaker session revoke runs inside the rotation transaction (L2).** Both rotation paths now call `revokeSpeakerSession` from inside the Firestore transaction that commits the new `tokenHash`: `decideTokenAction` invokes revoke just before `tx.update`; `rotateInvitationLink` is fully wrapped in `runTransaction` (read merged invitation → refresh live contact → revoke → tx.update). `revokeRefreshTokens` is idempotent so tx retries are safe. Closes the window where the new token committed before the prior session was invalidated. (#233)
+- **Prior conversations archived on resend instead of hard-deleted (L3).** `cleanupPriorConversations` now closes the prior Twilio Conversation (`state: closed`, friendlyName prefixed with `[archived] `) instead of removing it. Closed conversations reject new messages but retain the message history in the Conversations service for audit. A re-send still issues a fresh Conversation under a new SID, so the speaker only sees the active thread; bishopric record-keeping gets the prior thread preserved. The hard-delete `deleteConversation` helper is retained for explicit full-purge use cases. (#233)
+- **Structured `invitation.consumed_token_presented` + `invitation.rate_limited` logs (L5).** `decideTokenAction` emits two named events during the rotation branch — info-level when a previously-consumed token is presented (with `reason: "expired" | "consumed"` to distinguish a normal expired-token rotation from a replay-style attempt), and warn-level when the daily rotation cap (`ROTATION_DAILY_CAP`) trips. Cloud Logging filter targets are `jsonPayload.event="invitation.consumed_token_presented"` and `jsonPayload.event="invitation.rate_limited"`. Operator follow-up: create log-based metrics + Cloud Monitoring alerts at the desired thresholds. (#233)
+- **App Check (reCAPTCHA Enterprise) + per-IP rate limit on `issueSpeakerSession` (H4).** Web client now initialises Firebase App Check on both Firebase apps (main + invite) using `ReCaptchaEnterpriseProvider`, gated on the `VITE_FIREBASE_APPCHECK_SITE_KEY` env var so dev/emulator and any environment without a configured key continues to work unchanged. The `issueSpeakerSession` callable opts into `enforceAppCheck` via the `APP_CHECK_ENFORCED` env var (unset → observe-only) so the operator can ship the client-side init first, observe verification metrics for a soak window, and only flip the enforcement flag once real traffic looks healthy. New `functions/src/rateLimit.ts` adds an in-memory per-IP token bucket (30 calls per 60s) — Fluid Compute reuses function instances so the bucket persists across invocations on the same instance. Combined with App Check this is a best-effort backstop, not the primary defense; over-limit returns the existing `{ status: "rate-limited" }` shape so the landing page reuses its existing UI branch. (#233)
+
+### Infrastructure
+
+- **`issueSpeakerSession.ts` split for the 150-LOC cap.** PR-10's additions pushed the callable file past the project-wide `max-lines: 150` rule. The dispatch (`handleSpeakerTokenExchange` + `mintSpeakerSession`) moves to a new sibling `issueSpeakerSession.dispatch.ts`; shared types (`TOKEN_TTL_SECONDS` + `SpeakerResponse`) move to `issueSpeakerSession.types.ts`. Pure file split — no behaviour change. (#233)
+- **Operator follow-ups added by this release.** reCAPTCHA Enterprise site key + Firebase App Check provider provisioned during the v0.21.1 setup; `VITE_FIREBASE_APPCHECK_SITE_KEY` set on Vercel Production. After ~1 week of healthy `appCheckTokenInvalid` / `appCheckTokenMissing` metrics in Firebase Console → App Check → APIs, set `APP_CHECK_ENFORCED=true` in `functions/.env.steward-prod-65a36` and redeploy `issueSpeakerSession`. Add Cloud Logging metrics + alerts on the two new log events documented above.
+
 ## [0.21.0] — 2026-05-02
 
 Three threads of work since v0.20.1, anchored by the **Critical** doc-split fix from the 2026-05-01 security audit (C1).
@@ -2492,7 +2512,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.21.1...HEAD
+[0.21.1]: https://github.com/aylabyuk/steward/releases/tag/v0.21.1
 [0.21.0]: https://github.com/aylabyuk/steward/releases/tag/v0.21.0
 [0.20.1]: https://github.com/aylabyuk/steward/releases/tag/v0.20.1
 [0.20.0]: https://github.com/aylabyuk/steward/releases/tag/v0.20.0
