@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, query, where, type DocumentData } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  where,
+  type DocumentData,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { speakerInvitationSchema, type SpeakerInvitation } from "@/lib/types";
 
@@ -37,6 +44,36 @@ export function useLatestInvitation(
       collection(db, "wards", wardId, "speakerInvitations"),
       where("speakerRef.meetingDate", "==", meetingDate),
     );
+    let chosenId: string | null = null;
+    let publicData: DocumentData | null = null;
+    let authData: DocumentData = {};
+    let unsubAuth: (() => void) | null = null;
+    const emit = () => {
+      if (!chosenId || !publicData) return;
+      const merged = { ...publicData, ...authData };
+      const parsed = speakerInvitationSchema.safeParse(merged);
+      if (!parsed.success) {
+        setState({ loading: false, invitation: null });
+        return;
+      }
+      setState({ loading: false, invitation: { ...parsed.data, invitationId: chosenId } });
+    };
+    const subscribeAuth = (id: string) => {
+      const authRef = doc(db, "wards", wardId, "speakerInvitations", id, "private", "auth");
+      return onSnapshot(
+        authRef,
+        (snap) => {
+          authData = snap.exists() ? (snap.data() ?? {}) : {};
+          emit();
+        },
+        // Pre-migration invitations have no auth subdoc — keep
+        // authData empty rather than blowing the whole hook up.
+        () => {
+          authData = {};
+          emit();
+        },
+      );
+    };
     const unsub = onSnapshot(
       q,
       (snap) => {
@@ -47,24 +84,34 @@ export function useLatestInvitation(
               (d.data.speakerRef as { speakerId: string } | undefined)?.speakerId === speakerId,
           );
         if (candidates.length === 0) {
+          if (unsubAuth) unsubAuth();
+          unsubAuth = null;
+          chosenId = null;
+          publicData = null;
+          authData = {};
           setState({ loading: false, invitation: null });
           return;
         }
         candidates.sort((a, b) => millisOf(b.data.createdAt) - millisOf(a.data.createdAt));
         const chosen = candidates[0]!;
-        const parsed = speakerInvitationSchema.safeParse(chosen.data);
-        if (!parsed.success) {
-          setState({ loading: false, invitation: null });
-          return;
+        publicData = chosen.data;
+        if (chosen.id !== chosenId) {
+          if (unsubAuth) unsubAuth();
+          chosenId = chosen.id;
+          authData = {};
+          unsubAuth = subscribeAuth(chosen.id);
         }
-        setState({ loading: false, invitation: { ...parsed.data, invitationId: chosen.id } });
+        emit();
       },
       (err) => {
         console.error("useLatestInvitation snapshot error", err);
         setState({ loading: false, invitation: null });
       },
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      if (unsubAuth) unsubAuth();
+    };
   }, [wardId, meetingDate, speakerId]);
 
   return state;

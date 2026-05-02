@@ -13,20 +13,39 @@ export interface SpeakerResponseInput {
   actorEmail?: string;
 }
 
-/** Speaker-side: writes the `response` subtree on the invitation
- *  doc. Routes through `inviteDb` so the write carries the isolated
- *  `inviteAuth` session's ID token (with invitationId claim). */
+/** Speaker-side: writes the response. Post C1 doc-split, the full
+ *  response object lives on the private auth subdoc; only a tiny
+ *  `responseSummary` (answer + respondedAt) lands on the public
+ *  parent so the pre-auth landing page can switch UI without
+ *  reading the private subdoc. Both writes go in a single batch so
+ *  the parent and subdoc never disagree about whether a response
+ *  exists. Routes through `inviteDb` so the write carries the
+ *  isolated `inviteAuth` session's ID token (with invitationId
+ *  claim). */
 export async function writeSpeakerResponse(input: SpeakerResponseInput): Promise<void> {
-  const ref = doc(inviteDb, "wards", input.wardId, "speakerInvitations", input.invitationId);
-  await updateDoc(ref, {
+  const parentRef = doc(
+    inviteDb,
+    "wards",
+    input.wardId,
+    "speakerInvitations",
+    input.invitationId,
+  );
+  const authRef = doc(parentRef, "private", "auth");
+  const respondedAt = serverTimestamp();
+  const batch = writeBatch(inviteDb);
+  batch.update(authRef, {
     response: {
       answer: input.answer,
       ...(input.reason ? { reason: input.reason } : {}),
-      respondedAt: serverTimestamp(),
+      respondedAt,
       actorUid: input.actorUid,
       ...(input.actorEmail ? { actorEmail: input.actorEmail } : {}),
     },
   });
+  batch.update(parentRef, {
+    responseSummary: { answer: input.answer, respondedAt },
+  });
+  await batch.commit();
 }
 
 export interface ApplyResponseInput {
@@ -48,15 +67,24 @@ export interface ApplyResponseInput {
  *  holds the role string. */
 export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise<void> {
   const invitationRef = doc(db, "wards", input.wardId, "speakerInvitations", input.invitationId);
-  const snap = await getDoc(invitationRef);
-  if (!snap.exists()) throw new Error("Invitation not found.");
-  const data = snap.data() as {
-    response?: { answer: "yes" | "no" };
+  const authRef = doc(invitationRef, "private", "auth");
+  const [parentSnap, authSnap] = await Promise.all([getDoc(invitationRef), getDoc(authRef)]);
+  if (!parentSnap.exists()) throw new Error("Invitation not found.");
+  const parentData = parentSnap.data() as {
     speakerRef: { meetingDate: string; speakerId: string };
     kind?: "speaker" | "prayer";
+    responseSummary?: { answer: "yes" | "no" };
   };
-  const answer = data.response?.answer;
+  const authData = (authSnap.exists() ? authSnap.data() : null) as {
+    response?: { answer: "yes" | "no" };
+  } | null;
+  // Read response from auth subdoc; fall back to the public summary
+  // (and pre-migration `response` on parent) so apply still works
+  // mid-migration.
+  const answer =
+    authData?.response?.answer ?? parentData.responseSummary?.answer;
   if (!answer) throw new Error("No response to apply.");
+  const data = parentData;
 
   const newStatus: "confirmed" | "declined" = answer === "yes" ? "confirmed" : "declined";
   const isPrayer = data.kind === "prayer";
@@ -72,7 +100,10 @@ export async function applyResponseToSpeaker(input: ApplyResponseInput): Promise
   );
 
   const batch = writeBatch(db);
-  batch.update(invitationRef, {
+  // Acknowledgement audit lives on the auth subdoc with the rest of
+  // the response object; only the answer + respondedAt mirror to the
+  // public parent.
+  batch.update(authRef, {
     "response.acknowledgedAt": serverTimestamp(),
     "response.acknowledgedBy": input.bishopUid,
   });

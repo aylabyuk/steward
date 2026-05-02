@@ -35,7 +35,17 @@ export function useSpeakerHeartbeat({
 }): void {
   useEffect(() => {
     if (!enabled) return;
-    const ref = doc(inviteDb, "wards", wardId, "speakerInvitations", invitationId);
+    // Post C1 doc-split: `speakerLastSeenAt` lives on the auth
+    // subdoc, gated by the speaker's invitationId+wardId custom claim.
+    const ref = doc(
+      inviteDb,
+      "wards",
+      wardId,
+      "speakerInvitations",
+      invitationId,
+      "private",
+      "auth",
+    );
     const ping = () => {
       void updateDoc(ref, { speakerLastSeenAt: serverTimestamp() }).catch(() => {});
     };
