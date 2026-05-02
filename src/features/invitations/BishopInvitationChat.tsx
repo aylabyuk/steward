@@ -16,6 +16,7 @@ import { noteBishopStatusChange } from "./utils/statusChangeNotice";
 import { useBishopAuthors } from "./hooks/useBishopAuthors";
 import { useConversation } from "./hooks/useConversation";
 import { useFirstUnreadIndex } from "./hooks/useFirstUnreadIndex";
+import { useMarkAllRead } from "./hooks/useMarkAllRead";
 import { useReadHorizon } from "./hooks/useReadHorizon";
 import { useTypingParticipants } from "./hooks/useTypingParticipants";
 import { useTwilioChat } from "./TwilioChatProvider";
@@ -101,13 +102,9 @@ export function BishopInvitationChat({
     });
   }, [wardId, invitationId]);
 
-  // Mark-read horizon bumps whenever the bishop is actively viewing
-  // the thread and new messages land. Clears the unread badge on the
-  // Sunday card's chat icon without additional plumbing.
-  useEffect(() => {
-    if (!conversation || messages.length === 0) return;
-    void conversation.setAllMessagesRead();
-  }, [conversation, messages.length]);
+  // Bump the local read horizon while the bishop is actively viewing
+  // the thread; clears the Sunday-card unread badge as messages land.
+  useMarkAllRead(conversation, messages.length);
 
   async function onApply() {
     if (!user) return;

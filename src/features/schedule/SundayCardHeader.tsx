@@ -1,7 +1,6 @@
 import { Link } from "@/lib/nav";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { cn } from "@/lib/cn";
-import { useSundayInvitationsSummary } from "@/features/invitations/hooks/useSundayInvitationsSummary";
 import type { KindVariant } from "./utils/kindLabel";
 import { formatShortDate, formatCountdown } from "./utils/dateFormat";
 import { SundayTypeMenu } from "./SundayTypeMenu";
@@ -34,7 +33,6 @@ export function SundayCardHeader({
   variant = "regular",
   locked = false,
 }: Props) {
-  const { needsApply } = useSundayInvitationsSummary(wardId || null, date);
   return (
     <div className="flex items-start justify-between gap-3 p-4 pb-2">
       <div className="flex items-start gap-2 flex-1 min-w-0">
@@ -54,13 +52,6 @@ export function SundayCardHeader({
             {formatCountdown(date)}
           </div>
         </div>
-        {needsApply && (
-          <span
-            aria-label="Speaker response awaiting your review"
-            title="Speaker response awaiting your review — tap a speaker's chat icon below to apply"
-            className="mt-2.5 inline-block w-2 h-2 rounded-full bg-bordeaux"
-          />
-        )}
       </div>
       <div className="flex items-start gap-2 shrink-0">
         {badge && (
