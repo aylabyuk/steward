@@ -7,6 +7,38 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.21.0] — 2026-05-02
+
+Three threads of work since v0.20.1, anchored by the **Critical** doc-split fix from the 2026-05-01 security audit (C1).
+
+### Security
+
+- **Invitation doc split — public letter parent + private auth subdoc.** Fixes the audit's only Critical: previously every speakerInvitation lived in one Firestore doc with `allow read: if true`, which meant anyone with the URL could read `tokenHash`, `speakerEmail`, `speakerPhone`, the bishopric snapshot (with emails), the full `response` object, `deliveryRecord`, and the testing-number marker. The doc now splits into a public parent that carries only the letter snapshot + `conversationSid` + `expiresAt` + a tiny `responseSummary` denorm, and a private auth subdoc at `…/{id}/private/auth` that carries everything else. The subdoc is gated by Firestore rules — only the speaker (after `issueSpeakerSession` mints a Firebase custom token with matching `invitationId` + `wardId` claims) or an active bishopric/clerk member can read it. New Cloud-Function helpers (`invitationDocs.ts`) keep the merged shape downstream code consumes unchanged. New rules suite explicitly asserts the anonymous-read gate. Migration script (`scripts/migrate-invitation-doc-split.ts`) folds existing invitations onto the split. (#230)
+
+### Added
+
+- **SMS receipt on speaker Yes/No transition.** When a speaker submits Yes or No on the web invite page, the existing email confirmation now fans out alongside a short SMS receipt. Four new editable templates (`speakerResponseAcceptedSms`, `speakerResponseDeclinedSms`, `prayerResponseAcceptedSms`, `prayerResponseDeclinedSms`) with per-ward Firestore overrides, mirrored across the server + client defaults per the existing drift-test rule. Honours `fromNumberMode` so testing-number senders still route through the testing proxy. SMS leg failures are logged + swallowed; email remains the source-of-truth notification. (#228)
+
+### Changed
+
+- **SMS reply path — server-driven relay instead of Twilio auto-bridge.** Replaces the speaker's Twilio Conversations SMS-only participant with a server-side relay (`functions/src/twilio/inboundSmsRelay.ts`). Inbound speaker SMS now arrives at the messaging service's `inboundRequestUrl`, the dispatcher inside `onTwilioWebhook` looks up the active invitation by phone (collection-group query on the new `private` subcollection, joined back to each parent for `expiresAt` / `createdAt` / `conversationSid`), and posts the body into the conversation as `speaker:{invitationId}`. The bishop sees a normal speaker-authored chat message; existing fan-out (FCM push, email, etc.) runs unchanged. Removes Twilio's chat→SMS auto-broadcast as a load-bearing path, which sidesteps the speaker-echo bug from #227 and the duplicate bishop-reply SMS that appeared when both auto-bridge and `smsSpeaker` ran. Single endpoint (`onTwilioWebhook`) dispatches by request shape so we stay at 8 Cloud Functions. (#228)
+- **Mobile chatbox is fullscreen.** Both the bishop's invitation dialog and the speaker's floating drawer go edge-to-edge on phones (`fixed inset-0`) instead of the prior 85dvh bottom sheet that left ~15dvh of context behind. Drag-down still dismisses; desktop side drawer is unchanged. (#228)
+- **Removed the Sunday-card-level needs-apply dot.** The bordeaux dot at the top of each Sunday card was a rollup of "any speaker on this Sunday has a Yes/No that hasn't been Applied yet" — per-speaker chat icons already surface that signal where it's actionable. Drops it from desktop + mobile headers; deletes the now-orphan `useSundayInvitationsSummary` hook. (#229)
+
+### Fixed
+
+- **Speaker SMS replies no longer dropped silently.** Reverted the v0.20.1 `c9dc4a9` "combine speaker participant" attempt — Twilio's API rejects participants that carry both `Identity` and SMS `messagingBinding`, and the catch-block fallback dropped the SMS binding entirely so inbound replies had no participant to attach to. The relay model in this release replaces the auto-bridge entirely, so the underlying constraint no longer matters. Closes #226 and #227. (#228)
+- **Unread badge on the speaker row's chat icon now clears.** `useConversationUnread` now listens for both `participantUpdated` and `updatedLastReadMessageIndex` (`@twilio/conversations` 3.x emits the read-horizon self-update on whichever event the build prefers — relying on a single one lost the signal in some 3.x builds). Awaited `setAllMessagesRead` with try/catch + `console.warn` so silent rejections become diagnosable. Extracted the mark-read effect into `useMarkAllRead` to keep `BishopInvitationChat` under the 150-LOC cap. (#229)
+- **Emoji reactions restored on both Conversations services.** Granted `editAnyMessage` + `editAnyMessageAttributes` to the default `channel user` role on both the dev and prod Conversations services via the existing `configure-conversation-roles` script. Reactions are stored as message attributes; without these permissions, reacting to another participant's message tripped a Twilio 403. Operational fix, no code change. (#229)
+
+### Infrastructure
+
+- **Twilio inbound-SMS routing isolated dev from prod.** New "Steward Dev Inbound" messaging service (`MG09a6…`) holds the testing number `+12295473216` only, with `inboundRequestUrl` pointing at the dev ngrok tunnel. Production messaging service (`MG0566…`, the existing default) holds `+15873184624` only, with `inboundRequestUrl` set to the prod Cloud Function URL. Inbound replies on the testing number can never accidentally route through prod's Conversations service. Documented in the local Twilio resources memory.
+- **`pnpm emulators` optionally launches an ngrok tunnel.** Reads `NGROK_DOMAIN` from `.env.ngrok.local` (gitignored); when set, starts `ngrok http 5001 --domain=$NGROK_DOMAIN` alongside the emulator suite and tears it down via `EXIT/INT/TERM` traps. Without the env var, behaves identically to a bare `firebase emulators:start` so other contributors are unaffected. (#228)
+- **Firestore composite collection-group index for the inbound relay.** New index on `private.{speakerPhone, tokenStatus}` backs the relay's lookup query. Migration runbook deploys indexes before functions so the index has finished building when the dispatcher first sees inbound traffic. (#228, #230)
+- **One-time SMS-only-participant sweep script.** `pnpm --filter @steward/functions sweep-sms-only-participants` walks every conversation in the configured Conversations service and removes any participant carrying a `messagingBinding` with no `identity`. Run once at the v0.20.2 deploy step (now superseded by the relay model in v0.21.0); idempotent re-runs are no-ops. (#228)
+- **Migration: invitation doc split.** `pnpm migrate-invitation-doc-split --project <id>` walks every existing `speakerInvitations/{id}` doc, copies the private fields onto the new auth subdoc, mirrors `responseSummary` to the parent, and deletes the migrated fields from the parent. Idempotent; dry-run by default. Must run once after the v0.21.0 deploy completes. (#230)
+
 ## [0.20.1] — 2026-05-01
 
 Same-day follow-up to v0.20.0. Restores SMS bridging that broke under
@@ -2460,7 +2492,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.20.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/aylabyuk/steward/releases/tag/v0.21.0
 [0.20.1]: https://github.com/aylabyuk/steward/releases/tag/v0.20.1
 [0.20.0]: https://github.com/aylabyuk/steward/releases/tag/v0.20.0
 [0.19.0]: https://github.com/aylabyuk/steward/releases/tag/v0.19.0
