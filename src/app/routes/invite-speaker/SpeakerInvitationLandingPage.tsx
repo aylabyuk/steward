@@ -69,13 +69,21 @@ function InviteLandingContent({
   const [chatOpen, setChatOpen] = useState(false);
   const unread = useConversationUnread(invitation.conversationSid);
   const hasUnread = typeof unread === "number" && unread > 0;
+  // Has the speaker already responded? Post C1 doc-split, the full
+  // `response` object lives on the private auth subdoc which the
+  // landing page can only read once authenticated. The public parent
+  // carries a `responseSummary` denorm (answer + respondedAt) so the
+  // pre-auth banner can still gate correctly. Either signal counts.
+  const hasResponse = Boolean(invitation.response || invitation.responseSummary);
+  const responseAnswer =
+    invitation.response?.answer ?? invitation.responseSummary?.answer ?? null;
   // Derived attention state: what, if anything, should nudge the
   // speaker toward the chat right now. Banner + FAB both key off this
   // so they emerge and vanish together. When the drawer is open the
   // chat is already visible — no nudge needed.
   const promptVariant: CtaVariant | null = chatOpen
     ? null
-    : !invitation.response
+    : !hasResponse
       ? "reply"
       : hasUnread
         ? "unread"
@@ -133,9 +141,9 @@ function InviteLandingContent({
               conversationSid={invitation.conversationSid}
               speakerName={invitation.speakerName}
               bishopricParticipants={invitation.bishopricParticipants}
-              hasResponse={!!invitation.response}
+              hasResponse={hasResponse}
               meetingDate={invitation.speakerRef.meetingDate}
-              responseAnswer={invitation.response?.answer ?? null}
+              responseAnswer={responseAnswer}
               currentStatus={invitation.currentSpeakerStatus ?? null}
               {...(invitation.kind ? { kind: invitation.kind } : {})}
               onClose={() => setChatOpen(false)}
