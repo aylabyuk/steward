@@ -13,16 +13,18 @@ interface Props {
  *  of having a schedule. Sits under PageHead. */
 export function UpcomingPlanningBanner({ upcoming }: Props) {
   return (
-    <div className="my-5 flex flex-wrap items-center gap-3 rounded-xl border border-bordeaux-soft bg-[linear-gradient(180deg,rgba(139,46,42,0.06),rgba(139,46,42,0.01))] px-4 py-3">
-      <CalendarIcon />
-      <p className="font-sans text-[13.5px] text-walnut flex-1 min-w-0 leading-snug">
-        Sacrament meeting program planning is open for{" "}
-        <strong className="font-semibold">{formatShortSunday(upcoming)}</strong>. Speakers and
-        prayers can still be planned ahead from any card on the schedule.
-      </p>
+    <div className="my-5 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 rounded-xl border border-bordeaux-soft bg-[linear-gradient(180deg,rgba(139,46,42,0.06),rgba(139,46,42,0.01))] px-4 py-3">
+      <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+        <CalendarIcon />
+        <p className="font-sans text-[13.5px] text-walnut flex-1 min-w-0 leading-snug">
+          Sacrament meeting program planning is open for{" "}
+          <strong className="font-semibold">{formatShortSunday(upcoming)}</strong>. Speakers and
+          prayers can still be planned ahead from any card on the schedule.
+        </p>
+      </div>
       <Link
         to={`/week/${upcoming}`}
-        className="font-sans text-[13px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors whitespace-nowrap"
+        className="font-sans text-[13px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors whitespace-nowrap self-end sm:self-auto"
       >
         Plan program →
       </Link>
