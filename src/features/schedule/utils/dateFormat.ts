@@ -37,16 +37,47 @@ export function formatSundayOrdinal(iso: string): string {
   return `${ordinal}${suffix} Sunday`;
 }
 
-export function formatCountdown(iso: string): string {
+/** Whole-day delta from today's midnight to the event's midnight.
+ *  Both sides anchor to local-midnight so DST shifts and "started
+ *  composing at 11:59pm" don't pull a result across day boundaries.
+ *  Returns null if the ISO string can't be parsed. */
+function daysUntil(iso: string): number | null {
   const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  const eventDate = new Date(y, m - 1, d);
-  const today = new Date();
-  const daysUntil = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (daysUntil < 0) return "Past";
-  if (daysUntil === 0) return "Today";
-  if (daysUntil === 1) return "In 1 day";
-  if (daysUntil <= 7) return `In ${daysUntil} days`;
-  const weeks = Math.ceil(daysUntil / 7);
-  return `In ${weeks} week${weeks > 1 ? "s" : ""}`;
+  if (!y || !m || !d) return null;
+  const event = new Date(y, m - 1, d).getTime();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.round((event - today) / (1000 * 60 * 60 * 24));
+}
+
+/** Verbose countdown for desktop card headers + the type menu, where
+ *  precision earns its keep ("In 2 weeks and 3 days" vs. the old ceil-
+ *  rounded "In 3 weeks"). For tighter mobile chrome use
+ *  `formatCountdownCompact`. */
+export function formatCountdown(iso: string): string {
+  const days = daysUntil(iso);
+  if (days === null) return iso;
+  if (days < 0) return "Past";
+  if (days === 0) return "Today";
+  if (days === 1) return "In 1 day";
+  if (days < 7) return `In ${days} days`;
+  const weeks = Math.floor(days / 7);
+  const extra = days % 7;
+  const weekPart = `${weeks} week${weeks > 1 ? "s" : ""}`;
+  if (extra === 0) return `In ${weekPart}`;
+  return `In ${weekPart} and ${extra} day${extra > 1 ? "s" : ""}`;
+}
+
+/** Compact countdown ("2w 3d") for mobile, where the verbose form
+ *  would wrap the header. Same precision, fewer pixels. */
+export function formatCountdownCompact(iso: string): string {
+  const days = daysUntil(iso);
+  if (days === null) return iso;
+  if (days < 0) return "Past";
+  if (days === 0) return "Today";
+  if (days < 7) return `In ${days}d`;
+  const weeks = Math.floor(days / 7);
+  const extra = days % 7;
+  if (extra === 0) return `In ${weeks}w`;
+  return `In ${weeks}w ${extra}d`;
 }
