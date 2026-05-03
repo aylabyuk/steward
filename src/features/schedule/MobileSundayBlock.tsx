@@ -4,7 +4,7 @@ import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/type
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { cn } from "@/lib/cn";
 import { kindLabel, type KindVariant } from "./utils/kindLabel";
-import { formatCountdown } from "./utils/dateFormat";
+import { formatCountdownCompact } from "./utils/dateFormat";
 import { MobileSundayHeader } from "./MobileSundayHeader";
 import { MobileSundayHeroSummary } from "./MobileSundayHeroSummary";
 import { SundayCardSpecial } from "./SundayCardSpecial";
@@ -46,7 +46,7 @@ export function MobileSundayBlock({
   const { data: speakers } = useSpeakers(date);
   const urgent = leadTimeSeverity(new Date(), date, leadTimeDays) === "urgent";
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
-  const countdown = cancelled ? "Cancelled" : formatCountdown(date);
+  const countdown = cancelled ? "Cancelled" : formatCountdownCompact(date);
 
   return (
     <article
