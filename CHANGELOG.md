@@ -7,6 +7,27 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.22.0] — 2026-05-03
+
+UX-focused minor release. Sunday cards on the schedule now mirror the iOS app's dynamic speaker-slot rules, the prepare-invitation page gets an explicit Save with platform-aware export and a sent-letter download, and four close-button surfaces consolidate onto a single labeled primitive.
+
+### Added
+
+- **Dynamic speaker slots on the schedule.** Sunday cards previously rendered four fixed speaker rows and padded short lists with empty "Assign Speaker" pills. Slots are now driven by assignment count: 0 → two placeholders, 1 → one filled + one placeholder, 2–3 → all filled with an explicit "+ Add another speaker" affordance, 4 → all filled with no add button (ceiling). 5+ existing speakers still render in full — the cap only governs the explicit add control. Applied symmetrically on `SundayCardBody` (desktop) and `MobileSundayBody` (mobile). Mirrors `Speaker.slots` + `Speaker.canAddMore` in steward-ios. (#242)
+- **Explicit Save on the prepare-invitation page.** New toolbar Save button (lucide `Save`, enabled only when dirty). Cancel/X/Esc on a dirty draft opens a 3-button modal — *Cancel* / *Discard* / *Save & exit* — so closing the tab no longer silently drops every customization. Reload after Save now persists the edits. Same wiring on the parallel prayer prepare page. (#241)
+- **Sent-invitation download in the bishop chat overflow.** New "Download Sent Invitation Letter" item sourced from the immutable `speakerInvitations` snapshot and stamped "Sent {date · time}" from `createdAt`, so the bishop always retrieves the exact letter the speaker received — even if the ward template was edited afterward. (#241)
+- **`HeaderCloseButton` shared primitive.** Extracts the labeled Cancel control (X icon + visible label, 44 px hit target, focus ring, walnut → bordeaux hover) into `src/components/ui/HeaderCloseButton.tsx`. Replaces the tiny mono "Close" labels and icon-only `×` buttons across the speaker chat drawer, bishop invitation dialog, and the speaker + prayer prepare-invitation pages so all five surfaces stay locked together. (#240)
+
+### Changed
+
+- **Assign-slot Cancel is now an obvious affordance.** The 14 px walnut-3 `×` in the per-row Assign + Invite header is replaced with a labeled **Cancel** button (icon + text, walnut, 44 px hit target) on desktop and mobile. Esc binds at the form level so keyboard users land on the same exit path. When the form is dirty, Cancel + Esc open a 2-button `DiscardChangesConfirm` (Keep editing / Discard) — two-button instead of three because the form has two save actions (Save as Planned + Continue), so an in-prompt save would be ambiguous. (#239)
+- **Platform-aware export on the prepare-invitation page.** Desktop now shows **Download** and triggers a direct PDF download (no surprise share-sheet fallback); mobile keeps **Share** via the Web Share API. Both gate on Save with the tooltip "Save to download" / "Save to share" — what you save is what you share. PDF output carries a small mono "Saved {date · time}" reference stamp in the bottom margin, kept off the live editor preview so it's never mistaken for the bishop's message. (#241)
+- **"Resend via SMS" → "Resend Invite via SMS"** in the bishop chat overflow menu. Unambiguous wording — it rotates and redelivers the invitation link, not a chat reply. (#241)
+
+### Fixed
+
+- **Prayer rows pinned to the bottom of desktop Sunday cards.** Adjacent cards with different speaker counts now keep their prayer rows visually aligned via `mt-auto`. Filled `PrayerRow`s also restore the mono `OP` / `CP` leading column — previously only the empty placeholder rendered it, so a filled "Opening Prayer" row lost its alignment with the speaker numbers above. Mobile list is unaffected. (#243)
+
 ## [0.21.2] — 2026-05-03
 
 Patch release: precision tweak to the schedule countdown labels.
@@ -2520,7 +2541,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.21.2...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/aylabyuk/steward/releases/tag/v0.22.0
 [0.21.2]: https://github.com/aylabyuk/steward/releases/tag/v0.21.2
 [0.21.1]: https://github.com/aylabyuk/steward/releases/tag/v0.21.1
 [0.21.0]: https://github.com/aylabyuk/steward/releases/tag/v0.21.0
