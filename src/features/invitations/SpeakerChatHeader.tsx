@@ -1,3 +1,5 @@
+import { HeaderCloseButton } from "@/components/ui/HeaderCloseButton";
+
 interface Props {
   onClose?: (() => void) | undefined;
 }
@@ -17,16 +19,7 @@ export function SpeakerChatHeader({ onClose }: Props) {
           This is a group conversation — the bishop, counselors, and clerks can all see and reply.
         </p>
       </div>
-      {onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut px-2 py-1 transition-colors"
-          aria-label="Close conversation"
-        >
-          Close
-        </button>
-      )}
+      {onClose && <HeaderCloseButton onClick={onClose} ariaLabel="Close conversation" />}
     </header>
   );
 }

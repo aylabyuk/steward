@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Drawer } from "vaul";
+import { HeaderCloseButton } from "@/components/ui/HeaderCloseButton";
 import { useKeyboardAwareViewport } from "@/hooks/useKeyboardAwareViewport";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import type { Speaker, SpeakerInvitation } from "@/lib/types";
@@ -75,7 +76,7 @@ export function BishopInvitationDialog({
             <Drawer.Handle className="flex-none mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-walnut-2/40" />
           )}
           <Drawer.Title className="sr-only">Conversation with {speaker.name}</Drawer.Title>
-          <div className="flex items-start gap-3 px-5 py-3.5 border-b border-border bg-parchment">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-parchment">
             <div className="flex-1 min-w-0">
               <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-brass-deep font-medium">
                 Conversation
@@ -91,14 +92,7 @@ export function BishopInvitationDialog({
                 invitation={invitation}
               />
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="font-mono text-[11px] uppercase tracking-[0.14em] text-walnut-3 hover:text-walnut px-2 py-1 transition-colors"
-              aria-label="Close"
-            >
-              Close
-            </button>
+            <HeaderCloseButton onClick={onClose} />
           </div>
           {invitation && invitationId ? (
             <BishopInvitationChat

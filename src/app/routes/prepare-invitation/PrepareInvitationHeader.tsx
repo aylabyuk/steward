@@ -1,4 +1,4 @@
-import { RemoveIcon } from "@/features/schedule/SpeakerInviteIcons";
+import { HeaderCloseButton } from "@/components/ui/HeaderCloseButton";
 import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 
 interface Props {
@@ -51,7 +51,11 @@ export function PrepareInvitationHeader(props: Props) {
             onSendSms={props.onSendSms}
           />
         </div>
-        <CancelButton onClick={props.onCancel} />
+        <HeaderCloseButton
+          onClick={props.onCancel}
+          label="Cancel"
+          ariaLabel="Cancel and return to schedule"
+        />
       </div>
       <div className="lg:hidden flex justify-center">
         <PrepareInvitationActionBar
@@ -67,19 +71,5 @@ export function PrepareInvitationHeader(props: Props) {
         />
       </div>
     </header>
-  );
-}
-
-function CancelButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Cancel and return to schedule"
-      title="Cancel"
-      className="shrink-0 -mr-1 rounded-md p-2 text-walnut-3 hover:text-bordeaux hover:bg-parchment-2 focus:outline-none focus:ring-2 focus:ring-bordeaux/30"
-    >
-      <RemoveIcon />
-    </button>
   );
 }
