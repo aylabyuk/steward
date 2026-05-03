@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Select } from "@/components/ui/Select";
 import type { WardSettings } from "@/lib/types";
-import { NudgeChipRow } from "./NudgeChipRow";
 import { NumberStepper } from "./NumberStepper";
 import { timezoneSuggestions } from "./utils/timezone";
 import { HORIZON_MAX, HORIZON_MIN, LEAD_MAX, LEAD_MIN } from "./utils/wardSettingsValidate";
@@ -33,10 +32,10 @@ export function WardPrefsSection({ value, onChange, canEdit }: Props): React.Rea
         Schedule preferences
       </h2>
       <p className="font-serif italic text-[14px] text-walnut-2 mb-5">
-        Timezone, lead times, and finalization nudges for the bishopric.
+        Timezone and lead times for the bishopric.
       </p>
 
-      <FieldRow label="Timezone" sub="Used for all reminders and prints.">
+      <FieldRow label="Timezone" sub="Used for the planning-open reminder and prints.">
         <Select
           value={value.timezone}
           disabled={!canEdit}
@@ -74,21 +73,6 @@ export function WardPrefsSection({ value, onChange, canEdit }: Props): React.Rea
           ariaLabel="Schedule horizon in weeks"
         />
       </FieldRow>
-
-      <StackedRow
-        label="Finalization nudges"
-        sub="Email reminders sent to the bishopric until the program is approved."
-        lastRow
-      >
-        <NudgeChipRow
-          value={value.nudgeSchedule}
-          onChange={(next) => patch("nudgeSchedule", next)}
-          disabled={!canEdit}
-        />
-        <p className="font-serif italic text-[12.5px] text-walnut-3 mt-2">
-          Pick the days and times when incomplete programs should prompt a reminder.
-        </p>
-      </StackedRow>
     </section>
   );
 }
@@ -103,7 +87,7 @@ function FieldRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid sm:grid-cols-[200px_1fr] gap-y-2 sm:gap-x-6 py-3.5 border-b border-dashed border-border">
+    <div className="grid sm:grid-cols-[200px_1fr] gap-y-2 sm:gap-x-6 py-3.5 border-b border-dashed border-border last:border-b-0">
       <label className="font-sans text-[13.5px] font-semibold text-walnut pt-1.5">
         {label}
         {sub && (
@@ -113,34 +97,6 @@ function FieldRow({
         )}
       </label>
       <div className="min-w-0">{children}</div>
-    </div>
-  );
-}
-
-function StackedRow({
-  label,
-  sub,
-  lastRow,
-  children,
-}: {
-  label: string;
-  sub?: string;
-  lastRow?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={`flex flex-col gap-2 py-3.5 ${lastRow ? "" : "border-b border-dashed border-border"}`}
-    >
-      <div className="font-sans text-[13.5px] font-semibold text-walnut">
-        {label}
-        {sub && (
-          <span className="block font-serif italic text-[13px] text-walnut-3 font-normal mt-0.5">
-            {sub}
-          </span>
-        )}
-      </div>
-      <div>{children}</div>
     </div>
   );
 }

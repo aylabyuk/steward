@@ -13,8 +13,6 @@ const MEETING = `wards/w1/meetings/${DATE}`;
 
 const baseMeeting = {
   meetingType: "regular",
-  status: "draft",
-  approvals: [],
   wardBusiness: "",
   stakeBusiness: "",
   announcements: "",

@@ -45,13 +45,10 @@ describe("type schemas", () => {
     }
   });
 
-  it("parses a draft regular meeting with defaults", () => {
-    const parsed = sacramentMeetingSchema.parse({
-      meetingType: "regular",
-      status: "draft",
-    });
-    expect(parsed.approvals).toEqual([]);
+  it("parses a regular meeting with defaults", () => {
+    const parsed = sacramentMeetingSchema.parse({ meetingType: "regular" });
     expect(parsed.wardBusiness).toBe("");
+    expect(parsed.showAnnouncements).toBe(true);
   });
 
   it("parses a speaker with optional fields", () => {
@@ -68,14 +65,7 @@ describe("type schemas", () => {
     expect(parsed.timezone).toBe("UTC");
     expect(parsed.speakerLeadTimeDays).toBe(14);
     expect(parsed.scheduleHorizonWeeks).toBe(8);
-    expect(parsed.nudgeSchedule.wednesday.enabled).toBe(true);
-    expect(parsed.nudgeSchedule.saturday.enabled).toBe(false);
-  });
-
-  it("rejects a meeting with an invalid status", () => {
-    expect(() =>
-      sacramentMeetingSchema.parse({ meetingType: "regular", status: "bogus" }),
-    ).toThrow();
+    expect(parsed.nonMeetingSundays).toEqual([]);
   });
 
   it("enforces at most 2 sacrament blessers", () => {
@@ -83,7 +73,6 @@ describe("type schemas", () => {
     expect(() =>
       sacramentMeetingSchema.parse({
         meetingType: "regular",
-        status: "draft",
         sacramentBlessers: [blesser, blesser, blesser],
       }),
     ).toThrow();

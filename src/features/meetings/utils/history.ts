@@ -25,7 +25,7 @@ export function currentActor(): HistoryActor | null {
   };
 }
 
-export type HistoryTarget = "meeting" | "speaker" | "comment" | "approval";
+export type HistoryTarget = "meeting" | "speaker" | "comment";
 export type HistoryAction = "create" | "update" | "delete";
 
 export interface HistoryEventInput {

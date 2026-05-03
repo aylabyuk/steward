@@ -29,7 +29,7 @@ export function ProgramSections({
     <>
       <LeadersSection {...sectionProps} />
       <BusinessSection {...sectionProps} />
-      <PrayersSection {...sectionProps} />
+      <PrayersSection wardId={wardId} date={date} meeting={meeting} />
       <SacramentSection {...sectionProps} />
       {type === "regular" && (
         <SpeakersSection

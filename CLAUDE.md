@@ -14,11 +14,11 @@ PWA for a ward bishopric to plan weekly sacrament meeting programs. Desktop + mo
 - **SMS + in-app chat**: Twilio Conversations (bridges the speaker's phone SMS and their web invite page into a single thread — speakers can reply from either side)
 - **Lint**: oxlint &nbsp;·&nbsp; **Format**: Biome (formatter mode; linter disabled)
 - **Test**: Vitest + Playwright + `@firebase/rules-unit-testing`, against Firebase Local Emulator Suite
-- **Backend**: eight Firebase Cloud Functions — `onMeetingWrite` (change notifications), `scheduledNudges` (finalization cron, hourly), `drainNotificationQueue` (drains the per-ward notification queue once a minute, sends FCM multicasts for due entries), `onCommentCreate` (@mention notifications), `sendSpeakerInvitation` (callable: creates invitation + delivers email/SMS + a hashed capability token), `issueSpeakerSession` (callable: exchanges an invitation capability token for a Firebase custom token + Twilio Conversations JWT; self-heals consumed/expired tokens by rotating + resending the SMS), `onInvitationWrite` (Firestore trigger: fires receipt emails on authoritative response transitions — speaker gets a Yes/No confirmation, bishopric gets an Apply notice), `onTwilioWebhook` (HTTPS: receives Conversations events, fans out FCM to bishopric + email to speaker). No API server beyond these.
+- **Backend**: eight Firebase Cloud Functions — `onMeetingWrite` (change notifications), `planningOpenNotification` (Monday 08:00 ward-local push announcing the upcoming Sunday's planning window is open; hourly cron, idempotent on `wards/{wardId}.lastPlanningOpenNotified`), `drainNotificationQueue` (drains the per-ward notification queue once a minute, sends FCM multicasts for due entries), `onCommentCreate` (@mention notifications), `sendSpeakerInvitation` (callable: creates invitation + delivers email/SMS + a hashed capability token), `issueSpeakerSession` (callable: exchanges an invitation capability token for a Firebase custom token + Twilio Conversations JWT; self-heals consumed/expired tokens by rotating + resending the SMS), `onInvitationWrite` (Firestore trigger: fires receipt emails on authoritative response transitions — speaker gets a Yes/No confirmation, bishopric gets an Apply notice), `onTwilioWebhook` (HTTPS: receives Conversations events, fans out FCM to bishopric + email to speaker). No API server beyond these.
 
 ## Hard rules
 
-- **Everything is always editable.** No field locks based on status; status is a label, never a gate. Editing an `approved` program invalidates approvals (logged, not deleted).
+- **Everything is always editable.** There is no approval workflow; meetings stay editable indefinitely. Printing is gated only by `checkMeetingReadiness` (all required assignments + speakers confirmed + hymns picked). See [docs/domain.md](docs/domain.md) "Print readiness".
 - **Components ≤ 150 LOC.** Enforced by oxlint `max-lines` + `max-lines-per-function` (error, not warn).
 - **Components are flat by default; promoted to a folder only when they grow private hooks or tests.** A flat `<Component>.tsx` becomes `<Component>/{index.tsx, <Component>.tsx, hooks?/, __tests__?/}` only when it earns the folder. Feature-shared hooks live at `<feature>/hooks/`, feature utils at `<feature>/utils/`, tests in the nearest `__tests__/`, and cross-feature shared at `src/hooks/` / `src/lib/`. Components are PascalCase; routes are the only kebab-case folders (URL-shaped). See the [`project-structure`](.claude/skills/project-structure.md) skill for the decision trees, promotion/demotion steps, and full anatomy.
 - **Eight Cloud Functions, no API server.** The list above is the full surface; expanding it requires a deliberate scope decision. Firestore rules carry the rest of the authorization logic.
@@ -56,7 +56,7 @@ public/
 functions/          # Firebase Cloud Functions
   src/
     onMeetingWrite.ts           # change notifications
-    scheduledNudges.ts          # finalization nudges (hourly cron)
+    planningOpenNotification.ts # Mon 08:00 ward-local "planning is open" push (hourly cron)
     drainNotificationQueue.ts   # per-ward notification queue drainer (every-minute cron)
     onCommentCreate.ts          # @mention notifications
     sendSpeakerInvitation.ts    # callable: create invitation + deliver via SendGrid + Twilio; issues a hashed capability token

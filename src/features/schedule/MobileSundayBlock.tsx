@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { leadTimeSeverity } from "@/features/speakers/utils/leadTime";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
@@ -29,6 +30,11 @@ interface Props {
    *  bordeaux stroke on the chalk surface. Only mobile passes this —
    *  desktop has no equivalent affordance. */
   isHero?: boolean;
+  /** Set when this block matches `?focus=<date>` on the schedule
+   *  route. Triggers a smooth scrollIntoView + a one-shot ring flash
+   *  so the bishop's eye lands on the right card after arriving from
+   *  the meeting program form. */
+  focused?: boolean;
 }
 
 export function MobileSundayBlock({
@@ -38,6 +44,7 @@ export function MobileSundayBlock({
   leadTimeDays,
   nonMeetingSundays,
   isHero = false,
+  focused = false,
 }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const type = meeting?.meetingType ?? fallbackType;
@@ -47,14 +54,28 @@ export function MobileSundayBlock({
   const urgent = leadTimeSeverity(new Date(), date, leadTimeDays) === "urgent";
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
   const countdown = cancelled ? "Cancelled" : formatCountdownCompact(date);
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!focused) return;
+    const el = ref.current;
+    if (!el) return;
+    const id = requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [focused]);
 
   return (
     <article
+      ref={ref}
+      id={`sunday-${date}`}
       className={cn(
         "rounded-lg overflow-hidden border shadow-[0_1px_2px_rgba(58,37,25,0.06)]",
         ROW_BG[kind.variant],
         isHero ? "border-bordeaux/70 border-[1.5px]" : "border-border",
       )}
+      style={focused ? { animation: "scheduleFocusFlash 1.6s ease-out 1" } : undefined}
     >
       <MobileSundayHeader
         date={date}

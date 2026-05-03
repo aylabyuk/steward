@@ -14,11 +14,6 @@ const baseSettings = {
   speakerLeadTimeDays: 14,
   scheduleHorizonWeeks: 8,
   nonMeetingSundays: [],
-  nudgeSchedule: {
-    wednesday: { enabled: true, hour: 19 },
-    friday: { enabled: true, hour: 19 },
-    saturday: { enabled: false, hour: 9 },
-  },
   emailCcDefaults: {},
 };
 

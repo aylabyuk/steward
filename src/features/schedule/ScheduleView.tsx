@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { defaultMeetingType } from "@/features/meetings/utils/ensureMeetingDoc";
 import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
 import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
@@ -9,11 +10,13 @@ import { useScrollRestore } from "@/hooks/useScrollRestore";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { getUpcomingSundayIso } from "@/lib/dates";
 import { PageHead } from "./PageHead";
 import { HorizonSelect } from "./HorizonSelect";
 import { SundayCard } from "./SundayCard";
 import { QuarterSection } from "./QuarterSection";
 import { MobileScheduleList } from "./MobileScheduleList";
+import { UpcomingPlanningBanner } from "./UpcomingPlanningBanner";
 import { groupByMonth } from "./utils/groupByMonth";
 
 const MOBILE_INITIAL_WEEKS = 4;
@@ -24,12 +27,24 @@ const MOBILE_STEP_WEEKS = 4;
 const MOBILE_MAX_WEEKS = 16;
 
 export function ScheduleView() {
-  useScrollRestore("schedule");
+  const [searchParams] = useSearchParams();
+  const focusDate = searchParams.get("focus");
+  // When the bishop arrives via "Edit from the schedule view", we
+  // drive the scroll ourselves to land on the matching card —
+  // turn off scroll-restore for this mount so it doesn't fight us.
+  useScrollRestore("schedule", { enabled: !focusDate });
   const wardId = useCurrentWardStore((s) => s.wardId);
   const settingsState = useWardSettings();
   const defaultHorizon = settingsState.data?.settings.scheduleHorizonWeeks ?? 8;
   const leadTimeDays = settingsState.data?.settings.speakerLeadTimeDays ?? 14;
   const nonMeeting = settingsState.data?.settings.nonMeetingSundays ?? [];
+  // Fall back to the browser's tz while the ward settings load — the
+  // upcoming Sunday's local-day boundary lines up either way for any
+  // ward in the same UTC offset, and the brief mismatch on first paint
+  // self-corrects once settings arrive.
+  const timezone =
+    settingsState.data?.settings.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const upcoming = getUpcomingSundayIso(new Date(), timezone);
   const isMobile = useIsMobile();
 
   const [horizon, setHorizon] = useState(defaultHorizon);
@@ -76,12 +91,15 @@ export function ScheduleView() {
           rightSlot={isMobile ? null : <HorizonSelect value={horizon} onChange={setHorizon} />}
         />
 
+        <UpcomingPlanningBanner upcoming={upcoming} />
+
         {isMobile ? (
           <>
             <MobileScheduleList
               monthGroups={monthGroups}
               leadTimeDays={leadTimeDays}
               nonMeetingSundays={nonMeeting}
+              focusDate={focusDate}
             />
             {mobileHorizon < MOBILE_MAX_WEEKS && (
               <div
@@ -113,6 +131,7 @@ export function ScheduleView() {
                     fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
                     leadTimeDays={leadTimeDays}
                     nonMeetingSundays={nonMeeting}
+                    focused={sunday.date === focusDate}
                   />
                 ))}
               </QuarterSection>
