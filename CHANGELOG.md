@@ -7,6 +7,14 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.23.1] — 2026-05-03
+
+Patch release: mobile layout fix for the schedule's planning-open banner.
+
+### Fixed
+
+- **Schedule planning-open banner squeezed text on mobile.** The "Plan program" button sat next to the message at all widths, forcing the body copy into a narrow 5-line column on phones. The banner now stacks the icon + text on one row and the button on its own row below the small breakpoint, so the message reads as one or two lines on mobile; the inline row layout is preserved at `sm:` and up. (#252)
+
 ## [0.23.0] — 2026-05-03
 
 Three-PR planning rethink. The two-bishopric approval workflow is gone — printing is gated on a live readiness check instead. Sacrament meeting program planning is now scoped to the upcoming Sunday only (speakers and prayers stay plannable ahead on any Sunday). And the escalating Wed/Fri/Sat finalization nudges are replaced by a single Monday-morning "planning is open" push.
@@ -2567,7 +2575,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.23.1...HEAD
+[0.23.1]: https://github.com/aylabyuk/steward/releases/tag/v0.23.1
 [0.23.0]: https://github.com/aylabyuk/steward/releases/tag/v0.23.0
 [0.22.0]: https://github.com/aylabyuk/steward/releases/tag/v0.22.0
 [0.21.2]: https://github.com/aylabyuk/steward/releases/tag/v0.21.2
