@@ -15,12 +15,21 @@ The whole point: avoid last-minute scrambles. Speakers are planned ahead, not we
 
 **Minimum lead time** (ward setting, default 14 days). Not hard-blocked — last-minute substitutes are possible — just warned.
 
+### Sacrament meeting program planning is restricted to the upcoming Sunday
+
+The **sacrament meeting program form** (hymns, ward business, leaders, sacrament logistics) is editable only for the **upcoming Sunday** — the soonest Sunday that hasn't ended yet in the ward's local timezone. **Speakers and prayers can still be planned ahead from any card on the schedule** — the schedule is the speaker / prayer planning surface, and that's exactly the workflow it's designed for.
+
+- The schedule page surfaces the rule with a banner at the top: *"Sacrament meeting program planning is open for {Sunday}. Speakers and prayers can still be planned ahead from any card on the schedule."* Cards themselves stay fully interactive — every Sunday's speakers + prayers can be assigned and invited regardless of how far out it is.
+- Today's Sunday stays editable until local midnight; the next Sunday opens at 00:00 local Monday. The Monday-morning planning-OPEN push (separate cron, see [notifications.md](notifications.md)) is the prompt to start the program.
+- The week editor (`/week/:date`) renders a read-only banner and inert program sections when the loaded date isn't the upcoming Sunday. Past meetings stay viewable for archive (printable copies still resolve via the readiness gate); future Sundays are previewable. The banner's "Back to schedule" link returns to the schedule focused on the same date so speaker / prayer work can continue.
+- The helper that drives this is `getUpcomingSundayIso(now, tz)` in [src/lib/dates.ts](../src/lib/dates.ts) — single source of truth for both the schedule-page banner and the editor's gate.
+
 **Workflow**:
-1. Open Speaker Schedule → cards for next N Sundays.
+1. Open Speaker Schedule → cards for next N Sundays. Every card supports adding / inviting speakers and prayer-givers.
 2. Add speakers (name, email, topic) per Sunday. Each becomes a doc under `meetings/{date}/speakers/{id}`.
 3. Send invitations from the schedule view. Status moves `draft` → `invite_emailed` / `invite_printed` → `accepted` / `declined`.
 4. Decline → slot empty → pick someone else, still with lead time.
-5. Week-of: Weekly Program view has speakers ready; bishopric fills remaining non-speaker fields.
+5. Week-of: Weekly Program view (the editor for the upcoming Sunday) has speakers ready; bishopric fills hymns, leaders, sacrament logistics, and announcements.
 
 **No separate schedule collection** — `meetings/{date}` docs ARE the schedule, created in advance. A meeting doc with only speakers filled = a planned-but-not-finalized Sunday.
 

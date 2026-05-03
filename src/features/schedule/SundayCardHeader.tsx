@@ -2,7 +2,7 @@ import { Link } from "@/lib/nav";
 import type { MeetingType, NonMeetingSunday } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import type { KindVariant } from "./utils/kindLabel";
-import { formatShortDate, formatCountdown } from "./utils/dateFormat";
+import { formatCountdown, formatShortDate } from "./utils/dateFormat";
 import { SundayTypeMenu } from "./SundayTypeMenu";
 
 interface Props {

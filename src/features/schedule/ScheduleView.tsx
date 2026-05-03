@@ -10,11 +10,13 @@ import { useScrollRestore } from "@/hooks/useScrollRestore";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { getUpcomingSundayIso } from "@/lib/dates";
 import { PageHead } from "./PageHead";
 import { HorizonSelect } from "./HorizonSelect";
 import { SundayCard } from "./SundayCard";
 import { QuarterSection } from "./QuarterSection";
 import { MobileScheduleList } from "./MobileScheduleList";
+import { UpcomingPlanningBanner } from "./UpcomingPlanningBanner";
 import { groupByMonth } from "./utils/groupByMonth";
 
 const MOBILE_INITIAL_WEEKS = 4;
@@ -36,6 +38,13 @@ export function ScheduleView() {
   const defaultHorizon = settingsState.data?.settings.scheduleHorizonWeeks ?? 8;
   const leadTimeDays = settingsState.data?.settings.speakerLeadTimeDays ?? 14;
   const nonMeeting = settingsState.data?.settings.nonMeetingSundays ?? [];
+  // Fall back to the browser's tz while the ward settings load — the
+  // upcoming Sunday's local-day boundary lines up either way for any
+  // ward in the same UTC offset, and the brief mismatch on first paint
+  // self-corrects once settings arrive.
+  const timezone =
+    settingsState.data?.settings.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const upcoming = getUpcomingSundayIso(new Date(), timezone);
   const isMobile = useIsMobile();
 
   const [horizon, setHorizon] = useState(defaultHorizon);
@@ -81,6 +90,8 @@ export function ScheduleView() {
           subtitle="Assign speakers for the weeks ahead."
           rightSlot={isMobile ? null : <HorizonSelect value={horizon} onChange={setHorizon} />}
         />
+
+        <UpcomingPlanningBanner upcoming={upcoming} />
 
         {isMobile ? (
           <>
