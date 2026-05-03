@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const HISTORY_TARGETS = ["meeting", "speaker", "comment", "approval"] as const;
+export const HISTORY_TARGETS = ["meeting", "speaker", "comment"] as const;
 export const HISTORY_ACTIONS = ["create", "update", "delete"] as const;
 
 export const historyChangeSchema = z.object({

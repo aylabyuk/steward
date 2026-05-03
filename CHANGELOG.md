@@ -7,6 +7,10 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+### Removed
+
+- **Approval workflow.** Meetings no longer carry a `status` (draft / pending_approval / approved / published) or an `approvals[]` array, and there is no Request approval / Approve / Return-to-draft chrome. The premise that printing should require two bishopric votes added friction without a clear win — readiness alone is the gate. New `PrintReadinessPanel` at the top of the editor swaps in for the old `ProgramApproval` block: when ready it surfaces the two print links front and centre; when not, it lists what's still missing. The `ProgramSaveBar` now carries print shortcuts that disable with a tooltip until the meeting is ready. The `/print/:date/conducting` and `/print/:date/congregation` pages gate on the same `checkMeetingReadiness` helper so a deep-linked print of a half-filled meeting renders a "Not ready to print" view with the missing-items list. Firestore rules drop their four approval guard helpers (`statusTransitionOk`, `approvalEntryPreserved`, `noApprovalTampering`, `approvalsArrayOk`); meeting updates simplify to `isActiveMember(wardId)`. Schema fields are removed; legacy docs with `status` / `approvals` linger harmlessly (Zod strips unknown keys). The `nudgeTarget` cron loses its `pending_approval` branch and the `approved` short-circuit; existing `scheduledNudges` keep firing but only along the draft-or-missing path (full retirement comes in the planning-OPEN follow-up).
+
 ## [0.22.0] — 2026-05-03
 
 UX-focused minor release. Sunday cards on the schedule now mirror the iOS app's dynamic speaker-slot rules, the prepare-invitation page gets an explicit Save with platform-aware export and a sent-letter download, and four close-button surfaces consolidate onto a single labeled primitive.

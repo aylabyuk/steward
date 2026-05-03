@@ -7,12 +7,11 @@ const confirmed: Assignment = { person: { name: "Alice" }, confirmed: true };
 
 const complete: SacramentMeeting = {
   meetingType: "regular",
-  status: "draft",
-  approvals: [],
   wardBusiness: "",
   stakeBusiness: "",
   announcements: "",
   showAnnouncements: true,
+  visitors: [],
   openingHymn: { number: 1, title: "a" },
   sacramentHymn: { number: 2, title: "b" },
   closingHymn: { number: 3, title: "c" },
@@ -64,7 +63,7 @@ describe("checkMeetingReadiness", () => {
     expect(r.ready).toBe(false);
   });
 
-  it("blocks approval when any speaker is not confirmed", () => {
+  it("blocks readiness when any speaker is not confirmed", () => {
     const [a, b] = twoSpeakers;
     const r = checkMeetingReadiness(
       complete,
@@ -78,12 +77,11 @@ describe("checkMeetingReadiness", () => {
   it("flags every missing hymn + assignment on an empty regular meeting", () => {
     const empty: SacramentMeeting = {
       meetingType: "regular",
-      status: "draft",
-      approvals: [],
       wardBusiness: "",
       stakeBusiness: "",
       announcements: "",
       showAnnouncements: true,
+      visitors: [],
     };
     const r = checkMeetingReadiness(empty, [], "regular");
     expect(r.missing).toContain("Opening hymn");

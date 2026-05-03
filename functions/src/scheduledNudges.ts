@@ -9,7 +9,6 @@ import { filterRecipients, type RecipientCandidate } from "./recipients.js";
 import type { FcmToken, MemberDoc, WardDoc } from "./types.js";
 
 interface MeetingForNudge extends MeetingDocLite {
-  approvals?: { uid: string; invalidated?: boolean }[];
   lastNudgedSlots?: Record<string, Timestamp>;
 }
 
@@ -63,15 +62,11 @@ async function processWard(
     const m = d.data() as MemberDoc;
     return { uid: d.id, role: m.role, active: m.active };
   });
-  const approvedUids = new Set(
-    (meeting?.approvals ?? []).filter((a) => !a.invalidated).map((a) => a.uid),
-  );
 
   const target = computeNudgeTarget({
     day: slot.day,
     date,
     meeting,
-    approvedUids,
     members,
   });
   if (!target) return;

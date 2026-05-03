@@ -11,16 +11,13 @@ import { defaultMeetingType, ensureMeetingDoc } from "./utils/ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
 import { NO_MEETING_TYPES, TYPE_LABELS } from "./utils/meetingLabels";
 import { checkMeetingReadiness } from "./utils/readiness";
-import { LockBanner } from "./program/LockBanner";
-import { ProgramApproval } from "./program/ProgramApproval";
+import { PrintReadinessPanel } from "./program/PrintReadinessPanel";
 import { ProgramHead } from "./program/ProgramHead";
 import { ProgramSaveBar } from "./program/ProgramSaveBar";
 import { ProgramSections } from "./program/ProgramSections";
 import { ProgramSide } from "./program/ProgramSide";
-import { ResetToDraftDialog } from "./program/ResetToDraftDialog";
 import { StatusLegend } from "./program/StatusLegend";
 import { buildRailSections } from "./program/utils/railSections";
-import { useApprovalActions } from "./program/hooks/useApprovalActions";
 
 interface Props {
   date: string;
@@ -33,11 +30,6 @@ export function WeekEditor({ date }: Props) {
   const speakers = useSpeakers(date);
   const [historyOpen, setHistoryOpen] = useState(false);
   const markRead = useCommentReadStore((s) => s.markRead);
-  const approval = useApprovalActions({
-    wardId: wardId ?? "",
-    date,
-    approvals: meeting.data?.approvals ?? [],
-  });
 
   useEffect(() => {
     if (wardId) markRead(wardId, date);
@@ -58,9 +50,6 @@ export function WeekEditor({ date }: Props) {
   const isNonMeeting = NO_MEETING_TYPES.has(type);
   const report = checkMeetingReadiness(meeting.data, speakers.data, type);
   const rail = buildRailSections(meeting.data, speakers.data, type, report);
-  const currentStatus = meeting.data?.status ?? "draft";
-  const liveApprovals = (meeting.data?.approvals ?? []).filter((a) => !a.invalidated).length;
-  const isLocked = !isNonMeeting && currentStatus !== "draft" && currentStatus !== "published";
 
   const menuItems = [{ label: "History", onSelect: () => setHistoryOpen(true) }];
 
@@ -80,45 +69,17 @@ export function WeekEditor({ date }: Props) {
               </div>
             ) : (
               <>
-                <ProgramApproval
-                  date={date}
-                  report={report}
-                  status={currentStatus}
-                  approvals={meeting.data?.approvals ?? []}
-                  requiredApprovals={meeting.data?.requiredApprovals}
-                  onRequestApproval={approval.requestApproval}
-                  onApprove={approval.approve}
-                  canApprove={approval.canApprove}
-                  alreadyApproved={approval.alreadyApproved}
-                  error={approval.error}
-                  busy={approval.busy}
-                  memberReady={approval.memberReady}
-                />
-                {isLocked && (
-                  <LockBanner status={currentStatus} onUnlock={approval.openResetDialog} />
-                )}
+                <PrintReadinessPanel date={date} report={report} />
                 <div className="flex justify-center mb-4 lg:hidden">
                   <StatusLegend />
                 </div>
-                <div
-                  className={isLocked ? "pointer-events-none opacity-60 select-none" : ""}
-                  aria-disabled={isLocked}
-                >
-                  <ProgramSections
-                    wardId={wardId}
-                    date={date}
-                    meeting={meeting.data}
-                    type={type}
-                    speakers={speakers.data}
-                    nonMeetingSundays={nonMeeting}
-                  />
-                </div>
-                <ResetToDraftDialog
-                  open={approval.resetDialogOpen}
-                  status={currentStatus}
-                  liveApprovals={liveApprovals}
-                  onClose={approval.closeResetDialog}
-                  onConfirm={approval.resetToDraft}
+                <ProgramSections
+                  wardId={wardId}
+                  date={date}
+                  meeting={meeting.data}
+                  type={type}
+                  speakers={speakers.data}
+                  nonMeetingSundays={nonMeeting}
                 />
               </>
             )}
@@ -129,11 +90,9 @@ export function WeekEditor({ date }: Props) {
 
         {!isNonMeeting && (
           <ProgramSaveBar
-            status={currentStatus}
+            date={date}
             ready={report.ready}
             remaining={report.missing.length + report.unconfirmed.length}
-            busy={approval.busy}
-            onRequestApproval={approval.requestApproval}
           />
         )}
         <HistoryModal date={date} open={historyOpen} onClose={() => setHistoryOpen(false)} />

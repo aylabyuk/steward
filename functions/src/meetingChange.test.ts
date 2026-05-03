@@ -50,8 +50,8 @@ describe("classifyMeetingChange", () => {
   it("ignores no-op updates", () => {
     expect(
       classifyMeetingChange(
-        { meetingType: "regular", contentVersionHash: "h", status: "draft" },
-        { meetingType: "regular", contentVersionHash: "h", status: "draft" },
+        { meetingType: "regular", contentVersionHash: "h" },
+        { meetingType: "regular", contentVersionHash: "h" },
       ),
     ).toBeNull();
   });
@@ -61,15 +61,6 @@ describe("classifyMeetingChange", () => {
       classifyMeetingChange(
         { meetingType: "regular", contentVersionHash: "a" },
         { meetingType: "regular", contentVersionHash: "b" },
-      ),
-    ).toBe("updated");
-  });
-
-  it("returns 'updated' on status change", () => {
-    expect(
-      classifyMeetingChange(
-        { meetingType: "regular", contentVersionHash: "h", status: "draft" },
-        { meetingType: "regular", contentVersionHash: "h", status: "pending_approval" },
       ),
     ).toBe("updated");
   });

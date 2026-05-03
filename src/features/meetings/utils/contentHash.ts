@@ -25,10 +25,10 @@ function speakerKey(s: Speaker): string {
 }
 
 /**
- * Canonical string for the approvable content of a meeting + speakers.
- * Excludes cancellation, approvals, updatedAt/createdAt/lastNudgedAt, and
- * contentVersionHash itself -- per docs/domain.md, cancellation is orthogonal
- * to approval and timestamps are write-time metadata.
+ * Canonical string for a meeting's printable content + speakers. Drives
+ * `contentVersionHash`, which the meeting-change cron uses to detect
+ * real edits vs noise. Excludes cancellation, timestamps, and the hash
+ * itself.
  */
 export function canonicalizeContent(
   m: SacramentMeeting,

@@ -1,7 +1,6 @@
 import { doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { computeContentHash } from "@/features/meetings/utils/contentHash";
 import { appendHistoryEvent, currentActor } from "@/features/meetings/utils/history";
-import { buildInvalidationPatch } from "@/features/meetings/utils/writeMeetingPatch";
 import { db } from "@/lib/firebase";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import { sacramentMeetingSchema, speakerSchema } from "@/lib/types";
@@ -13,10 +12,8 @@ function speakerRef(wardId: string, date: string, speakerId: string) {
 /**
  * Persist a new order for all speakers in the given date. Runs in a
  * single Firestore transaction that both rewrites each speaker's
- * `order` field AND recomputes the meeting's content hash (invalidating
- * live approvals + resetting status to draft if applicable). This keeps
- * the speaker order and the hash-driven approval invariant atomic — a
- * partial failure can't leave the order live with a stale hash.
+ * `order` field AND recomputes the meeting's content hash so the
+ * meeting-change cron sees the edit.
  *
  * Note: Firestore transactions read only DocumentReferences, not
  * collection queries. We read each speaker doc individually inside the
@@ -61,12 +58,14 @@ async function doReorder(
     });
 
     const newHash = await computeContentHash(meeting, reordered);
-    const { patch, invalidatedCount } = buildInvalidationPatch(meeting, newHash);
 
     refs.forEach((ref, i) => {
       tx.update(ref, { order: i, updatedAt: serverTimestamp() });
     });
-    tx.update(meetingRef, patch);
+    tx.update(meetingRef, {
+      contentVersionHash: newHash,
+      updatedAt: serverTimestamp(),
+    });
 
     if (actor) {
       appendHistoryEvent(tx, wardId, date, actor, {
@@ -75,14 +74,6 @@ async function doReorder(
         action: "update",
         changes: [{ field: "order", new: orderedIds.join(",") }],
       });
-      if (invalidatedCount > 0) {
-        appendHistoryEvent(tx, wardId, date, actor, {
-          target: "approval",
-          targetId: date,
-          action: "update",
-          changes: [{ field: "invalidated", new: invalidatedCount }],
-        });
-      }
     }
   });
 }

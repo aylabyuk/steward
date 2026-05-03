@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // Permission model (see docs/access.md):
-//   bishopric = bishop + 2 counselors        -> approve, edit, view
+//   bishopric = bishop + 2 counselors        -> edit, view, manage roster
 //   clerk     = exec sec / clerk (+ assts)   -> edit, view
 // Every path checks the auth'd user has an active member doc in the target ward.
 // Member-doc creation requires an existing active bishopric, so an empty ward
@@ -40,36 +40,6 @@ service cloud.firestore {
         && getMember(wardId, request.auth.uid).get('role', '') == 'bishopric';
     }
 
-    // Status may stay the same, flip to 'draft' (the edit-invalidates-approvals
-    // path), or progress to pending_approval / approved / published -- the
-    // latter three only by bishopric.
-    function statusTransitionOk(wardId) {
-      return request.resource.data.status == resource.data.status
-        || request.resource.data.status == 'draft'
-        || isActiveBishopric(wardId);
-    }
-
-    // Each existing approval must survive the write intact at the same
-    // index: identity fields (uid / email / displayName /
-    // approvedVersionHash) preserved, and the only permitted mutation is
-    // `invalidated` flipping false → true (the edit-invalidates-approvals
-    // path). Firestore rules don't support list comprehensions, so we
-    // unroll positionally for the bounded list length (max 2 approvals).
-    //
-    // Reads use `.get(field, default)` so historical approval entries
-    // that pre-date a given field (e.g. early approvals written without
-    // `invalidated: false`) don't throw an evaluation error here — the
-    // rule should refuse the write or accept it, never crash.
-    function approvalEntryPreserved(o, n) {
-      let oInvalid = o.get('invalidated', false);
-      let nInvalid = n.get('invalidated', false);
-      return n.uid == o.uid
-        && n.get('email', '') == o.get('email', '')
-        && n.get('displayName', '') == o.get('displayName', '')
-        && n.get('approvedVersionHash', '') == o.get('approvedVersionHash', '')
-        && (nInvalid == oInvalid || (oInvalid == false && nInvalid == true));
-    }
-
     // Invite-driven member creation: the newly-created member doc must
     // mirror the invite's role / calling / displayName / email, so an
     // invitee can't self-promote by changing their stored calling.
@@ -82,32 +52,6 @@ service cloud.firestore {
         && data.calling == invite.calling
         && data.displayName == invite.displayName
         && data.active == true;
-    }
-
-    function noApprovalTampering(oldA, newA) {
-      return oldA.size() == 0
-        || (oldA.size() == 1 && approvalEntryPreserved(oldA[0], newA[0]))
-        || (oldA.size() == 2
-            && approvalEntryPreserved(oldA[0], newA[0])
-            && approvalEntryPreserved(oldA[1], newA[1]));
-    }
-
-    // Approvals array may keep the same length (content edit or in-place
-    // invalidation flip, with identity preserved via noApprovalTampering)
-    // OR grow by exactly one entry authored by the bishopric member
-    // performing the write. Shrinking and foreign-author appends are
-    // rejected. Duplicate prevention is client-enforced.
-    function approvalsArrayOk(wardId) {
-      let oldApprovals = resource.data.get('approvals', []);
-      let newApprovals = request.resource.data.get('approvals', []);
-      let lastIdx = newApprovals.size() - 1;
-      return (newApprovals.size() == oldApprovals.size()
-              && noApprovalTampering(oldApprovals, newApprovals))
-        || (newApprovals.size() == oldApprovals.size() + 1
-            && isActiveBishopric(wardId)
-            && newApprovals[lastIdx].uid == request.auth.uid
-            && newApprovals[lastIdx].invalidated == false
-            && noApprovalTampering(oldApprovals, newApprovals));
     }
 
     // `response.acknowledgedAt` is write-once. Once any active member sets
@@ -263,14 +207,11 @@ service cloud.firestore {
       }
 
       // Meetings and their speaker subcollection. Content edits are open to
-      // any active member. Approval transitions (status pending_approval /
-      // approved, growing the approvals array) are gated to bishopric.
+      // any active member.
       match /meetings/{date} {
         allow read: if isActiveMember(wardId);
         allow create, delete: if isActiveMember(wardId);
-        allow update: if isActiveMember(wardId)
-          && statusTransitionOk(wardId)
-          && approvalsArrayOk(wardId);
+        allow update: if isActiveMember(wardId);
 
         match /speakers/{speakerId} {
           allow read: if isActiveMember(wardId);
@@ -306,7 +247,7 @@ service cloud.firestore {
           allow read: if isActiveMember(wardId);
           allow create: if isActiveMember(wardId)
             && request.resource.data.actorUid == request.auth.uid
-            && request.resource.data.target in ['meeting', 'speaker', 'comment', 'approval']
+            && request.resource.data.target in ['meeting', 'speaker', 'comment']
             && request.resource.data.action in ['create', 'update', 'delete'];
           allow update, delete: if false;
         }

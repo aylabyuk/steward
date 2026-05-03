@@ -31,7 +31,7 @@ export function buildRailSections(
 ): RailSection[] {
   const m = meeting ?? undefined;
   const sections: RailSection[] = [
-    { id: "sec-overview", label: "Approval", state: report.ready ? "done" : "missing" },
+    { id: "sec-overview", label: "Print readiness", state: report.ready ? "done" : "missing" },
     {
       id: "sec-leaders",
       label: "Leaders",

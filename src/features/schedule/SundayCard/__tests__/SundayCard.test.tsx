@@ -6,8 +6,6 @@ import type { SacramentMeeting } from "@/lib/types";
 
 const mockMeeting = {
   meetingType: "regular",
-  status: "draft",
-  approvals: [],
   wardBusiness: "",
   stakeBusiness: "",
   announcements: "",

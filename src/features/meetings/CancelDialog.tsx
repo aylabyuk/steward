@@ -42,7 +42,7 @@ export function CancelDialog({ open, onConfirm, onClose }: Props) {
       <div className="w-full max-w-md rounded-lg bg-chalk p-6 shadow-xl">
         <h2 className="text-lg font-semibold text-walnut">Cancel this meeting?</h2>
         <p className="mt-2 text-sm text-walnut-2">
-          Enter a reason. Approvals + content are preserved; you can uncancel later.
+          Enter a reason. Content is preserved; you can uncancel later.
         </p>
         <textarea
           value={reason}

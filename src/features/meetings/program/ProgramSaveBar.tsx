@@ -1,25 +1,22 @@
+import { Link } from "@/lib/nav";
 import { cn } from "@/lib/cn";
 import { SaveIndicator } from "./SaveIndicator";
 
 interface Props {
-  status: string;
+  date: string;
   ready: boolean;
   remaining: number;
-  busy?: boolean;
-  onRequestApproval?: () => void;
   onPreview?: () => void;
 }
 
-export function ProgramSaveBar({
-  status,
-  ready,
-  remaining,
-  busy,
-  onRequestApproval,
-  onPreview,
-}: Props) {
-  const isPending = status === "pending_approval";
-  const isApproved = status === "approved";
+/** Floating bottom save bar. Left: save indicator. Right: print
+ *  shortcuts. Print buttons are always visible — disabled with a
+ *  tooltip when the meeting still has unfilled items, so the bishop
+ *  knows the action exists and what's blocking it. */
+export function ProgramSaveBar({ date, ready, remaining, onPreview }: Props) {
+  const blockedTitle = ready
+    ? undefined
+    : `Finish ${remaining} item${remaining === 1 ? "" : "s"} to print`;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 bg-chalk border-t border-border shadow-[0_-6px_20px_rgba(35,24,21,0.08)]">
@@ -40,14 +37,17 @@ export function ProgramSaveBar({
               Preview print
             </button>
           )}
-          <ApprovalCta
-            status={status}
+          <PrintLink
+            href={`/print/${date}/congregation`}
+            label="Congregation"
             ready={ready}
-            remaining={remaining}
-            busy={busy}
-            onRequestApproval={onRequestApproval}
-            isPending={isPending}
-            isApproved={isApproved}
+            blockedTitle={blockedTitle}
+          />
+          <PrintLink
+            href={`/print/${date}/conducting`}
+            label="Conducting"
+            ready={ready}
+            blockedTitle={blockedTitle}
           />
         </div>
       </div>
@@ -55,61 +55,37 @@ export function ProgramSaveBar({
   );
 }
 
-interface CtaProps {
-  status: string;
+interface LinkProps {
+  href: string;
+  label: string;
   ready: boolean;
-  remaining: number;
-  busy?: boolean;
-  onRequestApproval?: () => void;
-  isPending: boolean;
-  isApproved: boolean;
+  blockedTitle: string | undefined;
 }
 
-function ApprovalCta({
-  ready,
-  remaining,
-  busy,
-  onRequestApproval,
-  isPending,
-  isApproved,
-}: CtaProps) {
-  if (isApproved) {
+function PrintLink({ href, label, ready, blockedTitle }: LinkProps) {
+  const className = cn(
+    "font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border inline-flex items-center gap-1.5 transition-colors",
+    ready
+      ? "bg-bordeaux border-bordeaux-deep text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep"
+      : "bg-chalk border-border text-walnut-3 cursor-not-allowed",
+  );
+  if (!ready) {
     return (
-      <span className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-success-soft bg-success-soft text-success inline-flex items-center gap-1.5">
-        <CheckIcon />
-        Approved
-      </span>
-    );
-  }
-  if (isPending) {
-    return (
-      <span className="font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-info-soft bg-info-soft text-info inline-flex items-center gap-1.5">
-        <ClockIcon />
-        Pending approval
+      <span className={className} aria-disabled="true" title={blockedTitle}>
+        <PrinterIcon />
+        Print {label.toLowerCase()}
       </span>
     );
   }
   return (
-    <button
-      type="button"
-      onClick={onRequestApproval}
-      disabled={!ready || busy || !onRequestApproval}
-      className={cn(
-        "font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border inline-flex items-center gap-1.5 transition-colors",
-        ready
-          ? "bg-success border-success text-chalk hover:bg-success/90"
-          : "bg-bordeaux border-bordeaux-deep text-parchment hover:bg-bordeaux-deep shadow-[0_1px_0_rgba(35,24,21,0.18)]",
-        "disabled:opacity-60 disabled:cursor-not-allowed",
-      )}
-    >
-      {ready
-        ? "Request approval"
-        : `Finish ${remaining} item${remaining === 1 ? "" : "s"} to submit`}
-    </button>
+    <Link to={href} className={className}>
+      <PrinterIcon />
+      Print {label.toLowerCase()}
+    </Link>
   );
 }
 
-function CheckIcon() {
+function PrinterIcon() {
   return (
     <svg
       width="12"
@@ -117,28 +93,13 @@ function CheckIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-function ClockIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" />
+      <path d="M6 9V2h12v7" />
+      <rect x="3" y="9" width="18" height="9" rx="2" />
+      <path d="M6 14h12v7H6z" />
     </svg>
   );
 }

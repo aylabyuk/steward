@@ -20,8 +20,11 @@ describe("groupByMonth", () => {
     const dates = ["2026-04-05"];
     const meeting: SacramentMeeting = {
       meetingType: "regular",
-      status: "draft",
-      approvals: [],
+      wardBusiness: "",
+      stakeBusiness: "",
+      announcements: "",
+      showAnnouncements: true,
+      visitors: [],
     };
     const meetings = new Map([["2026-04-05", meeting]]);
 

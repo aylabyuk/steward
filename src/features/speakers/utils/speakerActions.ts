@@ -1,5 +1,5 @@
 import { collection, doc, serverTimestamp, writeBatch } from "firebase/firestore";
-import { writeMeetingPatch } from "@/features/meetings/utils/approvals";
+import { writeMeetingPatch } from "@/features/meetings/utils/writeMeetingPatch";
 import { ensureMeetingDoc } from "@/features/meetings/utils/ensureMeetingDoc";
 import { appendHistoryEvent, currentActor } from "@/features/meetings/utils/history";
 import { db } from "@/lib/firebase";

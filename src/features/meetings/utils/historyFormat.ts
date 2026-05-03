@@ -21,13 +21,10 @@ const FIELD_LABELS: Record<string, string> = {
   announcements: "Announcements",
   meetingType: "Meeting type",
   cancellation: "Cancellation",
-  status: "Status",
   letterBody: "Letter body",
   name: "Name",
   topic: "Topic",
   email: "Email",
-  invalidated: "Invalidated approvals",
-  live: "Live approvals",
 };
 
 function fieldLabel(field: string): string {
@@ -61,8 +58,6 @@ function targetLabel(target: HistoryTarget, action: HistoryAction): string {
   if (target === "comment" && action === "create") return "posted a comment";
   if (target === "comment" && action === "update") return "edited a comment";
   if (target === "comment" && action === "delete") return "deleted a comment";
-  if (target === "approval" && action === "create") return "approved the meeting";
-  if (target === "approval" && action === "update") return "invalidated approvals";
   return "updated the meeting";
 }
 

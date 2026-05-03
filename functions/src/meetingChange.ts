@@ -2,7 +2,6 @@ import type { WardSettingsDoc } from "./types.js";
 
 export interface MeetingDocLite {
   meetingType?: string;
-  status?: string;
   contentVersionHash?: string;
   cancellation?: { cancelled?: boolean; reason?: string };
 }
@@ -34,7 +33,6 @@ export function classifyMeetingChange(
   if (!before) return null;
 
   if (before.contentVersionHash !== after.contentVersionHash) return "updated";
-  if (before.status !== after.status) return "updated";
   return null;
 }
 

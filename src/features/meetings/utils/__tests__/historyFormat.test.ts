@@ -46,17 +46,6 @@ describe("formatHistoryEvent", () => {
     expect(out.details[0]).toBe("Opening Prayer: Fred (not assigned) → Fred (accepted)");
   });
 
-  it("formats an approval", () => {
-    const out = formatHistoryEvent({
-      actorDisplayName: "Carol",
-      target: "approval",
-      action: "create",
-      changes: [{ field: "live", new: 2 }],
-    });
-    expect(out.summary).toBe("Carol approved the meeting");
-    expect(out.details[0]).toBe("Live approvals: 2");
-  });
-
   it("truncates very long string values", () => {
     const out = formatHistoryEvent({
       actorDisplayName: "Dan",

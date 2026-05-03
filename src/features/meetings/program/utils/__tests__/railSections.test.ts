@@ -23,14 +23,11 @@ function speaker(id: string, status: Speaker["status"], name = id): WithId<Speak
 function meeting(overrides: Partial<SacramentMeeting> = {}): SacramentMeeting {
   return {
     meetingType: "regular",
-    status: "draft",
-    approvals: [],
     wardBusiness: "",
     stakeBusiness: "",
     announcements: "",
     showAnnouncements: true,
     visitors: [],
-    requiredApprovals: 2,
     ...overrides,
   };
 }
@@ -41,7 +38,7 @@ function pickState(sections: ReturnType<typeof buildRailSections>, id: string): 
   return s.state;
 }
 
-describe("buildRailSections — approval overview", () => {
+describe("buildRailSections — print readiness overview", () => {
   it("is done when the readiness report is ready", () => {
     const sections = buildRailSections(meeting(), [], "regular", { ...emptyReport, ready: true });
     expect(pickState(sections, "sec-overview")).toBe("done");

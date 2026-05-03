@@ -2,11 +2,6 @@ import { Switch } from "./Switch";
 
 const CATEGORIES: readonly { id: string; label: string; description: string }[] = [
   {
-    id: "approvals",
-    label: "Program approvals",
-    description: "When a program is finalized or sent back.",
-  },
-  {
     id: "reminders",
     label: "Finalization reminders",
     description: "Weekly nudges until Sunday's program is set.",
