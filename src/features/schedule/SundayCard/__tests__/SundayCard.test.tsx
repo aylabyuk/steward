@@ -68,7 +68,11 @@ describe("SundayCard", () => {
 
   it("shows Assign Speaker pills on empty rows", () => {
     renderCard();
-    // 4 empty speaker slots all render as Assign pills.
-    expect(screen.getAllByText("Assign Speaker").length).toBeGreaterThan(0);
+    // Fresh card with no speakers shows the floor of 2 placeholder
+    // rows — not the old fixed 4 — so the meeting reads as an
+    // invitation to assign without padding the height with empty
+    // noise.
+    expect(screen.getAllByText("Assign Speaker")).toHaveLength(2);
+    expect(screen.queryByText("Add another speaker")).toBeNull();
   });
 });
