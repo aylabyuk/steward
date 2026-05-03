@@ -65,8 +65,7 @@ describe("type schemas", () => {
     expect(parsed.timezone).toBe("UTC");
     expect(parsed.speakerLeadTimeDays).toBe(14);
     expect(parsed.scheduleHorizonWeeks).toBe(8);
-    expect(parsed.nudgeSchedule.wednesday.enabled).toBe(true);
-    expect(parsed.nudgeSchedule.saturday.enabled).toBe(false);
+    expect(parsed.nonMeetingSundays).toEqual([]);
   });
 
   it("enforces at most 2 sacrament blessers", () => {

@@ -77,6 +77,8 @@ function routeForPushData(data) {
         : "/schedule";
     case "mention":
       return data.date ? `/week/${encodeURIComponent(data.date)}` : "/schedule";
+    case "planning-open":
+      return data.date ? `/week/${encodeURIComponent(data.date)}` : "/schedule";
     default:
       return "/";
   }

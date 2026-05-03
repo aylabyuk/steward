@@ -7,6 +7,14 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+### Added
+
+- **Planning-open notification (Mon 08:00 ward-local).** New `planningOpenNotification` Cloud Function — hourly cron that fires a single, friendly push to all active members at 08:00 every Monday in the ward's local timezone: title `"Planning is OPEN for Sunday {date}"`, body `"Start planning the upcoming sacrament meeting."` Tap deep-links to `/week/{date}`. Idempotency keys on `wards/{wardId}.lastPlanningOpenNotified` (the upcoming Sunday's ISO date), so the cron only delivers once per Monday rollover even though it polls hourly. Per-user `notificationPrefs.enabled` + `quietHours` still gate delivery via the existing `filterRecipients` path. Pairs with the schedule's "sacrament meeting program planning is open for {Sunday}" banner — the push is the start-of-week prompt for the same window.
+
+### Removed
+
+- **Finalization nudges (`scheduledNudges`).** The hourly cron that fired escalating `soft` / `urgent` / `critical` reminders Wed 7pm / Fri 7pm / Sat 9am ward-local until the program reached `approved` is gone, along with the `nudgeSchedule` setting on `ward.settings`, the `NudgeChipRow` / `NudgeScheduleEditor` UI in Settings, and the `nudgeSlot.ts` / `nudgeTarget.ts` helpers. The new `planningOpenNotification` cron above is the replacement — one push at the start of the planning window instead of three escalating ones during it. **Deploy runbook:** Cloud Scheduler doesn't auto-deregister jobs whose function exports were removed. After deploying this release, run `firebase functions:delete scheduledNudges` to free the slot. Verify with `firebase functions:list`.
+
 ### Changed
 
 - **Sacrament meeting program planning is restricted to the upcoming Sunday.** Speakers and prayers can still be planned ahead from any card on the schedule — the restriction is only on the program form (hymns, ward business, leaders, sacrament logistics). The schedule page surfaces this with a banner: *"Sacrament meeting program planning is open for {Sunday}. Speakers and prayers can still be planned ahead from any card on the schedule."* Inside the week editor, opening any non-upcoming Sunday (past archive review or future preview) shows a read-only banner, drops the floating save bar, and renders the program sections inert. The banner's "Back to schedule" link returns to the schedule page focused on the same date, where speaker / prayer planning continues unimpeded. The single source of truth is `getUpcomingSundayIso(now, tz)` in `src/lib/dates.ts` — today's Sunday stays editable until local midnight, and the next Sunday opens at 00:00 local Monday.

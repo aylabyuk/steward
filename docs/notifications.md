@@ -32,37 +32,60 @@ Three distinct push flows, all via Firebase Cloud Messaging (FCM) Web Push. Thre
 
 **Cancelled meetings**: fires with special `"Meeting cancelled"` wording.
 
-## 2. Finalization nudges
+## 2. Planning-open notification
 
-**Function**: `scheduledNudges` — hourly cron (`functions.pubsub.schedule(...)`).
+**Function**: `planningOpenNotification` — hourly cron
+(`functions.pubsub.schedule("every 60 minutes")`).
 
-**Default schedule** (per-ward configurable):
+Replaces the old escalating Wed/Fri/Sat finalization nudges. The new
+flow is a single, friendly Monday-morning push that announces the
+planning window for the upcoming Sunday is open. It pairs with the
+PR-2 schedule restriction: the sacrament meeting program form is only
+editable for the upcoming Sunday, and this push is the prompt to
+start.
 
-| When (local) | Trigger if | Severity | Target |
-|---|---|---|---|
-| Wed 7pm | Upcoming Sunday missing OR `draft` / `pending_approval` | Soft | Whole team |
-| Fri 7pm | Still not `approved` | Urgent | Pending approvers only |
-| Sat 9am *(off by default)* | Still not `approved` | Critical | Whole team |
+**Schedule**: fires at **08:00 in the ward's local timezone every Monday**. The cron polls hourly so it can hit the right wall-clock hour for any tz.
 
-**Why Wed + Fri** (vs. Tue/Fri): Tue is too soon after last Sunday — feels nagging. Wed gives breathing room while keeping 4-day lead time. Fri evening still leaves Saturday to act.
+**Payload**:
 
-**Targeted > broadcast**:
-- `draft` → whole team (someone needs to request approval).
-- `pending_approval` → only bishopric members who haven't yet approved.
-- Meeting doc missing → whole team with different message (*"No program created yet for Sunday"*).
+| Field | Value |
+|---|---|
+| title | `Planning is OPEN for Sunday {YYYY-MM-DD}` |
+| body  | `Start planning the upcoming sacrament meeting.` |
+| data  | `{ wardId, date, kind: "planning-open" }` |
+| route | `/week/{date}` (via `firebase-messaging-sw.js → routeForPushData`) |
 
-**Skip**: cancelled meetings, non-meeting Sundays.
+**Targets**: every active member (bishopric + clerk). `filterRecipients` is
+applied so per-user `notificationPrefs.enabled` and `quietHours` still
+gate delivery, and dead FCM tokens are pruned by `sendAndPrune`.
 
-**Idempotent**: `lastNudgedAt` on meeting doc prevents double-send on retry.
+**Idempotency**: `wards/{wardId}.lastPlanningOpenNotified` stores the
+ISO date of the upcoming Sunday whenever the push goes out. Subsequent
+hourly ticks during the same Monday-morning window skip the ward
+because the value already matches the current upcoming Sunday. The
+key naturally goes stale next Monday when the upcoming Sunday rolls
+over, and the push fires again.
 
-**Settings** (under `ward.settings`):
-```
-nudgeSchedule: {
-  wednesday: { enabled: true,  hour: 19 },
-  friday:    { enabled: true,  hour: 19 },
-  saturday:  { enabled: false, hour: 9  }
-}
-```
+**No per-ward configuration.** The hour is hardcoded to 08:00 local —
+single time across all wards keeps the operational surface tiny and
+matches the "one prompt, then back off" intent. Per-user opt-out via
+the existing `notificationPrefs.enabled` toggle covers individual
+preferences.
+
+**No skip on cancelled meetings or non-meeting Sundays.** The push
+announces that the planning window is open, not that there's a
+meeting to fill — even a cancelled or stake-conference Sunday earns a
+ping so the bishop knows the slot is now editable. (The schedule UI
+itself surfaces non-meeting Sundays as such; the push is just a
+calendar prompt.)
+
+**Decommissioning the old `scheduledNudges` cron**: when this code
+deploys, the new `planningOpenNotification` cron is registered
+automatically. The old `scheduledNudges` Cloud Scheduler job won't
+deregister itself just because the function export went away —
+manually run `firebase functions:delete scheduledNudges` after a
+successful deploy to free the slot. Verify with
+`firebase functions:list`.
 
 ## 3. Mention notifications
 
