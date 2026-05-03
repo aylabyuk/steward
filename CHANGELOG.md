@@ -7,6 +7,14 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.21.2] — 2026-05-03
+
+Patch release: precision tweak to the schedule countdown labels.
+
+### Fixed
+
+- **Schedule countdown is precise instead of round-up.** `formatCountdown` previously called `Math.ceil(daysUntil / 7)`, so 8 days showed "In 2 weeks" and 17 days showed "In 3 weeks". It now floors the week count and surfaces the remainder, producing copy like "In 1 week and 1 day" and "In 2 weeks and 3 days". Both formatters anchor to local-midnight so DST shifts and late-night composition don't pull a result across a day boundary. Verbose copy on the desktop `SundayCardHeader` and `SundayTypeMenu`; a new compact form ("In 2w 3d") is wired into `MobileSundayBlock` so the tighter mobile header stays one line. (#236)
+
 ## [0.21.1] — 2026-05-02
 
 Bundled remediation release for the remaining items from the 2026-05-01 invitation-flow audit. PR #233 lands eight findings as separate commits — one High, four Medium, three Low — alongside the audit's Critical (already shipped in v0.21.0). Behaviour-preserving for normal flows; rate-limited callers and `[archived]` Twilio Conversations are the only user-observable surface changes. App Check is wired but gated on operator-side env vars so this release ships in observe-only mode.
@@ -2512,7 +2520,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.21.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.21.2...HEAD
+[0.21.2]: https://github.com/aylabyuk/steward/releases/tag/v0.21.2
 [0.21.1]: https://github.com/aylabyuk/steward/releases/tag/v0.21.1
 [0.21.0]: https://github.com/aylabyuk/steward/releases/tag/v0.21.0
 [0.20.1]: https://github.com/aylabyuk/steward/releases/tag/v0.20.1
