@@ -5,7 +5,6 @@ import {
   type AssignAction,
   type AssignSeed,
 } from "@/features/assign-slot/AssignSlotForm";
-import { AssignSlotHeader } from "@/features/assign-slot/AssignSlotHeader";
 import { persistAssignPrayer } from "@/features/assign-slot/utils/persistAssignPrayer";
 import {
   clearPrayerParticipant,
@@ -130,15 +129,13 @@ export function AssignPrayerPage() {
 
   return (
     <main className="min-h-dvh bg-parchment flex flex-col">
-      <AssignSlotHeader
-        eyebrow={`Assign ${role === "opening" ? "opening prayer" : "closing prayer"}`}
-        title={seedName.trim() ? seedName : ROLE_TITLE[role]}
-        subtitle={date ? formatShortSunday(date) : undefined}
-      />
       <AssignSlotForm
         seed={seed}
         busy={busy}
         error={error}
+        eyebrow={`Assign ${role === "opening" ? "opening prayer" : "closing prayer"}`}
+        title={seedName.trim() ? seedName : ROLE_TITLE[role]}
+        subtitle={date ? formatShortSunday(date) : undefined}
         onSubmit={onSubmit}
         {...(hasExistingPrayer
           ? {

@@ -3,44 +3,31 @@ import type { SubState } from "@/hooks/_sub";
 import { DeleteSpeakerConfirm } from "@/features/speakers/DeleteSpeakerConfirm";
 import { isValidEmail } from "@/lib/email";
 import { isE164 } from "@/features/templates/utils/smsInvitation";
-import type { Member, SpeakerRole, SpeakerStatus, WithId } from "@/lib/types";
+import type { Member, SpeakerStatus, WithId } from "@/lib/types";
 import type { StatusSource } from "@/lib/types/meeting";
 import { AssignSlotFooter } from "./AssignSlotFooter";
-import { AssignPrayerFields, AssignSpeakerFields } from "./AssignSlotFields";
+import { AssignSlotHeader } from "./AssignSlotHeader";
+import { AssignFields } from "./AssignFields";
 import { AssignSlotStatusRow } from "./AssignSlotStatusRow";
+import { DiscardChangesConfirm } from "./DiscardChangesConfirm";
+import { useDiscardableExit } from "./hooks/useDiscardableExit";
+import type { AssignAction, AssignSeed } from "./types";
+import { isDirty } from "./utils/isDirty";
 
-export type AssignAction = "save-and-continue" | "save-as-planned";
-
-export interface AssignSpeakerSeed {
-  kind: "speaker";
-  /** Existing speaker doc id when editing. `null` for new. */
-  speakerId: string | null;
-  name: string;
-  topic: string;
-  role: SpeakerRole;
-  email: string;
-  phone: string;
-  /** Status of an existing speaker — drives the delete confirm
-   *  dialog's invited/confirmed warning. */
-  status: SpeakerStatus;
-}
-
-export interface AssignPrayerSeed {
-  kind: "prayer";
-  name: string;
-  email: string;
-  phone: string;
-  /** Status of the prayer-giver — drives the field-locking rule
-   *  (anything other than "planned" locks all inputs). */
-  status: SpeakerStatus;
-}
-
-export type AssignSeed = AssignSpeakerSeed | AssignPrayerSeed;
+export type { AssignAction, AssignPrayerSeed, AssignSeed, AssignSpeakerSeed } from "./types";
 
 interface Props {
   seed: AssignSeed;
   busy: boolean;
   error: string | null;
+  /** Header copy — eyebrow ("Assign speaker"), title (speaker / prayer
+   *  name or "New speaker"), and the Sunday-date subtitle. The page
+   *  used to render the header itself; pulling it inside the form so
+   *  the cancel control can consult dirty-form state for the discard
+   *  confirm. */
+  eyebrow: string;
+  title: string;
+  subtitle?: string | undefined;
   /** Called with the action and the current draft values. */
   onSubmit: (action: AssignAction, draft: AssignSeed) => void;
   /** Edit-mode only — both speaker and prayer pages can pass a delete
@@ -70,6 +57,9 @@ export function AssignSlotForm({
   seed,
   busy,
   error,
+  eyebrow,
+  title,
+  subtitle,
   onSubmit,
   onDelete,
   deleting,
@@ -88,6 +78,8 @@ export function AssignSlotForm({
   // this rather than draft.status (status isn't editable here, so
   // they're identical, but seeding from seed makes intent obvious).
   const locked = seed.status !== "planned";
+  const dirty = !locked && isDirty(draft, seed);
+  const exit = useDiscardableExit({ dirty });
 
   const emailInvalid = draft.email.trim().length > 0 && !isValidEmail(draft.email.trim());
   const phoneInvalid = draft.phone.trim().length > 0 && !isE164(draft.phone.trim());
@@ -109,83 +101,80 @@ export function AssignSlotForm({
   const showDelete = Boolean(onDelete) && (isExistingSpeaker || isExistingPrayer);
 
   return (
-    <div className="flex-1 px-4 py-6 sm:px-8 sm:py-10">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          submit("save-and-continue");
-        }}
-        className="flex flex-col gap-5 w-full max-w-xl mx-auto sm:bg-chalk sm:border sm:border-border-strong sm:rounded-[14px] sm:shadow-elev-2 sm:p-7"
-      >
-        {onStatusChange && (isExistingSpeaker || isExistingPrayer) && (
-          <AssignSlotStatusRow
-            status={seed.status}
-            kind={draft.kind === "speaker" ? "speaker" : "prayer"}
-            locked={locked}
-            onChange={onStatusChange}
-            {...(currentStatusSource ? { currentStatusSource } : {})}
-            {...(currentStatusSetBy ? { currentStatusSetBy } : {})}
-            {...(members ? { members } : {})}
-            {...(currentUserUid !== undefined ? { currentUserUid } : {})}
-          />
-        )}
+    <>
+      <AssignSlotHeader
+        eyebrow={eyebrow}
+        title={title}
+        subtitle={subtitle}
+        onCancel={exit.requestCancel}
+      />
+      <div className="flex-1 px-4 py-6 sm:px-8 sm:py-10">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit("save-and-continue");
+          }}
+          className="flex flex-col gap-5 w-full max-w-xl mx-auto sm:bg-chalk sm:border sm:border-border-strong sm:rounded-[14px] sm:shadow-elev-2 sm:p-7"
+        >
+          {onStatusChange && (isExistingSpeaker || isExistingPrayer) && (
+            <AssignSlotStatusRow
+              status={seed.status}
+              kind={draft.kind === "speaker" ? "speaker" : "prayer"}
+              locked={locked}
+              onChange={onStatusChange}
+              {...(currentStatusSource ? { currentStatusSource } : {})}
+              {...(currentStatusSetBy ? { currentStatusSetBy } : {})}
+              {...(members ? { members } : {})}
+              {...(currentUserUid !== undefined ? { currentUserUid } : {})}
+            />
+          )}
 
-        {draft.kind === "speaker" ? (
-          <AssignSpeakerFields
-            name={draft.name}
-            topic={draft.topic}
-            role={draft.role}
-            email={draft.email}
-            phone={draft.phone}
+          <AssignFields
+            draft={draft}
             emailInvalid={emailInvalid}
             phoneInvalid={phoneInvalid}
             disabled={locked}
-            onChange={(p) => patch(p)}
+            onChange={patch}
           />
-        ) : (
-          <AssignPrayerFields
-            name={draft.name}
-            email={draft.email}
-            phone={draft.phone}
-            emailInvalid={emailInvalid}
-            phoneInvalid={phoneInvalid}
-            disabled={locked}
-            onChange={(p) => patch(p)}
+
+          {error && (
+            <p className="font-sans text-[12.5px] text-bordeaux border border-bordeaux/40 bg-bordeaux/5 rounded-md px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          <AssignSlotFooter
+            canSubmit={canSubmit}
+            busy={busy}
+            showDelete={showDelete}
+            deleteLabel={draft.kind === "prayer" ? "Remove" : "Delete"}
+            showSaveActions={!locked}
+            onDelete={() => setConfirmDelete(true)}
+            onContinue={() => submit("save-and-continue")}
+            onSavePlanned={() => submit("save-as-planned")}
           />
-        )}
 
-        {error && (
-          <p className="font-sans text-[12.5px] text-bordeaux border border-bordeaux/40 bg-bordeaux/5 rounded-md px-3 py-2">
-            {error}
-          </p>
-        )}
-
-        <AssignSlotFooter
-          canSubmit={canSubmit}
-          busy={busy}
-          showDelete={showDelete}
-          deleteLabel={draft.kind === "prayer" ? "Remove" : "Delete"}
-          showSaveActions={!locked}
-          onDelete={() => setConfirmDelete(true)}
-          onContinue={() => submit("save-and-continue")}
-          onSavePlanned={() => submit("save-as-planned")}
-        />
-
-        {showDelete && onDelete && (
-          <DeleteSpeakerConfirm
-            open={confirmDelete}
-            speakerName={draft.name}
-            speakerStatus={draft.status}
-            kind={draft.kind === "speaker" ? "speaker" : "prayer"}
-            busy={Boolean(deleting)}
-            onConfirm={() => {
-              onDelete();
-              setConfirmDelete(false);
-            }}
-            onCancel={() => setConfirmDelete(false)}
-          />
-        )}
-      </form>
-    </div>
+          {showDelete && onDelete && (
+            <DeleteSpeakerConfirm
+              open={confirmDelete}
+              speakerName={draft.name}
+              speakerStatus={draft.status}
+              kind={draft.kind === "speaker" ? "speaker" : "prayer"}
+              busy={Boolean(deleting)}
+              onConfirm={() => {
+                onDelete();
+                setConfirmDelete(false);
+              }}
+              onCancel={() => setConfirmDelete(false)}
+            />
+          )}
+        </form>
+      </div>
+      <DiscardChangesConfirm
+        open={exit.confirmOpen}
+        onKeepEditing={exit.onKeepEditing}
+        onDiscard={exit.onDiscard}
+      />
+    </>
   );
 }
