@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { defaultMeetingType } from "@/features/meetings/utils/ensureMeetingDoc";
 import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
 import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
@@ -24,7 +25,12 @@ const MOBILE_STEP_WEEKS = 4;
 const MOBILE_MAX_WEEKS = 16;
 
 export function ScheduleView() {
-  useScrollRestore("schedule");
+  const [searchParams] = useSearchParams();
+  const focusDate = searchParams.get("focus");
+  // When the bishop arrives via "Edit from the schedule view", we
+  // drive the scroll ourselves to land on the matching card —
+  // turn off scroll-restore for this mount so it doesn't fight us.
+  useScrollRestore("schedule", { enabled: !focusDate });
   const wardId = useCurrentWardStore((s) => s.wardId);
   const settingsState = useWardSettings();
   const defaultHorizon = settingsState.data?.settings.scheduleHorizonWeeks ?? 8;
@@ -82,6 +88,7 @@ export function ScheduleView() {
               monthGroups={monthGroups}
               leadTimeDays={leadTimeDays}
               nonMeetingSundays={nonMeeting}
+              focusDate={focusDate}
             />
             {mobileHorizon < MOBILE_MAX_WEEKS && (
               <div
@@ -113,6 +120,7 @@ export function ScheduleView() {
                     fallbackType={defaultMeetingType(sunday.date, nonMeeting)}
                     leadTimeDays={leadTimeDays}
                     nonMeetingSundays={nonMeeting}
+                    focused={sunday.date === focusDate}
                   />
                 ))}
               </QuarterSection>

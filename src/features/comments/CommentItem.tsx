@@ -6,6 +6,7 @@ import type { Comment } from "@/lib/types";
 import { useAuthStore } from "@/stores/authStore";
 import { editComment, softDeleteComment } from "./utils/commentActions";
 import { extractMentions } from "./utils/extractMentions";
+import { renderCommentBody } from "./utils/renderCommentBody";
 
 interface Props {
   wardId: string;
@@ -87,7 +88,7 @@ export function CommentItem({ wardId, date, comment }: Props) {
         />
       ) : (
         <p className="whitespace-pre-wrap font-sans text-[13.5px] text-walnut leading-relaxed">
-          {comment.data.body}
+          {renderCommentBody(comment.data.body, members)}
         </p>
       )}
 
