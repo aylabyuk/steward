@@ -2,10 +2,14 @@ import { useMemo, useState } from "react";
 import type { WithId } from "@/hooks/_sub";
 import type { MidItem as MidItemType, NonMeetingSunday, Speaker } from "@/lib/types";
 import { reorderSpeakers } from "@/features/speakers/utils/speakerActions";
+import { Link } from "@/lib/nav";
 import { ProgramSection } from "../program/ProgramSection";
 import { updateMeetingField } from "../utils/updateMeeting";
 import { MidPlaceholderRow, SpeakerListRow } from "./SpeakerListRow";
 import { buildItems, formatMidLabel, sortByOrder, type Item } from "./utils/speakerListItems";
+
+const SCHEDULE_LINK_CLS =
+  "font-serif italic text-[12.5px] text-walnut-3 underline decoration-dotted decoration-walnut-3/60 underline-offset-2 hover:text-bordeaux hover:decoration-bordeaux transition-colors";
 
 interface Props {
   wardId: string;
@@ -51,7 +55,14 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
     return (
       <ProgramSection id="sec-speakers" label="Speakers">
         <p className="font-serif italic text-[13.5px] text-walnut-3 py-1">
-          No speakers yet. Add them from the schedule view.
+          No speakers yet. Add them from the{" "}
+          <Link
+            to={`/schedule?focus=${date}`}
+            className="underline decoration-dotted decoration-walnut-3/60 underline-offset-2 hover:text-bordeaux hover:decoration-bordeaux transition-colors"
+          >
+            schedule view
+          </Link>
+          .
         </p>
       </ProgramSection>
     );
@@ -64,8 +75,12 @@ export function SpeakersSection({ wardId, date, speakers, mid, nonMeetingSundays
       label="Speakers"
       count={ordered.length}
       rightSlot={
-        <span className="ml-auto font-serif italic text-[12.5px] text-walnut-3">
-          Drag to reorder
+        <span className="ml-auto inline-flex items-center gap-2 font-serif italic text-[12.5px] text-walnut-3">
+          <span>Drag to reorder</span>
+          <span aria-hidden>·</span>
+          <Link to={`/schedule?focus=${date}`} className={SCHEDULE_LINK_CLS}>
+            Edit from the schedule view
+          </Link>
         </span>
       }
     >

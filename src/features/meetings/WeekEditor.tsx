@@ -4,10 +4,8 @@ import { TwilioAutoConnect } from "@/features/invitations/TwilioAutoConnect";
 import { TwilioChatProvider } from "@/features/invitations/TwilioChatProvider";
 import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { useAuthStore } from "@/stores/authStore";
 import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
-import { CancelDialog } from "./CancelDialog";
 import { CancellationBanner } from "./CancellationBanner";
 import { defaultMeetingType, ensureMeetingDoc } from "./utils/ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
@@ -23,7 +21,6 @@ import { ResetToDraftDialog } from "./program/ResetToDraftDialog";
 import { StatusLegend } from "./program/StatusLegend";
 import { buildRailSections } from "./program/utils/railSections";
 import { useApprovalActions } from "./program/hooks/useApprovalActions";
-import { cancelMeeting } from "./utils/updateMeeting";
 
 interface Props {
   date: string;
@@ -31,11 +28,9 @@ interface Props {
 
 export function WeekEditor({ date }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId);
-  const authUid = useAuthStore((s) => s.user?.uid);
   const settings = useWardSettings();
   const meeting = useMeeting(date);
   const speakers = useSpeakers(date);
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const markRead = useCommentReadStore((s) => s.markRead);
   const approval = useApprovalActions({
@@ -61,19 +56,13 @@ export function WeekEditor({ date }: Props) {
   const type = meeting.data?.meetingType ?? defaultMeetingType(date, nonMeeting);
   const cancellation = meeting.data?.cancellation;
   const isNonMeeting = NO_MEETING_TYPES.has(type);
-  const canCancel = !isNonMeeting && !cancellation?.cancelled;
   const report = checkMeetingReadiness(meeting.data, speakers.data, type);
   const rail = buildRailSections(meeting.data, speakers.data, type, report);
   const currentStatus = meeting.data?.status ?? "draft";
   const liveApprovals = (meeting.data?.approvals ?? []).filter((a) => !a.invalidated).length;
   const isLocked = !isNonMeeting && currentStatus !== "draft" && currentStatus !== "published";
 
-  const menuItems = [
-    { label: "History", onSelect: () => setHistoryOpen(true) },
-    ...(canCancel
-      ? [{ label: "Cancel meeting…", onSelect: () => setConfirmingCancel(true), destructive: true }]
-      : []),
-  ];
+  const menuItems = [{ label: "History", onSelect: () => setHistoryOpen(true) }];
 
   return (
     <TwilioChatProvider>
@@ -84,14 +73,6 @@ export function WeekEditor({ date }: Props) {
             <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
 
             <CancellationBanner wardId={wardId} date={date} cancellation={cancellation} />
-            <CancelDialog
-              open={confirmingCancel}
-              onClose={() => setConfirmingCancel(false)}
-              onConfirm={async (reason) => {
-                if (!authUid) return;
-                await cancelMeeting(wardId, date, reason, authUid, nonMeeting);
-              }}
-            />
 
             {isNonMeeting ? (
               <div className="rounded-xl border border-border bg-parchment-2 p-5 text-sm text-walnut-2">
