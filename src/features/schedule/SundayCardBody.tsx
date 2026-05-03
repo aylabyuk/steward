@@ -41,7 +41,7 @@ export function SundayCardBody({ speakers, date, meeting }: Props) {
         })}
         {showAddAnother && <AddAnotherSpeakerRow date={date} />}
       </ul>
-      <ul className="list-none m-0 p-0 mb-2 border-t-2 border-walnut-3 pt-1">
+      <ul className="list-none m-0 p-0 mb-2 mt-auto border-t-2 border-walnut-3 pt-1">
         <PrayerRow
           role="opening"
           date={date}
