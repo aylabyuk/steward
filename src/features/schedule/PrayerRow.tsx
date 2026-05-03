@@ -76,6 +76,9 @@ export function PrayerRow({ inlineName, role, date, hideEmpty = false }: Props) 
         to={`/week/${date}/prayer/${role}/assign`}
         className="flex items-center gap-3 flex-1 min-w-0 hover:bg-parchment-2 transition-colors -mx-1 px-1 rounded-sm"
       >
+        <div className="font-mono text-[10.5px] tracking-[0.08em] text-brass-deep w-6 shrink-0">
+          {ROLE_LABEL[role]}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="font-sans text-sm font-semibold text-walnut truncate">{name}</div>
           <div className="font-serif italic text-sm text-walnut-2 truncate">
