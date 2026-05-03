@@ -9,6 +9,9 @@ interface Props {
   monthGroups: readonly MonthGroup[];
   leadTimeDays: number;
   nonMeetingSundays: readonly NonMeetingSunday[];
+  /** Date matching `?focus=<date>` on the schedule route. The block
+   *  whose date matches scroll-flashes itself on mount. */
+  focusDate?: string | null;
 }
 
 /** Mobile schedule list. The first card across all month groups gets
@@ -16,7 +19,12 @@ interface Props {
  *  kind-aware confirmed-rollup line). When the hero scrolls out of
  *  view, a Messages-style floating jump-back button fades in so the
  *  bishop can return to "this Sunday" with one tap. */
-export function MobileScheduleList({ monthGroups, leadTimeDays, nonMeetingSundays }: Props) {
+export function MobileScheduleList({
+  monthGroups,
+  leadTimeDays,
+  nonMeetingSundays,
+  focusDate = null,
+}: Props) {
   const firstDate = monthGroups[0]?.sundays[0]?.date ?? null;
   const [heroEl, setHeroEl] = useState<HTMLElement | null>(null);
   const [heroVisible, setHeroVisible] = useState(true);
@@ -49,6 +57,7 @@ export function MobileScheduleList({ monthGroups, leadTimeDays, nonMeetingSunday
                 leadTimeDays={leadTimeDays}
                 nonMeetingSundays={nonMeetingSundays}
                 isHero={isHero}
+                focused={sunday.date === focusDate}
               />
             );
             return isHero ? (

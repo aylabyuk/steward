@@ -300,6 +300,22 @@
   }
 }
 
+/* One-shot bordeaux ring flash. Played on the Sunday card matching
+   `?focus=<date>` when the bishop arrives from the meeting program
+   form so the eye lands on the right card. Pairs with a smooth
+   scrollIntoView in the card's mount effect. */
+@keyframes scheduleFocusFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 46, 42, 0);
+  }
+  15% {
+    box-shadow: 0 0 0 6px rgba(139, 46, 42, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 46, 42, 0);
+  }
+}
+
 /* --------------------------------------------------------------------
    Native-stack page transitions. The body wrapper inside <AppShell>
    carries `view-transition-name: shell-content`, so route swaps

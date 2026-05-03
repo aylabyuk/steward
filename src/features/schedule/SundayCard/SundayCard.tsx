@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { MeetingType, NonMeetingSunday, SacramentMeeting } from "@/lib/types";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
@@ -29,6 +30,11 @@ interface Props {
   fallbackType: MeetingType;
   leadTimeDays: number;
   nonMeetingSundays: readonly NonMeetingSunday[];
+  /** Set when this card matches `?focus=<date>` on the schedule
+   *  route. Triggers a smooth scroll-into-view + a one-shot ring
+   *  flash so the bishop's eye lands on the right card after
+   *  arriving from the meeting program form. */
+  focused?: boolean;
 }
 
 export function SundayCard({
@@ -37,6 +43,7 @@ export function SundayCard({
   fallbackType,
   leadTimeDays,
   nonMeetingSundays,
+  focused = false,
 }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const type = meeting?.meetingType ?? fallbackType;
@@ -45,6 +52,19 @@ export function SundayCard({
   const { data: speakers } = useSpeakers(date);
   const severity = leadTimeSeverity(new Date(), date, leadTimeDays);
   const hasConfirmedSpeaker = speakers.some((s) => s.data.status === "confirmed");
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!focused) return;
+    const el = ref.current;
+    if (!el) return;
+    // Defer one frame so layout/data has settled before we scroll —
+    // matches the pattern used by useScrollRestore for the same reason.
+    const id = requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [focused]);
 
   if (cancelled) {
     return (
@@ -58,10 +78,13 @@ export function SundayCard({
   return (
     <div className="relative h-full">
       <article
+        ref={ref}
+        id={`sunday-${date}`}
         className={cn(
           "group relative flex h-full flex-col rounded-lg border border-border shadow-elev-1",
           CARD_BG[kind.variant],
         )}
+        style={focused ? { animation: "scheduleFocusFlash 1.6s ease-out 1" } : undefined}
       >
         <SundayCardHeader
           date={date}

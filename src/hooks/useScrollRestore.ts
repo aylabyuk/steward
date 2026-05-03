@@ -9,9 +9,16 @@ import { useEffect } from "react";
  *  Picks the right scroll source automatically: AppShell's inner
  *  scroll container on desktop (marked with `data-app-scroll`),
  *  falling back to the window when no container is present (mobile,
- *  or modal pages with their own layout). */
-export function useScrollRestore(key: string): void {
+ *  or modal pages with their own layout).
+ *
+ *  Pass `{ enabled: false }` to fully no-op (no restore, no save) —
+ *  used by routes that drive scroll themselves on mount (e.g.
+ *  schedule's `?focus=<date>` flash) so the saved position isn't
+ *  poisoned by the deliberate scroll. */
+export function useScrollRestore(key: string, options?: { enabled?: boolean }): void {
+  const enabled = options?.enabled ?? true;
   useEffect(() => {
+    if (!enabled) return;
     const storageKey = `scroll-restore:${key}`;
     const saved = sessionStorage.getItem(storageKey);
     const target = pickScrollTarget();
@@ -29,7 +36,7 @@ export function useScrollRestore(key: string): void {
     return () => {
       sessionStorage.setItem(storageKey, String(getScroll(target)));
     };
-  }, [key]);
+  }, [key, enabled]);
 }
 
 type Target = HTMLElement | Window;
