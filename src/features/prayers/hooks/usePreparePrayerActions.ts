@@ -113,6 +113,21 @@ export function usePreparePrayerActions(args: Args) {
     });
   }
 
+  /** Persist the in-flight letter as a per-prayer-giver override
+   *  without triggering a send. Mirrors the speaker-side `save`. */
+  async function save(): Promise<void> {
+    form.setBusy(true);
+    form.setError(null);
+    try {
+      await form.persistOverrides();
+    } catch (e) {
+      form.setError(friendlyWriteError(e));
+      throw e;
+    } finally {
+      form.setBusy(false);
+    }
+  }
+
   return {
     markInvited: () =>
       void runAction(() =>
@@ -125,5 +140,6 @@ export function usePreparePrayerActions(args: Args) {
       void runAction(() => sendVia(["email"], email ? { email } : undefined)),
     sendSms: (phone?: string) =>
       void runAction(() => sendVia(["sms"], phone ? { phone } : undefined)),
+    save,
   };
 }

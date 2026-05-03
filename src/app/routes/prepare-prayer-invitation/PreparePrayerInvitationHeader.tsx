@@ -1,4 +1,4 @@
-import { RemoveIcon } from "@/features/schedule/SpeakerInviteIcons";
+import { HeaderCloseButton } from "@/components/ui/HeaderCloseButton";
 import type { PrayerRole } from "@/lib/types";
 import { PrepareInvitationActionBar } from "@/features/templates/PrepareInvitationActionBar";
 
@@ -11,11 +11,15 @@ interface Props {
   hasEmail: boolean;
   busy: boolean;
   hasOverride: boolean;
+  /** True when the editor state has unsaved edits — gates Save +
+   *  Share/Download in the action bar. */
+  dirty: boolean;
   /** Meeting date (ISO YYYY-MM-DD) — threaded to the action bar's
    *  share path so the generated PDF filename includes it. */
   assignedDate: string;
   onCancel: () => void;
   onRevert: () => void;
+  onSave: () => void;
   onSend: (email: string) => void;
   onSendSms: (phone: string) => void;
 }
@@ -29,11 +33,13 @@ export function PreparePrayerInvitationHeader(props: Props) {
   const actionBarProps = {
     busy: props.busy,
     hasOverride: props.hasOverride,
+    dirty: props.dirty,
     speakerName: props.speakerName,
     speakerEmail: props.speakerEmail,
     speakerPhone: props.speakerPhone,
     assignedDate: props.assignedDate,
     onRevert: props.onRevert,
+    onSave: props.onSave,
     onSend: props.onSend,
     onSendSms: props.onSendSms,
   };
@@ -54,25 +60,15 @@ export function PreparePrayerInvitationHeader(props: Props) {
         <div className="hidden lg:block shrink-0">
           <PrepareInvitationActionBar {...actionBarProps} />
         </div>
-        <CancelButton onClick={props.onCancel} />
+        <HeaderCloseButton
+          onClick={props.onCancel}
+          label="Cancel"
+          ariaLabel="Cancel and return to schedule"
+        />
       </div>
       <div className="lg:hidden flex justify-center">
         <PrepareInvitationActionBar {...actionBarProps} />
       </div>
     </header>
-  );
-}
-
-function CancelButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Cancel and return to schedule"
-      title="Cancel"
-      className="shrink-0 -mr-1 rounded-md p-2 text-walnut-3 hover:text-bordeaux hover:bg-parchment-2 focus:outline-none focus:ring-2 focus:ring-bordeaux/30"
-    >
-      <RemoveIcon />
-    </button>
   );
 }

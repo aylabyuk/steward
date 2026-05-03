@@ -1,10 +1,10 @@
 import type { SacramentMeeting, Speaker } from "@/lib/types";
 import type { WithId } from "@/hooks/_sub";
-import { SpeakerRow } from "./SpeakerRow";
-import { PrayerRow } from "./PrayerRow";
+import { AddAnotherSpeakerRow } from "./AddAnotherSpeakerRow";
 import { EmptyRosterRow } from "./EmptyRosterRow";
-
-const SPEAKER_SLOT_COUNT = 4;
+import { PrayerRow } from "./PrayerRow";
+import { SpeakerRow } from "./SpeakerRow";
+import { canAddAnotherSpeaker, speakerPlaceholderCount } from "./utils/speakerSlots";
 
 interface Props {
   date: string;
@@ -12,14 +12,15 @@ interface Props {
   speakers: WithId<Speaker>[];
 }
 
-/** Mobile body for a regular Sunday. Always renders 4 speaker slots
- *  + 2 prayer slots — empty slots fall back to "Not assigned"
- *  placeholder rows. Mirrors the desktop card body's vertical rhythm
- *  so the list reads as a consistent table without requiring the
- *  user to count present-vs-missing. The kebab menu in the date row
- *  is the entry point for "Plan speakers" / "Plan prayers" actions. */
+/** Mobile body for a regular Sunday. Speaker rows render dynamically
+ *  (floor of 2 placeholder rows on a fresh card, ceiling of 4 visible
+ *  before the explicit "Add another speaker" affordance hides) so a
+ *  partially-filled meeting doesn't push prayers off the visible
+ *  list with empty noise. Prayer rows always render — bishops use
+ *  them as the implicit footer. */
 export function MobileSundayBody({ date, meeting, speakers }: Props) {
-  const placeholderCount = Math.max(0, SPEAKER_SLOT_COUNT - speakers.length);
+  const placeholderCount = speakerPlaceholderCount(speakers.length);
+  const showAddAnother = canAddAnotherSpeaker(speakers.length);
   return (
     <div className="px-4 pb-3">
       <ul className="list-none m-0 p-0">
@@ -37,6 +38,7 @@ export function MobileSundayBody({ date, meeting, speakers }: Props) {
             />
           );
         })}
+        {showAddAnother && <AddAnotherSpeakerRow date={date} />}
         <PrayerRow
           role="opening"
           date={date}

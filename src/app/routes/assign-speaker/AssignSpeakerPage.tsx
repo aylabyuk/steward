@@ -122,15 +122,13 @@ export function AssignSpeakerPage() {
 
   return (
     <main className="min-h-dvh bg-parchment flex flex-col">
-      <AssignSlotHeader
-        eyebrow={isNew ? "Assign speaker" : "Edit speaker"}
-        title={isNew ? "New speaker" : (existing?.data.name ?? "Speaker")}
-        subtitle={date ? formatShortSunday(date) : undefined}
-      />
       <AssignSlotForm
         seed={seed}
         busy={busy}
         error={error}
+        eyebrow={isNew ? "Assign speaker" : "Edit speaker"}
+        title={isNew ? "New speaker" : (existing?.data.name ?? "Speaker")}
+        subtitle={date ? formatShortSunday(date) : undefined}
         onSubmit={onSubmit}
         {...(existing
           ? {

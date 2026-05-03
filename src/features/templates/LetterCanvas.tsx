@@ -27,6 +27,12 @@ interface Props {
    *  inside the settings page. The landing page + PDF paths skip this
    *  so the letter renders at true letter-sheet proportions. */
   compact?: boolean;
+  /** Reference-only metadata stamp rendered in the page's bottom
+   *  margin, visually outside the letter card. Captured in PDF export
+   *  so the holder of a printed copy knows which version they have.
+   *  Omitted on live preview / embed paths so the on-screen paper
+   *  stays clean while editing. */
+  versionStamp?: { label: "Saved" | "Sent"; text: string };
 }
 
 /**
@@ -44,10 +50,12 @@ export function LetterCanvas({
   footerMarkdown,
   editorStateJson,
   compact,
+  versionStamp,
 }: Props) {
   const rendered = editorStateJson ? renderLetterState(editorStateJson, { assignedDate }) : null;
   return (
     <div
+      data-letter-page
       className={cn(
         // Typography rules mirror the editor's contenteditable
         // (`prose prose-sm font-serif text-[16.5px] leading-[1.65]
@@ -90,6 +98,32 @@ export function LetterCanvas({
           </div>
         </>
       )}
+
+      {versionStamp && <VersionStamp stamp={versionStamp} compact={compact === true} />}
+    </div>
+  );
+}
+
+/** Reference-only metadata, sitting in the page's bottom margin so
+ *  the holder of a printed copy can identify which version they have.
+ *  Visually + structurally separate from the letter content above. */
+function VersionStamp({
+  stamp,
+  compact,
+}: {
+  stamp: { label: "Saved" | "Sent"; text: string };
+  compact: boolean;
+}) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute left-0 right-0 text-center",
+        "font-mono text-[8.5px] tracking-[0.18em] uppercase text-walnut-3/60",
+        compact ? "bottom-2" : "bottom-[0.3in]",
+      )}
+    >
+      {stamp.label} {stamp.text}
     </div>
   );
 }

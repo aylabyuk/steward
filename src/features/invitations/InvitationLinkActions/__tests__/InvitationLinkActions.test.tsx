@@ -57,7 +57,7 @@ describe("InvitationLinkActions", () => {
   it("Resend menu item shows both channels when invitation has email + phone", () => {
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
     openMenu();
-    expect(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Resend Invite via EMAIL + SMS" })).toBeTruthy();
   });
 
   it("renders no overflow items when no delivery channel is available", () => {
@@ -70,7 +70,7 @@ describe("InvitationLinkActions", () => {
   it("selecting Resend opens a confirmation dialog instead of firing immediately", () => {
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
     openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend Invite via EMAIL + SMS" }));
     expect(screen.getByRole("dialog", { name: "Resend invitation link?" })).toBeTruthy();
     expect(mockFn).not.toHaveBeenCalled();
   });
@@ -78,7 +78,7 @@ describe("InvitationLinkActions", () => {
   it("Cancel on the confirm dialog does not fire the callable", () => {
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
     openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend Invite via EMAIL + SMS" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(mockFn).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -92,8 +92,8 @@ describe("InvitationLinkActions", () => {
     const inv = mkInvitation({ speakerEmail: undefined });
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={inv} />);
     openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via SMS" }));
-    fireEvent.click(screen.getByRole("button", { name: "Resend via SMS" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend Invite via SMS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resend Invite via SMS" }));
     await waitFor(() => expect(screen.getByText("Delivery failed.")).toBeTruthy());
   });
 
@@ -107,8 +107,8 @@ describe("InvitationLinkActions", () => {
     });
     render(<InvitationLinkActions wardId="w1" invitationId="i1" invitation={mkInvitation()} />);
     openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Resend via EMAIL + SMS" }));
-    fireEvent.click(screen.getByRole("button", { name: "Resend via EMAIL + SMS" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Resend Invite via EMAIL + SMS" }));
+    fireEvent.click(screen.getByRole("button", { name: "Resend Invite via EMAIL + SMS" }));
     await waitFor(() => expect(screen.getByText("Sent via SMS")).toBeTruthy());
   });
 });
