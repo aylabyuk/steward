@@ -6,7 +6,7 @@ export { onCommentCreate } from "./onCommentCreate.js";
 export { onMeetingWrite } from "./onMeetingWrite.js";
 export { onInvitationWrite } from "./onInvitationWrite.js";
 export { drainNotificationQueue } from "./drainNotificationQueue.js";
-export { scheduledNudges } from "./scheduledNudges.js";
+export { planningOpenNotification } from "./planningOpenNotification.js";
 export { sendSpeakerInvitation } from "./sendSpeakerInvitation.js";
 export { issueSpeakerSession } from "./issueSpeakerSession.js";
 export { onTwilioWebhook } from "./onTwilioWebhook.js";
