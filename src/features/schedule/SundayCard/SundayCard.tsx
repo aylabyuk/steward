@@ -35,11 +35,6 @@ interface Props {
    *  flash so the bishop's eye lands on the right card after
    *  arriving from the meeting program form. */
   focused?: boolean;
-  /** False when this Sunday isn't the upcoming one — the card body
-   *  becomes inert (interactive controls disabled), the date stops
-   *  linking out, and the type menu locks. Keeps the card visible so
-   *  leadership sees what's coming, without inviting edits. */
-  editable?: boolean;
 }
 
 export function SundayCard({
@@ -49,7 +44,6 @@ export function SundayCard({
   leadTimeDays,
   nonMeetingSundays,
   focused = false,
-  editable = true,
 }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const type = meeting?.meetingType ?? fallbackType;
@@ -101,25 +95,19 @@ export function SundayCard({
           {...(kind.badge ? { badge: kind.badge } : {})}
           variant={kind.variant}
           locked={hasConfirmedSpeaker}
-          editable={editable}
         />
 
-        <div
-          className={cn(!editable && "pointer-events-none opacity-80 select-none")}
-          aria-disabled={!editable}
-        >
-          {kind.isSpecial ? (
-            <SundayCardSpecial
-              variant={kind.variant}
-              stampLabel={kind.stampLabel}
-              description={kind.description}
-              date={date}
-              meeting={meeting ?? null}
-            />
-          ) : (
-            <SundayCardBody speakers={speakers} date={date} meeting={meeting ?? null} />
-          )}
-        </div>
+        {kind.isSpecial ? (
+          <SundayCardSpecial
+            variant={kind.variant}
+            stampLabel={kind.stampLabel}
+            description={kind.description}
+            date={date}
+            meeting={meeting ?? null}
+          />
+        ) : (
+          <SundayCardBody speakers={speakers} date={date} meeting={meeting ?? null} />
+        )}
       </article>
     </div>
   );

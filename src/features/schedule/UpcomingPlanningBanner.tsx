@@ -6,24 +6,25 @@ interface Props {
   upcoming: string;
 }
 
-/** Schedule-page banner that communicates the one-Sunday-at-a-time rule.
- *  Sits under PageHead. Click-through opens the upcoming Sunday's
- *  editor. Keep this short — leadership reads schedule-page chrome
- *  many times a week. */
+/** Schedule-page banner that communicates the one-Sunday-at-a-time
+ *  rule for the sacrament meeting *program* (hymns, ward business,
+ *  leaders, sacrament logistics). Speakers and prayers can still be
+ *  planned for any Sunday on the schedule — that's the whole point
+ *  of having a schedule. Sits under PageHead. */
 export function UpcomingPlanningBanner({ upcoming }: Props) {
   return (
     <div className="my-5 flex flex-wrap items-center gap-3 rounded-xl border border-bordeaux-soft bg-[linear-gradient(180deg,rgba(139,46,42,0.06),rgba(139,46,42,0.01))] px-4 py-3">
       <CalendarIcon />
       <p className="font-sans text-[13.5px] text-walnut flex-1 min-w-0 leading-snug">
-        Planning is open for{" "}
-        <strong className="font-semibold">{formatShortSunday(upcoming)}</strong>. Other Sundays are
-        view-only — they open after the current week wraps up.
+        Sacrament meeting program planning is open for{" "}
+        <strong className="font-semibold">{formatShortSunday(upcoming)}</strong>. Speakers and
+        prayers can still be planned ahead from any card on the schedule.
       </p>
       <Link
         to={`/week/${upcoming}`}
         className="font-sans text-[13px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors whitespace-nowrap"
       >
-        Plan now →
+        Plan program →
       </Link>
     </div>
   );

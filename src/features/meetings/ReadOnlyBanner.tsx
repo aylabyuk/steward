@@ -9,23 +9,29 @@ interface Props {
 }
 
 /** Banner shown at the top of `WeekEditor` when the loaded date isn't
- *  the upcoming Sunday. Past meetings stay viewable for archive (printable
- *  copies, history) and future Sundays are previewable, but neither can
- *  be edited. The link routes back to the active planning surface. */
+ *  the upcoming Sunday. The sacrament meeting program form is locked
+ *  for non-upcoming weeks — past meetings stay viewable for archive
+ *  (printable copies, history), and future Sundays are previewable.
+ *  Speakers and prayers stay plannable from the schedule for any
+ *  Sunday, so the link points back there. */
 export function ReadOnlyBanner({ viewingDate, upcoming }: Props) {
   const isPast = viewingDate < upcoming;
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-info-soft bg-[linear-gradient(180deg,rgba(60,85,100,0.08),rgba(60,85,100,0.02))] px-4 py-3">
       <LockIcon />
       <p className="font-sans text-[13.5px] text-walnut flex-1 min-w-0 leading-snug">
-        {isPast ? "Past meeting — view only." : "This Sunday isn't open for planning yet."} Planning
-        is open for <strong className="font-semibold">{formatShortSunday(upcoming)}</strong>.
+        {isPast
+          ? "Past meeting — program is view-only."
+          : "Program planning isn't open for this Sunday yet."}{" "}
+        Sacrament meeting program planning is open for{" "}
+        <strong className="font-semibold">{formatShortSunday(upcoming)}</strong>. Speakers and
+        prayers can still be planned from the schedule.
       </p>
       <Link
-        to={`/week/${upcoming}`}
+        to={`/schedule?focus=${viewingDate}`}
         className="font-sans text-[13px] font-semibold px-3 py-1.5 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors whitespace-nowrap"
       >
-        Go to current week
+        Back to schedule
       </Link>
     </div>
   );

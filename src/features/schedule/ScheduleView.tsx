@@ -100,7 +100,6 @@ export function ScheduleView() {
               leadTimeDays={leadTimeDays}
               nonMeetingSundays={nonMeeting}
               focusDate={focusDate}
-              upcoming={upcoming}
             />
             {mobileHorizon < MOBILE_MAX_WEEKS && (
               <div
@@ -133,7 +132,6 @@ export function ScheduleView() {
                     leadTimeDays={leadTimeDays}
                     nonMeetingSundays={nonMeeting}
                     focused={sunday.date === focusDate}
-                    editable={sunday.date === upcoming}
                   />
                 ))}
               </QuarterSection>

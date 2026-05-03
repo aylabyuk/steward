@@ -11,19 +11,15 @@ const mockMeeting = {
   announcements: "",
 } as unknown as SacramentMeeting;
 
-function renderCard(
-  meeting: SacramentMeeting | null = mockMeeting,
-  overrides: { editable?: boolean; date?: string } = {},
-) {
+function renderCard(meeting: SacramentMeeting | null = mockMeeting) {
   return render(
     <BrowserRouter>
       <SundayCard
-        date={overrides.date ?? "2026-04-05"}
+        date="2026-04-05"
         meeting={meeting}
         fallbackType="regular"
         leadTimeDays={14}
         nonMeetingSundays={[]}
-        {...(overrides.editable !== undefined ? { editable: overrides.editable } : {})}
       />
     </BrowserRouter>,
   );
@@ -76,31 +72,5 @@ describe("SundayCard", () => {
     // noise.
     expect(screen.getAllByText("Assign Speaker")).toHaveLength(2);
     expect(screen.queryByText("Add another speaker")).toBeNull();
-  });
-
-  it("renders the date as a link when editable", () => {
-    const { container } = renderCard(mockMeeting, { editable: true });
-    expect(container.querySelector('a[href="/week/2026-04-05"]')).not.toBeNull();
-  });
-
-  it("renders the date as plain text and shows an Opens hint when not editable", () => {
-    // 2026-04-12 is a Sunday — the Monday-before is 2026-04-06, which
-    // toLocaleDateString prints as "Mon, Apr 6" in en-US.
-    const { container } = renderCard(mockMeeting, {
-      editable: false,
-      date: "2026-04-12",
-    });
-    expect(container.querySelector('a[href="/week/2026-04-12"]')).toBeNull();
-    expect(screen.getByText(/Opens Mon, Apr 6/)).toBeInTheDocument();
-  });
-
-  it("disables interactive controls when not editable (aria-disabled wrapper around the body)", () => {
-    const { container } = renderCard(mockMeeting, {
-      editable: false,
-      date: "2026-04-12",
-    });
-    const bodyWrapper = container.querySelector('[aria-disabled="true"]');
-    expect(bodyWrapper).not.toBeNull();
-    expect(bodyWrapper?.className).toMatch(/pointer-events-none/);
   });
 });

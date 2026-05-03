@@ -68,22 +68,6 @@ export function formatCountdown(iso: string): string {
   return `In ${weekPart} and ${extra} day${extra > 1 ? "s" : ""}`;
 }
 
-/** "Opens Mon, Apr 6" — the Monday before a future Sunday's date.
- *  Surfaces when a Sunday card on the schedule is read-only because
- *  it isn't the upcoming Sunday yet. The Monday-after-the-prior-Sunday
- *  is when the planning window for that Sunday opens. */
-export function formatOpensOn(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  const opens = new Date(y, m - 1, d - 6);
-  const label = opens.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-  return `Opens ${label}`;
-}
-
 /** Compact countdown ("2w 3d") for mobile, where the verbose form
  *  would wrap the header. Same precision, fewer pixels. */
 export function formatCountdownCompact(iso: string): string {
