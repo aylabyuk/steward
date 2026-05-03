@@ -12,6 +12,9 @@ interface Props {
   /** Date matching `?focus=<date>` on the schedule route. The block
    *  whose date matches scroll-flashes itself on mount. */
   focusDate?: string | null;
+  /** ISO of the upcoming Sunday — only that date renders editable;
+   *  every other card is read-only. */
+  upcoming: string;
 }
 
 /** Mobile schedule list. The first card across all month groups gets
@@ -24,6 +27,7 @@ export function MobileScheduleList({
   leadTimeDays,
   nonMeetingSundays,
   focusDate = null,
+  upcoming,
 }: Props) {
   const firstDate = monthGroups[0]?.sundays[0]?.date ?? null;
   const [heroEl, setHeroEl] = useState<HTMLElement | null>(null);
@@ -58,6 +62,7 @@ export function MobileScheduleList({
                 nonMeetingSundays={nonMeetingSundays}
                 isHero={isHero}
                 focused={sunday.date === focusDate}
+                editable={sunday.date === upcoming}
               />
             );
             return isHero ? (

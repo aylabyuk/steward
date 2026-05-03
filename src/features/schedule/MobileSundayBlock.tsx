@@ -35,6 +35,11 @@ interface Props {
    *  so the bishop's eye lands on the right card after arriving from
    *  the meeting program form. */
   focused?: boolean;
+  /** False when this Sunday isn't the upcoming one — the body becomes
+   *  inert (interactive controls disabled), the date stops linking
+   *  out, and the type menu locks. Keeps the card visible so
+   *  leadership sees what's coming, without inviting edits. */
+  editable?: boolean;
 }
 
 export function MobileSundayBlock({
@@ -45,6 +50,7 @@ export function MobileSundayBlock({
   nonMeetingSundays,
   isHero = false,
   focused = false,
+  editable = true,
 }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId) ?? "";
   const type = meeting?.meetingType ?? fallbackType;
@@ -88,6 +94,7 @@ export function MobileSundayBlock({
         wardId={wardId}
         nonMeetingSundays={nonMeetingSundays}
         isHero={isHero}
+        editable={editable}
       />
 
       {isHero && !cancelled && (
@@ -99,14 +106,19 @@ export function MobileSundayBlock({
         />
       )}
 
-      <Body
-        cancelled={cancelled}
-        cancelReason={meeting?.cancellation?.reason}
-        kind={kind}
-        date={date}
-        meeting={meeting ?? null}
-        speakers={speakers}
-      />
+      <div
+        className={cn(!editable && "pointer-events-none opacity-80 select-none")}
+        aria-disabled={!editable}
+      >
+        <Body
+          cancelled={cancelled}
+          cancelReason={meeting?.cancellation?.reason}
+          kind={kind}
+          date={date}
+          meeting={meeting ?? null}
+          speakers={speakers}
+        />
+      </div>
     </article>
   );
 }

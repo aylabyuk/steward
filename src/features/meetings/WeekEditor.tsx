@@ -6,6 +6,8 @@ import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCommentReadStore } from "@/stores/commentReadStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { getUpcomingSundayIso } from "@/lib/dates";
+import { cn } from "@/lib/cn";
 import { CancellationBanner } from "./CancellationBanner";
 import { defaultMeetingType, ensureMeetingDoc } from "./utils/ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
@@ -17,6 +19,7 @@ import { ProgramSaveBar } from "./program/ProgramSaveBar";
 import { ProgramSections } from "./program/ProgramSections";
 import { ProgramSide } from "./program/ProgramSide";
 import { StatusLegend } from "./program/StatusLegend";
+import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { buildRailSections } from "./program/utils/railSections";
 
 interface Props {
@@ -36,11 +39,20 @@ export function WeekEditor({ date }: Props) {
   }, [wardId, date, markRead]);
 
   const settingsLoaded = Boolean(settings.data);
+  const timezone =
+    settings.data?.settings.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const upcoming = getUpcomingSundayIso(new Date(), timezone);
+  const editable = date === upcoming;
+
   useEffect(() => {
-    if (!wardId || !settingsLoaded) return;
+    // Don't seed a meeting doc for a Sunday that isn't currently open
+    // for planning — past meetings shouldn't be auto-created when a
+    // bishop deep-links in for archive review, and future Sundays open
+    // when their week arrives.
+    if (!wardId || !settingsLoaded || !editable) return;
     const nonMeetingSundays = settings.data?.settings.nonMeetingSundays ?? [];
     void ensureMeetingDoc(wardId, date, nonMeetingSundays);
-  }, [wardId, date, settingsLoaded, settings.data]);
+  }, [wardId, date, settingsLoaded, editable, settings.data]);
 
   if (!wardId) return null;
 
@@ -61,6 +73,7 @@ export function WeekEditor({ date }: Props) {
           <div>
             <ProgramHead date={date} type={type} rightSlot={<OverflowMenu items={menuItems} />} />
 
+            {!editable && <ReadOnlyBanner viewingDate={date} upcoming={upcoming} />}
             <CancellationBanner wardId={wardId} date={date} cancellation={cancellation} />
 
             {isNonMeeting ? (
@@ -73,14 +86,19 @@ export function WeekEditor({ date }: Props) {
                 <div className="flex justify-center mb-4 lg:hidden">
                   <StatusLegend />
                 </div>
-                <ProgramSections
-                  wardId={wardId}
-                  date={date}
-                  meeting={meeting.data}
-                  type={type}
-                  speakers={speakers.data}
-                  nonMeetingSundays={nonMeeting}
-                />
+                <div
+                  className={cn(!editable && "pointer-events-none opacity-80 select-none")}
+                  aria-disabled={!editable}
+                >
+                  <ProgramSections
+                    wardId={wardId}
+                    date={date}
+                    meeting={meeting.data}
+                    type={type}
+                    speakers={speakers.data}
+                    nonMeetingSundays={nonMeeting}
+                  />
+                </div>
               </>
             )}
           </div>
@@ -88,7 +106,7 @@ export function WeekEditor({ date }: Props) {
           {!isNonMeeting && <ProgramSide wardId={wardId} date={date} rail={rail} />}
         </div>
 
-        {!isNonMeeting && (
+        {!isNonMeeting && editable && (
           <ProgramSaveBar
             date={date}
             ready={report.ready}

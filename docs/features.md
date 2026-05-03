@@ -15,9 +15,18 @@ The whole point: avoid last-minute scrambles. Speakers are planned ahead, not we
 
 **Minimum lead time** (ward setting, default 14 days). Not hard-blocked — last-minute substitutes are possible — just warned.
 
+### Planning is restricted to the upcoming Sunday
+
+Editing only happens for the **upcoming Sunday** — the soonest Sunday that hasn't ended yet in the ward's local timezone. Everything else stays visible (so leadership sees what's coming) but is read-only.
+
+- The schedule page surfaces this with a banner at the top: *"Planning is open for {Sunday}. Other Sundays are view-only."* Future cards drop their date link, switch their countdown to *"Opens Mon, {date}"*, and disable inline assignment / type controls.
+- Today's Sunday stays editable until local midnight; the next Sunday opens at 00:00 local Monday. The Monday-morning planning-OPEN push (separate cron, see [notifications.md](notifications.md)) is the prompt to start.
+- The week editor (`/week/:date`) renders a read-only banner and inert program sections when the loaded date isn't the upcoming Sunday. Past meetings stay viewable for archive (printable copies still resolve via the readiness gate); future Sundays are previewable.
+- The helper that drives this is `getUpcomingSundayIso(now, tz)` in [src/lib/dates.ts](../src/lib/dates.ts) — single source of truth for both the schedule-page chrome and the editor's gate.
+
 **Workflow**:
-1. Open Speaker Schedule → cards for next N Sundays.
-2. Add speakers (name, email, topic) per Sunday. Each becomes a doc under `meetings/{date}/speakers/{id}`.
+1. Open Speaker Schedule → cards for next N Sundays. Only the upcoming card is interactive.
+2. Add speakers (name, email, topic) for the upcoming Sunday. Each becomes a doc under `meetings/{date}/speakers/{id}`.
 3. Send invitations from the schedule view. Status moves `draft` → `invite_emailed` / `invite_printed` → `accepted` / `declined`.
 4. Decline → slot empty → pick someone else, still with lead time.
 5. Week-of: Weekly Program view has speakers ready; bishopric fills remaining non-speaker fields.
