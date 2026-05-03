@@ -3,6 +3,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { OverflowMenu, type OverflowMenuItem } from "@/components/ui/OverflowMenu";
 import type { SpeakerInvitation } from "@/lib/types";
 import { callRotateInvitationLink } from "../utils/invitationsCallable";
+import { useDownloadSentLetter } from "./useDownloadSentLetter";
 
 interface Props {
   wardId: string;
@@ -32,6 +33,8 @@ export function InvitationLinkActions({
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [confirmOpen, setConfirmOpen] = useState(false);
   const deliverable = availableChannels(invitation);
+  const downloadSent = useDownloadSentLetter(invitation, invitationId);
+  const canDownloadSent = Boolean(invitation.editorStateJson || invitation.bodyMarkdown);
 
   useEffect(() => {
     if (status.kind !== "sent") return;
@@ -63,8 +66,14 @@ export function InvitationLinkActions({
   const items: OverflowMenuItem[] = [];
   if (deliverable.length > 0) {
     items.push({
-      label: `Resend via ${formatChannels(deliverable)}`,
+      label: `Resend Invite via ${formatChannels(deliverable)}`,
       onSelect: () => setConfirmOpen(true),
+    });
+  }
+  if (canDownloadSent) {
+    items.push({
+      label: downloadSent.busy ? "Preparing…" : "Download Sent Invitation Letter",
+      onSelect: () => void downloadSent.trigger().catch(() => {}),
     });
   }
 
@@ -88,7 +97,7 @@ export function InvitationLinkActions({
         open={confirmOpen}
         title="Resend invitation link?"
         body={`A new invitation link will be delivered to ${invitation.speakerName} via ${formatChannels(deliverable)}. Any earlier link is invalidated.`}
-        confirmLabel={`Resend via ${formatChannels(deliverable)}`}
+        confirmLabel={`Resend Invite via ${formatChannels(deliverable)}`}
         busy={status.kind === "working"}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
@@ -96,6 +105,7 @@ export function InvitationLinkActions({
           void resend();
         }}
       />
+      {downloadSent.portal}
     </div>
   );
 }

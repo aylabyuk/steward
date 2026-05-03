@@ -28,11 +28,14 @@ export async function shareLetterPdf(
       if (err instanceof DOMException && err.name === "AbortError") return "shared";
     }
   }
-  download(file, filename);
+  downloadFile(file, filename);
   return "downloaded";
 }
 
-function download(file: File, filename: string): void {
+/** Triggers a plain browser download. Exported so callers that
+ *  explicitly want a download (desktop "Download letter" affordance)
+ *  can bypass the share-sheet round-trip in `shareLetterPdf`. */
+export function downloadFile(file: File, filename: string): void {
   const url = URL.createObjectURL(file);
   const a = document.createElement("a");
   a.href = url;

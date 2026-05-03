@@ -40,6 +40,7 @@ export function usePreparePrayerInvitation(args: Args) {
   });
   const [letterStateJson, setLetterStateJson] = useState<string | null>(null);
   const [letterHasOverride, setLetterHasOverride] = useState(false);
+  const [savedAt, setSavedAt] = useState<unknown>(null);
   const [hydrated, setHydrated] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export function usePreparePrayerInvitation(args: Args) {
       setInitialMarkdown(md);
       setLetterStateJson(json);
       setLetterHasOverride(Boolean(override));
+      setSavedAt(override?.updatedAt ?? null);
       setError(null);
       setHydrated(true);
     })();
@@ -103,6 +105,10 @@ export function usePreparePrayerInvitation(args: Args) {
     if (!letterStateJson) return;
     await savePrayerLetterOverride(wardId, date, role, { editorStateJson: letterStateJson });
     setLetterHasOverride(true);
+    // Mirror the speaker hook: advance the dirty baseline + the
+    // version-stamp timestamp on a successful save.
+    setInitialJson(letterStateJson);
+    setSavedAt(new Date());
   }
 
   function revertLetterToWardDefault() {
@@ -112,6 +118,7 @@ export function usePreparePrayerInvitation(args: Args) {
       bodyMarkdown: letterTemplate?.bodyMarkdown ?? DEFAULT_PRAYER_LETTER_BODY,
       footerMarkdown: letterTemplate?.footerMarkdown ?? DEFAULT_PRAYER_LETTER_FOOTER,
     });
+    setSavedAt(null);
     setResetKey((k) => k + 1);
   }
 
@@ -129,6 +136,8 @@ export function usePreparePrayerInvitation(args: Args) {
     }
   }
 
+  const dirty = letterStateJson !== null && letterStateJson !== initialJson;
+
   return {
     initialJson,
     initialMarkdown,
@@ -138,6 +147,8 @@ export function usePreparePrayerInvitation(args: Args) {
     letterBody,
     letterFooter,
     letterHasOverride,
+    savedAt,
+    dirty,
     hydrated,
     resetKey,
     error,

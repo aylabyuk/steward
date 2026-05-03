@@ -126,6 +126,22 @@ export function usePrepareInvitationActions(args: Args) {
     await updateSpeaker(args.wardId, args.date, args.speakerId, { status: "invited" });
   }
 
+  /** Save the in-flight letter as a per-speaker override without
+   *  triggering a send. Surfaces busy/error through the same form
+   *  channels as Send so the toolbar disables consistently. */
+  async function save(): Promise<void> {
+    form.setBusy(true);
+    form.setError(null);
+    try {
+      await form.persistOverrides();
+    } catch (e) {
+      form.setError(friendlyWriteError(e));
+      throw e;
+    } finally {
+      form.setBusy(false);
+    }
+  }
+
   return {
     markInvited: () =>
       void runAction(() =>
@@ -135,5 +151,6 @@ export function usePrepareInvitationActions(args: Args) {
       void runAction(() => sendVia(["email"], email ? { email } : undefined)),
     sendSms: (phone?: string) =>
       void runAction(() => sendVia(["sms"], phone ? { phone } : undefined)),
+    save,
   };
 }

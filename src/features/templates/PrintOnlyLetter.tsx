@@ -9,6 +9,9 @@ interface Props {
   bodyMarkdown: string;
   footerMarkdown: string;
   editorStateJson?: string;
+  /** Reference-only metadata stamp captured by the PDF export but
+   *  hidden from the live editor preview. */
+  versionStamp?: { label: "Saved" | "Sent"; text: string };
 }
 
 /** Portals a print-only `<LetterCanvas>` into `document.body` so the

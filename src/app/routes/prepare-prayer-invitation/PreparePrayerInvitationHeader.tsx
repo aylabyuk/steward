@@ -11,11 +11,15 @@ interface Props {
   hasEmail: boolean;
   busy: boolean;
   hasOverride: boolean;
+  /** True when the editor state has unsaved edits — gates Save +
+   *  Share/Download in the action bar. */
+  dirty: boolean;
   /** Meeting date (ISO YYYY-MM-DD) — threaded to the action bar's
    *  share path so the generated PDF filename includes it. */
   assignedDate: string;
   onCancel: () => void;
   onRevert: () => void;
+  onSave: () => void;
   onSend: (email: string) => void;
   onSendSms: (phone: string) => void;
 }
@@ -29,11 +33,13 @@ export function PreparePrayerInvitationHeader(props: Props) {
   const actionBarProps = {
     busy: props.busy,
     hasOverride: props.hasOverride,
+    dirty: props.dirty,
     speakerName: props.speakerName,
     speakerEmail: props.speakerEmail,
     speakerPhone: props.speakerPhone,
     assignedDate: props.assignedDate,
     onRevert: props.onRevert,
+    onSave: props.onSave,
     onSend: props.onSend,
     onSendSms: props.onSendSms,
   };
