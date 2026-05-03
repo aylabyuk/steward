@@ -2,9 +2,9 @@ import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { reportSaved, reportSaveError, reportSaving } from "@/stores/saveStatusStore";
 import type { NonMeetingSunday, SacramentMeeting } from "@/lib/types";
-import { writeMeetingPatch } from "./approvals";
 import { ensureMeetingDoc } from "./ensureMeetingDoc";
 import { appendHistoryEvent, currentActor } from "./history";
+import { writeMeetingPatch } from "./writeMeetingPatch";
 
 export async function updateMeetingField(
   wardId: string,
@@ -31,8 +31,8 @@ export async function cancelMeeting(
   nonMeetingSundays: readonly NonMeetingSunday[],
 ): Promise<void> {
   await ensureMeetingDoc(wardId, date, nonMeetingSundays);
-  // Cancellation is orthogonal to approval; hash excludes it, so this is a
-  // direct update -- approvals are preserved, no re-hash needed.
+  // Cancellation is excluded from the content hash, so this is a direct
+  // update — no re-hash needed.
   const batch = writeBatch(db);
   batch.update(doc(db, "wards", wardId, "meetings", date), {
     cancellation: {

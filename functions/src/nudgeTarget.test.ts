@@ -12,7 +12,6 @@ const roster: NudgeMember[] = [
 const base = {
   day: "wednesday" as const,
   date: "2026-04-26",
-  approvedUids: new Set<string>(),
   members: roster,
 };
 
@@ -41,46 +40,17 @@ describe("computeNudgeTarget", () => {
     ).toBeNull();
   });
 
-  it("skips when the meeting is approved", () => {
-    expect(
-      computeNudgeTarget({
-        ...base,
-        meeting: { meetingType: "regular", status: "approved" },
-      }),
-    ).toBeNull();
-  });
-
-  it("draft → whole active team", () => {
+  it("nudges the whole active team for any editable meeting", () => {
     const out = computeNudgeTarget({
       ...base,
-      meeting: { meetingType: "regular", status: "draft" },
+      meeting: { meetingType: "regular" },
     });
     expect(out?.uids.toSorted()).toEqual(["bish", "c1", "c2", "clerk"]);
     expect(out?.title).toContain("Program needs review");
   });
 
-  it("pending_approval → only bishopric who haven't approved", () => {
-    const out = computeNudgeTarget({
-      ...base,
-      approvedUids: new Set(["bish"]),
-      meeting: { meetingType: "regular", status: "pending_approval" },
-    });
-    expect(out?.uids.toSorted()).toEqual(["c1", "c2"]);
-    expect(out?.title).toContain("Approval needed");
-  });
-
-  it("pending_approval with all bishopric already approved → null", () => {
-    expect(
-      computeNudgeTarget({
-        ...base,
-        approvedUids: new Set(["bish", "c1", "c2"]),
-        meeting: { meetingType: "regular", status: "pending_approval" },
-      }),
-    ).toBeNull();
-  });
-
   it("severity follows the slot (wed=soft, fri=urgent, sat=critical)", () => {
-    const meeting = { meetingType: "regular", status: "draft" };
+    const meeting = { meetingType: "regular" };
     expect(computeNudgeTarget({ ...base, day: "wednesday", meeting })?.severity).toBe("soft");
     expect(computeNudgeTarget({ ...base, day: "friday", meeting })?.severity).toBe("urgent");
     expect(computeNudgeTarget({ ...base, day: "saturday", meeting })?.severity).toBe("critical");

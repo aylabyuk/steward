@@ -22,10 +22,6 @@ export const SPEAKER_ROLES = ["Member", "Youth", "High Council", "Visiting"] as 
 export const speakerRoleSchema = z.enum(SPEAKER_ROLES);
 export type SpeakerRole = z.infer<typeof speakerRoleSchema>;
 
-export const MEETING_STATUSES = ["draft", "pending_approval", "approved", "published"] as const;
-export const meetingStatusSchema = z.enum(MEETING_STATUSES);
-export type MeetingStatus = z.infer<typeof meetingStatusSchema>;
-
 export const hymnSchema = z.object({
   number: z.number().int().min(1),
   title: z.string().min(1),
@@ -41,17 +37,6 @@ export const cancellationSchema = z
   })
   .nullable();
 export type Cancellation = z.infer<typeof cancellationSchema>;
-
-export const approvalSchema = z.object({
-  uid: z.string().min(1),
-  email: z.email(),
-  displayName: z.string().min(1),
-  approvedAt: z.any(),
-  approvedVersionHash: z.string().min(1),
-  invalidated: z.boolean().default(false),
-  invalidatedAt: z.any().optional(),
-});
-export type Approval = z.infer<typeof approvalSchema>;
 
 // Visiting authorities, ward members, or other guests to be recognized
 // from the stand (stake leaders, mission president, etc.). `details`
@@ -87,9 +72,7 @@ export type MidItem = z.infer<typeof midItemSchema>;
 
 export const sacramentMeetingSchema = z.object({
   meetingType: meetingTypeSchema,
-  status: meetingStatusSchema,
   cancellation: cancellationSchema.optional(),
-  approvals: z.array(approvalSchema).default([]),
   contentVersionHash: z.string().optional(),
   openingHymn: hymnSchema.nullable().optional(),
   sacramentHymn: hymnSchema.nullable().optional(),
@@ -108,11 +91,6 @@ export const sacramentMeetingSchema = z.object({
   presiding: assignmentSchema.optional(),
   conducting: assignmentSchema.optional(),
   visitors: z.array(visitorSchema).default([]),
-  // How many live approvals are needed to move status → approved.
-  // Set when approval is requested: 1 if the requester is bishopric
-  // (their self-approval counts), otherwise 2.
-  requiredApprovals: z.number().int().min(1).max(2).default(2),
-  lastNudgedAt: z.any().optional(),
   updatedAt: z.any().optional(),
   createdAt: z.any().optional(),
 });

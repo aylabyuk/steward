@@ -11,8 +11,6 @@ const DATE = "2026-04-26";
 
 const draftMeeting = {
   meetingType: "regular" as const,
-  status: "draft" as const,
-  approvals: [],
   wardBusiness: "",
   stakeBusiness: "",
   announcements: "",

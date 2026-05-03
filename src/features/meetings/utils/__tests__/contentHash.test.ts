@@ -5,11 +5,11 @@ import { canonicalizeContent, computeContentHash } from "../contentHash";
 
 const base: SacramentMeeting = {
   meetingType: "regular",
-  status: "draft",
-  approvals: [],
   wardBusiness: "",
   stakeBusiness: "",
   announcements: "",
+  showAnnouncements: true,
+  visitors: [],
 };
 
 const speaker = (id: string, name: string): WithId<Speaker> => ({
@@ -39,7 +39,7 @@ describe("canonicalizeContent", () => {
     expect(a).not.toBe(b);
   });
 
-  it("ignores cancellation (orthogonal to approval)", () => {
+  it("ignores cancellation (cancellation toggle shouldn't fan out as a content edit)", () => {
     const a = canonicalizeContent(base, []);
     const b = canonicalizeContent(
       {
@@ -50,27 +50,6 @@ describe("canonicalizeContent", () => {
           cancelledAt: null,
           cancelledBy: "u1",
         },
-      },
-      [],
-    );
-    expect(a).toBe(b);
-  });
-
-  it("ignores the approvals array", () => {
-    const a = canonicalizeContent(base, []);
-    const b = canonicalizeContent(
-      {
-        ...base,
-        approvals: [
-          {
-            uid: "u1",
-            email: "a@x.com",
-            displayName: "Alice",
-            approvedAt: null,
-            approvedVersionHash: "deadbeef",
-            invalidated: false,
-          },
-        ],
       },
       [],
     );

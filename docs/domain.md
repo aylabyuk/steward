@@ -6,10 +6,8 @@ Core entity: **SacramentMeeting** per Sunday date.
 
 - `date` — ISO `YYYY-MM-DD`
 - `meetingType` — `regular` | `fast` | `stake` | `general`
-- `status` — `draft` | `pending_approval` | `approved` | `published` (v1.1)
 - `cancellation` — `{ cancelled, reason, cancelledAt, cancelledBy }`
-- `approvals[]` — log of approval events
-- `contentVersionHash` — cheap hash of current content; approvals compare against it to detect staleness
+- `contentVersionHash` — cheap hash of current content; the meeting-change cron uses it to detect real edits vs noise
 - `openingHymn`, `sacramentHymn`, `closingHymn` — Hymn assignments
 - `openingPrayer`, `benediction` — Person + status
 - `speakers[]` — subcollection (variable count), 2+ for `regular`; disabled for `fast`
@@ -58,7 +56,7 @@ wards/{wardId}/
   letterTemplates/{templateId}
     - name, subject, body
   meetings/{YYYY-MM-DD}
-    - meetingType, status, cancellation, approvals[], contentVersionHash
+    - meetingType, cancellation, contentVersionHash
     - openingHymn, sacramentHymn, closingHymn
     - openingPrayer, benediction, pianist, chorister, sacramentBread
     - sacramentBlessers: [assignment, assignment]
@@ -88,46 +86,37 @@ Speakers / comments / history are subcollections (variable count; can be long). 
 
 ## Cancellation
 
-Orthogonal to approval — an `approved` meeting can still be cancelled without losing approval history.
+A meeting can be cancelled at any time without losing its content.
 
 Effects:
 - Schedule view: strikethrough + reason.
 - Print: refuses to render ("This meeting was cancelled").
 - Change notification fires with "Meeting cancelled" wording.
 - Nudges skip cancelled meetings.
-- Uncancel = just clear the field. Approval + content survive.
+- Uncancel = just clear the field. Content survives.
 
-## Program lifecycle & approval
+## Print readiness
 
-Printing is gated on **≥2 distinct bishopric-member approvals**.
+There is no approval workflow. Printing is gated by `checkMeetingReadiness`
+([src/features/meetings/utils/readiness.ts](../src/features/meetings/utils/readiness.ts)),
+which returns `ready: true` when:
 
-| State | Meaning |
-|---|---|
-| `draft` | Default on creation. Freely editable. Cannot print. |
-| `pending_approval` | Review requested. Approvers can click Approve. |
-| `approved` | ≥2 distinct approvals. Printing unlocked. |
-| `published` (v1.1) | Informational "distributed" label. |
+- All required assignments have a person (presiding, conducting, prayers, chorister, pianist, sacrament bread, two blessers).
+- All assigned people are `confirmed`.
+- Every required hymn is picked (opening, sacrament, closing — plus rest hymn or musical performer when configured).
+- For `regular` meetings: at least 2 speakers, all `confirmed`.
 
-**Transitions**:
-- `draft` → `pending_approval`: any bishopric member clicks "Request approval".
-- `pending_approval` → `approved`: automatic on 2nd distinct approval.
-- Any state → `draft` on edit (confirm dialog): prior approvals marked `invalidated: true`, preserved in the log. Honors "everything is always editable".
-
-**Approval rules**:
-- Must be `role: bishopric` + `active: true`.
-- One approval per UID.
-- Author may approve own work (small-bishopric reality: bishop + 2 counselors often means author is 1 of 2).
-- Captures `{ uid, email, displayName, approvedAt, approvedVersionHash, invalidated, invalidatedAt }`.
-
-Firestore rules: only `bishopric` can approve; no duplicate non-invalidated approvals per UID.
+Readiness is computed live; nothing is persisted. The print buttons in the
+editor and the print-view pages both compute it the same way, so the gate
+is consistent.
 
 ## Audit trail
 
-Every write to a meeting / speakers / comments / approvals appends to `meetings/{date}/history/{eventId}`:
+Every write to a meeting / speakers / comments appends to `meetings/{date}/history/{eventId}`:
 
 ```
 - actorUid, actorDisplayName, at
-- target: "meeting" | "speaker" | "comment" | "approval"
+- target: "meeting" | "speaker" | "comment"
 - targetId
 - action: "create" | "update" | "delete"
 - changes: [{ field, old, new }]    # sparse; updates only
@@ -141,4 +130,4 @@ Every write to a meeting / speakers / comments / approvals appends to `meetings/
 
 **Retention**: none in v1. Add Firestore TTL (1 year) later if storage becomes an issue.
 
-**Privacy**: approval events + comment deletions never removed. Members cannot erase their approval history.
+**Privacy**: comment deletions are soft (preserved with `deletedAt`); the audit history is append-only.
