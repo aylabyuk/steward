@@ -22,6 +22,11 @@ interface Props {
   onInitial: (json: string) => void;
   resetKey: number;
   vars: LetterVars;
+  /** Reference-only metadata stamp threaded into the off-screen
+   *  PrintOnlyLetter portal so the PDF export carries it. The on-
+   *  screen editor + mobile preview deliberately omit it — pure
+   *  reference metadata, not part of the letter content. */
+  printVersionStamp?: { label: "Saved" | "Sent"; text: string };
 }
 
 /** Per-speaker letter editor on the prepare-invitation route — same
@@ -39,6 +44,7 @@ export function PrepareInvitationLetterTab({
   onInitial,
   resetKey,
   vars,
+  printVersionStamp,
 }: Props) {
   const isMobile = useIsMobile();
   const renderedBody = useMemo(() => interpolate(body, vars), [body, vars]);
@@ -58,6 +64,7 @@ export function PrepareInvitationLetterTab({
         bodyMarkdown={renderedBody}
         footerMarkdown={renderedFooter}
         {...(printEditorStateJson ? { editorStateJson: printEditorStateJson } : {})}
+        {...(printVersionStamp ? { versionStamp: printVersionStamp } : {})}
       />
       <div className="relative h-full">
         {isMobile ? (

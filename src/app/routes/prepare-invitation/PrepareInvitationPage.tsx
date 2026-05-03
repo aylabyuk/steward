@@ -1,21 +1,20 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { useCurrentMember } from "@/hooks/useCurrentMember";
 import { useSpeakers } from "@/hooks/useMeeting";
 import { useWardSettings } from "@/hooks/useWardSettings";
-import { PrepareInvitationLetterTab } from "@/features/templates/PrepareInvitationLetterTab";
 import { EmbedLetterView } from "@/features/embed/EmbedLetterView";
 import { useEmbedAuthBootstrap } from "@/features/embed/useEmbedAuthBootstrap";
 import { useEmbedShareBridge } from "@/features/embed/useEmbedShareBridge";
-import { PrepareInvitationHeader } from "./PrepareInvitationHeader";
 import { formatAssignedDate, formatToday } from "@/features/templates/utils/letterDates";
 import { useSpeakerLetterTemplate } from "@/features/templates/hooks/useSpeakerLetterTemplate";
 import { usePrepareInvitation } from "@/features/templates/hooks/usePrepareInvitation";
 import { usePrepareInvitationActions } from "@/features/templates/hooks/usePrepareInvitationActions";
+import { useSavableExit } from "@/features/templates/hooks/useSavableExit";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
+import { PrepareInvitationContent } from "./PrepareInvitationContent";
 import { PrepareInvitationPageMessage } from "../PrepareInvitationPageMessage";
-import { computeSendValidation } from "./utils/prepareInvitationValidation";
 
 export function PrepareInvitationPage() {
   const { date, speakerId } = useParams<{ date: string; speakerId: string }>();
@@ -23,7 +22,6 @@ export function PrepareInvitationPage() {
   const isEmbed = searchParams.get("embed") === "ios";
   const embedAuth = useEmbedAuthBootstrap();
   useEmbedShareBridge();
-  const navigate = useNavigate();
   const wardId = useCurrentWardStore((s) => s.wardId);
   const me = useCurrentMember();
   const authUser = useAuthStore((s) => s.user);
@@ -70,6 +68,8 @@ export function PrepareInvitationPage() {
     onDone: () => setDone(true),
   });
 
+  const exit = useSavableExit({ dirty: form.dirty, onSave: actions.save });
+
   if (!wardId || !date || !speakerId) {
     return (
       <PrepareInvitationPageMessage
@@ -105,50 +105,14 @@ export function PrepareInvitationPage() {
     return <EmbedLetterView authStatus={embedAuth} form={form} date={date} wardName={wardName} vars={vars} />;
   }
 
-  const { email, hasEmail } = computeSendValidation(speaker.data);
-
-  const toolbarProps = {
-    busy: form.busy,
-    hasOverride: form.letterHasOverride,
-    speakerName: speaker.data.name,
-    speakerEmail: speaker.data.email ?? "",
-    speakerPhone: speaker.data.phone ?? "",
-    assignedDate: date,
-    onRevert: () => void form.clearLetterOverride(),
-    onSend: actions.send,
-    onSendSms: actions.sendSms,
-  };
-
   return (
-    <main className="min-h-dvh lg:h-dvh bg-parchment flex flex-col lg:overflow-hidden">
-      <PrepareInvitationHeader
-        email={email}
-        hasEmail={hasEmail}
-        onCancel={() => navigate("/schedule")}
-        {...toolbarProps}
-      />
-      <div className="flex-1 min-h-0 lg:overflow-hidden">
-        {form.hydrated ? (
-          <PrepareInvitationLetterTab
-            initialJson={form.initialJson}
-            initialMarkdown={form.initialMarkdown}
-            liveStateJson={form.letterStateJson}
-            body={form.letterBody}
-            footer={form.letterFooter}
-            onChange={form.setLetterStateJson}
-            onInitial={form.captureInitial}
-            resetKey={form.resetKey}
-            vars={vars}
-          />
-        ) : (
-          <p className="px-5 sm:px-8 pt-5 pb-4 font-serif italic text-[14px] text-walnut-3">
-            Loading letter…
-          </p>
-        )}
-        {form.error && (
-          <p className="px-5 sm:px-8 mt-4 font-sans text-[12.5px] text-bordeaux">{form.error}</p>
-        )}
-      </div>
-    </main>
+    <PrepareInvitationContent
+      date={date}
+      speaker={speaker.data}
+      vars={vars}
+      form={form}
+      actions={actions}
+      exit={exit}
+    />
   );
 }

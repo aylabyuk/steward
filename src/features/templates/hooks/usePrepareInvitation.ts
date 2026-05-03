@@ -48,6 +48,7 @@ export function usePrepareInvitation(args: Args) {
   });
   const [letterStateJson, setLetterStateJson] = useState<string | null>(null);
   const [letterHasOverride, setLetterHasOverride] = useState(false);
+  const [savedAt, setSavedAt] = useState<unknown>(null);
   const [hydrated, setHydrated] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +76,7 @@ export function usePrepareInvitation(args: Args) {
       setInitialMarkdown(md);
       setLetterStateJson(json);
       setLetterHasOverride(Boolean(override));
+      setSavedAt(override?.updatedAt ?? null);
       setError(null);
       setHydrated(true);
     })();
@@ -111,6 +113,13 @@ export function usePrepareInvitation(args: Args) {
     if (!letterStateJson) return;
     await saveSpeakerLetterOverride(wardId, date, speakerId, { editorStateJson: letterStateJson });
     setLetterHasOverride(true);
+    // Advance the dirty baseline so the toolbar Save button + exit
+    // guard reflect the freshly-persisted state. `serverTimestamp()`
+    // resolves on the server; mirroring with `new Date()` locally is
+    // a near-enough approximation for the version stamp without a
+    // round-trip read.
+    setInitialJson(letterStateJson);
+    setSavedAt(new Date());
   }
 
   function revertLetterToWardDefault() {
@@ -120,6 +129,7 @@ export function usePrepareInvitation(args: Args) {
       bodyMarkdown: letterTemplate?.bodyMarkdown ?? DEFAULT_SPEAKER_LETTER_BODY,
       footerMarkdown: letterTemplate?.footerMarkdown ?? DEFAULT_SPEAKER_LETTER_FOOTER,
     });
+    setSavedAt(null);
     setResetKey((k) => k + 1);
   }
 
@@ -137,6 +147,8 @@ export function usePrepareInvitation(args: Args) {
     }
   }
 
+  const dirty = letterStateJson !== null && letterStateJson !== initialJson;
+
   return {
     initialJson,
     initialMarkdown,
@@ -146,6 +158,8 @@ export function usePrepareInvitation(args: Args) {
     letterBody,
     letterFooter,
     letterHasOverride,
+    savedAt,
+    dirty,
     hydrated,
     resetKey,
     error,

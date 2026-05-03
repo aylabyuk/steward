@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { RotateCcw, Send, Share } from "lucide-react";
+import { Download, RotateCcw, Send, Share } from "lucide-react";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { letterCanvasToPdf } from "@/features/page-editor/utils/letterToPdf";
-import { shareLetterPdf } from "@/features/page-editor/utils/shareLetterPdf";
+import { downloadFile, shareLetterPdf } from "@/features/page-editor/utils/shareLetterPdf";
 import { PrepareInvitationDialogs } from "../PrepareInvitationDialogs";
 import { PrepareInvitationGroupBtn as GroupBtn } from "../PrepareInvitationGroupBtn";
+import { ToolbarSaveButton } from "./ToolbarSaveButton";
 
 interface Props {
   busy: boolean;
   hasOverride: boolean;
+  /** True when the editor state has unsaved edits. Gates the
+   *  Download/Share button (must save first so the PDF + Firestore
+   *  agree on what's "the letter"). */
+  dirty: boolean;
   speakerName: string;
   /** Current email / phone on file for the speaker. Used to prefill
    *  the Send-channel dialog; empty strings are handled (the dialog
@@ -17,6 +23,7 @@ interface Props {
   /** Meeting date (ISO YYYY-MM-DD) — used for the shared PDF filename. */
   assignedDate: string;
   onRevert: () => void;
+  onSave: () => void;
   /** Called with the final email the bishop confirmed in the dialog.
    *  The parent is responsible for persisting it to the speaker doc
    *  when it differs from what was on file. */
@@ -30,42 +37,52 @@ type PendingSend = "email" | "sms" | null;
 const ICON_SIZE = 14;
 const ICON_STROKE = 1.75;
 
-/** Top-of-page action toolbar for the Prepare Invitation page. Two
- *  icon-only buttons in a connected group (Revert · Share), then
- *  text-labelled Send Email + Send SMS buttons. Share renders the
- *  LetterCanvas portal to a PDF and hands it to the OS share sheet
- *  (Web Share API, with download fallback) so the bishop can route
- *  the letter through any installed app — same path as the speaker
- *  invite landing page. Sharing never flips status; the bishop
- *  controls status explicitly via the menu on the assign page. */
+/** Top-of-page action toolbar for the Prepare Invitation page.
+ *  Three groups: [Revert | Share/Download], [Save], [Send Email,
+ *  Send SMS]. The Share/Download split picks Share on touch viewports
+ *  (Web Share API → OS share sheet) and Download on desktop (direct
+ *  PDF download — no surprising "I clicked Share but got a download"
+ *  fallback). Both paths are gated on `!dirty` so the artifact the
+ *  bishop hands out always matches what's persisted in Firestore. */
 export function PrepareInvitationActionBar({
   busy,
   hasOverride,
+  dirty,
   speakerName,
   speakerEmail,
   speakerPhone,
   assignedDate,
   onRevert,
+  onSave,
   onSend,
   onSendSms,
 }: Props) {
   const [pending, setPending] = useState<PendingConfirm>(null);
   const [pendingSend, setPendingSend] = useState<PendingSend>(null);
-  const [sharing, setSharing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const isMobile = useIsMobile();
 
-  async function doShare() {
-    if (sharing) return;
+  async function doExport() {
+    if (exporting) return;
     const target = document.querySelector<HTMLElement>("[data-print-only-letter]");
     if (!target) return;
-    setSharing(true);
+    setExporting(true);
     try {
       const filename = pdfFilename(speakerName, assignedDate);
       const { file } = await letterCanvasToPdf(target, filename);
-      await shareLetterPdf(file, filename, `Invitation for ${speakerName}`);
+      if (isMobile) {
+        await shareLetterPdf(file, filename, `Invitation for ${speakerName}`);
+      } else {
+        downloadFile(file, filename);
+      }
     } finally {
-      setSharing(false);
+      setExporting(false);
     }
   }
+
+  const exportLabel = isMobile ? "Share letter" : "Download letter";
+  const exportDisabledLabel = dirty ? `Save to ${isMobile ? "share" : "download"}` : exportLabel;
+  const ExportIcon = isMobile ? Share : Download;
 
   return (
     <div className="flex flex-col items-center">
@@ -82,13 +99,14 @@ export function PrepareInvitationActionBar({
           </GroupBtn>
           <GroupBtn
             position="last"
-            label="Share letter"
-            onClick={() => void doShare()}
-            disabled={busy || sharing}
+            label={dirty ? exportDisabledLabel : exportLabel}
+            onClick={() => void doExport()}
+            disabled={busy || exporting || dirty}
           >
-            <Share size={ICON_SIZE} strokeWidth={ICON_STROKE} />
+            <ExportIcon size={ICON_SIZE} strokeWidth={ICON_STROKE} />
           </GroupBtn>
         </div>
+        <ToolbarSaveButton dirty={dirty} busy={busy} onSave={onSave} />
         <button
           type="button"
           onClick={() => setPendingSend("email")}
