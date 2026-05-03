@@ -7,21 +7,31 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.23.0] — 2026-05-03
+
+Three-PR planning rethink. The two-bishopric approval workflow is gone — printing is gated on a live readiness check instead. Sacrament meeting program planning is now scoped to the upcoming Sunday only (speakers and prayers stay plannable ahead on any Sunday). And the escalating Wed/Fri/Sat finalization nudges are replaced by a single Monday-morning "planning is open" push.
+
 ### Added
 
 - **Planning-open notification (Mon 08:00 ward-local).** New `planningOpenNotification` Cloud Function — hourly cron that fires a single, friendly push to all active members at 08:00 every Monday in the ward's local timezone: title `"Planning is OPEN for Sunday {date}"`, body `"Start planning the upcoming sacrament meeting."` Tap deep-links to `/week/{date}`. Idempotency keys on `wards/{wardId}.lastPlanningOpenNotified` (the upcoming Sunday's ISO date), so the cron only delivers once per Monday rollover even though it polls hourly. Per-user `notificationPrefs.enabled` + `quietHours` still gate delivery via the existing `filterRecipients` path. Pairs with the schedule's "sacrament meeting program planning is open for {Sunday}" banner — the push is the start-of-week prompt for the same window.
-
-### Removed
-
-- **Finalization nudges (`scheduledNudges`).** The hourly cron that fired escalating `soft` / `urgent` / `critical` reminders Wed 7pm / Fri 7pm / Sat 9am ward-local until the program reached `approved` is gone, along with the `nudgeSchedule` setting on `ward.settings`, the `NudgeChipRow` / `NudgeScheduleEditor` UI in Settings, and the `nudgeSlot.ts` / `nudgeTarget.ts` helpers. The new `planningOpenNotification` cron above is the replacement — one push at the start of the planning window instead of three escalating ones during it. **Deploy runbook:** Cloud Scheduler doesn't auto-deregister jobs whose function exports were removed. After deploying this release, run `firebase functions:delete scheduledNudges` to free the slot. Verify with `firebase functions:list`.
+- **`PrintReadinessPanel`** at the top of the meeting editor. When the readiness check passes it surfaces the two print links (congregation / conducting) front and centre; when it doesn't, it lists what's still missing. Replaces the old `ProgramApproval` block.
+- **Schedule banner** that explains the upcoming-Sunday-only rule: *"Sacrament meeting program planning is open for {Sunday}. Speakers and prayers can still be planned ahead from any card on the schedule."*
 
 ### Changed
 
-- **Sacrament meeting program planning is restricted to the upcoming Sunday.** Speakers and prayers can still be planned ahead from any card on the schedule — the restriction is only on the program form (hymns, ward business, leaders, sacrament logistics). The schedule page surfaces this with a banner: *"Sacrament meeting program planning is open for {Sunday}. Speakers and prayers can still be planned ahead from any card on the schedule."* Inside the week editor, opening any non-upcoming Sunday (past archive review or future preview) shows a read-only banner, drops the floating save bar, and renders the program sections inert. The banner's "Back to schedule" link returns to the schedule page focused on the same date, where speaker / prayer planning continues unimpeded. The single source of truth is `getUpcomingSundayIso(now, tz)` in `src/lib/dates.ts` — today's Sunday stays editable until local midnight, and the next Sunday opens at 00:00 local Monday.
+- **Printing is gated on `checkMeetingReadiness` alone.** The `/print/:date/conducting` and `/print/:date/congregation` pages compute readiness independently — a deep-linked print of a half-filled meeting renders a "Not ready to print" view with the missing-items list and a back-to-program link. The `ProgramSaveBar` carries print shortcuts that disable with a tooltip until the meeting is ready, so the action stays discoverable.
+- **Sacrament meeting program planning is restricted to the upcoming Sunday.** Speakers and prayers can still be planned ahead from any card on the schedule — the restriction is only on the program form (hymns, ward business, leaders, sacrament logistics). Inside the week editor, opening any non-upcoming Sunday (past archive review or future preview) shows a read-only banner, drops the floating save bar, and renders the program sections inert. The banner's "Back to schedule" link returns to the schedule page focused on the same date, where speaker / prayer planning continues unimpeded. The single source of truth is `getUpcomingSundayIso(now, tz)` in `src/lib/dates.ts` — today's Sunday stays editable until local midnight, and the next Sunday opens at 00:00 local Monday.
+- **`nudgeTarget` cron** is gone — replaced by `planningOpenNotification`. The new push is one prompt at the start of the window instead of three escalating reminders during it.
+- **Settings → Schedule preferences** drops the Finalization nudges section. Subtitle reads "Timezone and lead times for the bishopric." The planning-open push has no per-ward configuration — it always fires at 08:00 ward-local on Monday.
 
 ### Removed
 
-- **Approval workflow.** Meetings no longer carry a `status` (draft / pending_approval / approved / published) or an `approvals[]` array, and there is no Request approval / Approve / Return-to-draft chrome. The premise that printing should require two bishopric votes added friction without a clear win — readiness alone is the gate. New `PrintReadinessPanel` at the top of the editor swaps in for the old `ProgramApproval` block: when ready it surfaces the two print links front and centre; when not, it lists what's still missing. The `ProgramSaveBar` now carries print shortcuts that disable with a tooltip until the meeting is ready. The `/print/:date/conducting` and `/print/:date/congregation` pages gate on the same `checkMeetingReadiness` helper so a deep-linked print of a half-filled meeting renders a "Not ready to print" view with the missing-items list. Firestore rules drop their four approval guard helpers (`statusTransitionOk`, `approvalEntryPreserved`, `noApprovalTampering`, `approvalsArrayOk`); meeting updates simplify to `isActiveMember(wardId)`. Schema fields are removed; legacy docs with `status` / `approvals` linger harmlessly (Zod strips unknown keys). The `nudgeTarget` cron loses its `pending_approval` branch and the `approved` short-circuit; existing `scheduledNudges` keep firing but only along the draft-or-missing path (full retirement comes in the planning-OPEN follow-up).
+- **Approval workflow.** Meetings no longer carry a `status` (draft / pending_approval / approved / published) or an `approvals[]` array, and there is no Request approval / Approve / Return-to-draft chrome. The premise that printing should require two bishopric votes added friction without a clear win — readiness alone is the gate now. Firestore rules drop their four approval guard helpers (`statusTransitionOk`, `approvalEntryPreserved`, `noApprovalTampering`, `approvalsArrayOk`); meeting updates simplify to `isActiveMember(wardId)`. Schema fields are dropped (Zod strips legacy values from existing docs — no migration needed). The history `target` enum loses `'approval'`. The `requestApproval` / `approveMeeting` / `resetToDraft` actions, the `LockBanner`, the `ResetToDraftDialog`, the `ApprovalPanel` / `ProgramApproval` UI, and the `useApprovalActions` hook are deleted.
+- **Finalization nudges (`scheduledNudges`).** The hourly cron that fired escalating `soft` / `urgent` / `critical` reminders Wed 7pm / Fri 7pm / Sat 9am ward-local until the program reached `approved` is gone, along with the `nudgeSchedule` setting on `ward.settings`, the `NudgeChipRow` / `NudgeScheduleEditor` UI in Settings, and the `nudgeSlot.ts` / `nudgeTarget.ts` helpers.
+
+### Infrastructure
+
+- **Cloud Scheduler cleanup.** After deploying this release, run `firebase functions:delete scheduledNudges --project=steward-prod-65a36` to deregister the old cron job — Firebase doesn't auto-deregister jobs whose function exports were removed. Verify with `firebase functions:list`.
 
 ## [0.22.0] — 2026-05-03
 
@@ -2557,7 +2567,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/aylabyuk/steward/releases/tag/v0.23.0
 [0.22.0]: https://github.com/aylabyuk/steward/releases/tag/v0.22.0
 [0.21.2]: https://github.com/aylabyuk/steward/releases/tag/v0.21.2
 [0.21.1]: https://github.com/aylabyuk/steward/releases/tag/v0.21.1
