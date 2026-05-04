@@ -20,6 +20,7 @@ import { ProgramTemplatesPage } from "./routes/templates-programs";
 import { SpeakerLetterTemplatePage } from "./routes/templates-speaker-letter";
 import { WardSettingsPage } from "./routes/ward-settings";
 import { Week } from "./routes/week";
+import { PreparePrintRoute } from "./routes/week-prepare";
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
       },
       { path: "/print/:date/congregation", element: <CongregationProgram /> },
       { path: "/print/:date/conducting", element: <ConductingProgram /> },
+      { path: "/week/:date/prepare", element: <PreparePrintRoute /> },
       {
         path: "/settings/templates/speaker-letter",
         element: <SpeakerLetterTemplatePage />,
