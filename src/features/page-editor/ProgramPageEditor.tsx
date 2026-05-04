@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { LetterPageStyle, ProgramTemplateKey } from "@/lib/types";
 import {
   GROUP_LABEL,
   PROGRAM_VARIABLES,
+  type ProgramVariable,
 } from "@/features/program-templates/utils/programVariables";
 import { PAGE_EDITOR_BASE_NODES } from "./utils/pageEditorNodes";
 import { PageEditorComposer } from "./PageEditorComposer";
@@ -28,6 +29,13 @@ interface Props {
    *  are placeholders that resolve to real meeting data at print
    *  time. */
   showSampleNotice?: boolean;
+  /** Override the chip sample values with a real-data bag (e.g. from
+   *  `buildMeetingVariables`). Per-Sunday hosts (the prepare page)
+   *  pass this so chips render the actual meeting's presider, hymns,
+   *  and speakers — not the generic Bishop Reeves / hymn #19 stand-
+   *  ins. Template editors omit this and the chips fall back to the
+   *  built-in samples. */
+  vars?: Readonly<Record<string, string>>;
 }
 
 /** WYSIWYG program template editor — Word-style layout: full-width
@@ -44,6 +52,7 @@ export function ProgramPageEditor({
   ariaLabel,
   editorDisabled,
   showSampleNotice,
+  vars,
 }: Props) {
   const canvasVariant = variant === "conductingProgram" ? "conducting" : "congregation";
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -55,8 +64,20 @@ export function ProgramPageEditor({
       : zoomMode.kind === "fit-page"
         ? fits.fitPage
         : zoomMode.value;
+  // When a `vars` bag is supplied, swap each variable's `sample` for
+  // the live value so chips render real meeting data inside the
+  // editor (instead of the generic Bishop Reeves / hymn #19). Empty
+  // strings fall back to the built-in sample so an unfilled hymn
+  // still renders meaningful guidance text.
+  const effectiveVariables = useMemo<readonly ProgramVariable[]>(() => {
+    if (!vars) return PROGRAM_VARIABLES;
+    return PROGRAM_VARIABLES.map((v) => {
+      const live = vars[v.token];
+      return live && live.trim().length > 0 ? { ...v, sample: live } : v;
+    });
+  }, [vars]);
   return (
-    <VariableRegistryProvider variables={PROGRAM_VARIABLES} groupLabels={GROUP_LABEL}>
+    <VariableRegistryProvider variables={effectiveVariables} groupLabels={GROUP_LABEL}>
       <div
         className={`flex flex-col h-full w-full ${editorDisabled ? "opacity-60 pointer-events-none" : ""}`}
       >
@@ -71,7 +92,7 @@ export function ProgramPageEditor({
           pageToolbar={
             <PageToolbar
               slashCommands={PROGRAM_SLASH_COMMANDS}
-              variables={PROGRAM_VARIABLES}
+              variables={effectiveVariables}
               variableGroupLabels={GROUP_LABEL}
               pageStyle={pageStyle}
               zoom={zoom}

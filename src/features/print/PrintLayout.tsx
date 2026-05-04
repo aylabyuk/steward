@@ -38,12 +38,12 @@ export function PrintLayout({ ready, dense, landscape, children }: Props) {
   }, [ready]);
 
   return (
-    <div className="min-h-screen bg-chalk text-walnut font-serif print:bg-white print:min-h-screen print:flex print:flex-col print:justify-center">
+    <div className="min-h-screen bg-chalk text-walnut font-serif print:bg-white print:min-h-0 print:block">
       <div
         className={
           dense
-            ? "mx-auto max-w-4xl px-6 py-6 print:px-2 print:py-0 print:w-full"
-            : "mx-auto max-w-4xl px-10 py-10 print:px-6 print:py-0 print:w-full"
+            ? "mx-auto max-w-4xl px-6 py-6 print:max-w-none print:p-0 print:w-full"
+            : "mx-auto max-w-4xl px-10 py-10 print:max-w-none print:p-0 print:w-full"
         }
       >
         {children}
