@@ -7,8 +7,14 @@ export const personSchema = z.object({
 });
 export type Person = z.infer<typeof personSchema>;
 
+// `person` accepts present-as-object, present-as-null, AND absent. The
+// missing-key variant happens when a clear path uses Firestore's
+// `deleteField()` to wipe the person — the resulting doc has the
+// assignment object but no `person` key, which Zod's `nullable()`
+// rejects. Tolerating absence here keeps existing meetings parseable;
+// new writes should still prefer `person: null` (see `clearPrayerParticipant`).
 export const assignmentSchema = z.object({
-  person: personSchema.nullable(),
+  person: personSchema.nullish(),
   confirmed: z.boolean().default(false),
 });
 export type Assignment = z.infer<typeof assignmentSchema>;

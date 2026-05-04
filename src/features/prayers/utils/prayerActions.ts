@@ -1,4 +1,4 @@
-import { deleteField, doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import { ensureMeetingDoc } from "@/features/meetings/utils/ensureMeetingDoc";
 import { db } from "@/lib/firebase";
 import type { InvitationStatus, NonMeetingSunday, PrayerRole } from "@/lib/types";
@@ -128,9 +128,13 @@ export async function clearPrayerParticipant(
     const meetingRef = doc(db, "wards", wardId, "meetings", date);
     const batch = writeBatch(db);
     batch.delete(participantRef);
+    // Use `person: null` rather than `deleteField()` so the resulting
+    // assignment object stays parseable by `assignmentSchema` — a
+    // missing `person` key produces a doc that fails Zod parse and
+    // surfaces as "Meeting not created yet" on the week editor.
     batch.set(
       meetingRef,
-      { [MEETING_FIELD[role]]: { person: deleteField(), confirmed: false } },
+      { [MEETING_FIELD[role]]: { person: null, confirmed: false } },
       { merge: true },
     );
     await batch.commit();
