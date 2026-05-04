@@ -10,6 +10,7 @@ import { CongregationProgramBody } from "./CongregationProgramBody";
 import { NotReadyBlock } from "./NotReadyBlock";
 import { PrintLayout } from "./PrintLayout";
 import { formatLongDate } from "./utils/programData";
+import { resolveCoverImageUrl } from "./utils/programFooter";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -44,6 +45,10 @@ export function CongregationProgram() {
   const templateJson = override?.editorStateJson ?? template.data?.editorStateJson ?? null;
   const wardName = ward.data?.name ?? "Ward";
   const dateLong = formatLongDate(date);
+  const coverImageUrl = resolveCoverImageUrl(
+    m?.coverImageUrl,
+    ward.data?.congregationDefaults?.coverImageUrl,
+  );
 
   return (
     <PrintLayout ready={ready && report.ready} dense landscape>
@@ -53,7 +58,7 @@ export function CongregationProgram() {
             wardName={wardName}
             dateLong={dateLong}
             announcements={m?.announcements ?? ""}
-            imageUrl={m?.coverImageUrl ?? null}
+            imageUrl={coverImageUrl}
           />
         </div>
         <div

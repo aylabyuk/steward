@@ -13,9 +13,9 @@ interface Props {
   ward: Ward | null;
   templateJson: string | null;
   /** Per-meeting override for the program footer note. Undefined →
-   *  default ("Quietly ponder…"); empty string → hide. The
-   *  congregation prepare tab passes a draft value here so the
-   *  preview updates live as the user types. */
+   *  fall through to ward default → built-in default; empty string
+   *  → hide. The congregation prepare tab passes a draft value here
+   *  so the preview updates live as the user types. */
   footerNoteOverride?: string | undefined;
 }
 
@@ -32,9 +32,12 @@ export function CongregationProgramBody({
 }: Props) {
   const wardName = ward?.name ?? "Ward";
   const dateLong = formatLongDate(date);
-  const footerSource =
+  const meetingFooterSource =
     footerNoteOverride !== undefined ? footerNoteOverride : meeting?.programFooterNote;
-  const footerNote = resolveProgramFooterNote(footerSource);
+  const footerNote = resolveProgramFooterNote(
+    meetingFooterSource,
+    ward?.congregationDefaults?.programFooterNote,
+  );
 
   const body = templateJson ? (
     <>

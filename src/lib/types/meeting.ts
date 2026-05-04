@@ -93,15 +93,16 @@ export const sacramentMeetingSchema = z.object({
   conducting: assignmentSchema.optional(),
   visitors: z.array(visitorSchema).default([]),
   /** URL of the cover image shown on the congregation copy's left
-   *  panel (above the announcements). Optional — when absent the
-   *  cover renders ward branding + announcements only. */
-  coverImageUrl: z.string().optional(),
+   *  panel (above the announcements). Nullish — when absent or null
+   *  the cover renders ward branding + announcements only. The write
+   *  helper clears with `null`, so the schema must accept it. */
+  coverImageUrl: z.string().nullish(),
   /** Footer note printed at the bottom of the congregation copy's
    *  right (program) panel — typically a reverence prompt like
-   *  "Quietly ponder the prelude music…". Undefined falls back to
-   *  the built-in default; an explicit empty string hides the
-   *  footer. */
-  programFooterNote: z.string().optional(),
+   *  "Quietly ponder the prelude music…". Undefined / null falls
+   *  back to the ward default → built-in default; an explicit empty
+   *  string hides the footer. */
+  programFooterNote: z.string().nullish(),
   /** Per-Sunday overrides for the printed program. When present, the
    *  prepare-to-print + print routes use these saved Lexical states
    *  instead of the ward-level template — so the bishopric can tailor
