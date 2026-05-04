@@ -17,7 +17,7 @@ const PATH_PRINTER = "M6 9V2h12v7";
 const PATH_PRINTER_TRAY = "M6 14h12v7H6z";
 
 /** Top-of-editor panel that drives printing. When ready, it surfaces
- *  the two print-nav links front and centre; when not, it lists what
+ *  the Prepare-to-print CTA front and centre; when not, it lists what
  *  still needs filling so the bishop knows where to look. There's no
  *  approval workflow — readiness alone gates print. */
 export function PrintReadinessPanel({ date, report }: Props) {
@@ -61,18 +61,19 @@ function ReadyBody({ date }: { date: string }) {
       <p className="font-display text-[17px] font-semibold text-walnut tracking-[-0.005em] m-0 mb-2.5">
         All items assigned and confirmed.
       </p>
-      <div className="mt-1 flex flex-col sm:flex-row gap-2.5 flex-wrap">
-        <PrintLink
-          href={`/print/${date}/congregation`}
-          title="Congregation"
-          subtitle="Hand out to attendees — hymns, prayers, speakers with topics."
-        />
-        <PrintLink
-          href={`/print/${date}/conducting`}
-          title="Conducting"
-          subtitle="Conductor's desk copy — script cues + ward / stake business space."
-        />
-      </div>
+      <p className="font-serif italic text-[12.5px] text-walnut-3 m-0 mb-3">
+        Review both programs side-by-side, then print each one.
+      </p>
+      <Link
+        to={`/week/${date}/prepare`}
+        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors font-sans text-[13px] font-semibold"
+      >
+        <Icon paths={[PATH_PRINTER, PATH_PRINTER_TRAY]} rect />
+        Prepare to print
+        <span aria-hidden className="ml-0.5">
+          →
+        </span>
+      </Link>
     </>
   );
 }
@@ -98,21 +99,6 @@ function MissingBody({ missing, unconfirmed }: { missing: string[]; unconfirmed:
         ))}
       </ul>
     </>
-  );
-}
-
-function PrintLink({ href, title, subtitle }: { href: string; title: string; subtitle: string }) {
-  return (
-    <Link
-      to={href}
-      className="flex-1 inline-flex flex-col gap-0.5 px-3.5 py-2.5 rounded-md border border-border-strong bg-chalk text-walnut hover:bg-parchment-2 hover:border-walnut-3 transition-colors"
-    >
-      <span className="font-sans text-[13px] font-semibold inline-flex items-center gap-1.5">
-        <Icon paths={[PATH_PRINTER, PATH_PRINTER_TRAY]} rect />
-        Print {title.toLowerCase()} program
-      </span>
-      <span className="font-serif italic text-[12px] text-walnut-3 leading-snug">{subtitle}</span>
-    </Link>
   );
 }
 

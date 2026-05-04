@@ -1,6 +1,6 @@
 import type { SacramentMeeting } from "@/lib/types";
 import { personName, type SequenceEntry } from "./utils/programData";
-import { RowFreeform, RowHymn, RowLabeled, RowSection } from "./utils/programRows";
+import { RowHymn, RowLabeled, RowSection } from "./utils/programRows";
 
 interface Props {
   m: SacramentMeeting | null;
@@ -16,7 +16,7 @@ interface Props {
 export function LegacyCongregationCopy({ m, wardName, dateLong, sequence, visitorText }: Props) {
   return (
     <>
-      <header className="mb-3 border-b-2 border-walnut pb-2">
+      <header className="mb-6 border-b-2 border-walnut pb-2">
         <div className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-brass-deep">
           Sacrament meeting · {wardName}
         </div>
@@ -30,12 +30,6 @@ export function LegacyCongregationCopy({ m, wardName, dateLong, sequence, visito
         <RowLabeled label="Conducting" value={personName(m?.conducting)} dense />
         {visitorText && <RowLabeled label="Visitors" value={visitorText} dense />}
       </RowSection>
-
-      {m?.showAnnouncements && (m?.announcements ?? "").trim().length > 0 && (
-        <RowSection title="Announcements" dense>
-          <RowFreeform label="Announcements" value={m.announcements} dense />
-        </RowSection>
-      )}
 
       <RowSection title="Music" dense>
         <RowLabeled label="Pianist" value={personName(m?.pianist)} dense />

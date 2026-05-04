@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { programTemplateSchema } from "./template";
 import { assignmentSchema } from "./person";
 
 export const MEETING_TYPES = ["regular", "fast", "stake", "general"] as const;
@@ -91,6 +92,29 @@ export const sacramentMeetingSchema = z.object({
   presiding: assignmentSchema.optional(),
   conducting: assignmentSchema.optional(),
   visitors: z.array(visitorSchema).default([]),
+  /** URL of the cover image shown on the congregation copy's left
+   *  panel (above the announcements). Nullish — when absent or null
+   *  the cover renders ward branding + announcements only. The write
+   *  helper clears with `null`, so the schema must accept it. */
+  coverImageUrl: z.string().nullish(),
+  /** Footer note printed at the bottom of the congregation copy's
+   *  right (program) panel — typically a reverence prompt like
+   *  "Quietly ponder the prelude music…". Undefined / null falls
+   *  back to the ward default → built-in default; an explicit empty
+   *  string hides the footer. */
+  programFooterNote: z.string().nullish(),
+  /** Per-Sunday overrides for the printed program. When present, the
+   *  prepare-to-print + print routes use these saved Lexical states
+   *  instead of the ward-level template — so the bishopric can tailor
+   *  one Sunday's program without changing the template that future
+   *  weeks inherit. The shape mirrors the ward template doc so the
+   *  same editor + render path can read either. */
+  programs: z
+    .object({
+      conducting: programTemplateSchema.optional(),
+      congregation: programTemplateSchema.optional(),
+    })
+    .optional(),
   updatedAt: z.any().optional(),
   createdAt: z.any().optional(),
 });
