@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SaveBar } from "@/components/ui/SaveBar";
-import { useMeeting } from "@/hooks/useMeeting";
+import { useMeeting, useSpeakers } from "@/hooks/useMeeting";
+import { useWardSettings } from "@/hooks/useWardSettings";
 import { useCurrentWardStore } from "@/stores/currentWardStore";
 import { friendlyWriteError } from "@/stores/saveStatusStore";
 import { useProgramTemplate } from "@/features/program-templates/hooks/useProgramTemplate";
@@ -8,6 +9,7 @@ import { DEFAULT_MARGINS } from "@/features/program-templates/ProgramCanvas";
 import { defaultProgramTemplate } from "@/features/program-templates/utils/programTemplateDefaults";
 import { ProgramPageEditor } from "@/features/page-editor/ProgramPageEditor";
 import type { LetterPageStyle } from "@/lib/types";
+import { buildMeetingVariables } from "./utils/buildMeetingVariables";
 import { writeMeetingProgram } from "./utils/writeMeetingProgram";
 
 interface Props {
@@ -23,6 +25,8 @@ const KEY = "conductingProgram";
 export function ConductingPrepareTab({ date, onUsingOverrideChange }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId);
   const meeting = useMeeting(date);
+  const speakers = useSpeakers(date);
+  const ward = useWardSettings();
   const tpl = useProgramTemplate(KEY);
 
   const [draft, setDraft] = useState<string | null>(null);
@@ -37,6 +41,22 @@ export function ConductingPrepareTab({ date, onUsingOverrideChange }: Props) {
     override?.editorStateJson ?? tpl.data?.editorStateJson ?? defaultProgramTemplate(KEY);
   const initialPageStyle = override?.pageStyle ?? tpl.data?.pageStyle ?? null;
   const margins = override?.margins ?? tpl.data?.margins ?? DEFAULT_MARGINS[KEY];
+
+  // Build the live variable bag so chips render *this* Sunday's
+  // presider, hymns, and speakers — not the generic template
+  // samples. Falls through to the built-in samples for any field
+  // that's still empty (e.g. an unassigned speaker), so the editor
+  // never shows a literally blank chip.
+  const liveVars = useMemo(
+    () =>
+      buildMeetingVariables({
+        date,
+        meeting: meeting.data ?? null,
+        speakers: speakers.data,
+        ward: ward.data ?? null,
+      }),
+    [date, meeting.data, speakers.data, ward.data],
+  );
 
   useEffect(() => {
     onUsingOverrideChange?.(Boolean(override));
@@ -80,6 +100,7 @@ export function ConductingPrepareTab({ date, onUsingOverrideChange }: Props) {
           variant={KEY}
           initialJson={editorJson}
           pageStyle={activePageStyle}
+          vars={liveVars}
           onChange={setDraft}
           onPageStyleChange={setPageStyleDraft}
           ariaLabel="Conducting copy"
