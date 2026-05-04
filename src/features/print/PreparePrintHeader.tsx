@@ -29,12 +29,14 @@ export function PreparePrintHeader({ date, printSegment, usingOverride }: Props)
       </div>
       <div className="flex items-center gap-2">
         <StatusPill usingOverride={usingOverride} />
-        <Link
-          to={`/print/${date}/${printSegment}`}
+        <a
+          href={`/print/${date}/${printSegment}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 font-sans text-[13px] font-semibold px-3.5 py-2 rounded-md border border-bordeaux-deep bg-bordeaux text-parchment shadow-[0_1px_0_rgba(35,24,21,0.18)] hover:bg-bordeaux-deep transition-colors"
         >
           Print {printSegment}
-        </Link>
+        </a>
       </div>
     </header>
   );

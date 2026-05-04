@@ -462,8 +462,11 @@
     height: auto !important;
   }
 
-  /* Hide every top-level body child except the portal. */
-  body > *:not([data-print-only-letter]) {
+  /* Hide every top-level body child except the portal — only when a
+     letter portal is actually mounted (otherwise this rule blanks out
+     every other print route, like the congregation / conducting
+     program prints which render in #root, not via portal). */
+  body:has([data-print-only-letter]) > *:not([data-print-only-letter]) {
     display: none !important;
   }
 

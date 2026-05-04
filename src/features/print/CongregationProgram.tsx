@@ -5,9 +5,11 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProgramTemplate } from "@/features/program-templates/hooks/useProgramTemplate";
 import { checkMeetingReadiness } from "@/features/meetings/utils/readiness";
 import { defaultMeetingType } from "@/features/meetings/utils/ensureMeetingDoc";
+import { CongregationCoverPanel } from "./CongregationCoverPanel";
 import { CongregationProgramBody } from "./CongregationProgramBody";
 import { NotReadyBlock } from "./NotReadyBlock";
 import { PrintLayout } from "./PrintLayout";
+import { formatLongDate } from "./utils/programData";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -40,29 +42,36 @@ export function CongregationProgram() {
   // precedence over the ward-level template.
   const override = m?.programs?.congregation;
   const templateJson = override?.editorStateJson ?? template.data?.editorStateJson ?? null;
-
-  const copy = (
-    <CongregationProgramBody
-      date={date}
-      meeting={m ?? null}
-      speakers={speakers.data}
-      ward={ward.data ?? null}
-      templateJson={templateJson}
-    />
-  );
+  const wardName = ward.data?.name ?? "Ward";
+  const dateLong = formatLongDate(date);
 
   return (
     <PrintLayout ready={ready && report.ready} dense landscape>
-      <div className="relative grid grid-cols-2 print:-mx-2">
-        <div className="px-[0.35in]">{copy}</div>
+      <div className="relative grid grid-cols-2 print:h-screen">
+        <div className="px-[0.35in] py-[0.1in]">
+          <CongregationCoverPanel
+            wardName={wardName}
+            dateLong={dateLong}
+            announcements={m?.announcements ?? ""}
+            imageUrl={m?.coverImageUrl ?? null}
+          />
+        </div>
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 left-1/2 border-l border-dashed border-walnut-3"
         />
-        <div className="px-[0.35in]">{copy}</div>
+        <div className="px-[0.35in] py-[0.1in]">
+          <CongregationProgramBody
+            date={date}
+            meeting={m ?? null}
+            speakers={speakers.data}
+            ward={ward.data ?? null}
+            templateJson={templateJson}
+          />
+        </div>
       </div>
       <p className="mt-4 text-center font-serif italic text-[11px] text-walnut-3 print-hidden">
-        Two copies per page — cut down the middle.
+        Fold down the middle — cover on the left, program on the right.
       </p>
     </PrintLayout>
   );
