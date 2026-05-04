@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import { CancellationBanner } from "./CancellationBanner";
 import { defaultMeetingType, ensureMeetingDoc } from "./utils/ensureMeetingDoc";
 import { HistoryModal } from "./HistoryModal";
+import { MeetingInitErrorBanner } from "./MeetingInitErrorBanner";
 import { NO_MEETING_TYPES, TYPE_LABELS } from "./utils/meetingLabels";
 import { checkMeetingReadiness } from "./utils/readiness";
 import { PrintReadinessPanel } from "./program/PrintReadinessPanel";
@@ -44,6 +45,9 @@ export function WeekEditor({ date }: Props) {
   const upcoming = getUpcomingSundayIso(new Date(), timezone);
   const editable = date === upcoming;
 
+  const [initError, setInitError] = useState<Error | null>(null);
+  const [initRetryKey, setInitRetryKey] = useState(0);
+
   useEffect(() => {
     // Don't seed a meeting doc for a Sunday that isn't currently open
     // for planning — past meetings shouldn't be auto-created when a
@@ -51,8 +55,15 @@ export function WeekEditor({ date }: Props) {
     // when their week arrives.
     if (!wardId || !settingsLoaded || !editable) return;
     const nonMeetingSundays = settings.data?.settings.nonMeetingSundays ?? [];
-    void ensureMeetingDoc(wardId, date, nonMeetingSundays);
-  }, [wardId, date, settingsLoaded, editable, settings.data]);
+    setInitError(null);
+    ensureMeetingDoc(wardId, date, nonMeetingSundays).catch((err: unknown) => {
+      // Surface the failure to the bishop — without this, a denied
+      // permission or transaction error leaves the readiness panel
+      // stuck at "Meeting not created yet" with no way to recover.
+      console.error("ensureMeetingDoc failed", err);
+      setInitError(err instanceof Error ? err : new Error(String(err)));
+    });
+  }, [wardId, date, settingsLoaded, editable, settings.data, initRetryKey]);
 
   if (!wardId) return null;
 
@@ -82,6 +93,13 @@ export function WeekEditor({ date }: Props) {
               </div>
             ) : (
               <>
+                {(initError || meeting.error) && (
+                  <MeetingInitErrorBanner
+                    error={initError ?? meeting.error!}
+                    source={initError ? "init" : "subscription"}
+                    onRetry={() => setInitRetryKey((k) => k + 1)}
+                  />
+                )}
                 <PrintReadinessPanel date={date} report={report} />
                 <div className="flex justify-center mb-4 lg:hidden">
                   <StatusLegend />
