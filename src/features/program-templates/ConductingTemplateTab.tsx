@@ -17,7 +17,8 @@ interface Props {
 }
 
 /** Conducting-copy template editor on /settings/templates/programs.
- *  Lexical WYSIWYG with variable chips — saves to the ward template
+ *  Lexical WYSIWYG with variable chips — same authoring surface as
+ *  the speaker + prayer letter editors, scoped to the ward template
  *  doc at `wards/{wardId}/templates/conductingProgram`. */
 export function ConductingTemplateTab({ onUsingDefaultChange }: Props) {
   const wardId = useCurrentWardStore((s) => s.wardId);

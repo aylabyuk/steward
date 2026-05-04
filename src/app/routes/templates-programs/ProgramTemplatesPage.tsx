@@ -8,8 +8,8 @@ import { ConductingTemplateTab } from "@/features/program-templates/ConductingTe
 import { DesktopOnlyNotice } from "@/features/page-editor/DesktopOnlyNotice";
 
 const TABS: { key: ProgramTemplateKey; label: string }[] = [
-  { key: "conductingProgram", label: "Conducting copy" },
   { key: "congregationProgram", label: "Congregation copy" },
+  { key: "conductingProgram", label: "Conducting copy" },
 ];
 
 /** /settings/templates/programs — chrome + tab switcher. The
@@ -21,7 +21,7 @@ const TABS: { key: ProgramTemplateKey; label: string }[] = [
 export function ProgramTemplatesPage(): React.ReactElement {
   useFullViewportLayout();
   const isMobile = useIsMobile();
-  const [activeKey, setActiveKey] = useState<ProgramTemplateKey>("conductingProgram");
+  const [activeKey, setActiveKey] = useState<ProgramTemplateKey>("congregationProgram");
   const [conductingUsingDefault, setConductingUsingDefault] = useState(false);
 
   if (isMobile) return <DesktopOnlyNotice title="Program templates" />;

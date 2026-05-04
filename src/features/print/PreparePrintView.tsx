@@ -14,8 +14,8 @@ interface Props {
 }
 
 const TABS: { key: ProgramTemplateKey; label: string; printSegment: string }[] = [
-  { key: "conductingProgram", label: "Conducting copy", printSegment: "conducting" },
   { key: "congregationProgram", label: "Congregation copy", printSegment: "congregation" },
+  { key: "conductingProgram", label: "Conducting copy", printSegment: "conducting" },
 ];
 
 /** /week/:date/prepare — chrome + tab switcher. Each tab is a self-
@@ -27,7 +27,7 @@ export function PreparePrintView({ date }: Props) {
   useFullViewportLayout();
   const isMobile = useIsMobile();
   const authed = useAuthStore((s) => s.status === "signed_in");
-  const [activeKey, setActiveKey] = useState<ProgramTemplateKey>("conductingProgram");
+  const [activeKey, setActiveKey] = useState<ProgramTemplateKey>("congregationProgram");
   const [conductingOverride, setConductingOverride] = useState(false);
 
   if (!authed) return <Navigate to="/login" replace />;
