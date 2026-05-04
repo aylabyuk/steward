@@ -7,6 +7,32 @@ documented in [README.md](README.md#versioning--releases).
 
 ## [Unreleased]
 
+## [0.24.0] — 2026-05-04
+
+Print bulletin rethink. The congregation copy becomes a single fold-down-the-middle bulletin (cover left, program right) printed on landscape letter, replacing the old "two identical copies, cut down the middle". A new prepare-to-print page sits between the meeting form and the print routes, with per-Sunday saves on the meeting doc and ward-level defaults on the templates page. Conducting chips on the prepare page now render real meeting data instead of generic samples.
+
+### Added
+
+- **Prepare-to-print page (`/week/:date/prepare`).** Full-viewport editor between the meeting form and the print routes — Congregation copy first, Conducting copy second. Per-Sunday saves land on the meeting doc under `programs.{conducting|congregation}`; print routes prefer per-Sunday overrides and cascade to the ward template when absent. The two old direct-print buttons in the editor (in `PrintReadinessPanel` + `ProgramSaveBar`) collapse into a single "Prepare to print" CTA.
+- **New congregation bulletin layout.** `/print/:date/congregation` now prints **one** bulletin per landscape sheet — left half is a cover panel (church name eyebrow + ward name + image + announcements), right half is the brass-label program panel — instead of two identical cut-down-the-middle copies. Cover image URL, announcements, and program footer note are editable per-Sunday on the prepare page; defaults come from the ward template.
+- **Congregation copy template editor on `/settings/templates/programs`.** Form-and-preview UI (default cover image URL + default program footer note; no announcements, since those are per-week content) saves ward-level defaults under `ward.congregationDefaults`. Render time cascades meeting → ward → built-in default; explicit empty string at any layer is an "explicit hide" for the footer.
+- **Built-in default footer note** — *"Quietly ponder the prelude music 10 minutes before the meeting begins"*. Pre-fills the form on the prepare page so bishops have concrete text to tweak instead of an empty box.
+
+### Changed
+
+- **Conducting chips render this Sunday's real data on the prepare page.** New optional `vars` prop on `ProgramPageEditor` (mirrors `LetterPageEditor`'s `vars`) overrides each variable's `sample` with a live value. The conducting prepare tab passes `buildMeetingVariables({ date, meeting, speakers, ward })` so chips show the actual presider, hymns, and speakers — not "Bishop Reeves / hymn #19". The templates page intentionally still shows the built-in samples; its bordeaux preview banner explains why.
+- **Tab order swap.** Congregation copy is the first and default active tab on both `/week/:date/prepare` and `/settings/templates/programs`.
+- **Print pipeline fixes.** A global `@media print` rule that was silently hiding every print route's content (intended for the speaker-letter portal flow only) is now scoped with `:has([data-print-only-letter])` so it fires only when a letter portal is mounted. `PrintLayout` drops `max-w-4xl` + `print:flex print:justify-center` so bulletins fill the printable area instead of getting squeezed into a 9.3in column or overflowing off-page from vertical centering.
+- **Print CTAs open in a new tab** so the prepare page keeps its draft state when the bishop sends a sheet to the printer.
+
+### Fixed
+
+- **Meeting init / load failures surface in the UI.** The readiness panel previously got stuck on "Meeting not created yet" when the ward doc failed Zod parsing (e.g. a saved `null` field on a schema that only accepted `string | undefined`). A new `MeetingInitErrorBanner` shows the underlying error so the bishop can act on it; ward + meeting schemas now use `.nullish()` on optional string fields so cleared values written as `null` by the form helpers continue to parse cleanly.
+
+### Infrastructure
+
+- **Schema additions** — `meeting.coverImageUrl`, `meeting.programFooterNote`, `meeting.programs.{conducting|congregation}`, `ward.congregationDefaults.{coverImageUrl|programFooterNote}`. All nullish: undefined falls through the cascade; empty-string is "explicit hide" (footer); non-empty wins. No migration required — Zod accepts existing docs unchanged.
+
 ## [0.23.1] — 2026-05-03
 
 Patch release: mobile layout fix for the schedule's planning-open banner.
@@ -2575,7 +2601,8 @@ correctness fixes shipped to `steward-prod-65a36`.
 - Biome format check gated in CI; `design/` and `emulator-data/`
   excluded; tailwindDirectives enabled so `styles/index.css` parses.
 
-[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.23.1...HEAD
+[Unreleased]: https://github.com/aylabyuk/steward/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/aylabyuk/steward/releases/tag/v0.24.0
 [0.23.1]: https://github.com/aylabyuk/steward/releases/tag/v0.23.1
 [0.23.0]: https://github.com/aylabyuk/steward/releases/tag/v0.23.0
 [0.22.0]: https://github.com/aylabyuk/steward/releases/tag/v0.22.0
